@@ -7,6 +7,53 @@
 
 ---
 
+## v2.4 — AI Communication Surfaces for Patient Submissions (NEW)
+
+### Patient Submission Success + AI Response
+- **Added:** `patient-submission-success` screen in `prototype-web/index.html`
+- **Purpose:** Show patient-safe, supportive AI response immediately after journal/voice submissions
+- **Features:**
+  - Successful submission confirmation for journal and voice memo
+  - Patient-facing "What I heard" reflection summary
+  - Suggested next-step prompt with non-clinical framing
+  - Explicit boundary language (not diagnosis/emergency guidance)
+
+### Clinician-Only Internal Report Comparison
+- **Added:** `ai-communication-compare` screen
+- **Purpose:** Demonstrate differential communication surfaces by audience (patient vs clinician)
+- **Features:**
+  - Side-by-side patient-safe response vs clinician internal report
+  - Internal report includes signal band, evidence references, and known unknowns
+  - Explicit clinician-only banner to prevent boundary confusion
+
+### Deterministic Submission State Wiring
+- **Added:** `baselineSubmissionState`, `processSubmission`, `renderSubmissionSurfaces`, `resetSubmissionState`
+- **Updated:** `saveJournal()` and `uploadVoice()` route into submission success + report surfaces
+- **Updated:** `resetDemo` restores submission/report baseline deterministically
+
+---
+
+## v2.3 — Enterprise Governance Differentiator (NEW)
+
+### Enterprise Governance Hub
+- **Added:** `enterprise-governance` screen in `prototype-web/index.html`
+- **Purpose:** Showcase enterprise-grade procurement/governance readiness vs non-enterprise consumer tools
+- **Features:**
+  - Synthetic multi-tenant governance package table (SSO/SCIM, RBAC bundle, audit pipeline)
+  - Deterministic review actions: `APPROVED`, `CONDITIONAL`, `REVIEW_REQUIRED`
+  - Governance detail panel with evidence references and audit trail text
+  - Simulated enterprise readiness metric tied to approved package count
+
+### ROI Linkage
+- **Enhanced:** `roi-dashboard`
+- **Added:** "Enterprise Procurement Signal (Simulated)" card connected to governance approvals
+
+### Deterministic Demo Controls
+- **Updated:** `resetDemo`
+- **Added:** enterprise governance reset wiring via `resetEnterpriseGovernance()`
+
+---
+
 ## CLAIMS & TRUST FIXES
 
 ### Compliance Posture Panel (NEW)
