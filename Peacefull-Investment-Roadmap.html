@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peacefull.ai - Investment Package Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0.6in 0.7in;
+            @top-center { content: "Peacefull.ai | Confidential"; font-size: 8pt; color: #94a3b8; }
+            @bottom-center { content: counter(page); font-size: 9pt; }
+        }
+        @page:first {
+            @top-center { content: none; }
+            @bottom-center { content: none; }
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            line-height: 1.5;
+            font-size: 10pt;
+        }
+        .font-display { font-family: 'Playfair Display', serif; }
+        
+        .cover-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            color: white;
+            page-break-after: always;
+            padding: 60px;
+        }
+        .cover-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(6, 182, 212, 0.4);
+        }
+        .cover-title { font-size: 42pt; font-weight: 700; margin-bottom: 16px; letter-spacing: -1px; }
+        .cover-subtitle { font-size: 16pt; font-weight: 300; opacity: 0.9; margin-bottom: 60px; }
+        .cover-meta { font-size: 11pt; opacity: 0.7; line-height: 2; }
+        
+        h1 { font-size: 22pt; font-weight: 700; color: #0f172a; margin: 30px 0 15px; page-break-after: avoid; }
+        h2 { font-size: 14pt; font-weight: 600; color: #1e40af; margin: 25px 0 12px; page-break-after: avoid; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        h3 { font-size: 12pt; font-weight: 600; color: #334155; margin: 18px 0 10px; page-break-after: avoid; }
+        h4 { font-size: 11pt; font-weight: 600; color: #475569; margin: 12px 0 8px; }
+        
+        p { margin: 8px 0; text-align: justify; }
+        
+        .section { page-break-inside: avoid; margin-bottom: 20px; }
+        .section-break { page-break-before: always; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+        th {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:nth-child(even) { background: #f8fafc; }
+        tr { page-break-inside: avoid; }
+        
+        .tier-table th { background: linear-gradient(135deg, #0f172a, #1e3a5f); }
+        .tier2-table th { background: linear-gradient(135deg, #059669, #10b981); }
+        .tier3-table th { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+        
+        .metric-box {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-left: 4px solid #0ea5e9;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { 
+            padding: 6px 0 6px 28px; 
+            position: relative;
+            page-break-inside: avoid;
+        }
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        
+        .phase-box {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 12px 0;
+            page-break-inside: avoid;
+        }
+        .phase-header {
+            font-weight: 700;
+            color: #1e40af;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .email-template {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 9pt;
+            white-space: pre-wrap;
+            margin: 15px 0;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .vc-tier {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .vc-tier h4 { color: #1e40af; margin-top: 0; }
+        
+        .timeline-item {
+            display: flex;
+            margin: 10px 0;
+            page-break-inside: avoid;
+        }
+        .timeline-week {
+            min-width: 100px;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        .timeline-content { flex: 1; }
+        
+        .success-metric {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-left: 4px solid #10b981;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .blow-away {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 12px 0;
+        }
+        .blow-away h4 { color: #b45309; margin-top: 0; }
+        
+        .contact-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #64748b;
+        }
+        
+        .qa-item {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        .qa-q { font-weight: 600; color: #1e40af; margin-bottom: 6px; }
+        .qa-a { color: #475569; padding-left: 15px; border-left: 3px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-logo">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <div class="cover-title font-display">Investment Package Roadmap</div>
+        <div class="cover-subtitle">Complete VC Materials Framework & Timeline</div>
+        <div class="cover-meta">
+            <strong>Peacefull.ai</strong><br>
+            AI-Powered Behavioral Health Platform<br><br>
+            Founder: Khoja Rahimi<br>
+            Stage: Seed/Series A | Target: $5-15M<br>
+            Valuation Target: $25-50M Pre-Money<br><br>
+            Q2 2026
+        </div>
+    </div>
+
+    <!-- Executive Overview -->
+    <div class="section">
+        <h1>The Complete VC Package Framework</h1>
+        <p>This roadmap outlines the complete set of investor materials required for a successful fundraising round. The framework is organized into three tiers based on priority and timing.</p>
+        
+        <div class="highlight-box">
+            <strong>Target Raise:</strong> $5-15M Seed/Series A | <strong>Valuation:</strong> $25-50M Pre-Money | <strong>Timeline:</strong> 12 weeks from start to close
+        </div>
+    </div>
+
+    <!-- Tier 1 Materials -->
+    <div class="section">
+        <h2>Tier 1: Critical Materials (Must Have for First Meeting)</h2>
+        <p>These materials make or break the first impression. They must be polished and ready before any investor outreach.</p>
+        
+        <table class="tier-table">
+            <thead>
+                <tr>
+                    <th style="width:25%">Material</th>
+                    <th style="width:30%">Purpose</th>
+                    <th style="width:20%">Status</th>
+                    <th style="width:25%">Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Interactive Demo</strong></td>
+                    <td>Show, don't tell - let VCs experience the product</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>2. Pitch Deck</strong> (10-12 slides)</td>
+                    <td>Tell the compelling story of the opportunity</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>3. Executive Summary</strong></td>
+                    <td>One-pager to get the initial meeting</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>4. Financial Model</strong></td>
+                    <td>Show the magnitude of the opportunity</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>5. Demo Video</strong> (2-3 min)</td>
+                    <td>Shareable asset for broader distribution</td>
+                    <td>Q2 2026</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tier 2 Materials -->
+    <div class="section">
+        <h2>Tier 2: High Value Materials (Due Diligence Ready)</h2>
+        <p>Materials VCs request after expressing initial interest. Having these ready demonstrates professionalism and preparation.</p>
+        
+        <table class="tier2-table">
+            <thead>
+                <tr>
+                    <th style="width:25%">Material</th>
+                    <th style="width:30%">Purpose</th>
+                    <th style="width:20%">Timeline</th>
+                    <th style="width:25%">Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>6. Technical Architecture</strong></td>
+                    <td>Prove the technology works at scale</td>
+                    <td>Q2 2026</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>7. Competitive Analysis</strong></td>
+                    <td>Show clear differentiation and moat</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>8. Product Roadmap</strong></td>
+                    <td>Demonstrate vision and execution plan</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>9. Go-to-Market Strategy</strong></td>
+                    <td>Show how you'll acquire customers</td>
+                    <td>Complete</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>10. Team Bios/Advisors</strong></td>
+                    <td>Prove you have the expertise to build this</td>
+                    <td>Q2 2026</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tier 3 Materials -->
+    <div class="section">
+        <h2>Tier 3: Differentiators (Stand Out from Competition)</h2>
+        <p>Materials that show exceptional professionalism and separate you from other startups competing for capital.</p>
+        
+        <table class="tier3-table">
+            <thead>
+                <tr>
+                    <th style="width:25%">Material</th>
+                    <th style="width:30%">Purpose</th>
+                    <th style="width:20%">Timeline</th>
+                    <th style="width:25%">Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>11. Risk Mitigation Matrix</strong></td>
+                    <td>Address concerns proactively</td>
+                    <td>Q3 2026</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>12. Customer Validation</strong></td>
+                    <td>Show market demand with data</td>
+                    <td>Q3 2026</td>
+                    <td>⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>13. Regulatory Compliance Guide</strong></td>
+                    <td>Reduce perceived risk in healthcare</td>
+                    <td>Q3 2026</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>14. Exit Strategy Analysis</strong></td>
+                    <td>Show ROI potential for investors</td>
+                    <td>Q3 2026</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td><strong>15. Investor Update Template</strong></td>
+                    <td>Show ongoing communication commitment</td>
+                    <td>Q3 2026</td>
+                    <td>⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-break"></div>
+
+    <!-- The Perfect Pitch Sequence -->
+    <div class="section">
+        <h1>The Perfect Pitch Sequence</h1>
+        
+        <div class="phase-box">
+            <div class="phase-header">Phase 1: Get the Meeting (Email/LinkedIn Outreach)</div>
+            <p><strong>Materials:</strong> Executive Summary + Demo Link</p>
+        </div>
+        
+        <div class="email-template">Subject: $2B Mental Health AI Opportunity - 10 Min Demo
+
+Hi [VC Name],
+
+We're building the AI platform that helps clinicians detect mental health crises 60x faster. Our interactive demo shows how we save 5.2 hours/week per clinician while improving patient outcomes.
+
+Key metrics:
+• 99.2% T2 alert detection rate
+• $1.6M annual savings per 100 clinicians
+• 340% ROI for health systems
+• HIPAA/SOC 2 compliant
+
+Interactive demo: [LINK]
+Executive summary: [ATTACH]
+
+Can we schedule 20 minutes next week?
+
+Khoja Rahimi
+Founder & CEO, Peacefull.ai</div>
+
+        <div class="phase-box">
+            <div class="phase-header">Phase 2: First Meeting (30-45 minutes)</div>
+            <p><strong>Materials:</strong> Pitch Deck + Live Demo</p>
+            <table>
+                <tr><td style="width:30%"><strong>Hook (2 min)</strong></td><td>"68% of mental health crises happen between sessions"</td></tr>
+                <tr><td><strong>Problem (3 min)</strong></td><td>Clinician burnout + missed signals</td></tr>
+                <tr><td><strong>Solution (5 min)</strong></td><td>Live demo of Story Mode</td></tr>
+                <tr><td><strong>Market (3 min)</strong></td><td>$2B TAM slide</td></tr>
+                <tr><td><strong>Business Model (3 min)</strong></td><td>SaaS pricing slide</td></tr>
+                <tr><td><strong>Traction (3 min)</strong></td><td>Pilot results and key metrics</td></tr>
+                <tr><td><strong>Team (2 min)</strong></td><td>Why you can build this</td></tr>
+                <tr><td><strong>Ask (2 min)</strong></td><td>$X for Y months to achieve Z</td></tr>
+                <tr><td><strong>Demo Deep Dive (15 min)</strong></td><td>ROI Dashboard + Before/After</td></tr>
+            </table>
+        </div>
+        
+        <div class="phase-box">
+            <div class="phase-header">Phase 3: Due Diligence (After Expression of Interest)</div>
+            <p><strong>Materials:</strong> Full data room with all Tier 1 & 2 materials</p>
+        </div>
+        
+        <div class="phase-box">
+            <div class="phase-header">Phase 4: Partner Meeting (Final Pitch)</div>
+            <p><strong>Materials:</strong> Refined deck + live product demo + Q&A preparation</p>
+        </div>
+    </div>
+
+    <div class="section-break"></div>
+
+    <!-- 12-Slide Pitch Deck Structure -->
+    <div class="section">
+        <h1>The 12-Slide Pitch Deck Structure</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:8%">#</th>
+                    <th style="width:22%">Slide</th>
+                    <th style="width:45%">Key Content</th>
+                    <th style="width:25%">Visual</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Title/Hook</strong></td>
+                    <td>Company name, tagline, founder, contact, one-line value prop</td>
+                    <td>Clean branding</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>The Problem</strong></td>
+                    <td>68% crises between sessions, clinician burnout, 30% signals missed</td>
+                    <td>Story Mode screenshot</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>The Solution</strong></td>
+                    <td>AI-powered clinician-supervised platform, 24/7 monitoring</td>
+                    <td>Before/After comparison</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><strong>Product Demo</strong></td>
+                    <td>QR code to interactive demo, 3 key screenshots</td>
+                    <td>Demo screenshots</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>Market Opportunity</strong></td>
+                    <td>TAM: $17B, SAM: $2B, SOM: $100M, 18% CAGR growth</td>
+                    <td>Market size chart</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><strong>Business Model</strong></td>
+                    <td>SaaS: $150/clinician/month, $50/patient/month enterprise</td>
+                    <td>Pricing tiers</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><strong>Traction</strong></td>
+                    <td>Pilots running, clinicians using daily, patients monitored</td>
+                    <td>ROI Dashboard</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><strong>Competitive Landscape</strong></td>
+                    <td>2x2 matrix: Safety Focus vs AI Sophistication</td>
+                    <td>Competitive matrix</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><strong>Go-to-Market</strong></td>
+                    <td>Direct sales, EHR partnerships, self-serve, 18-month rollout</td>
+                    <td>GTM timeline</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td><strong>Team</strong></td>
+                    <td>Founders, key hires planned, advisors</td>
+                    <td>Team photos</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td><strong>Financials</strong></td>
+                    <td>3-year projections, unit economics, burn rate, runway</td>
+                    <td>Financial charts</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td><strong>The Ask</strong></td>
+                    <td>Raising $X for Y months to achieve Z milestones</td>
+                    <td>Contact + demo link</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-break"></div>
+
+    <!-- Key Metrics -->
+    <div class="section">
+        <h1>Key Metrics That VCs Want to See</h1>
+        
+        <div class="two-column">
+            <div>
+                <h3>Product Metrics</h3>
+                <ul class="checklist">
+                    <li>Monthly Active Users (clinicians)</li>
+                    <li>Monthly Active Patients</li>
+                    <li>Average Session Duration</li>
+                    <li>Feature Adoption Rates</li>
+                    <li>Net Promoter Score (NPS)</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Business Metrics</h3>
+                <ul class="checklist">
+                    <li>Monthly Recurring Revenue (MRR)</li>
+                    <li>Annual Contract Value (ACV)</li>
+                    <li>Customer Acquisition Cost (CAC)</li>
+                    <li>Lifetime Value (LTV)</li>
+                    <li>LTV:CAC Ratio (target &gt;3:1)</li>
+                    <li>Churn Rate (target &lt;5% annually)</li>
+                    <li>Gross Margin (target &gt;80%)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3>Safety Metrics (Your Moat)</h3>
+        <div class="metric-box">
+            <strong>Core Differentiators:</strong> T2 Alert Detection Rate (99.2%) | False Positive Rate (&lt;10%) | Average Response Time (4 min) | Clinician Time Saved (5.2 hrs/week) | Patient Outcomes Improvement
+        </div>
+    </div>
+
+    <!-- Critical Questions -->
+    <div class="section">
+        <h2>Critical Questions to Prepare For</h2>
+        
+        <div class="qa-item">
+            <div class="qa-q">1. "How is this different from Woebot/Ginger?"</div>
+            <div class="qa-a">They're consumer apps. We're clinician-supervised with safety protocols and designed for healthcare workflows.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">2. "What if the AI makes a mistake?"</div>
+            <div class="qa-a">Every AI insight is a 'draft' requiring clinician approval. Our CSP-002 protocol ensures human oversight on all decisions.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">3. "How do you handle data privacy?"</div>
+            <div class="qa-a">HIPAA, SOC 2, end-to-end encryption. We exceed healthcare industry standards for data protection.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">4. "What's your go-to-market strategy?"</div>
+            <div class="qa-a">Start with health systems for validation, expand through EHR partnerships (Epic, Cerner), then self-serve for small practices.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">5. "How do you acquire customers?"</div>
+            <div class="qa-a">Direct sales + channel partners + medical reps. CAC is $X, LTV is $Y, giving us Z-month payback period.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">6. "What's the path to $100M ARR?"</div>
+            <div class="qa-a">X clinicians × $Y/month × 12 months = $Z. Here's the detailed math in our financial model...</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">7. "How big is this market really?"</div>
+            <div class="qa-a">$17B US mental health software market, growing 18% annually. Our addressable segment is $2B today.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">8. "Who are your competitors?"</div>
+            <div class="qa-a">Show competitive matrix. We're the only ones with clinician-supervised AI + safety protocols.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">9. "Why is your team the right one to build this?"</div>
+            <div class="qa-a">Mix of healthcare domain expertise, AI/ML technical skills, and enterprise SaaS go-to-market experience.</div>
+        </div>
+        
+        <div class="qa-item">
+            <div class="qa-q">10. "What milestones will you hit with this funding?"</div>
+            <div class="qa-a">Specific, measurable goals for next 12-18 months including revenue targets, customer acquisitions, and product milestones.</div>
+        </div>
+    </div>
+
+    <div class="section-break"></div>
+
+    <!-- Data Room Checklist -->
+    <div class="section">
+        <h1>The Data Room Checklist</h1>
+        <p>Create a secure folder (Google Drive, Dropbox, or DocSend) with the following organized sections:</p>
+        
+        <div class="two-column">
+            <div>
+                <h3>Company Documents</h3>
+                <ul class="checklist">
+                    <li>Certificate of Incorporation</li>
+                    <li>Cap Table (current and post-money)</li>
+                    <li>Bylaws</li>
+                    <li>IP Assignment Agreements</li>
+                    <li>Employment Agreements</li>
+                </ul>
+                
+                <h3>Financial Documents</h3>
+                <ul class="checklist">
+                    <li>Financial Model (Excel)</li>
+                    <li>Historical Financials</li>
+                    <li>Burn Rate Analysis</li>
+                    <li>Unit Economics Breakdown</li>
+                    <li>3-Year Projections</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Product Documents</h3>
+                <ul class="checklist">
+                    <li>Technical Architecture</li>
+                    <li>Product Roadmap</li>
+                    <li>User Research Summary</li>
+                    <li>Pilot Results/Case Studies</li>
+                    <li>Demo Video</li>
+                </ul>
+                
+                <h3>Legal/Compliance</h3>
+                <ul class="checklist">
+                    <li>HIPAA Compliance Documentation</li>
+                    <li>Privacy Policy</li>
+                    <li>Terms of Service</li>
+                    <li>Security Audit Results</li>
+                    <li>Insurance Policies</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3>Market Research</h3>
+        <ul class="checklist">
+            <li>Competitive Analysis</li>
+            <li>Market Size Research</li>
+            <li>Customer Interviews Summary</li>
+            <li>Industry Reports</li>
+        </ul>
+    </div>
+
+    <div class="section-break"></div>
+
+    <!-- Investor Target List -->
+    <div class="section">
+        <h1>Investor Target List Strategy</h1>
+        
+        <div class="vc-tier">
+            <h4>Tier 1: Healthcare-Focused VCs (Highest Probability)</h4>
+            <p>Andreessen Horowitz (Bio fund) | GV (Google Ventures) | Khosla Ventures | Venrock | Bessemer Venture Partners | 8VC | Rock Health | Lux Capital</p>
+        </div>
+        
+        <div class="vc-tier">
+            <h4>Tier 2: AI/ML-Focused VCs</h4>
+            <p>Sequoia Capital | Greylock Partners | Index Ventures | Accel | Battery Ventures</p>
+        </div>
+        
+        <div class="vc-tier">
+            <h4>Tier 3: Generalist VCs (Series A+)</h4>
+            <p>Benchmark | First Round Capital | Lightspeed Venture Partners | Founders Fund</p>
+        </div>
+        
+        <div class="vc-tier">
+            <h4>Tier 4: Strategic Investors</h4>
+            <p>Health system venture arms | EHR company investments (Epic, Cerner) | Pharma company ventures</p>
+        </div>
+    </div>
+
+    <!-- Timeline to Funding -->
+    <div class="section">
+        <h2>Timeline to Funding (12 Weeks)</h2>
+        
+        <div class="timeline-item">
+            <div class="timeline-week">Week 1-2</div>
+            <div class="timeline-content">
+                <strong>Material Preparation</strong><br>
+                Finalize pitch deck, create financial model, record demo video, write executive summary, set up data room
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-week">Week 3-4</div>
+            <div class="timeline-content">
+                <strong>Outreach Phase</strong><br>
+                Research target VCs, get warm intros, send initial emails, schedule first meetings
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-week">Week 5-8</div>
+            <div class="timeline-content">
+                <strong>Meeting Phase</strong><br>
+                20-30 first meetings, refine pitch based on feedback, follow-ups and additional materials, get term sheets
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-week">Week 9-12</div>
+            <div class="timeline-content">
+                <strong>Due Diligence & Close</strong><br>
+                Full due diligence process, partner meetings, negotiate terms, legal documentation, close the round
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Metrics -->
+    <div class="section">
+        <h2>Success Metrics for the Raise</h2>
+        
+        <div class="success-metric">
+            <strong>Meeting Metrics:</strong> Target 30 first meetings | 40% conversion to second meeting (12 meetings) | 25% conversion to term sheet (3 term sheets) | 33% close rate (1 closed round)
+        </div>
+        
+        <div class="success-metric">
+            <strong>Pitch Metrics:</strong> Deck open rate &gt;70% | Demo click-through rate &gt;50% | Time spent on demo &gt;3 minutes
+        </div>
+    </div>
+
+    <!-- Blow-Away Factor -->
+    <div class="section">
+        <h2>The Blow-Away Factor Checklist</h2>
+        <p>What makes VCs say "we HAVE to invest in this":</p>
+        
+        <div class="two-column">
+            <div class="blow-away">
+                <h4>Interactive Demo</h4>
+                <p>They can play with it, experience the value firsthand</p>
+            </div>
+            <div class="blow-away">
+                <h4>Clear ROI</h4>
+                <p>$1.6M savings for 100 clinicians - quantified value</p>
+            </div>
+            <div class="blow-away">
+                <h4>Safety Moat</h4>
+                <p>99.2% detection rate, clinician-supervised AI</p>
+            </div>
+            <div class="blow-away">
+                <h4>Massive Market</h4>
+                <p>$17B TAM, 18% growth - huge opportunity</p>
+            </div>
+            <div class="blow-away">
+                <h4>Defensible Tech</h4>
+                <p>AI + safety protocols + compliance</p>
+            </div>
+            <div class="blow-away">
+                <h4>Strong Team</h4>
+                <p>Healthcare + AI + SaaS experience</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Actions -->
+    <div class="section">
+        <h2>Next Immediate Actions</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:20%">Timeline</th>
+                    <th style="width:40%">Action</th>
+                    <th style="width:20%">Status</th>
+                    <th style="width:20%">Owner</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Today</strong></td>
+                    <td>Finalize interactive demo</td>
+                    <td>Complete</td>
+                    <td>Product Team</td>
+                </tr>
+                <tr>
+                    <td><strong>Today</strong></td>
+                    <td>Create pitch deck</td>
+                    <td>Complete</td>
+                    <td>Founder</td>
+                </tr>
+                <tr>
+                    <td><strong>Today</strong></td>
+                    <td>Create executive summary</td>
+                    <td>Complete</td>
+                    <td>Founder</td>
+                </tr>
+                <tr>
+                    <td><strong>Today</strong></td>
+                    <td>Create financial model</td>
+                    <td>Complete</td>
+                    <td>Finance</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 1</strong></td>
+                    <td>Record demo video (2-3 minutes)</td>
+                    <td>Q2 2026</td>
+                    <td>Product Team</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 1</strong></td>
+                    <td>Write competitive analysis</td>
+                    <td>Complete</td>
+                    <td>Strategy</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 1</strong></td>
+                    <td>Create product roadmap</td>
+                    <td>Complete</td>
+                    <td>Product Team</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 2</strong></td>
+                    <td>Set up data room</td>
+                    <td>Q2 2026</td>
+                    <td>Operations</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 3</strong></td>
+                    <td>Start investor outreach</td>
+                    <td>Q2 2026</td>
+                    <td>Founder</td>
+                </tr>
+                <tr>
+                    <td><strong>Week 3</strong></td>
+                    <td>Schedule first meetings</td>
+                    <td>Q2 2026</td>
+                    <td>Founder</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="section">
+        <h1>Conclusion</h1>
+        
+        <div class="highlight-box">
+            <p>You have the <strong>best interactive demo</strong> in the mental health AI space. Now you need to:</p>
+            <ol style="margin: 10px 0; padding-left: 20px;">
+                <li><strong>Tell the story</strong> (pitch deck)</li>
+                <li><strong>Show the numbers</strong> (financial model)</li>
+                <li><strong>Get the meeting</strong> (executive summary)</li>
+                <li><strong>Close the deal</strong> (data room + Q&A prep)</li>
+            </ol>
+            <p style="margin-top: 10px;"><strong>The combination of your interactive demo + professional materials will be unstoppable.</strong></p>
+        </div>
+    </div>
+
+    <!-- Contact Footer -->
+    <div class="contact-footer">
+        <p><strong>Peacefull.ai</strong> - AI-Powered Behavioral Health Platform</p>
+        <p>Khoja Rahimi, Founder & CEO</p>
+        <p>📧 Khoja@Peacefull.ai | 📱 346-679-6557</p>
+        <p>📍 8402 Mossy Pines Way, Gainesville VA 20155</p>
+        <p style="margin-top: 10px; font-size: 8pt; color: #94a3b8;">Confidential - Do Not Distribute</p>
+    </div>
+</body>
+</html>

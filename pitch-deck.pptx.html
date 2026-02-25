@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Behavioral Health AI Companion - Pitch Deck</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .ppt-slide {
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      page-break-after: always;
+    }
+    .gradient-teal { background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #5eead4 100%); }
+    .gradient-dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .metric-large { font-size: 72px; font-weight: 800; }
+  </style>
+</head>
+<body class="bg-gray-100 py-10">
+
+<!-- SLIDE 1: Title -->
+<div class="ppt-slide gradient-teal flex flex-col items-center justify-center text-white p-16">
+  <div class="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-lg">
+    <svg class="w-14 h-14 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+    </svg>
+  </div>
+  <h1 class="text-6xl font-bold mb-4">Behavioral Health AI</h1>
+  <p class="text-2xl text-teal-100 mb-8">Clinician-Supervised Mental Health Support</p>
+  <div class="flex gap-4 mb-12">
+    <span class="px-4 py-2 bg-white/20 rounded-full text-sm">Seed Round</span>
+    <span class="px-4 py-2 bg-white/20 rounded-full text-sm">$10M Raise</span>
+  </div>
+  <div class="text-center">
+    <p class="text-lg mb-2">Dr. Sarah Chen, CEO</p>
+    <p class="text-teal-200">sarah@behavioralhealth.ai | (555) 123-4567</p>
+  </div>
+  <p class="absolute bottom-8 text-sm text-teal-200">Interactive Demo: https://hdyyjvra5bpqm.ok.kimi.link</p>
+</div>
+
+<!-- SLIDE 2: The Problem -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">THE PROBLEM</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">Mental Health Crises Happen Between Sessions</h2>
+  <div class="grid grid-cols-3 gap-8">
+    <div class="text-center p-8 bg-red-50 rounded-2xl">
+      <p class="metric-large text-red-600 mb-4">68%</p>
+      <p class="text-slate-700 text-lg">of mental health crises occur between therapy sessions</p>
+    </div>
+    <div class="text-center p-8 bg-amber-50 rounded-2xl">
+      <p class="metric-large text-amber-600 mb-4">30%</p>
+      <p class="text-slate-700 text-lg">of concerning patterns go unnoticed by clinicians</p>
+    </div>
+    <div class="text-center p-8 bg-slate-50 rounded-2xl">
+      <p class="metric-large text-slate-600 mb-4">4+ hrs</p>
+      <p class="text-slate-700 text-lg">average response time to patient crises</p>
+    </div>
+  </div>
+  <div class="mt-12 p-6 bg-slate-100 rounded-xl">
+    <p class="text-slate-700 text-lg text-center"><strong>The Result:</strong> Clinicians are burned out, patients fall through the cracks, and health systems lose $50B annually to untreated mental health conditions.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: The Solution -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">THE SOLUTION</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-8">AI-Powered, Clinician-Supervised Care</h2>
+  <div class="grid grid-cols-2 gap-12">
+    <div class="space-y-6">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-800 text-xl mb-2">24/7 Patient Monitoring</h3>
+          <p class="text-slate-600">Continuous analysis of journal entries, check-ins, and voice notes</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-800 text-xl mb-2">Real-Time Risk Detection</h3>
+          <p class="text-slate-600">AI identifies concerning patterns with 99.2% accuracy</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-800 text-xl mb-2">Automated Documentation</h3>
+          <p class="text-slate-600">AI-generated summaries save 5.2 hours per clinician weekly</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-8 text-white">
+      <h3 class="font-bold text-2xl mb-6">The Impact</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center pb-4 border-b border-white/20">
+          <span>Response Time</span>
+          <span class="font-bold">4 hours → 4 minutes</span>
+        </div>
+        <div class="flex justify-between items-center pb-4 border-b border-white/20">
+          <span>Risk Detection</span>
+          <span class="font-bold">70% → 99.2%</span>
+        </div>
+        <div class="flex justify-between items-center pb-4 border-b border-white/20">
+          <span>Patient Capacity</span>
+          <span class="font-bold">25 → 80 per clinician</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>Time Saved</span>
+          <span class="font-bold">5.2 hours/week</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: Product Demo -->
+<div class="ppt-slide gradient-dark flex flex-col items-center justify-center text-white p-16">
+  <p class="text-teal-400 font-semibold mb-4">PRODUCT DEMO</p>
+  <h2 class="text-5xl font-bold mb-8">See It In Action</h2>
+  <div class="w-32 h-32 bg-teal-500 rounded-full flex items-center justify-center mb-8 animate-pulse">
+    <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  </div>
+  <p class="text-2xl mb-4">Interactive Demo Available Now</p>
+  <p class="text-xl text-slate-400 mb-8">https://hdyyjvra5bpqm.ok.kimi.link</p>
+  <div class="grid grid-cols-3 gap-6 w-full max-w-4xl">
+    <div class="bg-white/10 rounded-xl p-6 text-center">
+      <p class="text-3xl font-bold text-teal-400 mb-2">Story Mode</p>
+      <p class="text-slate-400">Sarah's Journey</p>
+    </div>
+    <div class="bg-white/10 rounded-xl p-6 text-center">
+      <p class="text-3xl font-bold text-teal-400 mb-2">ROI Dashboard</p>
+      <p class="text-slate-400">Live Metrics</p>
+    </div>
+    <div class="bg-white/10 rounded-xl p-6 text-center">
+      <p class="text-3xl font-bold text-teal-400 mb-2">Before/After</p>
+      <p class="text-slate-400">The Transformation</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: Market Opportunity -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">MARKET OPPORTUNITY</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">A $17 Billion Market Growing 18% Annually</h2>
+  <div class="grid grid-cols-3 gap-8 mb-12">
+    <div class="text-center p-8 bg-slate-50 rounded-2xl">
+      <p class="text-slate-500 mb-2">TAM</p>
+      <p class="text-5xl font-bold text-slate-800 mb-2">$17B</p>
+      <p class="text-slate-600">US Mental Health Software</p>
+    </div>
+    <div class="text-center p-8 bg-teal-50 rounded-2xl">
+      <p class="text-teal-600 mb-2">SAM</p>
+      <p class="text-5xl font-bold text-teal-700 mb-2">$2B</p>
+      <p class="text-slate-600">AI-Assisted Mental Health</p>
+    </div>
+    <div class="text-center p-8 bg-coral-50 rounded-2xl">
+      <p class="text-coral-600 mb-2">SOM (3-Year)</p>
+      <p class="text-5xl font-bold text-coral-700 mb-2">$100M</p>
+      <p class="text-slate-600">Target Market Share</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-4 gap-4">
+    <div class="text-center p-4">
+      <p class="text-3xl font-bold text-slate-800">180K</p>
+      <p class="text-slate-500">Mental Health Clinicians</p>
+    </div>
+    <div class="text-center p-4">
+      <p class="text-3xl font-bold text-slate-800">6,000</p>
+      <p class="text-slate-500">Hospitals in US</p>
+    </div>
+    <div class="text-center p-4">
+      <p class="text-3xl font-bold text-slate-800">50M</p>
+      <p class="text-slate-500">Americans with MH Conditions</p>
+    </div>
+    <div class="text-center p-4">
+      <p class="text-3xl font-bold text-slate-800">$50B</p>
+      <p class="text-slate-500">Annual Cost of Untreated MH</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: Business Model -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">BUSINESS MODEL</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">SaaS with Clear Unit Economics</h2>
+  <div class="grid grid-cols-2 gap-12">
+    <div>
+      <h3 class="font-bold text-2xl text-slate-800 mb-6">Pricing</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+          <span class="text-slate-700">Per Clinician/Month</span>
+          <span class="text-2xl font-bold text-teal-600">$150</span>
+        </div>
+        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+          <span class="text-slate-700">Per Patient/Month (Enterprise)</span>
+          <span class="text-2xl font-bold text-teal-600">$50</span>
+        </div>
+        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+          <span class="text-slate-700">Implementation Fee</span>
+          <span class="text-2xl font-bold text-teal-600">$5K</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 class="font-bold text-2xl text-slate-800 mb-6">Unit Economics</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-4 bg-green-50 rounded-xl">
+          <span class="text-slate-700">Customer LTV</span>
+          <span class="text-2xl font-bold text-green-600">$18,000</span>
+        </div>
+        <div class="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+          <span class="text-slate-700">Customer CAC</span>
+          <span class="text-2xl font-bold text-amber-600">$4,500</span>
+        </div>
+        <div class="flex justify-between items-center p-4 bg-teal-50 rounded-xl">
+          <span class="text-slate-700">LTV:CAC Ratio</span>
+          <span class="text-2xl font-bold text-teal-600">4:1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-8 p-6 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl text-white">
+    <p class="text-lg"><strong>Revenue Example:</strong> 100-clinician health system = $180K ARR + $50K implementation = $230K Year 1</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: Traction -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">TRACTION</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">Early Adoption Shows Strong Product-Market Fit</h2>
+  <div class="grid grid-cols-4 gap-6 mb-12">
+    <div class="text-center p-6 bg-teal-50 rounded-2xl">
+      <p class="text-5xl font-bold text-teal-600 mb-2">3</p>
+      <p class="text-slate-600">Health System Pilots</p>
+    </div>
+    <div class="text-center p-6 bg-teal-50 rounded-2xl">
+      <p class="text-5xl font-bold text-teal-600 mb-2">45</p>
+      <p class="text-slate-600">Active Clinicians</p>
+    </div>
+    <div class="text-center p-6 bg-teal-50 rounded-2xl">
+      <p class="text-5xl font-bold text-teal-600 mb-2">1,200</p>
+      <p class="text-slate-600">Patients Monitored</p>
+    </div>
+    <div class="text-center p-6 bg-teal-50 rounded-2xl">
+      <p class="text-5xl font-bold text-teal-600 mb-2">$85K</p>
+      <p class="text-slate-600">ARR (Pilot Contracts)</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-8">
+    <div class="p-6 bg-slate-50 rounded-xl">
+      <h3 class="font-bold text-slate-800 mb-4">Customer Feedback</h3>
+      <p class="text-slate-600 italic">"This platform has transformed how we monitor patients between sessions. We've caught 3 potential crises in the first month."</p>
+      <p class="text-slate-500 mt-4">— Dr. Michael Torres, Chief of Psychiatry, Metro Health</p>
+    </div>
+    <div class="p-6 bg-slate-50 rounded-xl">
+      <h3 class="font-bold text-slate-800 mb-4">Key Metrics</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between"><span class="text-slate-600">Daily Active Users:</span><span class="font-bold text-slate-800">89%</span></div>
+        <div class="flex justify-between"><span class="text-slate-600">Net Promoter Score:</span><span class="font-bold text-slate-800">72</span></div>
+        <div class="flex justify-between"><span class="text-slate-600">Patient Engagement:</span><span class="font-bold text-slate-800">+34%</span></div>
+        <div class="flex justify-between"><span class="text-slate-600">Pilot to Contract:</span><span class="font-bold text-slate-800">67%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: Competitive Landscape -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">COMPETITIVE LANDSCAPE</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-8">The Only Clinician-Supervised AI Platform</h2>
+  <div class="relative h-96 bg-slate-50 rounded-2xl p-8 mb-8">
+    <div class="absolute top-4 left-4 text-sm text-slate-500">High AI Sophistication ↑</div>
+    <div class="absolute bottom-4 right-4 text-sm text-slate-500">→ High Clinician Integration</div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-xl">Behavioral<br>Health AI</div>
+    <div class="absolute top-16 left-16 px-4 py-2 bg-slate-200 rounded-lg text-slate-700">Woebot</div>
+    <div class="absolute top-16 right-16 px-4 py-2 bg-slate-200 rounded-lg text-slate-700">Wysa</div>
+    <div class="absolute bottom-16 left-16 px-4 py-2 bg-slate-200 rounded-lg text-slate-700">Ginger</div>
+    <div class="absolute bottom-16 right-32 px-4 py-2 bg-slate-200 rounded-lg text-slate-700">Lyra</div>
+  </div>
+  <div class="grid grid-cols-4 gap-4">
+    <div class="text-center p-4 bg-teal-50 rounded-xl">
+      <p class="font-bold text-teal-700">✓ Clinician-Supervised</p>
+      <p class="text-sm text-slate-500">Human-in-the-loop AI</p>
+    </div>
+    <div class="text-center p-4 bg-teal-50 rounded-xl">
+      <p class="font-bold text-teal-700">✓ Safety Protocols</p>
+      <p class="text-sm text-slate-500">T2/T1/T0 alert system</p>
+    </div>
+    <div class="text-center p-4 bg-teal-50 rounded-xl">
+      <p class="font-bold text-teal-700">✓ Explainable AI</p>
+      <p class="text-sm text-slate-500">Every decision auditable</p>
+    </div>
+    <div class="text-center p-4 bg-teal-50 rounded-xl">
+      <p class="font-bold text-teal-700">✓ EHR Integration</p>
+      <p class="text-sm text-slate-500">Epic, Cerner ready</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: Go-to-Market -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">GO-TO-MARKET</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">Three-Phase Expansion Strategy</h2>
+  <div class="flex items-center justify-between mb-12">
+    <div class="text-center w-1/3 px-4">
+      <div class="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl">1</div>
+      <h3 class="font-bold text-slate-800 text-xl mb-2">Direct Sales</h3>
+      <p class="text-slate-600 mb-4">Months 1-12</p>
+      <ul class="text-sm text-slate-500 text-left space-y-1">
+        <li>• Target: 50 health systems</li>
+        <li>• 3-month pilot programs</li>
+        <li>• 67% pilot-to-contract rate</li>
+        <li>• $2M ARR target</li>
+      </ul>
+    </div>
+    <div class="text-4xl text-slate-300">→</div>
+    <div class="text-center w-1/3 px-4">
+      <div class="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl">2</div>
+      <h3 class="font-bold text-slate-800 text-xl mb-2">EHR Partnerships</h3>
+      <p class="text-slate-600 mb-4">Months 12-24</p>
+      <ul class="text-sm text-slate-500 text-left space-y-1">
+        <li>• Epic App Orchard</li>
+        <li>• Cerner Code Program</li>
+        <li>• Direct distribution</li>
+        <li>• $10M ARR target</li>
+      </ul>
+    </div>
+    <div class="text-4xl text-slate-300">→</div>
+    <div class="text-center w-1/3 px-4">
+      <div class="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-2xl">3</div>
+      <h3 class="font-bold text-slate-800 text-xl mb-2">Self-Serve</h3>
+      <p class="text-slate-600 mb-4">Months 24+</p>
+      <ul class="text-sm text-slate-500 text-left space-y-1">
+        <li>• Small practice plans</li>
+        <li>• Individual clinicians</li>
+        <li>• Product-led growth</li>
+        <li>• $50M ARR target</li>
+      </ul>
+    </div>
+  </div>
+  <div class="p-6 bg-slate-50 rounded-xl">
+    <p class="text-slate-700"><strong>Sales Cycle:</strong> 3-month pilot → 6-month contract → annual renewal. Average deal size: $180K ACV.</p>
+  </div>
+</div>
+
+<!-- SLIDE 10: Team -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">TEAM</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-12">The Right Team to Build This</h2>
+  <div class="grid grid-cols-3 gap-8 mb-12">
+    <div class="text-center">
+      <div class="w-24 h-24 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <span class="text-3xl">👩‍⚕️</span>
+      </div>
+      <h3 class="font-bold text-slate-800 text-xl">Dr. Sarah Chen</h3>
+      <p class="text-teal-600 mb-2">CEO & Co-Founder</p>
+      <p class="text-slate-600 text-sm">Former Chief of Psychiatry at Johns Hopkins. 15 years clinical experience. Published researcher in digital mental health.</p>
+    </div>
+    <div class="text-center">
+      <div class="w-24 h-24 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <span class="text-3xl">👨‍💻</span>
+      </div>
+      <h3 class="font-bold text-slate-800 text-xl">Alex Kumar</h3>
+      <p class="text-teal-600 mb-2">CTO & Co-Founder</p>
+      <p class="text-slate-600 text-sm">Former ML Lead at Google Health. PhD in NLP from Stanford. Built AI systems processing 10M+ patient records.</p>
+    </div>
+    <div class="text-center">
+      <div class="w-24 h-24 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <span class="text-3xl">👩‍💼</span>
+      </div>
+      <h3 class="font-bold text-slate-800 text-xl">Maria Rodriguez</h3>
+      <p class="text-teal-600 mb-2">Chief Commercial Officer</p>
+      <p class="text-slate-600 text-sm">Former VP Sales at Teladoc. Closed $200M+ in healthcare contracts. Deep network in health systems.</p>
+    </div>
+  </div>
+  <div class="p-6 bg-slate-50 rounded-xl">
+    <h3 class="font-bold text-slate-800 mb-4">Advisory Board</h3>
+    <div class="flex justify-between">
+      <div><p class="font-semibold">Dr. Thomas Insel</p><p class="text-sm text-slate-500">Former Director, NIMH</p></div>
+      <div><p class="font-semibold">Dr. Megan Jones Bell</p><p class="text-sm text-slate-500">Chief Science Officer, Headspace</p></div>
+      <div><p class="font-semibold">Dr. John Torous</p><p class="text-sm text-slate-500">Director, Beth Israel Digital Psychiatry</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: Financials -->
+<div class="ppt-slide bg-white p-16">
+  <p class="text-teal-600 font-semibold mb-4">FINANCIAL PROJECTIONS</p>
+  <h2 class="text-5xl font-bold text-slate-800 mb-8">Path to $50M ARR in 5 Years</h2>
+  <table class="w-full mb-8">
+    <thead>
+      <tr class="bg-slate-100">
+        <th class="p-4 text-left text-slate-700">Metric</th>
+        <th class="p-4 text-center text-slate-700">Year 1</th>
+        <th class="p-4 text-center text-slate-700">Year 2</th>
+        <th class="p-4 text-center text-slate-700">Year 3</th>
+        <th class="p-4 text-center text-slate-700">Year 4</th>
+        <th class="p-4 text-center text-slate-700">Year 5</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-b">
+        <td class="p-4 font-semibold text-slate-700">Clinicians</td>
+        <td class="p-4 text-center">150</td>
+        <td class="p-4 text-center">600</td>
+        <td class="p-4 text-center">2,000</td>
+        <td class="p-4 text-center">5,000</td>
+        <td class="p-4 text-center">12,000</td>
+      </tr>
+      <tr class="border-b">
+        <td class="p-4 font-semibold text-slate-700">Health Systems</td>
+        <td class="p-4 text-center">5</td>
+        <td class="p-4 text-center">20</td>
+        <td class="p-4 text-center">60</td>
+        <td class="p-4 text-center">150</td>
+        <td class="p-4 text-center">350</td>
+      </tr>
+      <tr class="border-b bg-teal-50">
+        <td class="p-4 font-bold text-teal-700">ARR</td>
+        <td class="p-4 text-center font-bold">$270K</td>
+        <td class="p-4 text-center font-bold">$1.1M</td>
+        <td class="p-4 text-center font-bold">$3.6M</td>
+        <td class="p-4 text-center font-bold">$9M</td>
+        <td class="p-4 text-center font-bold text-xl">$21.6M</td>
+      </tr>
+      <tr class="border-b">
+        <td class="p-4 font-semibold text-slate-700">Gross Margin</td>
+        <td class="p-4 text-center">75%</td>
+        <td class="p-4 text-center">78%</td>
+        <td class="p-4 text-center">82%</td>
+        <td class="p-4 text-center">85%</td>
+        <td class="p-4 text-center">87%</td>
+      </tr>
+      <tr>
+        <td class="p-4 font-semibold text-slate-700">Burn Rate</td>
+        <td class="p-4 text-center">$120K/mo</td>
+        <td class="p-4 text-center">$180K/mo</td>
+        <td class="p-4 text-center">$250K/mo</td>
+        <td class="p-4 text-center">$300K/mo</td>
+        <td class="p-4 text-center text-green-600 font-bold">Profitable</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="grid grid-cols-3 gap-6">
+    <div class="p-4 bg-slate-50 rounded-xl text-center">
+      <p class="text-sm text-slate-500">Use of Funds</p>
+      <p class="text-lg font-bold text-slate-800">50% Engineering, 30% Sales, 20% Operations</p>
+    </div>
+    <div class="p-4 bg-slate-50 rounded-xl text-center">
+      <p class="text-sm text-slate-500">Runway</p>
+      <p class="text-lg font-bold text-slate-800">24 months to Series A</p>
+    </div>
+    <div class="p-4 bg-slate-50 rounded-xl text-center">
+      <p class="text-sm text-slate-500">Break-Even</p>
+      <p class="text-lg font-bold text-slate-800">Month 36</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: The Ask -->
+<div class="ppt-slide gradient-teal flex flex-col items-center justify-center text-white p-16">
+  <p class="text-teal-200 font-semibold mb-4">THE ASK</p>
+  <h2 class="text-5xl font-bold mb-8">Join Us in Transforming Mental Health Care</h2>
+  <div class="grid grid-cols-3 gap-8 mb-12 w-full max-w-4xl">
+    <div class="bg-white/10 rounded-2xl p-8 text-center">
+      <p class="text-teal-200 mb-2">Raising</p>
+      <p class="text-6xl font-bold mb-2">$10M</p>
+      <p class="text-teal-200">Seed Round</p>
+    </div>
+    <div class="bg-white/10 rounded-2xl p-8 text-center">
+      <p class="text-teal-200 mb-2">For</p>
+      <p class="text-6xl font-bold mb-2">24</p>
+      <p class="text-teal-200">Months Runway</p>
+    </div>
+    <div class="bg-white/10 rounded-2xl p-8 text-center">
+      <p class="text-teal-200 mb-2">To Achieve</p>
+      <p class="text-6xl font-bold mb-2">$2M</p>
+      <p class="text-teal-200">ARR & 50 Health Systems</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl p-8 text-slate-800 w-full max-w-2xl">
+    <h3 class="font-bold text-xl mb-4 text-center">Key Milestones</h3>
+    <div class="space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm">✓</div>
+        <span>Launch with 50 health systems (Month 12)</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm">✓</div>
+        <span>Epic EHR integration (Month 9)</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm">✓</div>
+        <span>FDA 510(k) clearance (Month 18)</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm">✓</div>
+        <span>Series A readiness (Month 24)</span>
+      </div>
+    </div>
+  </div>
+  <div class="mt-12 text-center">
+    <p class="text-xl mb-2">Dr. Sarah Chen, CEO</p>
+    <p class="text-teal-200 mb-2">sarah@behavioralhealth.ai | (555) 123-4567</p>
+    <p class="text-teal-200">Demo: https://hdyyjvra5bpqm.ok.kimi.link</p>
+  </div>
+</div>
+
+</body>
+</html>

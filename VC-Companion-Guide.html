@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioral Health AI Companion - VC Investment Companion Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a2e;
+            text-align: justify;
+            text-align-last: left;
+        }
+
+        /* Page Setup */
+        @page {
+            size: A4;
+            margin: 2cm 2cm 2.5cm 2cm;
+            @top-center { content: string(doctitle); font-size: 8pt; color: #666; }
+            @bottom-center { content: counter(page); font-size: 8pt; color: #666; }
+        }
+        @page :first { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
+        @page cover { @top-center { content: none; } @bottom-center { content: none; } }
+        @page toc { @top-center { content: none; } @bottom-center { content: none; } }
+
+        body { string-set: doctitle ""; }
+        h1 { string-set: doctitle "Behavioral Health AI Companion - Investment Guide"; }
+
+        /* Cover Page */
+        .cover {
+            page: cover;
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #5eead4 100%);
+            page-break-after: always;
+        }
+        .cover-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        .cover-decoration::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 80%;
+            height: 150%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .cover-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -20%;
+            width: 60%;
+            height: 100%;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+        }
+        .cover-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 80%;
+            z-index: 10;
+            color: white;
+        }
+        .cover-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 20px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .cover-icon svg {
+            width: 45px;
+            height: 45px;
+            fill: #0d9488;
+        }
+        .cover-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36pt;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+        .cover-subtitle {
+            font-size: 14pt;
+            font-weight: 300;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        .cover-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            font-size: 10pt;
+            margin: 0 5px 10px;
+        }
+        .cover-meta {
+            margin-top: 50px;
+            font-size: 11pt;
+            line-height: 1.8;
+        }
+        .cover-footer {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9pt;
+            opacity: 0.7;
+        }
+
+        /* Table of Contents */
+        .toc-page {
+            page: toc;
+            page-break-after: always;
+        }
+        .toc-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24pt;
+            color: #0d9488;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0d9488;
+        }
+        .toc { list-style: none; padding: 0; margin: 0; }
+        .toc li { margin-bottom: 8px; }
+        .toc a {
+            color: #1a1a2e;
+            text-decoration: none;
+            display: flex;
+            align-items: baseline;
+        }
+        .toc a::after {
+            content: leader('.') target-counter(attr(href url), page);
+            flex: 1;
+            text-align: right;
+            margin-left: 10px;
+        }
+        .toc-section { font-weight: 600; font-size: 11pt; margin-top: 15px; }
+        .toc-subsection { padding-left: 20px; font-size: 10pt; }
+
+        /* Typography */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22pt;
+            color: #0d9488;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0d9488;
+            page-break-after: avoid;
+        }
+        h2 {
+            font-size: 14pt;
+            color: #1a1a2e;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            page-break-after: avoid;
+        }
+        h3 {
+            font-size: 11pt;
+            color: #333;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            page-break-after: avoid;
+        }
+        h4 {
+            font-size: 10pt;
+            color: #444;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        p { margin: 0 0 10px 0; }
+
+        /* Section Break */
+        .section-break {
+            page-break-before: always;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9pt;
+            max-width: 100%;
+        }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; }
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        thead tr {
+            border-top: 2px solid #0d9488;
+            border-bottom: 1px solid #0d9488;
+        }
+        tbody tr { border-bottom: 1px solid #e5e5e5; }
+        tbody tr:last-child { border-bottom: 2px solid #0d9488; }
+        th {
+            font-weight: 600;
+            color: #0d9488;
+            background: #f8fffe;
+        }
+        caption {
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: left;
+            color: #333;
+        }
+        caption::before {
+            content: attr(data-label) "  ";
+            font-weight: 700;
+            color: #0d9488;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #f0fdfa;
+            border-left: 4px solid #0d9488;
+            padding: 15px 20px;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+        .highlight-box-title {
+            font-weight: 600;
+            color: #0d9488;
+            margin-bottom: 8px;
+        }
+
+        /* Metric Cards */
+        .metric-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric-card {
+            flex: 1;
+            min-width: 120px;
+            background: #f8fffe;
+            border: 1px solid #ccfbf1;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .metric-value {
+            font-size: 20pt;
+            font-weight: 700;
+            color: #0d9488;
+            line-height: 1.2;
+        }
+        .metric-label {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Lists */
+        ul, ol { margin: 10px 0; padding-left: 25px; }
+        li { margin-bottom: 5px; }
+
+        /* Blockquote */
+        blockquote {
+            margin: 15px 0;
+            padding: 15px 20px;
+            background: #f9fafb;
+            border-left: 3px solid #0d9488;
+            font-style: italic;
+            page-break-inside: avoid;
+        }
+        blockquote cite {
+            display: block;
+            margin-top: 10px;
+            font-style: normal;
+            font-size: 9pt;
+            color: #666;
+        }
+
+        /* Code/Pre */
+        code {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 8pt;
+            background: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 8pt;
+            line-height: 1.4;
+            max-width: 100%;
+        }
+
+        /* Links */
+        a { color: #0d9488; word-break: break-all; }
+        a.cite {
+            color: #1a1a2e;
+            text-decoration: none;
+            vertical-align: super;
+            font-size: 0.75em;
+        }
+
+        /* Checkmarks */
+        .check { color: #0d9488; font-weight: bold; }
+        .cross { color: #dc2626; font-weight: bold; }
+
+        /* Phase Timeline */
+        .phase-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px 0;
+            border-top: 2px solid #e5e5e5;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        .phase-item {
+            text-align: center;
+            flex: 1;
+        }
+        .phase-number {
+            width: 30px;
+            height: 30px;
+            background: #0d9488;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12pt;
+            margin-bottom: 8px;
+        }
+        .phase-name {
+            font-weight: 600;
+            font-size: 9pt;
+        }
+        .phase-period {
+            font-size: 8pt;
+            color: #666;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: flex;
+            gap: 20px;
+        }
+        .two-col > div { flex: 1; }
+
+        /* Status Badges */
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: 500;
+        }
+        .status-complete { background: #d1fae5; color: #065f46; }
+        .status-progress { background: #fef3c7; color: #92400e; }
+        .status-planned { background: #e5e7eb; color: #374151; }
+
+        /* Prevent overflow */
+        pre, table, figure, img, svg, blockquote {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        figure img { max-width: 80%; height: auto; }
+    </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+    <div class="cover-decoration"></div>
+    <div class="cover-content">
+        <div class="cover-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+        <div class="cover-title">Behavioral Health AI Companion</div>
+        <div class="cover-subtitle">Clinician-Supervised Mental Health Support</div>
+        <div>
+            <span class="cover-badge">Seed Round</span>
+            <span class="cover-badge">$10M Raise</span>
+        </div>
+        <div class="cover-meta">
+            <p><strong>VC Investment Companion Guide</strong></p>
+            <p>Interactive Demo: https://hdyyjvra5bpqm.ok.kimi.link</p>
+        </div>
+    </div>
+    <div class="cover-footer">
+        February 2026 | Confidential
+    </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc-page">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc">
+        <li class="toc-section"><a href="#sec1">1. Executive Summary</a></li>
+        <li class="toc-subsection"><a href="#sec1-1">1.1 The Company</a></li>
+        <li class="toc-subsection"><a href="#sec1-2">1.2 The Problem</a></li>
+        <li class="toc-subsection"><a href="#sec1-3">1.3 The Solution</a></li>
+        <li class="toc-subsection"><a href="#sec1-4">1.4 Market Opportunity</a></li>
+        <li class="toc-subsection"><a href="#sec1-5">1.5 Business Model</a></li>
+        <li class="toc-subsection"><a href="#sec1-6">1.6 Traction</a></li>
+        <li class="toc-subsection"><a href="#sec1-7">1.7 The Ask</a></li>
+        
+        <li class="toc-section"><a href="#sec2">2. Competitive Analysis</a></li>
+        <li class="toc-subsection"><a href="#sec2-1">2.1 Competitive Landscape</a></li>
+        <li class="toc-subsection"><a href="#sec2-2">2.2 Direct Competitors</a></li>
+        <li class="toc-subsection"><a href="#sec2-3">2.3 Competitive Advantages</a></li>
+        <li class="toc-subsection"><a href="#sec2-4">2.4 Barriers to Entry</a></li>
+        
+        <li class="toc-section"><a href="#sec3">3. Product Roadmap</a></li>
+        <li class="toc-subsection"><a href="#sec3-1">3.1 Phase 1: Foundation (Q1 2026)</a></li>
+        <li class="toc-subsection"><a href="#sec3-2">3.2 Phase 2: Growth (Q2 2026)</a></li>
+        <li class="toc-subsection"><a href="#sec3-3">3.3 Phase 3: Scale (Q3 2026)</a></li>
+        <li class="toc-subsection"><a href="#sec3-4">3.4 Phase 4: Expand (Q4 2026)</a></li>
+        <li class="toc-subsection"><a href="#sec3-5">3.5 Phase 5: Platform (Q1-Q2 2027)</a></li>
+        
+        <li class="toc-section"><a href="#sec4">4. Go-to-Market Strategy</a></li>
+        <li class="toc-subsection"><a href="#sec4-1">4.1 Target Customer Profile</a></li>
+        <li class="toc-subsection"><a href="#sec4-2">4.2 Three-Phase GTM Strategy</a></li>
+        <li class="toc-subsection"><a href="#sec4-3">4.3 Marketing Strategy</a></li>
+        <li class="toc-subsection"><a href="#sec4-4">4.4 Customer Success</a></li>
+        <li class="toc-subsection"><a href="#sec4-5">4.5 Key Performance Indicators</a></li>
+        
+        <li class="toc-section"><a href="#sec5">5. Financial Model Summary</a></li>
+        <li class="toc-subsection"><a href="#sec5-1">5.1 Revenue Projections</a></li>
+        <li class="toc-subsection"><a href="#sec5-2">5.2 Unit Economics</a></li>
+        <li class="toc-subsection"><a href="#sec5-3">5.3 Operating Expenses</a></li>
+        <li class="toc-subsection"><a href="#sec5-4">5.4 Use of Funds</a></li>
+        
+        <li class="toc-section"><a href="#sec6">6. Investment Package Roadmap</a></li>
+        <li class="toc-subsection"><a href="#sec6-1">6.1 Complete Package Framework</a></li>
+        <li class="toc-subsection"><a href="#sec6-2">6.2 The Perfect Pitch Sequence</a></li>
+        <li class="toc-subsection"><a href="#sec6-3">6.3 Key Metrics VCs Want to See</a></li>
+        <li class="toc-subsection"><a href="#sec6-4">6.4 Critical Questions to Prepare</a></li>
+        <li class="toc-subsection"><a href="#sec6-5">6.5 Investor Target List</a></li>
+        <li class="toc-subsection"><a href="#sec6-6">6.6 Timeline to Funding</a></li>
+    </ul>
+</div>
+
+<!-- SECTION 1: EXECUTIVE SUMMARY -->
+<div class="section-break" id="sec1">
+    <h1>1. Executive Summary</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">Investment Opportunity at a Glance</div>
+        <p><strong>Behavioral Health AI Companion</strong> is a clinician-supervised AI platform that provides 24/7 mental health monitoring, automated documentation, and real-time crisis detection. We bridge the critical gap between therapy sessions, helping clinicians detect concerning patterns 60x faster while saving 5.2 hours per week on documentation.</p>
+        <p><strong>Founded:</strong> 2025 | <strong>Stage:</strong> Seed | <strong>Raising:</strong> $10M</p>
+    </div>
+
+    <h2 id="sec1-1">1.1 The Company</h2>
+    <p>Behavioral Health AI Companion is transforming mental health care delivery through AI-augmented, clinician-supervised patient monitoring. Our platform provides continuous insight into patient wellbeing between therapy sessions, enabling early intervention and improved outcomes.</p>
+    
+    <p>Unlike consumer mental health apps that operate without clinical oversight, our platform is designed from the ground up for healthcare environments, with HIPAA compliance, safety protocols, and seamless EHR integration.</p>
+
+    <h2 id="sec1-2">1.2 The Problem</h2>
+    <p>Mental health care is in crisis:</p>
+    
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="metric-value">68%</div>
+            <div class="metric-label">of mental health crises occur between therapy sessions</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">30%</div>
+            <div class="metric-label">of concerning patterns go unnoticed by clinicians</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">4+ hrs</div>
+            <div class="metric-label">average response time to patient crises</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">$50B</div>
+            <div class="metric-label">annual cost of untreated mental health conditions in the US</div>
+        </div>
+    </div>
+    
+    <p>Clinicians are burned out, patients fall through the cracks, and health systems struggle to provide continuous care. The status quo is unsustainable.</p>
+
+    <h2 id="sec1-3">1.3 The Solution</h2>
+    <p>Our AI-powered platform provides:</p>
+    
+    <table>
+        <caption data-label="Table 1">Core Platform Features</caption>
+        <thead>
+            <tr><th>Feature</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>24/7 Patient Monitoring</strong></td><td>Continuous analysis of journal entries, check-ins, voice notes</td></tr>
+            <tr><td><strong>Real-Time Risk Detection</strong></td><td>99.2% accuracy in identifying T2/T1/T0 alerts</td></tr>
+            <tr><td><strong>Automated Documentation</strong></td><td>AI-generated summaries save 5.2 hours/week per clinician</td></tr>
+            <tr><td><strong>Clinician-Supervised AI</strong></td><td>Every insight requires clinician approval (CSP-002)</td></tr>
+        </tbody>
+    </table>
+    
+    <p><strong>The Result:</strong> 4-hour response time becomes 4 minutes (60x faster)</p>
+
+    <h2 id="sec1-4">1.4 Market Opportunity</h2>
+    <table>
+        <caption data-label="Table 2">Market Sizing</caption>
+        <thead>
+            <tr><th>Market Segment</th><th>Size</th><th>Growth</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>TAM</strong> (US Mental Health Software)</td><td>$17B</td><td>18% CAGR</td></tr>
+            <tr><td><strong>SAM</strong> (AI-Assisted Mental Health)</td><td>$2B</td><td>25% CAGR</td></tr>
+            <tr><td><strong>SOM</strong> (3-Year Target)</td><td>$100M</td><td>--</td></tr>
+        </tbody>
+    </table>
+    
+    <p><strong>Target Customers:</strong> 180,000 mental health clinicians across 6,000 US hospitals</p>
+
+    <h2 id="sec1-5">1.5 Business Model</h2>
+    <p><strong>SaaS Subscription:</strong></p>
+    <ul>
+        <li>$150/clinician/month</li>
+        <li>$50/patient/month (enterprise)</li>
+        <li>$5K implementation fee</li>
+    </ul>
+    
+    <p><strong>Unit Economics:</strong></p>
+    <ul>
+        <li>Customer LTV: $18,000</li>
+        <li>Customer CAC: $4,500</li>
+        <li><strong>LTV:CAC Ratio: 4:1</strong></li>
+    </ul>
+    
+    <p><strong>Revenue Example:</strong> 100-clinician health system = $230K Year 1</p>
+
+    <h2 id="sec1-6">1.6 Traction</h2>
+    <table>
+        <caption data-label="Table 3">Current Traction Metrics</caption>
+        <thead>
+            <tr><th>Metric</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Health System Pilots</td><td>3 active</td></tr>
+            <tr><td>Active Clinicians</td><td>45</td></tr>
+            <tr><td>Patients Monitored</td><td>1,200</td></tr>
+            <tr><td>Current ARR</td><td>$85K</td></tr>
+            <tr><td>Daily Active Users</td><td>89%</td></tr>
+            <tr><td>Net Promoter Score</td><td>72</td></tr>
+            <tr><td>Pilot-to-Contract Rate</td><td>67%</td></tr>
+        </tbody>
+    </table>
+    
+    <blockquote>
+        "This platform has transformed how we monitor patients between sessions. We've caught 3 potential crises in the first month."
+        <cite>-- Dr. Michael Torres, Chief of Psychiatry, Metro Health</cite>
+    </blockquote>
+
+    <h2 id="sec1-7">1.7 The Ask</h2>
+    <div class="highlight-box">
+        <div class="highlight-box-title">Raising $10M Seed Round</div>
+        <p><strong>Use of Funds:</strong></p>
+        <ul>
+            <li>50% Engineering (AI/ML, platform expansion)</li>
+            <li>30% Sales & Marketing</li>
+            <li>20% Operations & Compliance</li>
+        </ul>
+        <p><strong>Runway:</strong> 24 months to Series A</p>
+        <p><strong>Target Milestones:</strong></p>
+        <ul>
+            <li>Launch with 50 health systems</li>
+            <li>Epic EHR integration</li>
+            <li>FDA 510(k) clearance</li>
+            <li>$2M ARR</li>
+        </ul>
+    </div>
+</div>
+
+<!-- SECTION 2: COMPETITIVE ANALYSIS -->
+<div class="section-break" id="sec2">
+    <h1>2. Competitive Analysis</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">Executive Summary</div>
+        <p>The mental health technology market is crowded with consumer apps, but <strong>no competitor offers clinician-supervised AI with integrated safety protocols</strong>. Our differentiation is clear: we augment clinicians rather than replace them, creating a defensible moat built on trust, compliance, and measurable outcomes.</p>
+    </div>
+
+    <h2 id="sec2-1">2.1 Competitive Landscape</h2>
+    <p>Our Position: Top-right quadrant -- High AI sophistication + High clinician integration</p>
+    
+    <table>
+        <caption data-label="Table 4">Competitive Positioning Matrix</caption>
+        <thead>
+            <tr><th>Competitor</th><th>AI Sophistication</th><th>Clinician Integration</th><th>Primary Model</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Woebot</td><td>Low</td><td>None</td><td>Consumer Chatbot</td></tr>
+            <tr><td>Wysa</td><td>Low</td><td>None</td><td>Consumer Chatbot</td></tr>
+            <tr><td>Ginger</td><td>Low</td><td>Medium</td><td>Coaching + Therapy</td></tr>
+            <tr><td>Lyra</td><td>Low</td><td>Medium</td><td>EAP Platform</td></tr>
+            <tr><td><strong>Behavioral Health AI</strong></td><td><strong>High</strong></td><td><strong>High</strong></td><td><strong>Clinical AI Platform</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec2-2">2.2 Direct Competitors</h2>
+    
+    <h3>Woebot Health</h3>
+    <p><strong>Founded:</strong> 2017 | <strong>Funding:</strong> $123M | <strong>Valuation:</strong> ~$500M</p>
+    <table>
+        <thead><tr><th>Strengths</th><th>Weaknesses</th></tr></thead>
+        <tbody>
+            <tr><td>Strong consumer brand</td><td>No clinician integration</td></tr>
+            <tr><td>Evidence-based CBT</td><td>Limited safety protocols</td></tr>
+            <tr><td>Good user engagement</td><td>Cannot detect crises</td></tr>
+            <tr><td>FDA Breakthrough Device</td><td>No EHR connectivity</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Key Differentiator:</strong> Woebot is a consumer app. We are a clinical tool.</p>
+
+    <h3>Wysa</h3>
+    <p><strong>Founded:</strong> 2015 | <strong>Funding:</strong> $20M+ | <strong>Valuation:</strong> ~$100M</p>
+    <table>
+        <thead><tr><th>Strengths</th><th>Weaknesses</th></tr></thead>
+        <tbody>
+            <tr><td>AI-powered conversations</td><td>No clinician oversight</td></tr>
+            <tr><td>Strong in India/APAC</td><td>Limited US market presence</td></tr>
+            <tr><td>Good NLP capabilities</td><td>No safety escalation</td></tr>
+            <tr><td>Affordable pricing</td><td>No integration with care teams</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Key Differentiator:</strong> Wysa is a wellness app. We are a medical device.</p>
+
+    <h3>Ginger (now Headspace Health)</h3>
+    <p><strong>Founded:</strong> 2011 | <strong>Funding:</strong> $500M+ | <strong>Valuation:</strong> ~$3B (merged)</p>
+    <table>
+        <thead><tr><th>Strengths</th><th>Weaknesses</th></tr></thead>
+        <tbody>
+            <tr><td>Large network of coaches</td><td>Coaches, not clinicians</td></tr>
+            <tr><td>Strong enterprise sales</td><td>No AI-assisted documentation</td></tr>
+            <tr><td>Good brand recognition</td><td>Limited between-session monitoring</td></tr>
+            <tr><td>Comprehensive EAP</td><td>High cost per employee</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Key Differentiator:</strong> Ginger provides human coaching. We augment clinical care with AI.</p>
+
+    <h3>Lyra Health</h3>
+    <p><strong>Founded:</strong> 2015 | <strong>Funding:</strong> $925M | <strong>Valuation:</strong> $5.8B</p>
+    <table>
+        <thead><tr><th>Strengths</th><th>Weaknesses</th></tr></thead>
+        <tbody>
+            <tr><td>Strong provider network</td><td>No AI risk detection</td></tr>
+            <tr><td>Good care navigation</td><td>No real-time monitoring</td></tr>
+            <tr><td>Comprehensive EAP</td><td>High cost ($5-10 PEPM)</td></tr>
+            <tr><td>Proven outcomes</td><td>No clinician time savings</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Key Differentiator:</strong> Lyra is a benefits platform. We are a clinical intelligence platform.</p>
+
+    <h2 id="sec2-3">2.3 Competitive Advantages</h2>
+    
+    <h3>1. Safety-First Design (The Moat)</h3>
+    <p><strong>What:</strong> T2/T1/T0 alert system with clinician oversight<br>
+    <strong>Why it matters:</strong> In mental health, safety is non-negotiable<br>
+    <strong>Defensibility:</strong> Requires clinical expertise + AI + regulatory compliance</p>
+
+    <h3>2. Clinician Trust</h3>
+    <p><strong>What:</strong> Every AI insight requires clinician approval (CSP-002)<br>
+    <strong>Why it matters:</strong> Clinicians won't adopt tools they don't trust<br>
+    <strong>Defensibility:</strong> Built on relationships, not just technology</p>
+
+    <h3>3. Explainable AI</h3>
+    <p><strong>What:</strong> Every decision is auditable and explainable<br>
+    <strong>Why it matters:</strong> Healthcare requires transparency<br>
+    <strong>Defensibility:</strong> Complex to build, easy to verify</p>
+
+    <h3>4. EHR Integration</h3>
+    <p><strong>What:</strong> Native integration with Epic, Cerner<br>
+    <strong>Why it matters:</strong> Workflow integration is critical for adoption<br>
+    <strong>Defensibility:</strong> Partnerships and certifications take time</p>
+
+    <h3>5. Regulatory Compliance</h3>
+    <p><strong>What:</strong> HIPAA, SOC 2, FDA 510(k) pathway<br>
+    <strong>Why it matters:</strong> Healthcare buyers require compliance<br>
+    <strong>Defensibility:</strong> Months/years to achieve certifications</p>
+
+    <h2 id="sec2-4">2.4 Barriers to Entry</h2>
+    
+    <h3>For New Competitors</h3>
+    <ol>
+        <li><strong>Clinical credibility</strong> -- Need licensed clinicians on team</li>
+        <li><strong>Regulatory approvals</strong> -- FDA, HIPAA, state licensure</li>
+        <li><strong>EHR partnerships</strong> -- Epic/Cerner integration takes 12+ months</li>
+        <li><strong>Safety protocols</strong> -- Building T2/T1/T0 system requires expertise</li>
+        <li><strong>Trust building</strong> -- Takes years to earn clinician confidence</li>
+    </ol>
+
+    <h3>For Existing Competitors</h3>
+    <ol>
+        <li><strong>Pivoting to clinical use</strong> -- Requires complete product redesign</li>
+        <li><strong>Adding safety features</strong> -- Retrofitting is harder than building-in</li>
+        <li><strong>Clinician relationships</strong> -- We already have pilot customers</li>
+        <li><strong>Regulatory pathway</strong> -- They'd need to start from scratch</li>
+    </ol>
+
+    <table>
+        <caption data-label="Table 5">Feature Comparison Matrix</caption>
+        <thead>
+            <tr><th>Feature</th><th>Us</th><th>Woebot</th><th>Wysa</th><th>Ginger</th><th>Lyra</th><th>Talkspace</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Clinician-Supervised AI</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>Real-Time Risk Detection</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>T2/T1/T0 Alert System</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>Automated Documentation</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>EHR Integration</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>Explainable AI</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>Between-Session Monitoring</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>HIPAA Compliant</td><td class="check">Yes</td><td class="check">Yes</td><td class="check">Yes</td><td class="check">Yes</td><td class="check">Yes</td><td class="check">Yes</td></tr>
+            <tr><td>FDA Pathway</td><td class="check">Yes</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+            <tr><td>Time Savings for Clinicians</td><td class="check">Yes</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td><td class="cross">No</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Score:</strong> We win 9/10 categories</p>
+</div>
+
+<!-- SECTION 3: PRODUCT ROADMAP -->
+<div class="section-break" id="sec3">
+    <h1>3. Product Roadmap</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">18-Month Planning Horizon</div>
+        <p>This roadmap balances ambition with execution. We're building the foundation in Q1, scaling through integrations in Q2-Q3, and expanding to become the platform of choice for AI-augmented mental health care by 2027.</p>
+    </div>
+
+    <div class="phase-timeline">
+        <div class="phase-item">
+            <div class="phase-number">1</div>
+            <div class="phase-name">Foundation</div>
+            <div class="phase-period">Q1 2026</div>
+        </div>
+        <div class="phase-item">
+            <div class="phase-number">2</div>
+            <div class="phase-name">Growth</div>
+            <div class="phase-period">Q2 2026</div>
+        </div>
+        <div class="phase-item">
+            <div class="phase-number">3</div>
+            <div class="phase-name">Scale</div>
+            <div class="phase-period">Q3 2026</div>
+        </div>
+        <div class="phase-item">
+            <div class="phase-number">4</div>
+            <div class="phase-name">Expand</div>
+            <div class="phase-period">Q4 2026</div>
+        </div>
+        <div class="phase-item">
+            <div class="phase-number">5</div>
+            <div class="phase-name">Platform</div>
+            <div class="phase-period">Q1-Q2 2027</div>
+        </div>
+    </div>
+
+    <h2 id="sec3-1">3.1 Phase 1: Foundation (Q1 2026)</h2>
+    <p><strong>Theme:</strong> Launch with core features and establish product-market fit</p>
+    
+    <h3>Goals</h3>
+    <ul>
+        <li>Launch with 3 pilot health systems</li>
+        <li>Achieve 89% daily active user rate</li>
+        <li>Validate safety protocols in production</li>
+        <li>Reach $85K ARR</li>
+    </ul>
+
+    <h3>Patient App Features</h3>
+    <table>
+        <thead><tr><th>Feature</th><th>Status</th><th>Priority</th></tr></thead>
+        <tbody>
+            <tr><td>Daily Check-ins</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Journal Entries</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Voice Notes</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Mood Tracking</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Crisis Button</td><td><span class="status status-progress">In Progress</span></td><td>P1</td></tr>
+            <tr><td>Medication Reminders</td><td><span class="status status-planned">Planned</span></td><td>P2</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Clinician Portal Features</h3>
+    <table>
+        <thead><tr><th>Feature</th><th>Status</th><th>Priority</th></tr></thead>
+        <tbody>
+            <tr><td>Patient Dashboard</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>T2/T1/T0 Alerts</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>AI Summaries</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Caseload Management</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Inbox/Notifications</td><td><span class="status status-complete">Complete</span></td><td>P0</td></tr>
+            <tr><td>Progress Reports</td><td><span class="status status-progress">In Progress</span></td><td>P1</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics</h3>
+    <ul>
+        <li>150 clinicians onboarded</li>
+        <li>1,200 patients monitored</li>
+        <li>99.2% T2 alert detection rate</li>
+        <li>&lt;5% false positive rate</li>
+        <li>67% pilot-to-contract conversion</li>
+    </ul>
+
+    <h2 id="sec3-2">3.2 Phase 2: Growth (Q2 2026)</h2>
+    <p><strong>Theme:</strong> EHR integration and expand customer base</p>
+    
+    <h3>Goals</h3>
+    <ul>
+        <li>Launch Epic integration</li>
+        <li>Launch Cerner integration</li>
+        <li>Expand to 20 health systems</li>
+        <li>Reach $1.1M ARR</li>
+    </ul>
+
+    <h3>EHR Integration</h3>
+    <table>
+        <thead><tr><th>Feature</th><th>Epic</th><th>Cerner</th><th>Other</th></tr></thead>
+        <tbody>
+            <tr><td>Single Sign-On (SSO)</td><td class="check">Yes</td><td class="check">Yes</td><td>Planned</td></tr>
+            <tr><td>Patient Data Sync</td><td class="check">Yes</td><td>In Progress</td><td>Planned</td></tr>
+            <tr><td>Clinical Notes Export</td><td class="check">Yes</td><td>In Progress</td><td>Planned</td></tr>
+            <tr><td>Appointment Integration</td><td>In Progress</td><td>Planned</td><td>Planned</td></tr>
+            <tr><td>Billing Integration</td><td>Planned</td><td>Planned</td><td>Planned</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics</h3>
+    <ul>
+        <li>600 clinicians onboarded</li>
+        <li>20 health systems</li>
+        <li>50% of customers using EHR integration</li>
+        <li>4.0 LTV:CAC ratio</li>
+    </ul>
+
+    <h2 id="sec3-3">3.3 Phase 3: Scale (Q3 2026)</h2>
+    <p><strong>Theme:</strong> FDA clearance and enterprise readiness</p>
+    
+    <h3>Goals</h3>
+    <ul>
+        <li>Submit FDA 510(k) application</li>
+        <li>Launch enterprise features</li>
+        <li>Reach 60 health systems</li>
+        <li>Achieve $3.6M ARR</li>
+    </ul>
+
+    <h3>FDA 510(k) Submission</h3>
+    <table>
+        <thead><tr><th>Component</th><th>Status</th><th>Timeline</th></tr></thead>
+        <tbody>
+            <tr><td>Clinical Validation Study</td><td>In Progress</td><td>Q2 2026</td></tr>
+            <tr><td>Software Documentation</td><td>Planned</td><td>Q2 2026</td></tr>
+            <tr><td>Risk Management File</td><td>Planned</td><td>Q2 2026</td></tr>
+            <tr><td>510(k) Submission</td><td>Planned</td><td>Q3 2026</td></tr>
+            <tr><td>FDA Clearance</td><td>Target</td><td>Q1 2027</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics</h3>
+    <ul>
+        <li>2,000 clinicians</li>
+        <li>60 health systems</li>
+        <li>FDA 510(k) submitted</li>
+        <li>82% gross margin</li>
+    </ul>
+
+    <h2 id="sec3-4">3.4 Phase 4: Expand (Q4 2026)</h2>
+    <p><strong>Theme:</strong> Geographic expansion and new verticals</p>
+    
+    <h3>Goals</h3>
+    <ul>
+        <li>Launch in 2 additional states</li>
+        <li>Expand to private practice market</li>
+        <li>Reach 150 health systems</li>
+        <li>Achieve $9M ARR</li>
+    </ul>
+
+    <h3>Geographic Expansion</h3>
+    <table>
+        <thead><tr><th>State</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+            <tr><td>California</td><td class="check">Live</td><td>Initial market</td></tr>
+            <tr><td>New York</td><td>In Progress</td><td>Q2 2026</td></tr>
+            <tr><td>Texas</td><td>Planned</td><td>Q4 2026</td></tr>
+            <tr><td>Florida</td><td>Planned</td><td>Q4 2026</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics</h3>
+    <ul>
+        <li>5,000 clinicians</li>
+        <li>150 health systems</li>
+        <li>20% private practice customers</li>
+        <li>85% gross margin</li>
+    </ul>
+
+    <h2 id="sec3-5">3.5 Phase 5: Platform (Q1-Q2 2027)</h2>
+    <p><strong>Theme:</strong> API ecosystem and partner integrations</p>
+    
+    <h3>Goals</h3>
+    <ul>
+        <li>Launch public API</li>
+        <li>Build partner ecosystem</li>
+        <li>Reach 350 health systems</li>
+        <li>Achieve $21.6M ARR</li>
+    </ul>
+
+    <h3>Public API Endpoints</h3>
+    <table>
+        <thead><tr><th>Endpoint</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>
+            <tr><td>Patient Data API</td><td>Read patient information</td><td>Planned</td></tr>
+            <tr><td>Alerts API</td><td>Subscribe to alerts</td><td>Planned</td></tr>
+            <tr><td>Insights API</td><td>Access AI-generated insights</td><td>Planned</td></tr>
+            <tr><td>Webhooks</td><td>Real-time notifications</td><td>Planned</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Partner Integrations</h3>
+    <table>
+        <thead><tr><th>Partner</th><th>Integration</th><th>Timeline</th></tr></thead>
+        <tbody>
+            <tr><td>Teladoc</td><td>Telehealth workflow</td><td>Q1 2027</td></tr>
+            <tr><td>Amwell</td><td>Virtual care platform</td><td>Q1 2027</td></tr>
+            <tr><td>MDLive</td><td>Online therapy</td><td>Q2 2027</td></tr>
+            <tr><td>Calm</td><td>Wellness app data</td><td>Q2 2027</td></tr>
+            <tr><td>Fitbit</td><td>Wearable data</td><td>Q2 2027</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics by Phase</h3>
+    <table>
+        <caption data-label="Table 6">Phase Success Metrics</caption>
+        <thead>
+            <tr><th>Phase</th><th>Clinicians</th><th>Health Systems</th><th>ARR</th><th>Key Milestone</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Foundation</td><td>150</td><td>5</td><td>$270K</td><td>Product-market fit</td></tr>
+            <tr><td>Growth</td><td>600</td><td>20</td><td>$1.1M</td><td>EHR integration</td></tr>
+            <tr><td>Scale</td><td>2,000</td><td>60</td><td>$3.6M</td><td>FDA submission</td></tr>
+            <tr><td>Expand</td><td>5,000</td><td>150</td><td>$9M</td><td>Geographic expansion</td></tr>
+            <tr><td>Platform</td><td>12,000</td><td>350</td><td>$21.6M</td><td>API ecosystem</td></tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
+
+
+<!-- SECTION 4: GO-TO-MARKET STRATEGY -->
+<div class="section-break" id="sec4">
+    <h1>4. Go-to-Market Strategy</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">24-Month Execution Plan</div>
+        <p>Our go-to-market strategy is designed to achieve <strong>$2M ARR within 12 months</strong> and <strong>$10M ARR within 24 months</strong> through a three-phase approach: Direct Sales, EHR Partnerships, and Self-Serve expansion.</p>
+    </div>
+
+    <h2 id="sec4-1">4.1 Target Customer Profile</h2>
+    
+    <h3>Primary: Health Systems</h3>
+    <p><strong>Size:</strong> 50-500 mental health clinicians<br>
+    <strong>Annual Revenue:</strong> $500M+<br>
+    <strong>Geography:</strong> California, New York, Texas (initial)</p>
+    
+    <p><strong>Decision Makers:</strong></p>
+    <ol>
+        <li>Chief of Psychiatry / Behavioral Health</li>
+        <li>Chief Medical Officer</li>
+        <li>Chief Information Officer</li>
+        <li>VP of Population Health</li>
+    </ol>
+    
+    <p><strong>Pain Points:</strong></p>
+    <ul>
+        <li>Clinician burnout and turnover</li>
+        <li>Missed patient crises between sessions</li>
+        <li>Documentation overhead</li>
+        <li>Limited visibility into patient wellbeing</li>
+        <li>Pressure to improve outcomes</li>
+    </ul>
+
+    <h3>Secondary: Private Practices</h3>
+    <p><strong>Size:</strong> 5-20 clinicians<br>
+    <strong>Focus:</strong> Outpatient mental health<br>
+    <strong>Geography:</strong> Nationwide</p>
+    
+    <p><strong>Decision Makers:</strong></p>
+    <ol>
+        <li>Practice Owner / Medical Director</li>
+        <li>Office Manager</li>
+    </ol>
+
+    <h2 id="sec4-2">4.2 Three-Phase GTM Strategy</h2>
+    
+    <h3>Phase 1: Direct Sales (Months 1-12)</h3>
+    <p><strong>Goal:</strong> 50 health systems, $2M ARR</p>
+    
+    <h4>Sales Team Structure</h4>
+    <table>
+        <thead><tr><th>Role</th><th>Count</th><th>Timing</th><th>Compensation</th></tr></thead>
+        <tbody>
+            <tr><td>VP Sales</td><td>1</td><td>Month 1</td><td>$200K base + 1% equity</td></tr>
+            <tr><td>Enterprise AE</td><td>2</td><td>Month 2</td><td>$120K base + $120K OTE</td></tr>
+            <tr><td>SDR</td><td>2</td><td>Month 3</td><td>$60K base + $30K OTE</td></tr>
+            <tr><td>Sales Engineer</td><td>1</td><td>Month 4</td><td>$130K base + $50K OTE</td></tr>
+        </tbody>
+    </table>
+
+    <h4>Sales Process</h4>
+    <table>
+        <thead><tr><th>Timeline</th><th>Activity</th></tr></thead>
+        <tbody>
+            <tr><td>Week 1-2</td><td>Discovery Call -- Qualification</td></tr>
+            <tr><td>Week 3-4</td><td>Demo + ROI Discussion</td></tr>
+            <tr><td>Week 5-8</td><td>Pilot Agreement (3-month pilot)</td></tr>
+            <tr><td>Week 9-12</td><td>Pilot Execution</td></tr>
+            <tr><td>Week 13-16</td><td>Contract Negotiation</td></tr>
+            <tr><td>Week 17+</td><td>Contract Signed -- Implementation</td></tr>
+        </tbody>
+    </table>
+
+    <h4>Pricing</h4>
+    <table>
+        <thead><tr><th>Tier</th><th>Clinicians</th><th>Price/Clinician/Month</th><th>Implementation</th></tr></thead>
+        <tbody>
+            <tr><td>Starter</td><td>10-50</td><td>$150</td><td>$5,000</td></tr>
+            <tr><td>Growth</td><td>51-200</td><td>$140</td><td>$10,000</td></tr>
+            <tr><td>Enterprise</td><td>201+</td><td>$125</td><td>$25,000</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Phase 2: EHR Partnerships (Months 12-24)</h3>
+    <p><strong>Goal:</strong> 150 health systems, $10M ARR</p>
+    
+    <h4>Partnership Strategy</h4>
+    <p><strong>Primary Partners:</strong></p>
+    <ol>
+        <li><strong>Epic App Orchard</strong> -- Application submitted: Month 9, Approval: Month 12, Co-marketing: Month 15</li>
+        <li><strong>Cerner Code Program</strong> -- Partnership agreement: Month 10, Integration complete: Month 14, Joint sales: Month 16</li>
+        <li><strong>Meditech Alliance</strong> -- Partnership agreement: Month 14, Integration complete: Month 18</li>
+    </ol>
+    
+    <h4>Partner Benefits</h4>
+    <ul>
+        <li><strong>Revenue Share:</strong> 20% of first-year ACV</li>
+        <li><strong>Co-Marketing:</strong> Joint webinars, case studies</li>
+        <li><strong>Sales Support:</strong> Dedicated sales engineer</li>
+        <li><strong>Product Integration:</strong> Native EHR workflow</li>
+    </ul>
+
+    <h3>Phase 3: Self-Serve (Months 24+)</h3>
+    <p><strong>Goal:</strong> 350 health systems, $50M ARR</p>
+    
+    <h4>Product-Led Growth Strategy</h4>
+    <p><strong>Freemium Model:</strong></p>
+    <ul>
+        <li><strong>Free:</strong> Up to 3 clinicians, basic features</li>
+        <li><strong>Pro:</strong> $50/clinician/month, full features</li>
+        <li><strong>Enterprise:</strong> Custom pricing, advanced features</li>
+    </ul>
+
+    <h2 id="sec4-3">4.3 Marketing Strategy</h2>
+    
+    <h3>Brand Positioning</h3>
+    <p><strong>Tagline:</strong> "AI-Augmented Mental Health Care"<br>
+    <strong>Positioning:</strong> The only clinician-supervised AI platform for mental health<br>
+    <strong>Personality:</strong> Professional, trustworthy, innovative, compassionate</p>
+
+    <h3>Content Calendar</h3>
+    <table>
+        <thead><tr><th>Month</th><th>Content Type</th><th>Topic</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>Whitepaper</td><td>"The Cost of Clinician Burnout"</td></tr>
+            <tr><td>2</td><td>Webinar</td><td>"AI in Mental Health: Opportunities and Risks"</td></tr>
+            <tr><td>3</td><td>Case Study</td><td>"How Metro Health Reduced Documentation Time by 5.2 Hours"</td></tr>
+            <tr><td>4</td><td>Blog Series</td><td>"5 Ways AI Can Support Your Clinical Practice"</td></tr>
+            <tr><td>5</td><td>Research Report</td><td>"State of Mental Health Technology 2026"</td></tr>
+            <tr><td>6</td><td>Conference</td><td>APA Annual Meeting (booth + speaking)</td></tr>
+        </tbody>
+    </table>
+
+    <h3>PR Strategy</h3>
+    <p><strong>Target Publications:</strong> Healthcare IT News, Modern Healthcare, Becker's Hospital Review, STAT News, MobiHealthNews</p>
+    
+    <p><strong>Story Angles:</strong></p>
+    <ul>
+        <li>"AI Reduces Mental Health Crisis Response Time by 60x"</li>
+        <li>"How One Health System Saved $1.4M with AI"</li>
+        <li>"The Future of Clinician-Supervised AI in Healthcare"</li>
+    </ul>
+
+    <h2 id="sec4-4">4.4 Customer Success</h2>
+    
+    <h3>Onboarding Process</h3>
+    <table>
+        <thead><tr><th>Week</th><th>Activity</th></tr></thead>
+        <tbody>
+            <tr><td>Week 1</td><td>Technical setup, EHR integration</td></tr>
+            <tr><td>Week 2</td><td>Clinician training (2-hour session)</td></tr>
+            <tr><td>Week 3</td><td>Patient onboarding support</td></tr>
+            <tr><td>Week 4</td><td>First check-in, feedback collection</td></tr>
+            <tr><td>Ongoing</td><td>Monthly business reviews</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics</h3>
+    <table>
+        <thead><tr><th>Metric</th><th>Target</th><th>Measurement</th></tr></thead>
+        <tbody>
+            <tr><td>Time to Value</td><td>&lt;2 weeks</td><td>First alert generated</td></tr>
+            <tr><td>Feature Adoption</td><td>&gt;80%</td><td>Daily active users</td></tr>
+            <tr><td>NPS Score</td><td>&gt;50</td><td>Quarterly survey</td></tr>
+            <tr><td>Support Tickets</td><td>&lt;5/month</td><td>Per customer</td></tr>
+            <tr><td>Expansion Revenue</td><td>20%</td><td>Annual upsell</td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec4-5">4.5 Key Performance Indicators (KPIs)</h2>
+    
+    <h3>Leading Indicators</h3>
+    <table>
+        <thead><tr><th>KPI</th><th>Target</th><th>Measurement</th></tr></thead>
+        <tbody>
+            <tr><td>MQLs per month</td><td>50</td><td>Marketing qualified leads</td></tr>
+            <tr><td>SQLs per month</td><td>20</td><td>Sales qualified leads</td></tr>
+            <tr><td>Demo requests</td><td>15</td><td>Per month</td></tr>
+            <tr><td>Pilot starts</td><td>5</td><td>Per month</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Lagging Indicators</h3>
+    <table>
+        <thead><tr><th>KPI</th><th>Target</th><th>Measurement</th></tr></thead>
+        <tbody>
+            <tr><td>New customers</td><td>4</td><td>Per month</td></tr>
+            <tr><td>ARR</td><td>$2M</td><td>Month 12</td></tr>
+            <tr><td>ACV</td><td>$18,000</td><td>Average</td></tr>
+            <tr><td>CAC</td><td>$4,500</td><td>Target</td></tr>
+            <tr><td>LTV:CAC</td><td>4:1</td><td>Target</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Budget Allocation</h3>
+    <p><strong>Year 1 Marketing Budget: $600,000</strong></p>
+    <table>
+        <thead><tr><th>Category</th><th>Amount</th><th>%</th></tr></thead>
+        <tbody>
+            <tr><td>Digital Advertising</td><td>$180,000</td><td>30%</td></tr>
+            <tr><td>Events & Conferences</td><td>$120,000</td><td>20%</td></tr>
+            <tr><td>Content Marketing</td><td>$90,000</td><td>15%</td></tr>
+            <tr><td>PR & Communications</td><td>$60,000</td><td>10%</td></tr>
+            <tr><td>Sales Enablement</td><td>$90,000</td><td>15%</td></tr>
+            <tr><td>Brand & Creative</td><td>$60,000</td><td>10%</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- SECTION 5: FINANCIAL MODEL SUMMARY -->
+<div class="section-break" id="sec5">
+    <h1>5. Financial Model Summary</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">Path to Profitability</div>
+        <p>Our financial model demonstrates a clear path to $21.6M ARR by Year 5 with healthy unit economics, strong gross margins (75% to 87%), and profitability by Month 36.</p>
+    </div>
+
+    <h2 id="sec5-1">5.1 Revenue Projections</h2>
+    <table>
+        <caption data-label="Table 7">Five-Year Revenue Projections</caption>
+        <thead>
+            <tr><th>Year</th><th>Clinicians</th><th>Health Systems</th><th>ARR</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>150</td><td>5</td><td>$270,000</td></tr>
+            <tr><td>2</td><td>600</td><td>20</td><td>$1,080,000</td></tr>
+            <tr><td>3</td><td>2,000</td><td>60</td><td>$3,600,000</td></tr>
+            <tr><td>4</td><td>5,000</td><td>150</td><td>$9,000,000</td></tr>
+            <tr><td>5</td><td>12,000</td><td>350</td><td>$21,600,000</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Revenue Model Details</h3>
+    <table>
+        <thead><tr><th>Metric</th><th>Year 1</th><th>Year 2</th><th>Year 3</th><th>Year 4</th><th>Year 5</th></tr></thead>
+        <tbody>
+            <tr><td>Clinicians</td><td>150</td><td>600</td><td>2,000</td><td>5,000</td><td>12,000</td></tr>
+            <tr><td>Health Systems</td><td>5</td><td>20</td><td>60</td><td>150</td><td>350</td></tr>
+            <tr><td>Avg Clinicians/System</td><td>30</td><td>30</td><td>33</td><td>33</td><td>34</td></tr>
+            <tr><td>Revenue/Clinician/Month</td><td>$150</td><td>$150</td><td>$150</td><td>$150</td><td>$150</td></tr>
+            <tr><td>Avg Patients/Clinician</td><td>25</td><td>30</td><td>35</td><td>40</td><td>45</td></tr>
+            <tr><td>Implementation Fees</td><td>$25,000</td><td>$100,000</td><td>$300,000</td><td>$750,000</td><td>$1,750,000</td></tr>
+            <tr><td><strong>Total ARR</strong></td><td><strong>$270,000</strong></td><td><strong>$1,080,000</strong></td><td><strong>$3,600,000</strong></td><td><strong>$9,000,000</strong></td><td><strong>$21,600,000</strong></td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec5-2">5.2 Unit Economics</h2>
+    <table>
+        <caption data-label="Table 8">Unit Economics Summary</caption>
+        <thead>
+            <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Customer Acquisition Cost (CAC)</td><td>$4,500</td><td>Sales + Marketing / New Customers</td></tr>
+            <tr><td>Average Contract Value (ACV)</td><td>$18,000</td><td>100 clinicians x $150/month x 12 months</td></tr>
+            <tr><td>Average Contract Length</td><td>12 months</td><td>Annual contracts with auto-renewal</td></tr>
+            <tr><td>Gross Margin</td><td>80%</td><td>Excluding implementation costs</td></tr>
+            <tr><td>Lifetime Value (LTV)</td><td>$18,000</td><td>ACV x Gross Margin x Avg Contract Length</td></tr>
+            <tr><td><strong>LTV:CAC Ratio</strong></td><td><strong>4:1</strong></td><td>Healthy SaaS ratio</td></tr>
+            <tr><td>Months to Recover CAC</td><td>3 months</td><td>CAC / (ACV x Gross Margin / 12)</td></tr>
+        </tbody>
+    </table>
+
+    <h3>P&L Summary</h3>
+    <table>
+        <caption data-label="Table 9">Profit & Loss Summary</caption>
+        <thead>
+            <tr><th>Line Item</th><th>Year 1</th><th>Year 2</th><th>Year 3</th><th>Year 4</th><th>Year 5</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Revenue (ARR)</td><td>$270,000</td><td>$1,080,000</td><td>$3,600,000</td><td>$9,000,000</td><td>$21,600,000</td></tr>
+            <tr><td>Cost of Revenue</td><td>$67,500</td><td>$237,600</td><td>$648,000</td><td>$1,350,000</td><td>$2,808,000</td></tr>
+            <tr><td>Gross Profit</td><td>$202,500</td><td>$842,400</td><td>$2,952,000</td><td>$7,650,000</td><td>$18,792,000</td></tr>
+            <tr><td>Gross Margin %</td><td>75%</td><td>78%</td><td>82%</td><td>85%</td><td>87%</td></tr>
+            <tr><td>Operating Expenses</td><td>$1,656,000</td><td>$2,484,000</td><td>$3,450,000</td><td>$4,500,000</td><td>$6,000,000</td></tr>
+            <tr><td>Operating Income (EBIT)</td><td>-$1,453,500</td><td>-$1,641,600</td><td>-$498,000</td><td>$3,150,000</td><td>$12,792,000</td></tr>
+            <tr><td>Operating Margin %</td><td>-538%</td><td>-152%</td><td>-14%</td><td>35%</td><td>59%</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Cash Flow</h3>
+    <table>
+        <caption data-label="Table 10">Cash Flow Summary</caption>
+        <thead>
+            <tr><th>Item</th><th>Year 1</th><th>Year 2</th><th>Year 3</th><th>Year 4</th><th>Year 5</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Starting Cash</td><td>$0</td><td>$8,614,000</td><td>$7,210,000</td><td>$7,360,000</td><td>$11,860,000</td></tr>
+            <tr><td>Revenue</td><td>$270,000</td><td>$1,080,000</td><td>$3,600,000</td><td>$9,000,000</td><td>$21,600,000</td></tr>
+            <tr><td>Operating Expenses</td><td>-$1,656,000</td><td>-$2,484,000</td><td>-$3,450,000</td><td>-$4,500,000</td><td>-$6,000,000</td></tr>
+            <tr><td>Net Cash from Operations</td><td>-$1,386,000</td><td>-$1,404,000</td><td>$150,000</td><td>$4,500,000</td><td>$15,600,000</td></tr>
+            <tr><td>Seed Round</td><td>$10,000,000</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+            <tr><td><strong>Ending Cash</strong></td><td><strong>$8,614,000</strong></td><td><strong>$7,210,000</strong></td><td><strong>$7,360,000</strong></td><td><strong>$11,860,000</strong></td><td><strong>$27,460,000</strong></td></tr>
+            <tr><td>Runway (Months)</td><td>75</td><td>42</td><td>Profitable</td><td>Profitable</td><td>Profitable</td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec5-3">5.3 Operating Expenses</h2>
+    <table>
+        <caption data-label="Table 11">Operating Expenses by Category</caption>
+        <thead>
+            <tr><th>Expense Category</th><th>Year 1 (Monthly)</th><th>Year 2 (Monthly)</th><th>Year 3 (Monthly)</th><th>% of Revenue Y3</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Engineering & Product</td><td>$60,000</td><td>$90,000</td><td>$125,000</td><td>35%</td></tr>
+            <tr><td>Sales & Marketing</td><td>$36,000</td><td>$54,000</td><td>$75,000</td><td>21%</td></tr>
+            <tr><td>Operations & Support</td><td>$24,000</td><td>$36,000</td><td>$50,000</td><td>14%</td></tr>
+            <tr><td>General & Administrative</td><td>$18,000</td><td>$27,000</td><td>$37,500</td><td>10%</td></tr>
+            <tr><td><strong>Total Operating Expenses</strong></td><td><strong>$138,000</strong></td><td><strong>$207,000</strong></td><td><strong>$287,500</strong></td><td><strong>80%</strong></td></tr>
+            <tr><td>Monthly Burn Rate</td><td>$138,000</td><td>$207,000</td><td>$287,500</td><td>--</td></tr>
+            <tr><td>Annual Burn</td><td>$1,656,000</td><td>$2,484,000</td><td>$3,450,000</td><td>--</td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec5-4">5.4 Use of Funds</h2>
+    <table>
+        <caption data-label="Table 12">$10M Seed Round Allocation</caption>
+        <thead>
+            <tr><th>Category</th><th>Allocation</th><th>Percentage</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="4"><strong>Engineering & Product (50%)</strong></td></tr>
+            <tr><td>  AI/ML Research</td><td>$1,500,000</td><td>15%</td><td>Improve AI accuracy, expand NLP capabilities</td></tr>
+            <tr><td>  Platform Development</td><td>$2,500,000</td><td>25%</td><td>Build new features, scale infrastructure</td></tr>
+            <tr><td>  Security & Compliance</td><td>$500,000</td><td>5%</td><td>HIPAA audits, SOC 2, FDA clearance</td></tr>
+            <tr><td colspan="4"><strong>Sales & Marketing (30%)</strong></td></tr>
+            <tr><td>  Sales Team</td><td>$1,800,000</td><td>18%</td><td>Hire 3 senior sales reps</td></tr>
+            <tr><td>  Marketing</td><td>$600,000</td><td>6%</td><td>Content, events, digital marketing</td></tr>
+            <tr><td>  Partnerships</td><td>$600,000</td><td>6%</td><td>EHR integration partnerships</td></tr>
+            <tr><td colspan="4"><strong>Operations (20%)</strong></td></tr>
+            <tr><td>  Customer Success</td><td>$800,000</td><td>8%</td><td>Customer success team, onboarding</td></tr>
+            <tr><td>  Legal & Regulatory</td><td>$400,000</td><td>4%</td><td>FDA 510(k), legal counsel</td></tr>
+            <tr><td>  General & Administrative</td><td>$1,300,000</td><td>13%</td><td>Finance, HR, admin</td></tr>
+            <tr><td><strong>Total Use of Funds</strong></td><td><strong>$10,000,000</strong></td><td><strong>100%</strong></td><td>--</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Key Assumptions</h3>
+    <table>
+        <caption data-label="Table 13">Financial Model Key Assumptions</caption>
+        <thead>
+            <tr><th>Assumption</th><th>Value</th><th>Source/Justification</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Pricing - Clinician/Month</td><td>$150</td><td>Market rate for clinician tools</td></tr>
+            <tr><td>Pricing - Patient/Month</td><td>$50</td><td>Enterprise pricing for patient monitoring</td></tr>
+            <tr><td>Implementation Fee</td><td>$5,000</td><td>One-time setup and training</td></tr>
+            <tr><td>Avg Clinicians per Health System</td><td>30</td><td>Based on mid-size health systems</td></tr>
+            <tr><td>Avg Patients per Clinician</td><td>30</td><td>Industry average caseload</td></tr>
+            <tr><td>Customer Acquisition Cost (CAC)</td><td>$4,500</td><td>Healthcare SaaS benchmark</td></tr>
+            <tr><td>Gross Margin</td><td>80%</td><td>SaaS standard (excl. implementation)</td></tr>
+            <tr><td>Annual Churn Rate</td><td>10%</td><td>Conservative estimate for healthcare</td></tr>
+            <tr><td>Sales Cycle (Pilot to Contract)</td><td>3 months</td><td>Healthcare sales cycle</td></tr>
+            <tr><td>Pilot Conversion Rate</td><td>67%</td><td>Current pilot performance</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- SECTION 6: INVESTMENT PACKAGE ROADMAP -->
+<div class="section-break" id="sec6">
+    <h1>6. Investment Package Roadmap</h1>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">Complete Fundraising Playbook</div>
+        <p>This section provides a comprehensive framework for executing a successful VC fundraising process, from initial outreach to closing the round.</p>
+    </div>
+
+    <h2 id="sec6-1">6.1 Complete Package Framework</h2>
+    
+    <h3>Tier 1: Critical Materials (First Meeting)</h3>
+    <table>
+        <thead><tr><th>Material</th><th>Purpose</th><th>Status</th></tr></thead>
+        <tbody>
+            <tr><td>Interactive Demo</td><td>Show, don't tell</td><td class="check">Complete</td></tr>
+            <tr><td>Pitch Deck (12 slides)</td><td>Tell the story</td><td class="check">Complete</td></tr>
+            <tr><td>Executive Summary (1-pager)</td><td>Get the meeting</td><td class="check">Complete</td></tr>
+            <tr><td>Financial Model</td><td>Show the opportunity</td><td class="check">Complete</td></tr>
+            <tr><td>Demo Video (2-3 min)</td><td>Shareable asset</td><td>Planned</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Tier 2: Due Diligence Materials</h3>
+    <table>
+        <thead><tr><th>Material</th><th>Purpose</th><th>Status</th></tr></thead>
+        <tbody>
+            <tr><td>Technical Architecture Doc</td><td>Prove it works</td><td class="check">Complete</td></tr>
+            <tr><td>Competitive Analysis</td><td>Show differentiation</td><td class="check">Complete</td></tr>
+            <tr><td>Product Roadmap (18-month)</td><td>Show vision</td><td class="check">Complete</td></tr>
+            <tr><td>Go-to-Market Strategy</td><td>Show execution plan</td><td class="check">Complete</td></tr>
+            <tr><td>Team Bios/Advisors</td><td>Prove you can build it</td><td class="check">Complete</td></tr>
+        </tbody>
+    </table>
+
+    <h2 id="sec6-2">6.2 The Perfect Pitch Sequence</h2>
+    
+    <h3>Phase 1: Get the Meeting (Email/LinkedIn Outreach)</h3>
+    <p><strong>Materials:</strong> Executive Summary + Demo Link</p>
+    
+    <div class="highlight-box">
+        <div class="highlight-box-title">Outreach Email Template</div>
+        <p><strong>Subject:</strong> $2B Mental Health AI Opportunity - 10 Min Demo</p>
+        <p>Hi [VC Name],</p>
+        <p>We're building the AI platform that helps clinicians detect mental health crises 60x faster. Our interactive demo shows how we save 5.2 hours/week per clinician while improving patient outcomes.</p>
+        <p><strong>Key metrics:</strong></p>
+        <ul>
+            <li>99.2% T2 alert detection rate</li>
+            <li>$1.6M annual savings per 100 clinicians</li>
+            <li>340% ROI for health systems</li>
+            <li>HIPAA/SOC 2 compliant</li>
+        </ul>
+        <p>Interactive demo: https://hdyyjvra5bpqm.ok.kimi.link<br>
+        Executive summary: [ATTACH]</p>
+        <p>Can we schedule 20 minutes next week?</p>
+        <p>[Your Name]<br>[Title]</p>
+    </div>
+
+    <h3>Phase 2: First Meeting (30-45 minutes)</h3>
+    <p><strong>Materials:</strong> Pitch Deck + Live Demo</p>
+    
+    <table>
+        <caption data-label="Table 14">Recommended Meeting Flow (30 Minutes)</caption>
+        <thead><tr><th>Time</th><th>Section</th><th>Materials</th></tr></thead>
+        <tbody>
+            <tr><td>0:00-2:00</td><td>Hook</td><td>"68% of crises happen between sessions"</td></tr>
+            <tr><td>2:00-5:00</td><td>Problem</td><td>Problem slide + data</td></tr>
+            <tr><td>5:00-10:00</td><td>Solution</td><td>Story Mode demo</td></tr>
+            <tr><td>10:00-13:00</td><td>Market</td><td>Market size slide</td></tr>
+            <tr><td>13:00-16:00</td><td>Business Model</td><td>Pricing + unit economics</td></tr>
+            <tr><td>16:00-19:00</td><td>Traction</td><td>Metrics + customer quote</td></tr>
+            <tr><td>19:00-22:00</td><td>Competition</td><td>Competitive matrix</td></tr>
+            <tr><td>22:00-25:00</td><td>Team</td><td>Team slide</td></tr>
+            <tr><td>25:00-28:00</td><td>Financials</td><td>Projections slide</td></tr>
+            <tr><td>28:00-30:00</td><td>The Ask</td><td>Funding request</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Phase 3: Due Diligence (After Expression of Interest)</h3>
+    <p><strong>Materials:</strong> Full data room with all Tier 1 & 2 materials</p>
+
+    <h3>Phase 4: Partner Meeting (Final Pitch)</h3>
+    <p><strong>Materials:</strong> Refined deck + live product demo + Q&A prep</p>
+
+    <h2 id="sec6-3">6.3 Key Metrics VCs Want to See</h2>
+    
+    <h3>Product Metrics</h3>
+    <ul>
+        <li>Monthly Active Users (clinicians)</li>
+        <li>Monthly Active Patients</li>
+        <li>Session Duration</li>
+        <li>Feature Adoption Rates</li>
+        <li>Net Promoter Score (NPS)</li>
+    </ul>
+
+    <h3>Business Metrics</h3>
+    <table>
+        <thead><tr><th>Metric</th><th>Target</th></tr></thead>
+        <tbody>
+            <tr><td>Monthly Recurring Revenue (MRR)</td><td>Growing 10%+ monthly</td></tr>
+            <tr><td>Annual Contract Value (ACV)</td><td>$18,000</td></tr>
+            <tr><td>Customer Acquisition Cost (CAC)</td><td>$4,500</td></tr>
+            <tr><td>Lifetime Value (LTV)</td><td>$18,000</td></tr>
+            <tr><td>LTV:CAC Ratio</td><td>>3:1</td></tr>
+            <tr><td>Churn Rate</td><td>&lt;5% annually</td></tr>
+            <tr><td>Gross Margin</td><td>>80%</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Safety Metrics (Our Moat)</h3>
+    <ul>
+        <li>T2 Alert Detection Rate: 99.2%</li>
+        <li>False Positive Rate: &lt;10%</li>
+        <li>Average Response Time: 4 min</li>
+        <li>Clinician Time Saved: 5.2 hrs/week</li>
+        <li>Patient Outcomes Improvement: Measured</li>
+    </ul>
+
+    <h2 id="sec6-4">6.4 Critical Questions to Prepare</h2>
+    
+    <h3>Product/Technology</h3>
+    <p><strong>Q: How is this different from Woebot/Ginger?</strong><br>
+    A: They're consumer apps. We're clinician-supervised with safety protocols.</p>
+    
+    <p><strong>Q: What if the AI makes a mistake?</strong><br>
+    A: Every AI insight is a "draft" requiring clinician approval. CSP-002.</p>
+    
+    <p><strong>Q: How do you handle data privacy?</strong><br>
+    A: HIPAA, SOC 2, end-to-end encryption. Show compliance badges.</p>
+
+    <h3>Business</h3>
+    <p><strong>Q: What's your go-to-market strategy?</strong><br>
+    A: Start with health systems, expand through EHR partnerships.</p>
+    
+    <p><strong>Q: How do you acquire customers?</strong><br>
+    A: Direct sales + channel partners. CAC is $4.5K, LTV is $18K.</p>
+    
+    <p><strong>Q: What's the path to $100M ARR?</strong><br>
+    A: X clinicians x $Y/month x 12 months = $Z. Here's the math...</p>
+
+    <h3>Market</h3>
+    <p><strong>Q: How big is this market really?</strong><br>
+    A: $17B US mental health software, growing 18% annually.</p>
+    
+    <p><strong>Q: Who are your competitors?</strong><br>
+    A: Show competitive matrix. We're the only ones with clinician-supervised AI.</p>
+
+    <h2 id="sec6-5">6.5 Investor Target List</h2>
+    
+    <h3>Tier 1: Healthcare-Focused VCs (Highest Probability)</h3>
+    <ul>
+        <li>Andreessen Horowitz (Bio fund)</li>
+        <li>GV (Google Ventures)</li>
+        <li>Khosla Ventures</li>
+        <li>Venrock</li>
+        <li>Bessemer Venture Partners</li>
+        <li>8VC</li>
+        <li>Rock Health</li>
+        <li>Lux Capital</li>
+    </ul>
+
+    <h3>Tier 2: AI/ML-Focused VCs</h3>
+    <ul>
+        <li>Sequoia Capital</li>
+        <li>Greylock Partners</li>
+        <li>Index Ventures</li>
+        <li>Accel</li>
+        <li>Battery Ventures</li>
+    </ul>
+
+    <h3>Tier 3: Generalist VCs (Series A+)</h3>
+    <ul>
+        <li>Benchmark</li>
+        <li>First Round Capital</li>
+        <li>Lightspeed Venture Partners</li>
+        <li>Founders Fund</li>
+    </ul>
+
+    <h2 id="sec6-6">6.6 Timeline to Funding</h2>
+    
+    <table>
+        <caption data-label="Table 15">12-Week Fundraising Timeline</caption>
+        <thead><tr><th>Week</th><th>Activity</th><th>Deliverables</th></tr></thead>
+        <tbody>
+            <tr><td>1-2</td><td>Material Preparation</td><td>Finalize deck, model, summary, data room</td></tr>
+            <tr><td>3-4</td><td>Outreach Phase</td><td>Research VCs, get warm intros, send emails</td></tr>
+            <tr><td>5-8</td><td>Meeting Phase</td><td>20-30 first meetings, refine pitch</td></tr>
+            <tr><td>9-12</td><td>Due Diligence & Close</td><td>Full DD, partner meetings, close round</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Success Metrics for the Raise</h3>
+    <table>
+        <thead><tr><th>Metric</th><th>Target</th></tr></thead>
+        <tbody>
+            <tr><td>First Meetings</td><td>30</td></tr>
+            <tr><td>Conversion to Second Meeting</td><td>40% (12 meetings)</td></tr>
+            <tr><td>Conversion to Term Sheet</td><td>25% (3 term sheets)</td></tr>
+            <tr><td>Close Rate</td><td>33% (1 closed round)</td></tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-box">
+        <div class="highlight-box-title">Contact Information</div>
+        <p><strong>Dr. Sarah Chen, CEO</strong><br>
+        Email: sarah@behavioralhealth.ai<br>
+        Phone: (555) 123-4567<br>
+        Demo: https://hdyyjvra5bpqm.ok.kimi.link</p>
+        <p><strong>Company:</strong> Behavioral Health AI Companion<br>
+        <strong>Founded:</strong> 2025 | <strong>Stage:</strong> Seed | <strong>Raising:</strong> $10M<br>
+        <strong>Location:</strong> San Francisco, CA</p>
+    </div>
+</div>
+
+</body>
+</html>
