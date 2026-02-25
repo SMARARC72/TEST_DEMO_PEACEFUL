@@ -36,3 +36,6 @@ venv/
 # Misc
 tmp/
 temp/
+
+# Local Netlify folder
+.netlify
