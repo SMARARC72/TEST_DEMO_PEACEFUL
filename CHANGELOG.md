@@ -7,6 +7,27 @@
 
 ---
 
+## v2.3 — Enterprise Governance Differentiator (NEW)
+
+### Enterprise Governance Hub
+- **Added:** `enterprise-governance` screen in `prototype-web/index.html`
+- **Purpose:** Showcase enterprise-grade procurement/governance readiness vs non-enterprise consumer tools
+- **Features:**
+  - Synthetic multi-tenant governance package table (SSO/SCIM, RBAC bundle, audit pipeline)
+  - Deterministic review actions: `APPROVED`, `CONDITIONAL`, `REVIEW_REQUIRED`
+  - Governance detail panel with evidence references and audit trail text
+  - Simulated enterprise readiness metric tied to approved package count
+
+### ROI Linkage
+- **Enhanced:** `roi-dashboard`
+- **Added:** "Enterprise Procurement Signal (Simulated)" card connected to governance approvals
+
+### Deterministic Demo Controls
+- **Updated:** `resetDemo`
+- **Added:** enterprise governance reset wiring via `resetEnterpriseGovernance()`
+
+---
+
 ## CLAIMS & TRUST FIXES
 
 ### Compliance Posture Panel (NEW)
