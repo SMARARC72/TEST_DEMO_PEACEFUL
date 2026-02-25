@@ -118,6 +118,11 @@
           <button onclick="showScreen('restricted-notes')" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
           <button onclick="showScreen('exports-center')" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
           <button onclick="showScreen('suppression-ui')" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
+          <button onclick="showScreen('memory-review')" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Memory Review (C-11)</button>
+          <button onclick="showScreen('treatment-plan-editor')" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Treatment Plan (C-10)</button>
+          <button onclick="showScreen('enterprise-governance')" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
+          <button onclick="showScreen('ai-communication-compare')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
+          <button onclick="showScreen('communication-triage-queue')" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
           <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -145,6 +150,7 @@
         <button onclick="showScreen('compliance-posture')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Compliance Posture</button>
         <button onclick="showScreen('demo-script')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Demo Script</button>
         <button onclick="showScreen('roi-dashboard')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
+        <button onclick="showScreen('enterprise-governance')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Enterprise Governance</button>
       </div>
     </div>
   </div>
@@ -536,6 +542,69 @@
       <button id="upload-btn" onclick="uploadVoice()" class="hidden w-full max-w-sm mt-8 btn-primary text-white py-4 rounded-xl font-semibold">Upload Voice Note</button>
     </div>
   </div>
+
+
+
+  <div id="patient-submission-success" class="screen min-h-screen bg-white flex flex-col">
+    <div class="p-4 border-b flex items-center">
+      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">Submission Complete</h1>
+    </div>
+    <div class="p-6 max-w-3xl mx-auto w-full space-y-4">
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+        <p class="text-sm text-green-900"><strong id="submission-success-title">Journal entry submitted.</strong> Your clinician-supervised companion generated a supportive response for reflection. Synthetic demo only.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Your AI Reflection (Patient View)</h3>
+        <p id="patient-ai-tone" class="text-sm text-slate-700 mb-2"></p>
+        <p id="patient-ai-summary" class="text-sm text-slate-700 mb-2"></p>
+        <p id="patient-ai-next-step" class="text-sm text-slate-700"></p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+        This response is supportive reflection, not diagnosis or emergency guidance. If urgent safety concerns arise, contact emergency services.
+      </div>
+      <div class="flex gap-3">
+        <button onclick="showScreen('patient-home')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Back to Home</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-communication-compare" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button onclick="showScreen('clinician-patient')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">AI Communication Compare</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-6xl mx-auto space-y-4">
+      <div class="bg-violet-50 border border-violet-200 rounded-xl p-4 text-sm text-violet-900"><strong>Clinician-only internal view.</strong> Left panel reflects patient-safe response; right panel shows internal clinician report with evidence and uncertainty.</div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Patient View</h3>
+          <p id="compare-patient-mode" class="text-xs text-slate-500 mb-2"></p>
+          <p id="compare-patient-summary" class="text-sm text-slate-700 mb-2"></p>
+          <p id="compare-patient-next" class="text-sm text-slate-700"></p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Clinician Internal Report</h3>
+          <p id="compare-clinician-signal" class="text-xs mb-2"></p>
+          <p id="compare-clinician-summary" class="text-sm text-slate-700 mb-2"></p>
+          <p id="compare-clinician-evidence" class="text-sm text-slate-700 mb-2"></p>
+          <p id="compare-clinician-unknowns" class="text-sm text-slate-700"></p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Submission Lifecycle</h3>
+        <p class="text-sm text-slate-700">Current status: <span id="submission-status-badge" class="font-semibold"></span> • Source: <span id="submission-source" class="font-semibold"></span></p>
+      </div>
+    </div>
+  </div>
+
 
   <div id="patient-settings" class="screen min-h-screen bg-slate-50">
     <div class="p-4 border-b bg-white flex items-center">
@@ -1152,6 +1221,8 @@
         </div>
         <div class="flex items-center gap-3">
           <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft Summary →</button>
+          <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare →</button>
+          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue →</button>
         </div>
       </div>
       
@@ -1175,6 +1246,191 @@
             <li>Document ASR quality in patient record</li>
           </ol>
         </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- COMMUNICATION TRIAGE QUEUE -->
+  <div id="communication-triage-queue" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <button onclick="showScreen('clinician-inbox')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Communication Triage Queue</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-7xl mx-auto space-y-4">
+      <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-4 text-sm text-fuchsia-900">
+        <strong>Clinician-only queue.</strong> This surface triages patient submissions into review states; patient-facing screens do not show internal evidence or triage statuses.
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Source</th><th class="py-2 pr-2">Signal</th><th class="py-2 pr-2">Summary</th><th class="py-2">Queue Status</th>
+              </tr>
+            </thead>
+            <tbody id="triage-queue-body"></tbody>
+          </table>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-3">Triage Detail</h3>
+          <div id="triage-detail" class="space-y-2 text-sm text-slate-700"></div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button onclick="updateTriageStatus('ACK')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button>
+            <button onclick="updateTriageStatus('IN_REVIEW')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">In Review</button>
+            <button onclick="updateTriageStatus('ESCALATED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Escalate</button>
+            <button onclick="updateTriageStatus('RESOLVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800">Queue Throughput (Simulated)</h3>
+        <p class="text-sm text-slate-600">Open triage items: <span id="triage-open-count" class="font-semibold">0</span> • Reviewed/Resolved: <span id="triage-closed-count" class="font-semibold">0</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMORY REVIEW (C-11) -->
+  <div id="memory-review" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Memory Review (C-11)</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-7xl mx-auto space-y-4">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+        <p class="text-sm text-red-800"><strong>Clinician-only moderation surface.</strong> Synthetic data only. This does not make autonomous clinical decisions.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Category</th><th class="py-2 pr-2">Proposed Memory</th><th class="py-2 pr-2">Confidence</th><th class="py-2 pr-2">Conflict</th><th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="memory-table-body"></tbody>
+          </table>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-3">Memory Detail</h3>
+          <div id="memory-detail" class="space-y-3 text-sm text-slate-700"></div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button onclick="updateMemoryStatus('APPROVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve</button>
+            <button onclick="updateMemoryStatus('REJECTED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reject</button>
+            <button onclick="updateMemoryStatus('CONFLICT_FLAGGED')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Flag Conflict</button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800">Approved Memory in Clinician Patient Profile</h3>
+        <ul id="approved-memory-list" class="list-disc pl-5 mt-2 text-sm text-slate-700"></ul>
+      </div>
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+        <p class="font-semibold text-indigo-900">Simulated Investor Callout</p>
+        <p class="text-sm text-indigo-800">Estimated prep-time reduction from approved memory reuse: <span id="memory-roi-link">12%</span> (simulated pilot metric).</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TREATMENT PLAN EDITOR (C-10) -->
+  <div id="treatment-plan-editor" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Treatment Plan Editor (C-10)</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-7xl mx-auto space-y-4">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <p class="text-sm text-emerald-800"><strong>Clinician-governed planning surface.</strong> Synthetic data only. Plans are draft workflow artifacts and not autonomous care instructions.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Goal</th><th class="py-2 pr-2">Intervention</th><th class="py-2 pr-2">Owner</th><th class="py-2 pr-2">Target</th><th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="treatment-plan-table-body"></tbody>
+          </table>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-3">Plan Item Detail</h3>
+          <div id="treatment-plan-detail" class="space-y-3 text-sm text-slate-700"></div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button onclick="updatePlanStatus('DRAFT')" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Keep Draft</button>
+            <button onclick="updatePlanStatus('REVIEWED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Mark Reviewed</button>
+            <button onclick="updatePlanStatus('HOLD')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Hold</button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800">Care Plan Readiness (Simulated)</h3>
+        <p class="text-sm text-slate-600">Reviewed plan items: <span id="plan-reviewed-count">0</span> • Follow-up readiness signal: <span id="plan-readiness-signal">28%</span> (simulated pilot metric).</p>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ENTERPRISE GOVERNANCE HUB -->
+  <div id="enterprise-governance" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Enterprise Governance Hub</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-6xl mx-auto space-y-4">
+      <div class="bg-sky-50 border border-sky-200 rounded-xl p-4">
+        <p class="text-sm text-sky-900"><strong>Enterprise differentiator:</strong> synthetic multi-tenant governance, audit readiness, and policy-package controls for clinician-supervised operations.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
+          <h3 class="font-semibold text-slate-800 mb-3">Tenant Policy Package Status</h3>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-2">Tenant</th><th class="py-2 pr-2">SSO/SCIM</th><th class="py-2 pr-2">RBAC Bundle</th><th class="py-2 pr-2">Audit Pipeline</th><th class="py-2">Package Status</th>
+              </tr>
+            </thead>
+            <tbody id="enterprise-table-body"></tbody>
+          </table>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-3">Governance Detail</h3>
+          <div id="enterprise-detail" class="space-y-2 text-sm text-slate-700"></div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button onclick="updateEnterpriseStatus('APPROVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve Package</button>
+            <button onclick="updateEnterpriseStatus('CONDITIONAL')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
+            <button onclick="updateEnterpriseStatus('REVIEW_REQUIRED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800">Enterprise Readiness Signal (Simulated)</h3>
+        <p class="text-sm text-slate-600">Approved tenant packages: <span id="enterprise-approved-count">0</span> • Procurement readiness: <span id="enterprise-readiness-signal">35%</span> (simulated).</p>
       </div>
     </div>
   </div>
@@ -1204,6 +1460,18 @@
       </div>
       
       <div class="grid grid-cols-3 gap-4">
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-indigo-900">Memory Governance Moat (Simulated)</p>
+          <p class="text-sm text-indigo-800">Approved memory reuse currently indicates <span id="roi-memory-signal">12%</span> prep-time reduction potential in this synthetic cohort.</p>
+        </div>
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-emerald-900">Treatment Plan Operational Signal (Simulated)</p>
+          <p class="text-sm text-emerald-800">Clinician-reviewed plan readiness currently indicates <span id="roi-plan-signal">28%</span> follow-up coordination lift potential in this synthetic cohort.</p>
+        </div>
+        <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-sky-900">Enterprise Procurement Signal (Simulated)</p>
+          <p class="text-sm text-sky-800">Governance package approvals currently indicate <span id="roi-enterprise-signal">35%</span> enterprise procurement readiness.</p>
+        </div>
         <div class="bg-white rounded-xl p-6 text-center">
           <p id="roi-metric-1" class="text-3xl font-bold text-teal-600">5.2</p>
           <p class="text-sm text-slate-500 mt-1">Hours Saved/Week</p>
@@ -1314,6 +1582,15 @@
           </div>
         </div>
         <div class="grid grid-cols-3 gap-4">
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-indigo-900">Clinician Profile Memory Snapshot</p>
+          <p class="text-sm text-indigo-800 mb-2">Approved memories sync here for prep continuity (clinician-only).</p>
+          <ul id="clinician-profile-memory" class="list-disc pl-5 text-sm text-indigo-900"><li>No approved memory yet.</li></ul>
+        </div>
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-emerald-900">Clinician Treatment Plan Snapshot</p>
+          <ul id="clinician-profile-plan" class="list-disc pl-5 text-sm text-emerald-900"><li>No reviewed treatment plan items yet.</li></ul>
+        </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
             <p class="text-2xl font-bold text-slate-800">47</p>
             <p class="text-sm text-slate-500">Total Entries</p>
@@ -1333,6 +1610,10 @@
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-slate-800">Recent Activity</h3>
           <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Review Draft Summary</button>
+          <button onclick="showScreen('memory-review')" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Open Memory Review</button>
+          <button onclick="showScreen('treatment-plan-editor')" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Open Treatment Plan</button>
+          <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
+          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
         </div>
         <div class="space-y-3">
           <div class="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
@@ -1545,9 +1826,209 @@
       banner.classList.toggle('hidden', text.length < 10);
     }
     
+
+    // AI communication surfaces (patient vs clinician)
+    const baselineSubmissionState = {
+      id: 'sub-000',
+      source: 'JOURNAL',
+      status: 'SUBMITTED',
+      patientReport: {
+        tone: 'Supportive reflection generated in demo mode.',
+        summary: 'You shared that today felt heavy and you still showed up for your routine.',
+        nextStep: 'Consider a short breathing check-in tonight and add one follow-up journal line if helpful.'
+      },
+      clinicianReport: {
+        signalBand: 'GUARDED',
+        summary: 'Patient described elevated stress and fatigue with preserved engagement behavior.',
+        evidence: 'Journal segment #J-114, sentiment cue set #S-9.',
+        unknowns: 'Sleep quality detail missing; voice corroboration pending.'
+      }
+    };
+    let latestSubmission = JSON.parse(JSON.stringify(baselineSubmissionState));
+
+    function renderSubmissionSurfaces() {
+      const patientMode = latestSubmission.source === 'VOICE_MEMO' ? 'Voice memo processed' : 'Journal entry processed';
+      const titleEl = document.getElementById('submission-success-title');
+      const toneEl = document.getElementById('patient-ai-tone');
+      const summaryEl = document.getElementById('patient-ai-summary');
+      const nextEl = document.getElementById('patient-ai-next-step');
+      const cpm = document.getElementById('compare-patient-mode');
+      const cps = document.getElementById('compare-patient-summary');
+      const cpn = document.getElementById('compare-patient-next');
+      const ccs = document.getElementById('compare-clinician-signal');
+      const csum = document.getElementById('compare-clinician-summary');
+      const cev = document.getElementById('compare-clinician-evidence');
+      const cunk = document.getElementById('compare-clinician-unknowns');
+      const stat = document.getElementById('submission-status-badge');
+      const src = document.getElementById('submission-source');
+
+      if (titleEl) titleEl.textContent = `${patientMode}.`;
+      if (toneEl) toneEl.textContent = latestSubmission.patientReport.tone;
+      if (summaryEl) summaryEl.textContent = latestSubmission.patientReport.summary;
+      if (nextEl) nextEl.textContent = latestSubmission.patientReport.nextStep;
+
+      if (cpm) cpm.textContent = patientMode;
+      if (cps) cps.textContent = latestSubmission.patientReport.summary;
+      if (cpn) cpn.textContent = latestSubmission.patientReport.nextStep;
+      if (ccs) ccs.textContent = `Signal Band: ${latestSubmission.clinicianReport.signalBand}`;
+      if (csum) csum.textContent = latestSubmission.clinicianReport.summary;
+      if (cev) cev.textContent = `Evidence: ${latestSubmission.clinicianReport.evidence}`;
+      if (cunk) cunk.textContent = `Known unknowns: ${latestSubmission.clinicianReport.unknowns}`;
+      if (stat) stat.textContent = latestSubmission.status;
+      if (src) src.textContent = latestSubmission.source;
+    }
+
+    function processSubmission(source, patientPayload, clinicianPayload) {
+      const now = new Date().toISOString();
+      latestSubmission = {
+        id: `sub-${now.slice(11,19).replace(/:/g,'')}`,
+        source,
+        status: 'CLINICIAN_VISIBLE',
+        patientReport: patientPayload,
+        clinicianReport: clinicianPayload,
+      };
+      renderSubmissionSurfaces();
+      addSubmissionToTriage(source, patientPayload.summary, clinicianPayload.signalBand);
+      showScreen('patient-submission-success');
+    }
+
+    function resetSubmissionState() {
+      latestSubmission = JSON.parse(JSON.stringify(baselineSubmissionState));
+      renderSubmissionSurfaces();
+    }
+
+    const baselineTriageQueue = [
+      {
+        id: 'triage-1',
+        patient: 'Maria Rodriguez',
+        source: 'JOURNAL',
+        signalBand: 'GUARDED',
+        summary: 'Described evening stress spike after commute with preserved coping intent.',
+        status: 'ACK',
+        updatedAt: '2026-02-25 09:14'
+      },
+      {
+        id: 'triage-2',
+        patient: 'Emma Wilson',
+        source: 'VOICE_MEMO',
+        signalBand: 'MODERATE',
+        summary: 'Reported overwhelm and interrupted sleep; requested structured follow-up prompt.',
+        status: 'IN_REVIEW',
+        updatedAt: '2026-02-25 09:32'
+      },
+      {
+        id: 'triage-3',
+        patient: 'Alex Kim',
+        source: 'JOURNAL',
+        signalBand: 'ELEVATED',
+        summary: 'School-day routine disruption and rising anxiety language need clinician check.',
+        status: 'ESCALATED',
+        updatedAt: '2026-02-25 10:01'
+      }
+    ];
+    let triageQueue = JSON.parse(JSON.stringify(baselineTriageQueue));
+    let selectedTriageId = triageQueue[0].id;
+
+    function triageBadgeClass(status) {
+      if (status === 'ACK') return 'bg-blue-100 text-blue-700';
+      if (status === 'IN_REVIEW') return 'bg-amber-100 text-amber-700';
+      if (status === 'ESCALATED') return 'bg-red-100 text-red-700';
+      if (status === 'RESOLVED') return 'bg-green-100 text-green-700';
+      return 'bg-slate-100 text-slate-700';
+    }
+
+    function getSelectedTriageItem() {
+      return triageQueue.find(item => item.id === selectedTriageId) || triageQueue[0] || null;
+    }
+
+    function selectTriageItem(id) {
+      selectedTriageId = id;
+      renderTriageQueue();
+    }
+
+    function renderTriageQueue() {
+      const tbody = document.getElementById('triage-queue-body');
+      const detail = document.getElementById('triage-detail');
+      const openCount = document.getElementById('triage-open-count');
+      const closedCount = document.getElementById('triage-closed-count');
+      if (!tbody || !detail || !openCount || !closedCount) return;
+
+      tbody.innerHTML = triageQueue.map(item => `
+        <tr onclick="selectTriageItem('${item.id}')" class="border-b cursor-pointer ${item.id === selectedTriageId ? 'bg-fuchsia-50' : ''}">
+          <td class="py-2 pr-2">${item.patient}</td>
+          <td class="py-2 pr-2">${item.source}</td>
+          <td class="py-2 pr-2">${item.signalBand}</td>
+          <td class="py-2 pr-2">${item.summary}</td>
+          <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${triageBadgeClass(item.status)}">${item.status}</span></td>
+        </tr>`).join('');
+
+      const selected = getSelectedTriageItem();
+      detail.innerHTML = selected ? `
+        <p><strong>Patient:</strong> ${selected.patient}</p>
+        <p><strong>Submission Source:</strong> ${selected.source}</p>
+        <p><strong>Signal Band:</strong> ${selected.signalBand}</p>
+        <p><strong>Summary:</strong> ${selected.summary}</p>
+        <p><strong>Status:</strong> ${selected.status}</p>
+        <p><strong>Last Updated:</strong> ${selected.updatedAt}</p>
+      ` : '<p>No triage items available.</p>';
+
+      const open = triageQueue.filter(item => item.status !== 'RESOLVED').length;
+      openCount.textContent = String(open);
+      closedCount.textContent = String(triageQueue.length - open);
+    }
+
+    function updateTriageStatus(status) {
+      const selected = getSelectedTriageItem();
+      if (!selected) {
+        showToast('No triage item selected');
+        return;
+      }
+      selected.status = status;
+      selected.updatedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      renderTriageQueue();
+      showToast(`Triage status updated: ${status}`);
+    }
+
+    function addSubmissionToTriage(source, summary, signalBand) {
+      const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      const nextId = `triage-${Date.now()}`;
+      const item = {
+        id: nextId,
+        patient: 'Current Patient Session',
+        source,
+        signalBand,
+        summary,
+        status: 'ACK',
+        updatedAt: now
+      };
+      triageQueue.unshift(item);
+      selectedTriageId = nextId;
+      renderTriageQueue();
+    }
+
+    function resetTriageQueue() {
+      triageQueue = JSON.parse(JSON.stringify(baselineTriageQueue));
+      selectedTriageId = triageQueue[0].id;
+      renderTriageQueue();
+    }
+
     function saveJournal() {
-      showToast('Journal entry saved (draft)');
-      setTimeout(() => showScreen('patient-home'), 1000);
+      const text = document.getElementById('journal-text').value.trim();
+      processSubmission(
+        'JOURNAL',
+        {
+          tone: 'Thanks for sharing this. Your reflection was received and prepared for clinician-supervised review.',
+          summary: text ? `What I heard: ${text.slice(0, 110)}${text.length > 110 ? '…' : ''}` : 'What I heard: You shared an emotionally difficult day with continued effort to cope.',
+          nextStep: 'Suggested next step: add one coping action you want to try before your next session.'
+        },
+        {
+          signalBand: 'GUARDED',
+          summary: 'Journal indicates elevated stress narrative with intact forward-looking engagement.',
+          evidence: 'Journal segment ref #J-NEW-01 and lexical stress cues set #L-4.',
+          unknowns: 'No concurrent voice corroboration yet; sleep impact not fully specified.'
+        }
+      );
+      showToast('Journal entry saved and routed for clinician review');
     }
     
     // Sliders
@@ -1600,8 +2081,21 @@
     }
     
     function uploadVoice() {
-      showToast('Voice note uploaded for processing');
-      setTimeout(() => showScreen('patient-home'), 1000);
+      processSubmission(
+        'VOICE_MEMO',
+        {
+          tone: 'Voice memo received. A supportive summary is now available while your clinician view updates internally.',
+          summary: 'What I heard: you described feeling overwhelmed today while still seeking support and structure.',
+          nextStep: 'Suggested next step: complete a brief check-in later today to track whether stress intensity changes.'
+        },
+        {
+          signalBand: 'MODERATE',
+          summary: 'Voice memo indicates high emotional load with coherent speech and help-seeking language.',
+          evidence: 'Voice transcript segment #V-NEW-01, pacing marker set #P-3.',
+          unknowns: 'Context for trigger onset timing remains incomplete; follow-up prompt suggested.'
+        }
+      );
+      showToast('Voice note uploaded and routed for clinician review');
     }
     
     // MFA
@@ -1647,6 +2141,248 @@
       showToast('Voice status updated');
     }
     
+
+    // Memory review (C-11) synthetic local state
+    const baselineMemoryItems = [
+      { id: 'mem-1', patient: 'Maria Rodriguez', category: 'Trigger', statement: 'Crowded commute increases evening anxiety.', confidence: 'Moderate', conflict: false, status: 'PROPOSED', timestamp: '2026-02-24 09:14', evidence: ['Journal #J-114', 'Voice #V-23'], existing: '', uncertainty: 'May vary by sleep quality.', audit: ['Proposed by synthetic memory extraction model.'] },
+      { id: 'mem-2', patient: 'Emma Wilson', category: 'Coping', statement: '4-6 breathing reduces panic escalation.', confidence: 'High', conflict: true, status: 'CONFLICT_FLAGGED', timestamp: '2026-02-24 10:02', evidence: ['Check-in #C-87', 'Draft summary #D-44'], existing: 'Prior memory suggested object-grounding was preferred.', uncertainty: 'Both strategies may be useful in different contexts.', audit: ['Conflict detected with existing clinician-approved memory.'] },
+      { id: 'mem-3', patient: 'Alex Kim', category: 'Engagement', statement: 'Morning check-ins are often missed on school commute days.', confidence: 'Moderate', conflict: false, status: 'PROPOSED', timestamp: '2026-02-23 18:20', evidence: ['Check-in trend #T-08', 'Portal inbox #I-12'], existing: '', uncertainty: 'Could include intermittent connectivity issues.', audit: ['Proposed by continuity signal monitor.'] }
+    ];
+    let memoryItems = JSON.parse(JSON.stringify(baselineMemoryItems));
+    let selectedMemoryId = memoryItems[0].id;
+
+    function getSelectedMemory() {
+      return memoryItems.find(item => item.id === selectedMemoryId) || memoryItems[0];
+    }
+
+    function renderMemoryReview() {
+      const tbody = document.getElementById('memory-table-body');
+      const detail = document.getElementById('memory-detail');
+      const approvedList = document.getElementById('approved-memory-list');
+      if (!tbody || !detail || !approvedList) return;
+
+      tbody.innerHTML = memoryItems.map(item => `
+        <tr onclick="selectMemory('${item.id}')" class="border-b cursor-pointer ${item.id === selectedMemoryId ? 'bg-indigo-50' : ''}">
+          <td class="py-2 pr-2">${item.patient}</td>
+          <td class="py-2 pr-2">${item.category}</td>
+          <td class="py-2 pr-2">${item.statement}</td>
+          <td class="py-2 pr-2">${item.confidence}</td>
+          <td class="py-2 pr-2">${item.conflict ? 'Flagged' : 'None'}</td>
+          <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${memoryBadgeClass(item.status)}">${item.status}</span></td>
+        </tr>`).join('');
+
+      const selected = getSelectedMemory();
+      detail.innerHTML = `
+        <p><strong>Patient:</strong> ${selected.patient}</p>
+        <p><strong>Proposed Memory:</strong> ${selected.statement}</p>
+        ${selected.existing ? `<p><strong>Conflicting Existing Memory:</strong> ${selected.existing}</p>` : ''}
+        <p><strong>Evidence:</strong> ${selected.evidence.join(', ')}</p>
+        <p><strong>Known Unknowns:</strong> ${selected.uncertainty}</p>
+        <p><strong>Status:</strong> ${selected.status}</p>
+        <p><strong>Last Audit Entry:</strong> ${selected.audit[selected.audit.length - 1]}</p>
+      `;
+
+      const approved = memoryItems.filter(item => item.status === 'APPROVED');
+      approvedList.innerHTML = approved.length
+        ? approved.map(item => `<li>${item.patient}: ${item.statement}</li>`).join('')
+        : '<li>No approved memory yet.</li>';
+
+      const prepReduction = `${Math.min(12 + approved.length * 3, 24)}%`;
+      const linkEl = document.getElementById('memory-roi-link');
+      const roiSignal = document.querySelector('#roi-dashboard #roi-memory-signal');
+      const profileList = document.getElementById('clinician-profile-memory');
+      if (linkEl) linkEl.textContent = prepReduction;
+      if (roiSignal) roiSignal.textContent = prepReduction;
+      if (profileList) {
+        profileList.innerHTML = approved.length
+          ? approved.map(item => `<li>${item.patient}: ${item.statement}</li>`).join('')
+          : '<li>No approved memory yet.</li>';
+      }
+    }
+
+    function memoryBadgeClass(status) {
+      if (status === 'APPROVED') return 'bg-green-100 text-green-700';
+      if (status === 'REJECTED') return 'bg-red-100 text-red-700';
+      if (status === 'CONFLICT_FLAGGED') return 'bg-amber-100 text-amber-700';
+      return 'bg-blue-100 text-blue-700';
+    }
+
+    function selectMemory(id) {
+      selectedMemoryId = id;
+      renderMemoryReview();
+    }
+
+    function updateMemoryStatus(status) {
+      memoryItems = memoryItems.map(item => item.id === selectedMemoryId
+        ? { ...item, status, conflict: status === 'CONFLICT_FLAGGED', audit: [...item.audit, `Clinician set status to ${status} at ${new Date().toISOString()}.`] }
+        : item
+      );
+      showToast(`Memory status updated: ${status}`);
+      renderMemoryReview();
+    }
+
+    function resetMemoryReview() {
+      memoryItems = JSON.parse(JSON.stringify(baselineMemoryItems));
+      selectedMemoryId = memoryItems[0].id;
+      renderMemoryReview();
+    }
+
+
+
+    // Treatment plan editor (C-10) synthetic local state
+    const baselinePlanItems = [
+      { id: 'plan-1', patient: 'Maria Rodriguez', goal: 'Reduce panic escalation events', intervention: 'Breathing cadence 4-6 + evening check-in reminder', owner: 'Clinician', target: '2 weeks', status: 'DRAFT', evidence: ['Memory mem-2', 'Check-in trend #C-87'], uncertainty: 'May require alternate grounding method on high-stress commute days.', audit: ['Plan drafted from memory and summary review context.'] },
+      { id: 'plan-2', patient: 'Alex Kim', goal: 'Increase morning engagement consistency', intervention: 'School-day adaptive reminder with fallback text prompt', owner: 'Care Coordinator', target: '10 days', status: 'DRAFT', evidence: ['Memory mem-3', 'Portal inbox #I-12'], uncertainty: 'Missed check-ins may include connectivity constraints.', audit: ['Plan drafted for continuity readiness testing.'] },
+      { id: 'plan-3', patient: 'Emma Wilson', goal: 'Stabilize between-session coping adherence', intervention: 'Structured coping preference review in next session', owner: 'Clinician', target: 'Next visit', status: 'HOLD', evidence: ['Conflict memory mem-2', 'Draft summary #D-44'], uncertainty: 'Conflicting coping signals require clinician adjudication.', audit: ['Placed on hold pending memory conflict resolution.'] }
+    ];
+    let planItems = JSON.parse(JSON.stringify(baselinePlanItems));
+    let selectedPlanId = planItems[0].id;
+
+    function getSelectedPlan() {
+      return planItems.find(item => item.id === selectedPlanId) || planItems[0];
+    }
+
+    function planBadgeClass(status) {
+      if (status === 'REVIEWED') return 'bg-green-100 text-green-700';
+      if (status === 'HOLD') return 'bg-amber-100 text-amber-700';
+      return 'bg-slate-100 text-slate-700';
+    }
+
+    function renderTreatmentPlan() {
+      const tbody = document.getElementById('treatment-plan-table-body');
+      const detail = document.getElementById('treatment-plan-detail');
+      if (!tbody || !detail) return;
+
+      tbody.innerHTML = planItems.map(item => `
+        <tr onclick="selectPlan('${item.id}')" class="border-b cursor-pointer ${item.id === selectedPlanId ? 'bg-emerald-50' : ''}">
+          <td class="py-2 pr-2">${item.patient}</td>
+          <td class="py-2 pr-2">${item.goal}</td>
+          <td class="py-2 pr-2">${item.intervention}</td>
+          <td class="py-2 pr-2">${item.owner}</td>
+          <td class="py-2 pr-2">${item.target}</td>
+          <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${planBadgeClass(item.status)}">${item.status}</span></td>
+        </tr>`).join('');
+
+      const selected = getSelectedPlan();
+      detail.innerHTML = `
+        <p><strong>Patient:</strong> ${selected.patient}</p>
+        <p><strong>Goal:</strong> ${selected.goal}</p>
+        <p><strong>Intervention:</strong> ${selected.intervention}</p>
+        <p><strong>Evidence Links:</strong> ${selected.evidence.join(', ')}</p>
+        <p><strong>Known Unknowns:</strong> ${selected.uncertainty}</p>
+        <p><strong>Status:</strong> ${selected.status}</p>
+        <p><strong>Last Audit Entry:</strong> ${selected.audit[selected.audit.length - 1]}</p>
+      `;
+
+      const reviewedCount = planItems.filter(item => item.status === 'REVIEWED').length;
+      const readiness = `${Math.min(28 + reviewedCount * 8, 52)}%`;
+      const reviewedEl = document.getElementById('plan-reviewed-count');
+      const readinessEl = document.getElementById('plan-readiness-signal');
+      const roiPlanEl = document.getElementById('roi-plan-signal');
+      const profilePlan = document.getElementById('clinician-profile-plan');
+      if (reviewedEl) reviewedEl.textContent = String(reviewedCount);
+      if (readinessEl) readinessEl.textContent = readiness;
+      if (roiPlanEl) roiPlanEl.textContent = readiness;
+      if (profilePlan) {
+        const reviewed = planItems.filter(item => item.status === 'REVIEWED');
+        profilePlan.innerHTML = reviewed.length
+          ? reviewed.map(item => `<li>${item.patient}: ${item.goal}</li>`).join('')
+          : '<li>No reviewed treatment plan items yet.</li>';
+      }
+    }
+
+    function selectPlan(id) {
+      selectedPlanId = id;
+      renderTreatmentPlan();
+    }
+
+    function updatePlanStatus(status) {
+      planItems = planItems.map(item => item.id === selectedPlanId
+        ? { ...item, status, audit: [...item.audit, `Clinician set plan status to ${status} at ${new Date().toISOString()}.`] }
+        : item
+      );
+      showToast(`Treatment plan status updated: ${status}`);
+      renderTreatmentPlan();
+    }
+
+    function resetTreatmentPlan() {
+      planItems = JSON.parse(JSON.stringify(baselinePlanItems));
+      selectedPlanId = planItems[0].id;
+      renderTreatmentPlan();
+    }
+
+
+
+
+
+    // Enterprise governance hub synthetic state
+    const baselineEnterpriseItems = [
+      { id: 'ent-1', tenant: 'Northstar Behavioral Network', sso: 'Enabled', rbac: 'Clinical + Compliance', audit: 'Streaming', status: 'CONDITIONAL', notes: 'Awaiting annual access-review signoff.', evidence: ['Policy package v2.2', 'Audit dry run #A-18'], auditLog: ['Package imported for enterprise review.'] },
+      { id: 'ent-2', tenant: 'Bridgeway Care Group', sso: 'Enabled', rbac: 'Clinical', audit: 'Streaming', status: 'REVIEW_REQUIRED', notes: 'SCIM role mapping mismatch detected.', evidence: ['SCIM sync check #S-12'], auditLog: ['Role mapping drift flagged for admin review.'] },
+      { id: 'ent-3', tenant: 'Harbor Youth Clinics', sso: 'Pilot', rbac: 'Clinical + Supervisor', audit: 'Batch + Daily Verify', status: 'CONDITIONAL', notes: 'Pending supervisor override policy confirmation.', evidence: ['Override policy packet #P-6'], auditLog: ['Conditional package state assigned.'] }
+    ];
+    let enterpriseItems = JSON.parse(JSON.stringify(baselineEnterpriseItems));
+    let selectedEnterpriseId = enterpriseItems[0].id;
+
+    function enterpriseBadgeClass(status) {
+      if (status === 'APPROVED') return 'bg-green-100 text-green-700';
+      if (status === 'CONDITIONAL') return 'bg-amber-100 text-amber-700';
+      return 'bg-red-100 text-red-700';
+    }
+
+    function renderEnterpriseGovernance() {
+      const tbody = document.getElementById('enterprise-table-body');
+      const detail = document.getElementById('enterprise-detail');
+      if (!tbody || !detail) return;
+
+      tbody.innerHTML = enterpriseItems.map(item => `
+        <tr onclick="selectEnterprise('${item.id}')" class="border-b cursor-pointer ${item.id === selectedEnterpriseId ? 'bg-sky-50' : ''}">
+          <td class="py-2 pr-2">${item.tenant}</td>
+          <td class="py-2 pr-2">${item.sso}</td>
+          <td class="py-2 pr-2">${item.rbac}</td>
+          <td class="py-2 pr-2">${item.audit}</td>
+          <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${enterpriseBadgeClass(item.status)}">${item.status}</span></td>
+        </tr>`).join('');
+
+      const selected = enterpriseItems.find(i => i.id === selectedEnterpriseId) || enterpriseItems[0];
+      detail.innerHTML = `
+        <p><strong>Tenant:</strong> ${selected.tenant}</p>
+        <p><strong>Status:</strong> ${selected.status}</p>
+        <p><strong>Notes:</strong> ${selected.notes}</p>
+        <p><strong>Evidence:</strong> ${selected.evidence.join(', ')}</p>
+        <p><strong>Last Audit Entry:</strong> ${selected.auditLog[selected.auditLog.length - 1]}</p>
+      `;
+
+      const approvedCount = enterpriseItems.filter(i => i.status === 'APPROVED').length;
+      const readiness = `${Math.min(35 + approvedCount * 15, 80)}%`;
+      const countEl = document.getElementById('enterprise-approved-count');
+      const signalEl = document.getElementById('enterprise-readiness-signal');
+      const roiEl = document.getElementById('roi-enterprise-signal');
+      if (countEl) countEl.textContent = String(approvedCount);
+      if (signalEl) signalEl.textContent = readiness;
+      if (roiEl) roiEl.textContent = readiness;
+    }
+
+    function selectEnterprise(id) {
+      selectedEnterpriseId = id;
+      renderEnterpriseGovernance();
+    }
+
+    function updateEnterpriseStatus(status) {
+      enterpriseItems = enterpriseItems.map(item => item.id === selectedEnterpriseId
+        ? { ...item, status, auditLog: [...item.auditLog, `Enterprise reviewer set status to ${status} at ${new Date().toISOString()}.`] }
+        : item
+      );
+      showToast(`Enterprise package status: ${status}`);
+      renderEnterpriseGovernance();
+    }
+
+    function resetEnterpriseGovernance() {
+      enterpriseItems = JSON.parse(JSON.stringify(baselineEnterpriseItems));
+      selectedEnterpriseId = enterpriseItems[0].id;
+      renderEnterpriseGovernance();
+    }
+
     function resetDemo() {
       document.getElementById('system-status').value = 'normal';
       document.getElementById('safety-tier').value = 'T2';
@@ -1657,6 +2393,11 @@
       document.getElementById('voice-status').value = 'PROCESSING';
       const banner = document.getElementById('degraded-banner');
       if (banner) banner.classList.add('hidden');
+      resetMemoryReview();
+      resetTreatmentPlan();
+      resetEnterpriseGovernance();
+      resetSubmissionState();
+      resetTriageQueue();
       showToast('Demo reset to defaults');
     }
     
@@ -1736,6 +2477,12 @@
       const el = document.getElementById('assumption-' + id);
       el.classList.toggle('hidden');
     }
+
+    renderMemoryReview();
+    renderTreatmentPlan();
+    renderEnterpriseGovernance();
+    resetSubmissionState();
+    resetTriageQueue();
   </script>
 </body>
 </html>

@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run verify:no-conflicts && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:no-conflicts": "node scripts/check-merge-artifacts.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
