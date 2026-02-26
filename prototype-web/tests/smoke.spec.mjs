@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('Security Command Center smoke', async ({ page }) => {
-  // Point to the preview server (vite preview picked port 5173)
-  await page.goto('http://localhost:5173/');
+  await page.goto('/');
 
   // Screenshot: Landing page
   await page.screenshot({ path: 'test-results/screenshots/01-landing.png', fullPage: true });
