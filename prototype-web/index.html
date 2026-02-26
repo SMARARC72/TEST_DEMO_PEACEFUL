@@ -122,6 +122,10 @@
           <button onclick="showScreen('treatment-plan-editor')" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Treatment Plan (C-10)</button>
           <button onclick="showScreen('enterprise-governance')" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
           <button onclick="showScreen('ai-communication-compare')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
+<<<<<<< codex/test-remote-connection-to-repo
+          <button onclick="showScreen('communication-triage-queue')" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
+=======
+>>>>>>> main
           <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -1221,6 +1225,10 @@
         <div class="flex items-center gap-3">
           <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft Summary →</button>
           <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare →</button>
+<<<<<<< codex/test-remote-connection-to-repo
+          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue →</button>
+=======
+>>>>>>> main
         </div>
       </div>
       
@@ -1249,6 +1257,54 @@
   </div>
 
 
+<<<<<<< codex/test-remote-connection-to-repo
+
+  <!-- COMMUNICATION TRIAGE QUEUE -->
+  <div id="communication-triage-queue" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <button onclick="showScreen('clinician-inbox')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Communication Triage Queue</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-7xl mx-auto space-y-4">
+      <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-4 text-sm text-fuchsia-900">
+        <strong>Clinician-only queue.</strong> This surface triages patient submissions into review states; patient-facing screens do not show internal evidence or triage statuses.
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-slate-500 border-b">
+                <th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Source</th><th class="py-2 pr-2">Signal</th><th class="py-2 pr-2">Summary</th><th class="py-2">Queue Status</th>
+              </tr>
+            </thead>
+            <tbody id="triage-queue-body"></tbody>
+          </table>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-3">Triage Detail</h3>
+          <div id="triage-detail" class="space-y-2 text-sm text-slate-700"></div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button onclick="updateTriageStatus('ACK')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button>
+            <button onclick="updateTriageStatus('IN_REVIEW')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">In Review</button>
+            <button onclick="updateTriageStatus('ESCALATED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Escalate</button>
+            <button onclick="updateTriageStatus('RESOLVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800">Queue Throughput (Simulated)</h3>
+        <p class="text-sm text-slate-600">Open triage items: <span id="triage-open-count" class="font-semibold">0</span> • Reviewed/Resolved: <span id="triage-closed-count" class="font-semibold">0</span></p>
+      </div>
+    </div>
+  </div>
+
+=======
+>>>>>>> main
   <!-- MEMORY REVIEW (C-11) -->
   <div id="memory-review" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
@@ -1566,6 +1622,10 @@
           <button onclick="showScreen('memory-review')" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Open Memory Review</button>
           <button onclick="showScreen('treatment-plan-editor')" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Open Treatment Plan</button>
           <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
+<<<<<<< codex/test-remote-connection-to-repo
+          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
+=======
+>>>>>>> main
         </div>
         <div class="space-y-3">
           <div class="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
@@ -1840,6 +1900,10 @@
         clinicianReport: clinicianPayload,
       };
       renderSubmissionSurfaces();
+<<<<<<< codex/test-remote-connection-to-repo
+      addSubmissionToTriage(source, patientPayload.summary, clinicianPayload.signalBand);
+=======
+>>>>>>> main
       showScreen('patient-submission-success');
     }
 
@@ -1848,6 +1912,124 @@
       renderSubmissionSurfaces();
     }
 
+<<<<<<< codex/test-remote-connection-to-repo
+    const baselineTriageQueue = [
+      {
+        id: 'triage-1',
+        patient: 'Maria Rodriguez',
+        source: 'JOURNAL',
+        signalBand: 'GUARDED',
+        summary: 'Described evening stress spike after commute with preserved coping intent.',
+        status: 'ACK',
+        updatedAt: '2026-02-25 09:14'
+      },
+      {
+        id: 'triage-2',
+        patient: 'Emma Wilson',
+        source: 'VOICE_MEMO',
+        signalBand: 'MODERATE',
+        summary: 'Reported overwhelm and interrupted sleep; requested structured follow-up prompt.',
+        status: 'IN_REVIEW',
+        updatedAt: '2026-02-25 09:32'
+      },
+      {
+        id: 'triage-3',
+        patient: 'Alex Kim',
+        source: 'JOURNAL',
+        signalBand: 'ELEVATED',
+        summary: 'School-day routine disruption and rising anxiety language need clinician check.',
+        status: 'ESCALATED',
+        updatedAt: '2026-02-25 10:01'
+      }
+    ];
+    let triageQueue = JSON.parse(JSON.stringify(baselineTriageQueue));
+    let selectedTriageId = triageQueue[0].id;
+
+    function triageBadgeClass(status) {
+      if (status === 'ACK') return 'bg-blue-100 text-blue-700';
+      if (status === 'IN_REVIEW') return 'bg-amber-100 text-amber-700';
+      if (status === 'ESCALATED') return 'bg-red-100 text-red-700';
+      if (status === 'RESOLVED') return 'bg-green-100 text-green-700';
+      return 'bg-slate-100 text-slate-700';
+    }
+
+    function getSelectedTriageItem() {
+      return triageQueue.find(item => item.id === selectedTriageId) || triageQueue[0] || null;
+    }
+
+    function selectTriageItem(id) {
+      selectedTriageId = id;
+      renderTriageQueue();
+    }
+
+    function renderTriageQueue() {
+      const tbody = document.getElementById('triage-queue-body');
+      const detail = document.getElementById('triage-detail');
+      const openCount = document.getElementById('triage-open-count');
+      const closedCount = document.getElementById('triage-closed-count');
+      if (!tbody || !detail || !openCount || !closedCount) return;
+
+      tbody.innerHTML = triageQueue.map(item => `
+        <tr onclick="selectTriageItem('${item.id}')" class="border-b cursor-pointer ${item.id === selectedTriageId ? 'bg-fuchsia-50' : ''}">
+          <td class="py-2 pr-2">${item.patient}</td>
+          <td class="py-2 pr-2">${item.source}</td>
+          <td class="py-2 pr-2">${item.signalBand}</td>
+          <td class="py-2 pr-2">${item.summary}</td>
+          <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${triageBadgeClass(item.status)}">${item.status}</span></td>
+        </tr>`).join('');
+
+      const selected = getSelectedTriageItem();
+      detail.innerHTML = selected ? `
+        <p><strong>Patient:</strong> ${selected.patient}</p>
+        <p><strong>Submission Source:</strong> ${selected.source}</p>
+        <p><strong>Signal Band:</strong> ${selected.signalBand}</p>
+        <p><strong>Summary:</strong> ${selected.summary}</p>
+        <p><strong>Status:</strong> ${selected.status}</p>
+        <p><strong>Last Updated:</strong> ${selected.updatedAt}</p>
+      ` : '<p>No triage items available.</p>';
+
+      const open = triageQueue.filter(item => item.status !== 'RESOLVED').length;
+      openCount.textContent = String(open);
+      closedCount.textContent = String(triageQueue.length - open);
+    }
+
+    function updateTriageStatus(status) {
+      const selected = getSelectedTriageItem();
+      if (!selected) {
+        showToast('No triage item selected');
+        return;
+      }
+      selected.status = status;
+      selected.updatedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      renderTriageQueue();
+      showToast(`Triage status updated: ${status}`);
+    }
+
+    function addSubmissionToTriage(source, summary, signalBand) {
+      const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      const nextId = `triage-${Date.now()}`;
+      const item = {
+        id: nextId,
+        patient: 'Current Patient Session',
+        source,
+        signalBand,
+        summary,
+        status: 'ACK',
+        updatedAt: now
+      };
+      triageQueue.unshift(item);
+      selectedTriageId = nextId;
+      renderTriageQueue();
+    }
+
+    function resetTriageQueue() {
+      triageQueue = JSON.parse(JSON.stringify(baselineTriageQueue));
+      selectedTriageId = triageQueue[0].id;
+      renderTriageQueue();
+    }
+
+=======
+>>>>>>> main
     function saveJournal() {
       const text = document.getElementById('journal-text').value.trim();
       processSubmission(
@@ -2233,6 +2415,10 @@
       resetTreatmentPlan();
       resetEnterpriseGovernance();
       resetSubmissionState();
+<<<<<<< codex/test-remote-connection-to-repo
+      resetTriageQueue();
+=======
+>>>>>>> main
       showToast('Demo reset to defaults');
     }
     
@@ -2317,6 +2503,10 @@
     renderTreatmentPlan();
     renderEnterpriseGovernance();
     resetSubmissionState();
+<<<<<<< codex/test-remote-connection-to-repo
+    resetTriageQueue();
+=======
+>>>>>>> main
   </script>
 </body>
 </html>
