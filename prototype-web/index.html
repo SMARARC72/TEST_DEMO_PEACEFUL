@@ -54,7 +54,7 @@
   <!-- Demo Control Panel -->
   <div id="demo-panel" class="demo-panel">
     <div class="glass rounded-xl shadow-2xl overflow-hidden">
-      <button onclick="toggleDemoPanel()" class="w-full p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white flex items-center justify-between">
+      <button data-action="toggle-demo-panel" class="w-full p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white flex items-center justify-between">
         <span class="font-semibold text-sm demo-content">Demo Controls</span>
         <svg id="demo-chevron" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
@@ -113,19 +113,19 @@
         </select>
         
         <div class="border-t pt-4 space-y-2">
-          <button onclick="showScreen('compliance-posture')" class="w-full py-2 px-3 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Compliance Posture</button>
-          <button onclick="showScreen('demo-script')" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Demo Script</button>
-          <button onclick="showScreen('restricted-notes')" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
-          <button onclick="showScreen('exports-center')" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
-          <button onclick="showScreen('suppression-ui')" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
-          <button onclick="showScreen('memory-review')" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Memory Review (C-11)</button>
-          <button onclick="showScreen('treatment-plan-editor')" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Treatment Plan (C-10)</button>
-          <button onclick="showScreen('enterprise-governance')" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
-          <button onclick="showScreen('ai-communication-compare')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
-          <button onclick="showScreen('communication-triage-queue')" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
-          <button onclick="showScreen('security-command-center')" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
-          <button onclick="showScreen('decision-room')" class="w-full py-2 px-3 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
-          <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
+          <button data-nav="compliance-posture" class="w-full py-2 px-3 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Compliance Posture</button>
+          <button data-nav="demo-script" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Demo Script</button>
+          <button data-nav="restricted-notes" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
+          <button data-nav="exports-center" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
+          <button data-nav="suppression-ui" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
+          <button data-nav="memory-review" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Memory Review (C-11)</button>
+          <button data-nav="treatment-plan-editor" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Treatment Plan (C-10)</button>
+          <button data-nav="enterprise-governance" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
+          <button data-nav="ai-communication-compare" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
+          <button data-nav="communication-triage-queue" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
+          <button data-nav="security-command-center" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
+          <button data-nav="decision-room" class="w-full py-2 px-3 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
+          <button data-action="reset-demo" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
     </div>
@@ -135,7 +135,7 @@
   <div id="security-command-center" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Security Command Center (Demo Simulation)</h1>
@@ -155,8 +155,8 @@
           <div class="text-sm text-slate-600 mb-2">Backup Code (enter for deterministic accept)</div>
           <input id="backup-code" class="w-full p-2 border rounded-lg mb-2" placeholder="Enter demo backup code" />
           <div class="flex gap-2">
-            <button onclick="validateBackupCode()" class="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Validate Backup Code</button>
-            <button onclick="triggerStepUpAuth('sensitive-action')" class="px-3 py-2 bg-amber-600 text-white rounded-lg text-sm">Trigger Step-Up Auth</button>
+            <button data-action="validate-backup-code" class="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Validate Backup Code</button>
+            <button data-step-up="sensitive-action" class="px-3 py-2 bg-amber-600 text-white rounded-lg text-sm">Trigger Step-Up Auth</button>
           </div>
         </div>
 
@@ -166,7 +166,7 @@
           <input id="contract-version" class="w-full p-2 border rounded-lg mb-2" placeholder="v1.2.3" />
           <div class="text-sm text-slate-600 mb-2">Signature Hash</div>
           <input id="signature-hash" class="w-full p-2 border rounded-lg mb-2" placeholder="deadbeef..." />
-          <button onclick="validateSmartContractArtifact()" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">Validate Contract</button>
+          <button data-action="validate-contract" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">Validate Contract</button>
           <div id="contract-result" class="mt-3 text-sm text-slate-700"></div>
         </div>
 
@@ -178,7 +178,7 @@
           <input id="merkle-root" class="w-full p-2 border rounded-lg mb-2" placeholder="root hash" />
           <div class="text-sm text-slate-600 mb-2">Path Nodes (comma separated)</div>
           <input id="merkle-path" class="w-full p-2 border rounded-lg mb-2" placeholder="node1,node2,..." />
-          <button onclick="verifyMerkleRootPath()" class="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm">Verify Merkle Path</button>
+          <button data-action="verify-merkle" class="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm">Verify Merkle Path</button>
           <div id="merkle-result" class="mt-3 text-sm text-slate-700"></div>
         </div>
       </div>
@@ -212,7 +212,7 @@
   <div id="decision-room" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Proof-of-Safety & ROI Decision Room</h1>
@@ -241,7 +241,7 @@
       </div>
       <div class="bg-white rounded-2xl shadow-sm p-4">
         <h3 class="font-semibold text-slate-800 mb-2">Procurement Export Packet (Simulation)</h3>
-        <button onclick="generateProcurementPacket()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Generate Procurement Packet</button>
+        <button data-action="generate-procurement-packet" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Generate Procurement Packet</button>
         <pre id="procurement-packet" class="mt-3 bg-gray-50 rounded-lg p-3 text-xs overflow-auto"></pre>
       </div>
     </div>
@@ -250,15 +250,15 @@
       <p class="text-sm text-teal-200/80 mb-8">Workflow Simulation Demo • Synthetic Data Only</p>
       
       <div class="flex gap-4 justify-center mb-8">
-        <button onclick="showScreen('patient-welcome')" class="px-8 py-4 bg-white text-teal-700 rounded-xl font-semibold hover:bg-teal-50 transition-all">Patient Experience</button>
-        <button onclick="showScreen('clinician-login')" class="px-8 py-4 bg-teal-800 text-white rounded-xl font-semibold hover:bg-teal-900 transition-all">Clinician Portal</button>
+        <button data-nav="patient-welcome" class="px-8 py-4 bg-white text-teal-700 rounded-xl font-semibold hover:bg-teal-50 transition-all">Patient Experience</button>
+        <button data-nav="clinician-login" class="px-8 py-4 bg-teal-800 text-white rounded-xl font-semibold hover:bg-teal-900 transition-all">Clinician Portal</button>
       </div>
       
       <div class="flex gap-3 justify-center flex-wrap">
-        <button onclick="showScreen('compliance-posture')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Compliance Posture</button>
-        <button onclick="showScreen('demo-script')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Demo Script</button>
-        <button onclick="showScreen('roi-dashboard')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
-        <button onclick="showScreen('enterprise-governance')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Enterprise Governance</button>
+        <button data-nav="compliance-posture" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Compliance Posture</button>
+        <button data-nav="demo-script" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Demo Script</button>
+        <button data-nav="roi-dashboard" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
+        <button data-nav="enterprise-governance" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Enterprise Governance</button>
       </div>
     </div>
   </div>
@@ -267,7 +267,7 @@
   <div id="compliance-posture" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Compliance Posture & Roadmap</h1>
@@ -355,7 +355,7 @@
   <div id="demo-script" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Investor Demo Script</h1>
@@ -380,7 +380,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Patient submits journal entry and async voice note. System processes with ASR and safety detection.</p>
-            <button onclick="showScreen('patient-journal')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Start →</button>
+            <button data-nav="patient-journal" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Start →</button>
           </div>
         </div>
         
@@ -392,7 +392,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Safety signal detected → Portal inbox item created (authoritative) → Email/SMS nudges sent.</p>
-            <button onclick="showScreen('clinician-inbox')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Inbox →</button>
+            <button data-nav="clinician-inbox" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Inbox →</button>
           </div>
         </div>
         
@@ -404,7 +404,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Clinician reviews alert with segment-level evidence references. Acknowledges or resolves in portal only.</p>
-            <button onclick="showScreen('inbox-detail')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Detail →</button>
+            <button data-nav="inbox-detail" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Detail →</button>
           </div>
         </div>
         
@@ -416,7 +416,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">AI-generated draft summary with evidence refs. Clinician reviews and marks as Reviewed/Retain Draft/Reject.</p>
-            <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft →</button>
+            <button data-nav="draft-review" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft →</button>
           </div>
         </div>
         
@@ -428,7 +428,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Recommendation suppressed due to open T2 event. Reason codes and remediation steps displayed.</p>
-            <button onclick="showScreen('suppression-ui')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Suppression →</button>
+            <button data-nav="suppression-ui" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Suppression →</button>
           </div>
         </div>
         
@@ -440,7 +440,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Export profile selection, segmentation confirmation, manifest with included/excluded items and checksums.</p>
-            <button onclick="showScreen('exports-center')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Exports →</button>
+            <button data-nav="exports-center" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Exports →</button>
           </div>
         </div>
         
@@ -452,7 +452,7 @@
               <span class="text-sm text-slate-500">~1 min</span>
             </div>
             <p class="text-sm text-slate-600 mb-3">Pilot goals with assumptions drawer. Toggle between pilot targets and projections with formula transparency.</p>
-            <button onclick="showScreen('roi-dashboard')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View ROI →</button>
+            <button data-nav="roi-dashboard" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View ROI →</button>
           </div>
         </div>
       </div>
@@ -467,12 +467,12 @@
       </div>
       <h1 class="text-3xl font-bold text-slate-800 mb-2">Welcome to Peacefull.ai</h1>
       <p class="text-slate-600 text-center mb-8 max-w-md">Your clinician-supervised companion for between-session support. This is not a substitute for emergency care.</p>
-      <button onclick="showScreen('patient-consent')" class="w-full max-w-sm btn-primary text-white py-4 rounded-xl font-semibold">Get Started</button>
+      <button data-nav="patient-consent" class="w-full max-w-sm btn-primary text-white py-4 rounded-xl font-semibold">Get Started</button>
     </div>
   </div>
 
   <div id="patient-consent" class="screen min-h-screen bg-slate-50 p-6">
-    <button onclick="showScreen('patient-welcome')" class="mb-6 flex items-center text-slate-600 hover:text-slate-800">
+    <button data-nav="patient-welcome" class="mb-6 flex items-center text-slate-600 hover:text-slate-800">
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       Back
     </button>
@@ -503,7 +503,7 @@
       </label>
     </div>
     
-    <button id="consent-btn" onclick="showScreen('patient-home')" disabled class="w-full py-4 rounded-xl font-semibold bg-slate-300 text-slate-500 transition-all">Continue</button>
+    <button id="consent-btn" data-nav="patient-home" disabled class="w-full py-4 rounded-xl font-semibold bg-slate-300 text-slate-500 transition-all">Continue</button>
   </div>
 
   <div id="patient-home" class="screen min-h-screen bg-slate-50 pb-24">
@@ -513,7 +513,7 @@
           <p class="text-teal-100 text-sm">Good morning,</p>
           <h1 class="text-2xl font-bold text-white">Sarah</h1>
         </div>
-        <button onclick="showScreen('patient-settings')" class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+        <button data-nav="patient-settings" class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
       </div>
@@ -534,7 +534,7 @@
       
       <h2 class="font-semibold text-slate-800 mb-4">Quick Actions</h2>
       <div class="space-y-3">
-        <button onclick="showScreen('patient-checkin')" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-teal-500">
+        <button data-nav="patient-checkin" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-teal-500">
           <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
             <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
@@ -544,7 +544,7 @@
           </div>
         </button>
         
-        <button onclick="showScreen('patient-journal')" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-blue-500">
+        <button data-nav="patient-journal" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-blue-500">
           <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </div>
@@ -554,7 +554,7 @@
           </div>
         </button>
         
-        <button onclick="showScreen('patient-voice')" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-purple-500">
+        <button data-nav="patient-voice" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-purple-500">
           <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
           </div>
@@ -569,7 +569,7 @@
 
   <div id="patient-journal" class="screen min-h-screen bg-white flex flex-col">
     <div class="p-4 border-b flex items-center">
-      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h1 class="text-xl font-bold text-slate-800">Journal Entry</h1>
@@ -584,13 +584,13 @@
         </div>
       </div>
       
-      <button id="save-journal" onclick="saveJournal()" disabled class="w-full mt-6 py-4 rounded-xl font-semibold bg-slate-300 text-slate-500 transition-all">Save Entry</button>
+      <button id="save-journal" data-action="save-journal" disabled class="w-full mt-6 py-4 rounded-xl font-semibold bg-slate-300 text-slate-500 transition-all">Save Entry</button>
     </div>
   </div>
 
   <div id="patient-checkin" class="screen min-h-screen bg-white flex flex-col">
     <div class="p-4 border-b flex items-center">
-      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h1 class="text-xl font-bold text-slate-800">Daily Check-in</h1>
@@ -620,19 +620,19 @@
         </div>
       </div>
       
-      <button onclick="submitCheckin()" class="w-full btn-primary text-white py-4 rounded-xl font-semibold">Submit Check-in</button>
+      <button data-action="submit-checkin" class="w-full btn-primary text-white py-4 rounded-xl font-semibold">Submit Check-in</button>
     </div>
   </div>
 
   <div id="patient-voice" class="screen min-h-screen bg-white flex flex-col">
     <div class="p-4 border-b flex items-center">
-      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h1 class="text-xl font-bold text-slate-800">Voice Note</h1>
     </div>
     <div class="flex-1 flex flex-col items-center justify-center p-6">
-      <button id="record-btn" onclick="toggleRecording()" class="w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl transition-all">
+      <button id="record-btn" data-action="toggle-recording" class="w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl transition-all">
         <svg id="record-icon" class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
         <svg id="stop-icon" class="w-12 h-12 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
       </button>
@@ -647,7 +647,7 @@
         <div class="waveform-bar" style="animation-delay: 0.4s"></div>
       </div>
       
-      <button id="upload-btn" onclick="uploadVoice()" class="hidden w-full max-w-sm mt-8 btn-primary text-white py-4 rounded-xl font-semibold">Upload Voice Note</button>
+      <button id="upload-btn" data-action="upload-voice" class="hidden w-full max-w-sm mt-8 btn-primary text-white py-4 rounded-xl font-semibold">Upload Voice Note</button>
     </div>
   </div>
 
@@ -655,7 +655,7 @@
 
   <div id="patient-submission-success" class="screen min-h-screen bg-white flex flex-col">
     <div class="p-4 border-b flex items-center">
-      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h1 class="text-xl font-bold text-slate-800">Submission Complete</h1>
@@ -674,7 +674,7 @@
         This response is supportive reflection, not diagnosis or emergency guidance. If urgent safety concerns arise, contact emergency services.
       </div>
       <div class="flex gap-3">
-        <button onclick="showScreen('patient-home')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Back to Home</button>
+        <button data-nav="patient-home" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Back to Home</button>
       </div>
     </div>
   </div>
@@ -682,7 +682,7 @@
   <div id="ai-communication-compare" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button onclick="showScreen('clinician-patient')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-patient" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">AI Communication Compare</h1>
@@ -716,7 +716,7 @@
 
   <div id="patient-settings" class="screen min-h-screen bg-slate-50">
     <div class="p-4 border-b bg-white flex items-center">
-      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
       <h1 class="text-xl font-bold text-slate-800">Settings</h1>
@@ -735,7 +735,7 @@
           </label>
         </div>
       </div>
-      <button onclick="showScreen('landing')" class="w-full py-4 bg-white rounded-xl shadow-sm text-red-600 font-semibold hover:bg-red-50">Sign Out</button>
+      <button data-nav="landing" class="w-full py-4 bg-white rounded-xl shadow-sm text-red-600 font-semibold hover:bg-red-50">Sign Out</button>
     </div>
   </div>
 
@@ -753,7 +753,7 @@
       <div class="space-y-4">
         <input type="email" value="dr.chen@example.com" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Email">
         <input type="password" value="********" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Password">
-        <button onclick="showScreen('clinician-mfa')" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Continue</button>
+        <button data-nav="clinician-mfa" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Continue</button>
       </div>
     </div>
   </div>
@@ -776,7 +776,7 @@
       <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
     </div>
     
-    <button id="mfa-btn" onclick="showScreen('clinician-caseload')" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
+    <button id="mfa-btn" data-nav="clinician-caseload" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
   </div>
 
   <!-- CLINICIAN CASELOAD -->
@@ -785,11 +785,11 @@
       <div class="flex items-center justify-between max-w-7xl mx-auto">
         <h1 class="text-xl font-bold text-white">My Caseload</h1>
         <div class="flex items-center gap-4">
-          <button onclick="showScreen('clinician-inbox')" class="relative p-2 text-slate-400 hover:text-white">
+          <button data-nav="clinician-inbox" class="relative p-2 text-slate-400 hover:text-white">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
             <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">2</span>
           </button>
-          <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white text-sm">Sign Out</button>
+          <button data-nav="landing" class="text-slate-400 hover:text-white text-sm">Sign Out</button>
         </div>
       </div>
     </div>
@@ -831,7 +831,7 @@
           </div>
         </div>
         <div class="divide-y">
-          <div onclick="showScreen('clinician-patient')" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-red-600">MR</span>
@@ -846,7 +846,7 @@
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
           </div>
-          <div onclick="showScreen('clinician-patient')" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-blue-600">JS</span>
@@ -860,7 +860,7 @@
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
           </div>
-          <div onclick="showScreen('clinician-patient')" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-green-600">EW</span>
@@ -881,7 +881,7 @@
   <div id="clinician-inbox" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Portal Inbox</h1>
@@ -893,7 +893,7 @@
         <p class="text-sm text-amber-800"><strong>Portal is authoritative.</strong> Email/SMS are nudges only. Acknowledge and resolve in this portal.</p>
       </div>
       
-      <div class="t2-alert rounded-2xl p-5 mb-4 cursor-pointer hover:shadow-lg transition-shadow" onclick="showScreen('inbox-detail')">
+      <div class="t2-alert rounded-2xl p-5 mb-4 cursor-pointer hover:shadow-lg transition-shadow" data-nav="inbox-detail">
         <div class="flex items-start justify-between">
           <div>
             <div class="flex items-center gap-2 mb-2">
@@ -908,7 +908,7 @@
         </div>
       </div>
       
-      <div class="t2-alert rounded-2xl p-5 mb-4 cursor-pointer hover:shadow-lg transition-shadow" onclick="showScreen('inbox-detail')">
+      <div class="t2-alert rounded-2xl p-5 mb-4 cursor-pointer hover:shadow-lg transition-shadow" data-nav="inbox-detail">
         <div class="flex items-start justify-between">
           <div>
             <div class="flex items-center gap-2 mb-2">
@@ -944,7 +944,7 @@
   <div id="inbox-detail" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-inbox')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-inbox" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Alert Detail</h1>
@@ -968,9 +968,9 @@
         </div>
         
         <div class="flex gap-3">
-          <button onclick="acknowledgeAlert()" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Acknowledge</button>
-          <button onclick="resolveAlert()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Resolve</button>
-          <button onclick="escalateAlert()" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200">Escalate</button>
+          <button data-action="acknowledge-alert" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Acknowledge</button>
+          <button data-action="resolve-alert" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Resolve</button>
+          <button data-action="escalate-alert" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200">Escalate</button>
         </div>
       </div>
       
@@ -1019,7 +1019,7 @@
   <div id="draft-review" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-patient')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-patient" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Draft Summary Review</h1>
@@ -1086,11 +1086,11 @@
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <h3 class="font-semibold text-slate-800 mb-4">Review Actions</h3>
         <div class="flex flex-wrap gap-3">
-          <button onclick="markReviewed()" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Mark Reviewed</button>
-          <button onclick="useWithCaution()" class="px-6 py-3 bg-amber-100 text-amber-700 rounded-xl font-semibold hover:bg-amber-200">Use With Caution</button>
-          <button onclick="retainDraft()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Retain Draft</button>
-          <button onclick="rejectSummary()" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200">Reject</button>
-          <button onclick="escalateSummary()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-xl font-semibold hover:bg-purple-200">Escalate</button>
+          <button data-action="mark-reviewed" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Mark Reviewed</button>
+          <button data-action="use-with-caution" class="px-6 py-3 bg-amber-100 text-amber-700 rounded-xl font-semibold hover:bg-amber-200">Use With Caution</button>
+          <button data-action="retain-draft" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Retain Draft</button>
+          <button data-action="reject-summary" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200">Reject</button>
+          <button data-action="escalate-summary" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-xl font-semibold hover:bg-purple-200">Escalate</button>
         </div>
       </div>
     </div>
@@ -1100,7 +1100,7 @@
   <div id="restricted-notes" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Restricted Notes</h1>
@@ -1121,7 +1121,7 @@
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-slate-800">Maria Rodriguez</h2>
-          <button onclick="showToast('New restricted note created')" class="px-4 py-2 bg-coral-500 text-white rounded-lg text-sm font-semibold hover:bg-coral-600">+ New Note</button>
+          <button data-toast="New restricted note created" class="px-4 py-2 bg-coral-500 text-white rounded-lg text-sm font-semibold hover:bg-coral-600">+ New Note</button>
         </div>
         <div class="space-y-4">
           <div class="p-4 bg-slate-50 rounded-xl border-l-4 border-red-400">
@@ -1161,7 +1161,7 @@
   <div id="exports-center" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Exports Center</h1>
@@ -1206,7 +1206,7 @@
               </label>
             </div>
           </div>
-          <button onclick="showExportConfirmation()" class="w-full btn-primary text-white py-4 rounded-xl font-semibold">Generate Export</button>
+          <button data-action="show-export-confirmation" class="w-full btn-primary text-white py-4 rounded-xl font-semibold">Generate Export</button>
         </div>
       </div>
       
@@ -1220,8 +1220,8 @@
           </label>
         </div>
         <div class="flex gap-3">
-          <button onclick="generateExport()" class="flex-1 btn-primary text-white py-3 rounded-xl font-semibold">Confirm & Generate</button>
-          <button onclick="hideExportConfirmation()" class="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-semibold">Cancel</button>
+          <button data-action="generate-export" class="flex-1 btn-primary text-white py-3 rounded-xl font-semibold">Confirm & Generate</button>
+          <button data-action="hide-export-confirmation" class="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-semibold">Cancel</button>
         </div>
       </div>
       
@@ -1258,7 +1258,7 @@
   <div id="suppression-ui" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Recommendation Status</h1>
@@ -1303,7 +1303,7 @@
           </ol>
         </div>
         <div class="flex items-center gap-3">
-          <button onclick="showScreen('inbox-detail')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Open T2 Alert →</button>
+          <button data-nav="inbox-detail" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View Open T2 Alert →</button>
         </div>
       </div>
       
@@ -1328,9 +1328,9 @@
           </ol>
         </div>
         <div class="flex items-center gap-3">
-          <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft Summary →</button>
-          <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare →</button>
-          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue →</button>
+          <button data-nav="draft-review" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Review Draft Summary →</button>
+          <button data-nav="ai-communication-compare" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare →</button>
+          <button data-nav="communication-triage-queue" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue →</button>
         </div>
       </div>
       
@@ -1364,7 +1364,7 @@
   <div id="communication-triage-queue" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <button onclick="showScreen('clinician-inbox')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-inbox" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Communication Triage Queue</h1>
@@ -1390,10 +1390,10 @@
           <h3 class="font-semibold text-slate-800 mb-3">Triage Detail</h3>
           <div id="triage-detail" class="space-y-2 text-sm text-slate-700"></div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button onclick="updateTriageStatus('ACK')" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button>
-            <button onclick="updateTriageStatus('IN_REVIEW')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">In Review</button>
-            <button onclick="updateTriageStatus('ESCALATED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Escalate</button>
-            <button onclick="updateTriageStatus('RESOLVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button>
+            <button data-triage-status="ACK" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button>
+            <button data-triage-status="IN_REVIEW" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">In Review</button>
+            <button data-triage-status="ESCALATED" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Escalate</button>
+            <button data-triage-status="RESOLVED" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button>
           </div>
         </div>
       </div>
@@ -1408,7 +1408,7 @@
   <div id="memory-review" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Memory Review (C-11)</h1>
@@ -1434,9 +1434,9 @@
           <h3 class="font-semibold text-slate-800 mb-3">Memory Detail</h3>
           <div id="memory-detail" class="space-y-3 text-sm text-slate-700"></div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button onclick="updateMemoryStatus('APPROVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve</button>
-            <button onclick="updateMemoryStatus('REJECTED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reject</button>
-            <button onclick="updateMemoryStatus('CONFLICT_FLAGGED')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Flag Conflict</button>
+            <button data-memory-status="APPROVED" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve</button>
+            <button data-memory-status="REJECTED" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reject</button>
+            <button data-memory-status="CONFLICT_FLAGGED" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Flag Conflict</button>
           </div>
         </div>
       </div>
@@ -1456,7 +1456,7 @@
   <div id="treatment-plan-editor" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Treatment Plan Editor (C-10)</h1>
@@ -1482,9 +1482,9 @@
           <h3 class="font-semibold text-slate-800 mb-3">Plan Item Detail</h3>
           <div id="treatment-plan-detail" class="space-y-3 text-sm text-slate-700"></div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button onclick="updatePlanStatus('DRAFT')" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Keep Draft</button>
-            <button onclick="updatePlanStatus('REVIEWED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Mark Reviewed</button>
-            <button onclick="updatePlanStatus('HOLD')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Hold</button>
+            <button data-plan-status="DRAFT" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Keep Draft</button>
+            <button data-plan-status="REVIEWED" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Mark Reviewed</button>
+            <button data-plan-status="HOLD" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Hold</button>
           </div>
         </div>
       </div>
@@ -1501,7 +1501,7 @@
   <div id="enterprise-governance" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Enterprise Governance Hub</h1>
@@ -1529,11 +1529,11 @@
           <h3 class="font-semibold text-slate-800 mb-3">Governance Detail</h3>
           <div id="enterprise-detail" class="space-y-2 text-sm text-slate-700"></div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button onclick="updateEnterpriseStatus('APPROVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve Package</button>
-            <button onclick="updateEnterpriseStatus('CONDITIONAL')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
-            <button onclick="updateEnterpriseStatus('REVIEW_REQUIRED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
-            <button onclick="showScreen('security-command-center')" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
-            <button onclick="showScreen('decision-room')" class="px-3 py-2 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
+            <button data-enterprise-status="APPROVED" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve Package</button>
+            <button data-enterprise-status="CONDITIONAL" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
+            <button data-enterprise-status="REVIEW_REQUIRED" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
+            <button data-nav="security-command-center" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
+            <button data-nav="decision-room" class="px-3 py-2 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
           </div>
         </div>
       </div>
@@ -1549,7 +1549,7 @@
   <div id="roi-dashboard" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">ROI Dashboard</h1>
@@ -1564,8 +1564,8 @@
         </div>
         <p class="text-sm text-amber-800">All metrics below are simulated for demonstration purposes. Toggle to view pilot targets vs. projections.</p>
         <div class="flex gap-3 mt-3">
-          <button id="roi-toggle-pilot" onclick="setROIMode('pilot')" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Pilot Targets</button>
-          <button id="roi-toggle-proj" onclick="setROIMode('projection')" class="px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium">Projections</button>
+          <button id="roi-toggle-pilot" data-roi-mode="pilot" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Pilot Targets</button>
+          <button id="roi-toggle-proj" data-roi-mode="projection" class="px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium">Projections</button>
         </div>
       </div>
       
@@ -1605,7 +1605,7 @@
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
               <p class="font-medium text-slate-700">Hours Saved/Week</p>
-              <button onclick="toggleAssumption('hours')" class="text-teal-600 text-sm">Show Formula</button>
+              <button data-toggle-assumption="hours" class="text-teal-600 text-sm">Show Formula</button>
             </div>
             <div id="assumption-hours" class="hidden mt-3 pt-3 border-t border-slate-200">
               <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> (Avg entries/day × Review time/entry × Days/week) - (AI summary time × Sessions/week)</p>
@@ -1616,7 +1616,7 @@
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
               <p class="font-medium text-slate-700">ROI Calculation</p>
-              <button onclick="toggleAssumption('roi')" class="text-teal-600 text-sm">Show Formula</button>
+              <button data-toggle-assumption="roi" class="text-teal-600 text-sm">Show Formula</button>
             </div>
             <div id="assumption-roi" class="hidden mt-3 pt-3 border-t border-slate-200">
               <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> (Value of time saved + Outcome improvements - Platform cost) / Platform cost × 100</p>
@@ -1627,7 +1627,7 @@
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
               <p class="font-medium text-slate-700">Annual Savings</p>
-              <button onclick="toggleAssumption('savings')" class="text-teal-600 text-sm">Show Formula</button>
+              <button data-toggle-assumption="savings" class="text-teal-600 text-sm">Show Formula</button>
             </div>
             <div id="assumption-savings" class="hidden mt-3 pt-3 border-t border-slate-200">
               <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> Hours saved/week × Clinician hourly rate × 48 weeks × Number of clinicians</p>
@@ -1669,7 +1669,7 @@
   <div id="clinician-patient" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Patient Details</h1>
@@ -1719,11 +1719,11 @@
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-slate-800">Recent Activity</h3>
-          <button onclick="showScreen('draft-review')" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Review Draft Summary</button>
-          <button onclick="showScreen('memory-review')" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Open Memory Review</button>
-          <button onclick="showScreen('treatment-plan-editor')" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Open Treatment Plan</button>
-          <button onclick="showScreen('ai-communication-compare')" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
-          <button onclick="showScreen('communication-triage-queue')" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
+          <button data-nav="draft-review" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Review Draft Summary</button>
+          <button data-nav="memory-review" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Open Memory Review</button>
+          <button data-nav="treatment-plan-editor" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Open Treatment Plan</button>
+          <button data-nav="ai-communication-compare" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
+          <button data-nav="communication-triage-queue" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
         </div>
         <div class="space-y-3">
           <div class="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
@@ -1733,7 +1733,7 @@
             </div>
             <p class="font-medium text-slate-800">Voice Note: Safety Signal Detected</p>
             <p class="text-sm text-slate-600 mt-1">"I don't see the point anymore..."</p>
-            <button onclick="showScreen('inbox-detail')" class="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">View Alert</button>
+            <button data-nav="inbox-detail" class="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">View Alert</button>
           </div>
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
@@ -1768,7 +1768,7 @@
   <div id="workflow-simulation" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         <h1 class="text-xl font-bold text-white">Workflow Simulation</h1>
