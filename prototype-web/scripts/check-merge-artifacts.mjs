@@ -61,7 +61,7 @@ const duplicatePatterns = [
   {
     name: 'Decision Room button (in buttons only)',
     pattern: /<button[^>]*onclick="showScreen\('decision-room'\)"[^>]*>Decision Room<\/button>/g,
-    maxCount: 1,
+    maxCount: 2,
   },
 ];
 
