@@ -786,10 +786,11 @@
               </div>
               <div>
                 <p class="font-medium text-slate-800">James Smith</p>
-                <p class="text-sm text-slate-500">Last entry: Yesterday, 8:00 PM</p>
+                <p class="text-sm text-slate-500">Last entry: Yesterday, 8:00 PM • ADHD-focused adherence support</p>
               </div>
             </div>
             <div class="flex items-center gap-3">
+              <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">ADHD</span>
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
           </div>
@@ -800,10 +801,13 @@
               </div>
               <div>
                 <p class="font-medium text-slate-800">Emma Wilson</p>
-                <p class="text-sm text-slate-500">Last entry: Feb 23, 7:30 PM</p>
+                <p class="text-sm text-slate-500">Last entry: Feb 23, 7:30 PM • Mood stabilization pathway</p>
               </div>
             </div>
-            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Stable</span>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-semibold">Mood/Anxiety</span>
+              <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Stable</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1668,6 +1672,49 @@
             <p class="text-sm text-slate-500">Safety Alerts</p>
           </div>
         </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-slate-800">Patient Profile Library (Simulation)</h3>
+          <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-semibold">Clinician-only context</span>
+        </div>
+        <p class="text-sm text-slate-600 mb-4">These synthetic profile summaries demonstrate how Peacefull.ai supports varied patient presentations across care stages while preserving clinician authority.</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+              <p class="font-semibold text-blue-900">James Smith</p>
+              <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">ADHD + Anxiety</span>
+            </div>
+            <p class="text-sm text-blue-900 mb-3"><strong>Clinical context:</strong> Executive dysfunction, task-initiation paralysis, and stress amplification during deadline cycles.</p>
+            <div class="space-y-2 text-sm">
+              <div class="p-3 bg-white border border-blue-100 rounded-lg text-slate-700"><strong>Current stage:</strong> Active treatment optimization (week 6).</div>
+              <div class="p-3 bg-white border border-blue-100 rounded-lg text-slate-700"><strong>Signals tracked:</strong> adherence consistency, missed check-in clusters, evening overwhelm language.</div>
+              <div class="p-3 bg-white border border-blue-100 rounded-lg text-slate-700"><strong>Peacefull.ai support:</strong> structured micro-task coaching, routine reinforcement prompts, and clinician draft summaries with uncertainty flags.</div>
+              <div class="p-3 bg-white border border-blue-100 rounded-lg text-slate-700"><strong>Clinical focus this week:</strong> verify barriers to follow-through and recalibrate coping plan cadence.</div>
+            </div>
+          </div>
+          <div class="p-4 bg-violet-50 border border-violet-200 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+              <p class="font-semibold text-violet-900">Emma Wilson</p>
+              <span class="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-semibold">Depressive + Anxiety Spectrum</span>
+            </div>
+            <p class="text-sm text-violet-900 mb-3"><strong>Clinical context:</strong> Low mood recurrence with sleep irregularity and social withdrawal under sustained stress periods.</p>
+            <div class="space-y-2 text-sm">
+              <div class="p-3 bg-white border border-violet-100 rounded-lg text-slate-700"><strong>Current stage:</strong> Stabilization and relapse-prevention planning.</div>
+              <div class="p-3 bg-white border border-violet-100 rounded-lg text-slate-700"><strong>Signals tracked:</strong> mood trend slope, sleep disruption burden, protective engagement continuity.</div>
+              <div class="p-3 bg-white border border-violet-100 rounded-lg text-slate-700"><strong>Peacefull.ai support:</strong> between-session reflective check-ins, safety-forward language detection, and clinician-side timeline synthesis.</div>
+              <div class="p-3 bg-white border border-violet-100 rounded-lg text-slate-700"><strong>Clinical focus this week:</strong> reinforce protective routines and verify next-24h support plan adherence.</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 text-sm">
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg"><strong class="text-slate-800">Stage 1</strong><p class="text-slate-600">Intake + baseline signal capture</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg"><strong class="text-slate-800">Stage 2</strong><p class="text-slate-600">Active treatment support + supervised drafts</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg"><strong class="text-slate-800">Stage 3</strong><p class="text-slate-600">Stabilization with trend-based follow-up cues</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg"><strong class="text-slate-800">Stage 4</strong><p class="text-slate-600">Maintenance + relapse-prevention monitoring</p></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Guardrail boundary: diagnoses and treatment decisions are clinician-documented and clinician-approved; Peacefull.ai provides assistive decision-support only.</p>
       </div>
       
       <div class="bg-white rounded-2xl shadow-sm p-6">
