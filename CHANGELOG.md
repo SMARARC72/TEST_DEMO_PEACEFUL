@@ -7,6 +7,30 @@
 
 ---
 
+## v2.7 — Live AI Chat Demo Integration (NEW)
+
+### Live AI Chat Scenarios
+- **Added:** `ai-live-chat-demo` screen integration across core demo navigation
+- **Patient archetypes:**
+  - Type A (T1/Guarded): anxiety/workload stress with supportive coaching flow
+  - Type B (T2/Elevated): acute hopelessness language with deterministic escalation flow
+- **Guardrails surfaced in UI:**
+  - Privacy/training boundaries (no raw PHI model training claims)
+  - Tenant-scoped RAG retrieval and role-based context segregation
+  - Red-team hardening gates and quality check gates displayed in-demo
+
+### Narrative Tie-Ins
+- **Demo Script:** inserted explicit Live AI Chat step (`2A`) for investor walkthrough continuity
+- **Workflow Simulation:** added direct “Open Live Chat Example Path” CTA and flow continuity text
+- **Decision Room / ROI (prototype):** linked live chat trust signal to safety and GTM proof context
+
+### Reviewer Quick Path
+- Landing → `Live AI Chat`
+- Demo Script → `Live AI Chat (2A)`
+- Workflow Simulation → `Open Live Chat Example Path`
+
+---
+
 ## v2.4 — AI Communication Surfaces for Patient Submissions (NEW)
 
 ## v2.5 — Security Command Center & Hardening (NEW)

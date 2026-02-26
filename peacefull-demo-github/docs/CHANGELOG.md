@@ -7,6 +7,35 @@
 
 ---
 
+## v2.2 — Live AI Chat Integration (NEW)
+
+### Added Demo Surface
+- **Screen:** `ai-live-chat-demo`
+- **Purpose:** Show two patient types in a simulated live-chat context while preserving clinician-supervised safety model.
+
+### Scenario Coverage
+- **Type A (T1 / Guarded):** stress and anxiety language with patient-safe coaching response.
+- **Type B (T2 / Elevated):** hopelessness language with deterministic escalation and portal-authoritative workflow handoff.
+
+### Guardrails Displayed In-Screen
+- Privacy/training boundary statements
+- Tenant-scoped and role-constrained retrieval (RAG posture)
+- Red-team hardening gates
+- Quality check gates
+
+### Tie-In Updates
+- Landing quick link to Live AI Chat
+- Demo Script step `2A` for live-chat walkthrough
+- Workflow Simulation CTA to open live-chat path
+- ROI trust signal card linked to live-chat scenarios
+
+### Quick Reviewer Jump Path
+- Landing → `Live AI Chat`
+- Demo Script → `Live AI Chat (2A)`
+- Workflow Simulation → `Open Live Chat Example Path`
+
+---
+
 ## CLAIMS & TRUST FIXES
 
 ### A1: Compliance Posture Panel

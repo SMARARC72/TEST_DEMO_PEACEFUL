@@ -342,6 +342,18 @@
             <button onclick="showScreen('patient-journal')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Start →</button>
           </div>
         </div>
+
+        <div class="script-step">
+          <div class="script-dot">2A</div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-slate-800">Live AI Chat (Two Patient Archetypes)</h3>
+              <span class="text-sm text-slate-500">~1 min</span>
+            </div>
+            <p class="text-sm text-slate-600 mb-3">Demonstrate patient-safe coaching for guarded signals and deterministic escalation for elevated risk, with privacy-first retrieval boundaries.</p>
+            <button onclick="showScreen('ai-live-chat-demo')" class="px-4 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Open Live Chat →</button>
+          </div>
+        </div>
         
         <div class="script-step">
           <div class="script-dot">2</div>
@@ -1386,6 +1398,11 @@
       </div>
       
       <div class="grid grid-cols-3 gap-4">
+        <div class="bg-cyan-50 border border-cyan-200 rounded-xl p-4 col-span-3">
+          <p class="font-semibold text-cyan-900">Live Chat Trust Signal (Simulated)</p>
+          <p class="text-sm text-cyan-800">Two-patient archetype flows demonstrate patient-safe language, deterministic escalation, and policy-constrained retrieval boundaries.</p>
+          <button onclick="showScreen('ai-live-chat-demo')" class="mt-3 px-3 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Review Live Chat Scenarios</button>
+        </div>
         <div class="bg-white rounded-xl p-6 text-center">
           <p id="roi-metric-1" class="text-3xl font-bold text-teal-600">5.2</p>
           <p class="text-sm text-slate-500 mt-1">Hours Saved/Week</p>
@@ -1569,6 +1586,7 @@
     <div class="p-6 max-w-4xl mx-auto space-y-6">
       <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
         <p class="text-sm text-amber-800"><strong>Workflow Simulation:</strong> This demonstrates the clinical workflow from patient input to clinician review. All data is synthetic.</p>
+        <button onclick="showScreen('ai-live-chat-demo')" class="mt-3 px-3 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Open Live Chat Example Path</button>
       </div>
       
       <div class="space-y-4">
@@ -1608,6 +1626,7 @@
               <span class="text-sm text-slate-500">T1 - Review Recommended</span>
             </div>
             <p class="text-sm text-slate-600">Segment 0:12-0:18: "couldn't focus" • Segment 0:24-0:31: "what happened last week"</p>
+            <p class="text-sm text-slate-600 mt-2">In live chat mode, patient-safe coaching appears first while clinician-only evidence remains on supervised surfaces.</p>
           </div>
         </div>
         
