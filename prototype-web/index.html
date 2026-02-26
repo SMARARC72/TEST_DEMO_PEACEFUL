@@ -124,6 +124,7 @@
           <button onclick="showScreen('ai-communication-compare')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
           <button onclick="showScreen('communication-triage-queue')" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
           <button onclick="showScreen('security-command-center')" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
+          <button onclick="showScreen('decision-room')" class="w-full py-2 px-3 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
           <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -207,16 +208,45 @@
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
-
-  <!-- LANDING SCREEN -->
-  <div id="landing" class="screen active min-h-screen gradient-hero flex flex-col items-center justify-center p-6">
-    <div class="text-center max-w-2xl mx-auto">
-      <div class="w-24 h-24 bg-white/20 backdrop-blur rounded-3xl flex items-center justify-center mx-auto mb-8">
-        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+  <!-- DECISION ROOM (PROOF-OF-SAFETY & ROI) -->
+  <div id="decision-room" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Proof-of-Safety & ROI Decision Room</h1>
+        <div class="w-6"></div>
       </div>
-      <h1 class="text-5xl font-bold text-white mb-4">Peacefull.ai</h1>
-      <p class="text-xl text-teal-100 mb-2">Clinician-Supervised Behavioral Health AI Companion</p>
+    </div>
+    <div class="p-6 max-w-6xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Safety Assurance Panel</h3>
+        <p class="text-sm text-slate-600">Risk posture: <span id="risk-posture" class="font-bold">Guarded</span></p>
+        <p class="text-sm text-slate-600">Patient-safe output: <span id="boundary-patient" class="font-bold">YES</span></p>
+        <p class="text-sm text-slate-600">Clinician evidence segregation: <span id="boundary-clinician" class="font-bold">YES</span></p>
+        <p class="text-sm text-red-600" id="suppression-reasons"></p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Governance Chain-of-Custody Panel</h3>
+        <p class="text-sm text-slate-600">Approvals: C‑11, C‑10, Enterprise</p>
+        <p class="text-sm text-slate-600">Latest audits: <span id="governance-audits">none</span></p>
+        <p class="text-sm text-slate-600">Readiness Verdict: <span id="readiness-verdict" class="font-bold">REVIEW_REQUIRED</span></p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">ROI + GTM Proof Panel</h3>
+        <p class="text-sm text-slate-600">Clinician time-saved signal: <span id="roi-time-saved">0</span> hrs</p>
+        <p class="text-sm text-slate-600">Pilot Expansion Score: <span id="pilot-score" class="font-bold">0</span></p>
+        <p class="text-xs text-slate-500">All numbers are simulated for demo purposes</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Procurement Export Packet (Simulation)</h3>
+        <button onclick="generateProcurementPacket()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Generate Procurement Packet</button>
+        <pre id="procurement-packet" class="mt-3 bg-gray-50 rounded-lg p-3 text-xs overflow-auto"></pre>
+      </div>
+    </div>
+  </div>
+
       <p class="text-sm text-teal-200/80 mb-8">Workflow Simulation Demo • Synthetic Data Only</p>
       
       <div class="flex gap-4 justify-center mb-8">
@@ -1503,6 +1533,7 @@
             <button onclick="updateEnterpriseStatus('CONDITIONAL')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
             <button onclick="updateEnterpriseStatus('REVIEW_REQUIRED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
             <button onclick="showScreen('security-command-center')" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
+            <button onclick="showScreen('decision-room')" class="px-3 py-2 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
           </div>
         </div>
       </div>
@@ -1869,6 +1900,9 @@
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
+      if (screenId === 'decision-room') {
+        renderDecisionRoom();
+      }
     }
     
     // Demo panel toggle
@@ -2479,6 +2513,8 @@
       resetTriageQueue();
       // Reset newly added security demo state
       if (typeof resetSecurityState === 'function') resetSecurityState();
+      // Reset decision room state as part of deterministic demo reset
+      if (typeof resetDecisionRoomState === 'function') resetDecisionRoomState();
       showToast('Demo reset to defaults');
     }
     
@@ -2654,6 +2690,73 @@
       securityState = JSON.parse(JSON.stringify(baselineSecurityState));
       renderSecurityCommandCenter();
       appendSecurityAuditEvent('Security demo state reset to baseline');
+    }
+
+    /* Decision Room Simulation State & Helpers */
+    const baselineDecisionRoomState = {
+      readinessVerdict: 'REVIEW_REQUIRED',
+      pilotScore: 0,
+      packet: null
+    };
+    let decisionRoomState = JSON.parse(JSON.stringify(baselineDecisionRoomState));
+
+    function computeRiskPosture() {
+      const tier = (document.getElementById('safety-tier') || {}).value;
+      const escalated = triageQueue.some(i => i.status === 'ESCALATED' || i.signalBand === 'ELEVATED');
+      if (tier === 'T3' || escalated) return 'Elevated';
+      if (tier === 'T2') return 'Moderate';
+      return 'Guarded';
+    }
+
+    function computeReadinessVerdict() {
+      const signal = parseInt((document.getElementById('enterprise-readiness-signal') || {}).textContent) || 0;
+      if (signal >= 70) return 'APPROVED';
+      if (signal >= 40) return 'CONDITIONAL';
+      return 'REVIEW_REQUIRED';
+    }
+
+    function computePilotExpansionScore() {
+      const timeSaved = parseFloat((document.getElementById('roi-metric-1') || {}).textContent) || 0;
+      const readinessSignal = parseInt((document.getElementById('enterprise-readiness-signal') || {}).textContent) || 0;
+      const unresolvedHigh = triageQueue.filter(item => item.status !== 'RESOLVED' && item.signalBand === 'ELEVATED').length;
+      return Math.round(timeSaved + readinessSignal * 0.2 + unresolvedHigh * 5);
+    }
+
+    function generateProcurementPacket() {
+      const packet = {
+        controlsChecklist: ['MFA enabled', 'Audit logging', 'BAA-compliant cloud', 'Segregation enforced'],
+        latestAuditHighlights: securityState.auditLog.slice(0,3).map(e => e.event),
+        knownUnknowns: ['Regulatory approval timing', 'Third-party contract reviews pending'],
+        decisionRecommendation: computeReadinessVerdict()
+      };
+      decisionRoomState.packet = packet;
+      renderDecisionRoom();
+      showToast('Procurement packet generated (demo)');
+    }
+
+    function renderDecisionRoom() {
+      const riskEl = document.getElementById('risk-posture');
+      if (riskEl) riskEl.textContent = computeRiskPosture();
+      const suppEl = document.getElementById('suppression-reasons');
+      if (suppEl) {
+        const sup = (document.getElementById('rec-status') || {}).value;
+        suppEl.textContent = sup === 'SUPPRESSED' ? 'Recommendation suppressed due to open T2 items' : '';
+      }
+      const govEl = document.getElementById('governance-audits');
+      if (govEl) govEl.textContent = enterpriseItems.map(i => i.auditLog.slice(-1)[0] || '').join('; ');
+      const verdictEl = document.getElementById('readiness-verdict');
+      if (verdictEl) verdictEl.textContent = computeReadinessVerdict();
+      const timeEl = document.getElementById('roi-time-saved');
+      if (timeEl) timeEl.textContent = (document.getElementById('roi-metric-1') || {}).textContent || '0';
+      const scoreEl = document.getElementById('pilot-score');
+      if (scoreEl) scoreEl.textContent = computePilotExpansionScore();
+      const packetEl = document.getElementById('procurement-packet');
+      if (packetEl) packetEl.textContent = decisionRoomState.packet ? JSON.stringify(decisionRoomState.packet, null, 2) : '';
+    }
+
+    function resetDecisionRoomState() {
+      decisionRoomState = JSON.parse(JSON.stringify(baselineDecisionRoomState));
+      renderDecisionRoom();
     }
 
     renderMemoryReview();

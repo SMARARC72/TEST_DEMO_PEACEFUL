@@ -58,6 +58,11 @@ const duplicatePatterns = [
     pattern: /<button[^>]*onclick="showScreen\('security-command-center'\)"[^>]*>Security Command Center<\/button>/g,
     maxCount: 2,
   },
+  {
+    name: 'Decision Room button (in buttons only)',
+    pattern: /<button[^>]*onclick="showScreen\('decision-room'\)"[^>]*>Decision Room<\/button>/g,
+    maxCount: 1,
+  },
 ];
 
 let errors = [];

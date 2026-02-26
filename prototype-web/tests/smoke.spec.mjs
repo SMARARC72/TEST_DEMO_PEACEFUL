@@ -34,4 +34,19 @@ test('Security Command Center smoke', async ({ page }) => {
 
   // Audit log should contain reset event
   await expect(page.locator('#security-audit-log')).toContainText('Security demo state reset');
+
+  //-- Decision Room checks --
+  const drBtn = page.locator('text=Decision Room').first();
+  await drBtn.click();
+  const dr = page.locator('#decision-room');
+  await expect(dr).toBeVisible();
+  await expect(page.locator('#readiness-verdict')).toBeVisible();
+  await page.click('text=Generate Procurement Packet');
+  await expect(page.locator('#procurement-packet')).toContainText('controlsChecklist');
+
+  // Reset again and ensure page returns to baseline
+  await page.click('text=Reset Demo');
+  await drBtn.click();
+  await expect(page.locator('#readiness-verdict')).toBeVisible();
+  await expect(page.locator('#procurement-packet')).toHaveText('');
 });

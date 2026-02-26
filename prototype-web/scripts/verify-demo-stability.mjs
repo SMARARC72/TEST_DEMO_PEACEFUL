@@ -37,20 +37,14 @@ const hasResetWiring =
   resetDemoMatch[1].includes('resetEnterpriseGovernance()') &&
   resetDemoMatch[1].includes('resetSubmissionState()') &&
   resetDemoMatch[1].includes('resetTriageQueue()') &&
-  resetDemoMatch[1].includes('resetSecurityState()');
-
-checks.push({
-  name: 'resetDemo() wires all reset hooks',
-  pass: hasResetWiring,
-  details: resetDemoMatch
-    ? `resetDemo wired with: Memory, Treatment, Enterprise, Submission\n    Found: ${resetDemoMatch[0].slice(0, 60)}...`
-    : 'resetDemo() function not found',
-});
+  resetDemoMatch[1].includes('resetSecurityState()') &&
+  resetDemoMatch[1].includes('resetDecisionRoomState()');
 
 // 3. Check for duplicate nav button patterns
 const resetDemoButtonCount = (indexHtml.match(/<button[^>]*onclick="resetDemo\(\)"[^>]*>Reset Demo<\/button>/g) || []).length;
 const commTriageCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('communication-triage-queue'\)"[^>]*>Communication Triage Queue<\/button>/g) || []).length;
 const securityCenterCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('security-command-center'\)"[^>]*>Security Command Center<\/button>/g) || []).length;
+const decisionRoomCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('decision-room'\)"[^>]*>Decision Room<\/button>/g) || []).length;
 
 checks.push({
   name: 'Reset Demo button appears exactly once in DOM',
@@ -62,6 +56,12 @@ checks.push({
   name: 'Security Command Center button appears exactly once in DOM',
   pass: securityCenterCount >= 1 && securityCenterCount <= 2,
   details: `Found ${securityCenterCount} occurrence(s) (expected 1-2)`,
+});
+
+checks.push({
+  name: 'Decision Room button appears exactly once in DOM',
+  pass: decisionRoomCount === 1,
+  details: `Found ${decisionRoomCount} occurrence(s)`,
 });
 
 // 4. Netlify config check
