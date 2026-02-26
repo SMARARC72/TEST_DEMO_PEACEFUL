@@ -133,6 +133,7 @@
         <div class="border-t pt-4 space-y-2">
           <button onclick="showScreen('compliance-posture')" class="w-full py-2 px-3 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Compliance Posture</button>
           <button onclick="showScreen('demo-script')" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Demo Script</button>
+          <button onclick="showScreen('ai-live-chat-demo')" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Live AI Chat Demo</button>
           <button onclick="showScreen('restricted-notes')" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
           <button onclick="showScreen('exports-center')" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
           <button onclick="showScreen('suppression-ui')" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
@@ -151,6 +152,7 @@
       <button type="button" data-quick-nav="clinician-caseload" onclick="showScreen('clinician-caseload')" aria-label="Go to clinician caseload">Caseload</button>
       <button type="button" data-quick-nav="clinician-inbox" onclick="showScreen('clinician-inbox')" aria-label="Go to clinician inbox">Inbox</button>
       <button type="button" data-quick-nav="draft-review" onclick="showScreen('draft-review')" aria-label="Go to draft review">Draft Review</button>
+      <button type="button" data-quick-nav="ai-live-chat-demo" onclick="showScreen('ai-live-chat-demo')" aria-label="Go to live AI chat demo">Live Chat</button>
       <button type="button" data-quick-nav="suppression-ui" onclick="showScreen('suppression-ui')" aria-label="Go to suppression view">Suppression</button>
       <button type="button" data-quick-nav="exports-center" onclick="showScreen('exports-center')" aria-label="Go to exports center">Exports</button>
       <button type="button" data-quick-nav="roi-dashboard" onclick="showScreen('roi-dashboard')" aria-label="Go to ROI dashboard">ROI</button>
@@ -179,6 +181,7 @@
           <button onclick="showScreen('compliance-posture')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Compliance Posture</button>
           <button onclick="showScreen('demo-script')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Demo Script</button>
           <button onclick="showScreen('roi-dashboard')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
+          <button onclick="showScreen('ai-live-chat-demo')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Live AI Chat</button>
           <button onclick="showScreen('workflow-simulation')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Workflow</button>
         </div>
 
@@ -1009,6 +1012,84 @@
           <button onclick="retainDraft()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Retain Draft</button>
           <button onclick="rejectSummary()" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200">Reject</button>
           <button onclick="escalateSummary()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-xl font-semibold hover:bg-purple-200">Escalate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-live-chat-demo" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white" aria-label="Back to landing">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Live AI Chat Session Demo</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-6xl mx-auto space-y-4">
+      <div class="bg-cyan-50 border border-cyan-200 rounded-xl p-4">
+        <p class="text-sm text-cyan-900"><strong>Simulation only:</strong> Examples below show patient-safe response behavior, clinician escalation pathways, and privacy-first retrieval controls.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-800">Patient Type A: Anxiety + Workload Stress (T1)</h3>
+            <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">Signal: GUARDED</span>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "I keep spiraling at night and can’t shut my mind off."</div>
+            <div class="p-3 rounded-lg bg-teal-50 border border-teal-200"><strong class="text-teal-800">Peacefull.ai response:</strong> "Thanks for sharing this. Let’s do a short grounding step now: name 3 things you can see, 2 you can hear, and 1 you can feel. If helpful, we can draft a bedtime plan for tonight and send a concise summary for your clinician review."</div>
+            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "Okay, that helps a little. I still feel tense."</div>
+            <div class="p-3 rounded-lg bg-teal-50 border border-teal-200"><strong class="text-teal-800">Peacefull.ai response:</strong> "You made progress by pausing and checking in. I can guide a 2-minute breathing cycle and store this as a draft note so your clinician sees what worked tonight."</div>
+          </div>
+          <p class="text-xs text-slate-500 mt-3">Capability shown: adaptive tone, stepwise coping guidance, and clinician-context drafting without autonomous diagnosis.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-800">Patient Type B: Acute Hopelessness Language (T2)</h3>
+            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Signal: ELEVATED</span>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "I don’t think I can keep doing this anymore."</div>
+            <div class="p-3 rounded-lg bg-red-50 border border-red-200"><strong class="text-red-800">Peacefull.ai response:</strong> "I’m really glad you reached out. You deserve immediate support. If you may be in danger, call emergency services now or 988. I’m escalating this to your clinician workflow right away."</div>
+            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">System action:</strong> Portal inbox event created, clinician nudge sent, recommendation generation suppressed pending review.</div>
+            <div class="p-3 rounded-lg bg-red-50 border border-red-200"><strong class="text-red-800">Peacefull.ai response:</strong> "While we wait, would you like to contact a trusted person from your safety plan? I can stay with you step-by-step."</div>
+          </div>
+          <p class="text-xs text-slate-500 mt-3">Capability shown: safety-tier detection, crisis-forward language, and strict handoff to human-supervised protocol.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Privacy, Training, and RAG Guardrails</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">No raw PHI is used to train foundation models; production data handling follows policy-gated workflows.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Tenant-scoped retrieval only: RAG context is constrained to authorized, role-appropriate records.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Evidence references are traceable; clinician-facing detail is segregated from patient-safe responses.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Safety and policy filters run before response release and before recommendation generation.</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Red-Team Hardening Gates</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+            <li>Prompt-injection resistance: external instructions cannot override escalation policy.</li>
+            <li>Boundary lock: patient chat never reveals clinician-only suppression rationale.</li>
+            <li>Data exfiltration checks: model output filtered for restricted fields and identifiers.</li>
+            <li>Route integrity: escalation path always resolves to portal-authoritative workflow.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Quality Check Gates</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+            <li>Safety language QA: crisis wording remains direct, non-diagnostic, and action-oriented.</li>
+            <li>Behavioral consistency QA: same input class yields deterministic guardrail behavior.</li>
+            <li>Accessibility QA: chat demo remains keyboard-navigable and readable.</li>
+            <li>Regression QA: existing routing, state transitions, and controls remain unchanged.</li>
+          </ul>
         </div>
       </div>
     </div>
