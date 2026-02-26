@@ -7,6 +7,28 @@
 
 ---
 
+## v2.3 — Clinician Side + Human-in-Loop Reinforcement (NEW)
+
+### Clinical Side View Added to Live Chat
+- Expanded `ai-live-chat-demo` with explicit "What the Doctor Sees" path:
+  - Open Inbox CTA for portal-authoritative event view
+  - Open Draft Review CTA for evidence-linked summary validation
+  - Open Suppression UI CTA for recommendation policy control
+
+### Value Alignment by Audience
+- Added side-by-side value sections:
+  - Patient value (continuity, support, safety-forward guidance)
+  - Doctor value (triage context, review efficiency, policy-safe control)
+
+### Companion Platform / Medical-Device Framing
+- Added explicit assistive framing: AI is support tooling, not a replacement for clinician judgment.
+- Clarified that diagnosis/prescribing/safety-event closure remain clinician responsibilities.
+
+### Human/Doctor-in-the-Loop Checkpoints
+- Added deterministic checkpoints covering escalation, review, suppression, and role-bound export/disclosure controls.
+
+---
+
 ## v2.2 — Live AI Chat Integration (NEW)
 
 ### Added Demo Surface

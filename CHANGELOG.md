@@ -7,6 +7,33 @@
 
 ---
 
+## v2.8 — Clinician Visibility + Human-in-the-Loop Reinforcement (NEW)
+
+### Live Chat → Clinical Workflow Continuity
+- **Expanded:** `ai-live-chat-demo` with explicit clinician-side handoff sequence
+  - Portal inbox event visibility (severity, rationale, timestamp)
+  - Draft summary and evidence review entry point
+  - Suppression/recommendation policy control entry point
+- **Result:** Demo now shows what clinicians actually see after patient chat interactions, not only patient-facing messages.
+
+### Dual Value Framing
+- **Added in-screen value mapping:**
+  - Patient value: supportive continuity, crisis-forward guidance, boundary transparency
+  - Doctor value: triaged context, evidence-linked drafts, deterministic policy gates
+
+### Companion/Medical-Device Posture Clarification
+- **Added:** explicit assistive framing that AI does not diagnose, prescribe, or close safety events autonomously.
+- **Reinforced:** licensed clinician remains accountable authority for critical decisions.
+
+### Human/Doctor-in-the-Loop Checkpoints
+- **Added checkpoint sequence in `ai-live-chat-demo`:**
+  - Escalation cannot auto-resolve T2/T3 signals
+  - Draft content requires clinician review action
+  - Recommendations remain policy-gated and suppressible
+  - Export/disclosure remains role-authorized
+
+---
+
 ## v2.7 — Live AI Chat Demo Integration (NEW)
 
 ### Live AI Chat Scenarios

@@ -886,6 +886,62 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Clinical Side View (What the Doctor Sees)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <p class="font-semibold text-slate-800 mb-1">1) Portal Inbox Event</p>
+            <p class="text-slate-700">Severity tier, timestamp, and concise rationale are posted to the authoritative clinician inbox.</p>
+            <button data-nav="clinician-inbox" class="mt-3 px-3 py-2 bg-coral-100 text-coral-700 rounded-lg text-xs font-semibold hover:bg-coral-200">Open Inbox</button>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <p class="font-semibold text-slate-800 mb-1">2) Draft Summary + Evidence</p>
+            <p class="text-slate-700">Clinician receives draft with evidence references and known-unknowns for explicit review decisions.</p>
+            <button data-nav="draft-review" class="mt-3 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Open Draft Review</button>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <p class="font-semibold text-slate-800 mb-1">3) Recommendation Control</p>
+            <p class="text-slate-700">Automated recommendations remain policy-gated and can be suppressed until clinician actions are complete.</p>
+            <button data-nav="suppression-ui" class="mt-3 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200">Open Suppression UI</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Value to Patient</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+            <li>Immediate supportive response between sessions.</li>
+            <li>Clear crisis-forward guidance when elevated language appears.</li>
+            <li>Continuity cues that help with adherence and follow-through.</li>
+            <li>Transparent boundary language about what AI can and cannot do.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">Value to Doctor</h3>
+          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+            <li>Structured triage context rather than raw message streams.</li>
+            <li>Evidence-linked summaries with uncertainty made explicit.</li>
+            <li>Deterministic policy gates that reduce unsafe automation risk.</li>
+            <li>Faster pre-session insight with human authority preserved.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+        <p class="text-sm text-indigo-900"><strong>Companion Platform / Medical-Device Angle (Simulation):</strong> Peacefull.ai is positioned as assistive decision support with device-grade safety posture principles. The AI does not diagnose, prescribe, or close safety events; licensed clinicians remain accountable decision-makers at every critical step.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Human/Doctor-in-the-Loop Checkpoints</h3>
+        <div class="space-y-2 text-sm text-slate-700">
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 1:</strong> T2/T3 language detection requires clinician workflow escalation and cannot be auto-resolved by AI.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 2:</strong> Draft summaries remain draft until clinician review action is recorded.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 3:</strong> Recommendation generation is policy-gated and can be suppressed pending clinical protocol completion.</div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 4:</strong> Export and disclosure controls remain role-bound with explicit authorization requirements.</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-5">
         <h3 class="font-semibold text-slate-800 mb-3">Privacy, Training, and RAG Guardrails</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">No raw PHI is used to train foundation models; production data handling follows policy-gated workflows.</div>
