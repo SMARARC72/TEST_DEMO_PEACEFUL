@@ -1642,6 +1642,11 @@
         <h1 class="text-xl font-bold text-white">Patient Details</h1>
         <div class="w-6"></div>
       </div>
+      <div class="max-w-4xl mx-auto mt-3 flex flex-wrap gap-2">
+        <button id="patient-chip-maria" onclick="openPatientProfile('maria')" class="px-3 py-1.5 bg-white/20 text-white rounded-full text-xs font-semibold hover:bg-white/30">Maria</button>
+        <button id="patient-chip-james" onclick="openPatientProfile('james')" class="px-3 py-1.5 bg-white/10 text-slate-200 rounded-full text-xs font-semibold hover:bg-white/20">James</button>
+        <button id="patient-chip-emma" onclick="openPatientProfile('emma')" class="px-3 py-1.5 bg-white/10 text-slate-200 rounded-full text-xs font-semibold hover:bg-white/20">Emma</button>
+      </div>
     </div>
     <div class="p-6 max-w-4xl mx-auto space-y-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -2010,6 +2015,9 @@
       const alertsEl = document.getElementById('clinician-patient-safety-alerts');
       const activityEl = document.getElementById('clinician-patient-activity-list');
       const trendsEl = document.getElementById('clinician-patient-trends-body');
+      const chipMaria = document.getElementById('patient-chip-maria');
+      const chipJames = document.getElementById('patient-chip-james');
+      const chipEmma = document.getElementById('patient-chip-emma');
       if (initialsEl) initialsEl.textContent = profile.initials;
       if (nameEl) nameEl.textContent = profile.name;
       if (metaEl) metaEl.textContent = profile.meta;
@@ -2019,6 +2027,11 @@
       if (alertsEl) alertsEl.textContent = profile.stats.alerts;
       if (activityEl) activityEl.innerHTML = profile.activity;
       if (trendsEl) trendsEl.innerHTML = profile.trends;
+
+      const base = 'px-3 py-1.5 rounded-full text-xs font-semibold';
+      if (chipMaria) chipMaria.className = `${base} ${currentPatientProfile === 'maria' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
+      if (chipJames) chipJames.className = `${base} ${currentPatientProfile === 'james' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
+      if (chipEmma) chipEmma.className = `${base} ${currentPatientProfile === 'emma' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
     }
 
     function openPatientProfile(profileId) {

@@ -436,6 +436,9 @@ export function renderClinicianPatientProfile() {
   const alertsEl = document.getElementById('clinician-patient-safety-alerts');
   const activityEl = document.getElementById('clinician-patient-activity-list');
   const trendsEl = document.getElementById('clinician-patient-trends-body');
+  const chipMaria = document.getElementById('patient-chip-maria');
+  const chipJames = document.getElementById('patient-chip-james');
+  const chipEmma = document.getElementById('patient-chip-emma');
 
   if (initialsEl) initialsEl.textContent = profile.initials;
   if (nameEl) nameEl.textContent = profile.name;
@@ -446,4 +449,9 @@ export function renderClinicianPatientProfile() {
   if (alertsEl) alertsEl.textContent = profile.stats.alerts;
   if (activityEl) activityEl.innerHTML = profile.activity;
   if (trendsEl) trendsEl.innerHTML = profile.trends;
+
+  const base = 'px-3 py-1.5 rounded-full text-xs font-semibold';
+  if (chipMaria) chipMaria.className = `${base} ${state.selectedPatientProfile === 'maria' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
+  if (chipJames) chipJames.className = `${base} ${state.selectedPatientProfile === 'james' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
+  if (chipEmma) chipEmma.className = `${base} ${state.selectedPatientProfile === 'emma' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
 }
