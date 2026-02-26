@@ -36,6 +36,18 @@ jobs:
         run: npx playwright install --with-deps
         working-directory: ./prototype-web
 
+      - name: Create screenshot directory
+        run: mkdir -p test-results/screenshots
+        working-directory: ./prototype-web
+
       - name: Run Playwright smoke test
         run: npx playwright test tests/smoke.spec.mjs --reporter=github
         working-directory: ./prototype-web
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-screenshots
+          path: prototype-web/test-results/screenshots/
+          retention-days: 14
