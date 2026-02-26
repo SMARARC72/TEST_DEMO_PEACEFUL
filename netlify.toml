@@ -1,0 +1,9 @@
+[build]
+  base = "prototype-web"
+  command = "npm ci && npm run check:artifacts && npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
