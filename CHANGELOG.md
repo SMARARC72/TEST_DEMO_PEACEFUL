@@ -51,6 +51,27 @@
 
 ---
 
+## v2.6 — Proof-of-Safety & ROI Decision Room (CAPSTONE)
+
+### Decision Room Integration
+- **Added:** `decision-room` screen in `prototype-web/index.html`
+- **Purpose:** Unified executive/clinical decision surface consolidating safety, governance, and ROI proof without altering existing workflows.
+- **Features:**
+  - Safety Assurance Panel summarizing risk posture, boundary checks, suppression reasons.
+  - Governance Chain-of-Custody Panel with approval statuses, audit events and deterministic readiness verdict.
+  - ROI + GTM Proof Panel with clinician time-saved signal, Pilot Expansion Score derived from multiple modules.
+  - Procurement Export Packet action generating structured summary (simulation) using `generateProcurementPacket()`.
+  - Navigation added to demo control panel and enterprise governance quick actions.
+  - Deterministic state helpers (`baselineDecisionRoomState`, `computeReadinessVerdict`, `computePilotExpansionScore`, `generateProcurementPacket`, `resetDecisionRoomState`) and wiring to `resetDemo()`.
+
+### Hardening Updates
+- Added Decision Room duplicate nav check in `check-merge-artifacts.mjs` and `verify-demo-stability.mjs`.
+- Reset wiring validation expanded to include `resetDecisionRoomState()`.
+
+### Documentation
+- Added `RED_TEAM_DECISION_ROOM_REVIEW.md` covering threat model, misuse scenarios, and mitigations.
+
+
 ## v2.3 — Enterprise Governance Differentiator (NEW)
 
 ### Enterprise Governance Hub
