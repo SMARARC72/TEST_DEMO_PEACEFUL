@@ -149,18 +149,18 @@
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <nav class="quick-nav" aria-label="Quick Navigation">
     <div class="quick-nav-inner">
-      <button data-nav="landing" data-quick-nav="landing">Home</button>
-      <button data-nav="patient-home" data-quick-nav="patient-home">Patient Home</button>
-      <button data-nav="clinician-caseload" data-quick-nav="clinician-caseload">Caseload</button>
-      <button data-nav="clinician-inbox" data-quick-nav="clinician-inbox">Inbox</button>
-      <button data-nav="draft-review" data-quick-nav="draft-review">Draft Review</button>
-      <button data-nav="suppression-ui" data-quick-nav="suppression-ui">Suppression</button>
-      <button data-nav="exports-center" data-quick-nav="exports-center">Exports</button>
-      <button data-nav="roi-dashboard" data-quick-nav="roi-dashboard">ROI</button>
+      <button type="button" data-nav="landing" data-quick-nav="landing" aria-label="Go to home screen">Home</button>
+      <button type="button" data-nav="patient-home" data-quick-nav="patient-home" aria-label="Go to patient home">Patient Home</button>
+      <button type="button" data-nav="clinician-caseload" data-quick-nav="clinician-caseload" aria-label="Go to clinician caseload">Caseload</button>
+      <button type="button" data-nav="clinician-inbox" data-quick-nav="clinician-inbox" aria-label="Go to clinician inbox">Inbox</button>
+      <button type="button" data-nav="draft-review" data-quick-nav="draft-review" aria-label="Go to draft review">Draft Review</button>
+      <button type="button" data-nav="suppression-ui" data-quick-nav="suppression-ui" aria-label="Go to suppression view">Suppression</button>
+      <button type="button" data-nav="exports-center" data-quick-nav="exports-center" aria-label="Go to exports center">Exports</button>
+      <button type="button" data-nav="roi-dashboard" data-quick-nav="roi-dashboard" aria-label="Go to ROI dashboard">ROI</button>
     </div>
   </nav>
 
@@ -576,7 +576,7 @@
           <p class="text-teal-100 text-sm">Good morning,</p>
           <h1 class="text-2xl font-bold text-white">Sarah</h1>
         </div>
-        <button data-nav="patient-settings" class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+        <button data-nav="patient-settings" aria-label="Open patient settings" class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
       </div>
@@ -596,6 +596,23 @@
       </div>
       <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
         <p class="text-sm text-emerald-900"><strong>Next best step:</strong> share one quick check-in or journal reflection today so your clinician has better between-session context.</p>
+      </div>
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6">
+        <p class="text-sm font-semibold text-indigo-900 mb-1">Continuity Snapshot</p>
+        <div class="grid grid-cols-3 gap-3 text-sm text-indigo-900">
+          <div>
+            <p class="text-xs text-indigo-700">Streak</p>
+            <p class="font-semibold">4 days</p>
+          </div>
+          <div>
+            <p class="text-xs text-indigo-700">Last check-in</p>
+            <p class="font-semibold">Today, 9:15 AM</p>
+          </div>
+          <div>
+            <p class="text-xs text-indigo-700">Review window</p>
+            <p class="font-semibold">Within 24h</p>
+          </div>
+        </div>
       </div>
       
       <h2 class="font-semibold text-slate-800 mb-4">Quick Actions</h2>
@@ -641,7 +658,7 @@
       <h1 class="text-xl font-bold text-slate-800">Journal Entry</h1>
     </div>
     <div class="flex-1 p-6">
-      <textarea id="journal-text" oninput="checkJournal()" class="w-full h-64 p-4 bg-slate-50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="How are you feeling today?"></textarea>
+      <textarea id="journal-text" aria-label="Journal entry text" oninput="checkJournal()" class="w-full h-64 p-4 bg-slate-50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="How are you feeling today?"></textarea>
       
       <div id="draft-banner" class="draft-banner hidden mt-4">
         <div class="flex items-center gap-2">
@@ -667,7 +684,7 @@
           <span class="font-medium text-slate-700">Mood</span>
           <span id="mood-value" class="text-2xl font-bold text-teal-500">3</span>
         </div>
-        <input type="range" min="1" max="5" value="3" oninput="updateSlider('mood', this.value)" class="w-full">
+        <input type="range" min="1" max="5" value="3" aria-label="Mood score" oninput="updateSlider('mood', this.value)" class="w-full">
         <div class="flex justify-between text-xs text-slate-400 mt-1">
           <span>Low</span>
           <span>High</span>
@@ -679,7 +696,7 @@
           <span class="font-medium text-slate-700">Stress Level</span>
           <span id="stress-value" class="text-2xl font-bold text-orange-500">3</span>
         </div>
-        <input type="range" min="1" max="5" value="3" oninput="updateSlider('stress', this.value)" class="w-full">
+        <input type="range" min="1" max="5" value="3" aria-label="Stress level score" oninput="updateSlider('stress', this.value)" class="w-full">
         <div class="flex justify-between text-xs text-slate-400 mt-1">
           <span>Low</span>
           <span>High</span>
@@ -698,7 +715,7 @@
       <h1 class="text-xl font-bold text-slate-800">Voice Note</h1>
     </div>
     <div class="flex-1 flex flex-col items-center justify-center p-6">
-      <button id="record-btn" data-action="toggle-recording" class="w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl transition-all">
+      <button id="record-btn" data-action="toggle-recording" aria-label="Start or stop voice recording" class="w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl transition-all">
         <svg id="record-icon" class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
         <svg id="stop-icon" class="w-12 h-12 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
       </button>
@@ -825,8 +842,8 @@
       </div>
       
       <div class="space-y-4">
-        <input type="email" value="dr.chen@example.com" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Email">
-        <input type="password" value="********" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Password">
+        <input type="email" value="dr.chen@example.com" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Email">
+        <input type="password" value="********" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Password">
         <button data-nav="clinician-mfa" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Continue</button>
       </div>
     </div>
@@ -842,12 +859,12 @@
     </div>
     
     <div class="flex gap-3 mb-8">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 2" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 3" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 4" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 5" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 6" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
     </div>
     
     <button id="mfa-btn" data-nav="clinician-caseload" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
