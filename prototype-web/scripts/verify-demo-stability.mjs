@@ -47,7 +47,7 @@ checks.push({
 
 // 3. Check for duplicate nav button patterns
 const resetDemoButtonCount = (indexHtml.match(/<button[^>]*onclick="resetDemo\(\)"[^>]*>Reset Demo<\/button>/g) || []).length;
-const commTriageCount = (indexHtml.match(/Communication Triage Queue/g) || []).length;
+const commTriageCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('communication-triage-queue'\)"[^>]*>Communication Triage Queue<\/button>/g) || []).length;
 
 checks.push({
   name: 'Reset Demo button appears exactly once in DOM',

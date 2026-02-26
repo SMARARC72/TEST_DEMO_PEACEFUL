@@ -44,8 +44,8 @@ const leakedBranchPatterns = [
 // Patterns for duplicate UI elements in index.html
 const duplicatePatterns = [
   {
-    name: 'Communication Triage Queue button',
-    pattern: /Communication Triage Queue/g,
+    name: 'Communication Triage Queue button (in buttons only, not headings)',
+    pattern: /<button[^>]*onclick="showScreen\('communication-triage-queue'\)"[^>]*>Communication Triage Queue<\/button>/g,
     maxCount: 1,
   },
   {
