@@ -1704,12 +1704,105 @@
       
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <h3 class="font-semibold text-slate-800 mb-4">Mood & Stress Trends</h3>
-        <div class="h-48 bg-slate-50 rounded-xl flex items-center justify-center">
-          <div class="text-center">
-            <svg class="w-16 h-16 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-            <p class="text-slate-500">Trend visualization would appear here</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p>
+              <span class="text-xs text-slate-500">Updated: Today 09:18</span>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div>
+                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>2.4 / 5</span></div>
+                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 48%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.1 / 5</span></div>
+                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 82%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>3.8 / 5</span></div>
+                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 76%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.9 / 5</span></div>
+                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 58%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <p class="text-sm font-semibold text-slate-700 mb-3">Clinical Interpretation</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+              <li>Primary risk driver: sustained workload stress + poor sleep.</li>
+              <li>Protective behavior still present: check-ins continue.</li>
+              <li>Escalation threshold crossed when hopelessness phrase appears.</li>
+            </ul>
+            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-900">
+              <strong>Priority:</strong> verify intent, safety-plan access, and next-24h support path.
+            </div>
           </div>
         </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
+          <div class="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+            <p class="font-semibold text-teal-800">Pattern</p>
+            <p class="text-teal-900">Evening symptom intensification for 3 consecutive days.</p>
+          </div>
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p class="font-semibold text-amber-800">Likely Trigger Cluster</p>
+            <p class="text-amber-900">Work deadlines, reduced sleep, unplanned schedule changes.</p>
+          </div>
+          <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <p class="font-semibold text-indigo-800">Recommended Follow-up</p>
+            <p class="text-indigo-900">Confirm coping preference and set one measurable next-step task.</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Simulation boundary: trend summaries are assistive signals for clinician review, not diagnostic conclusions.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h3 class="font-semibold text-slate-800 mb-4">Enterprise Governance Snapshot (Simulation)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <p class="font-semibold text-slate-800 mb-2">Strict Controls in Place</p>
+            <ul class="list-disc pl-5 space-y-1 text-slate-700">
+              <li>Policy gates for recommendations, exports, and privileged actions.</li>
+              <li>Role/group scopes for clinician, supervisor, compliance, and admin.</li>
+              <li>Tenant-bound data access with restricted-note segregation.</li>
+              <li>Audit event capture for high-risk and workflow-critical actions.</li>
+            </ul>
+          </div>
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+            <p class="font-semibold text-slate-800 mb-2">Encryption, Privacy & Integrity</p>
+            <ul class="list-disc pl-5 space-y-1 text-slate-700">
+              <li>Encryption in transit and at rest with managed-key controls.</li>
+              <li>Patient-safe vs clinician-only surface separation by design.</li>
+              <li>Append-only audit trail and verification-ready export manifests.</li>
+              <li>Controlled retention/disclosure pathways with role authorization.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h3 class="font-semibold text-slate-800 mb-4">Practice Onboarding Audit (Simulation)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <p class="font-semibold text-amber-800 mb-2">Audit Workflow</p>
+            <ol class="list-decimal pl-5 space-y-1 text-amber-900">
+              <li>Identity and role-group mapping verification (SSO/SCIM).</li>
+              <li>Data-boundary and export-policy control checks.</li>
+              <li>Safety workflow simulation for T1/T2/T3 escalation behavior.</li>
+              <li>Quarterly re-attestation for privacy/safety effectiveness.</li>
+            </ol>
+          </div>
+          <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+            <p class="font-semibold text-indigo-800 mb-2">Sample Audit Record</p>
+            <p class="text-indigo-900"><strong>Audit ID:</strong> EG-AUD-2026-017</p>
+            <p class="text-indigo-900"><strong>Practice:</strong> Northstar Behavioral Network</p>
+            <p class="text-indigo-900"><strong>Status:</strong> Conditional (role mapping remediation pending)</p>
+            <p class="text-indigo-900"><strong>Safety Guardrail:</strong> Clinician remains required decision authority.</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Simulation only: this mirrors enterprise onboarding assurance logic without exposing production tenant data.</p>
       </div>
     </div>
   </div>
