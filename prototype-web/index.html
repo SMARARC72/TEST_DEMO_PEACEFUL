@@ -123,7 +123,85 @@
           <button onclick="showScreen('enterprise-governance')" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
           <button onclick="showScreen('ai-communication-compare')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
           <button onclick="showScreen('communication-triage-queue')" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
+          <button onclick="showScreen('security-command-center')" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
           <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY COMMAND CENTER (DEMO SIMULATION) -->
+  <div id="security-command-center" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Security Command Center (Demo Simulation)</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-6xl mx-auto space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-2">Authentication Controls</h3>
+          <div class="text-sm text-slate-600 mb-2">MFA Method (demo simulation)</div>
+          <select id="mfa-method" onchange="updateMfaMethod()" class="w-full p-2 border rounded-lg mb-3">
+            <option value="sms">SMS (simulated)</option>
+            <option value="totp">TOTP (simulated)</option>
+            <option value="hw">Hardware Key (simulated)</option>
+          </select>
+          <div class="text-sm text-slate-600 mb-2">Backup Code (enter for deterministic accept)</div>
+          <input id="backup-code" class="w-full p-2 border rounded-lg mb-2" placeholder="Enter demo backup code" />
+          <div class="flex gap-2">
+            <button onclick="validateBackupCode()" class="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Validate Backup Code</button>
+            <button onclick="triggerStepUpAuth('sensitive-action')" class="px-3 py-2 bg-amber-600 text-white rounded-lg text-sm">Trigger Step-Up Auth</button>
+          </div>
+        </div>
+
+        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-2">Smart Contract Validation (simulated)</h3>
+          <div class="text-sm text-slate-600 mb-2">Contract Version</div>
+          <input id="contract-version" class="w-full p-2 border rounded-lg mb-2" placeholder="v1.2.3" />
+          <div class="text-sm text-slate-600 mb-2">Signature Hash</div>
+          <input id="signature-hash" class="w-full p-2 border rounded-lg mb-2" placeholder="deadbeef..." />
+          <button onclick="validateSmartContractArtifact()" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">Validate Contract</button>
+          <div id="contract-result" class="mt-3 text-sm text-slate-700"></div>
+        </div>
+
+        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-2">Merkle Root Verification (simulated)</h3>
+          <div class="text-sm text-slate-600 mb-2">Leaf Hash</div>
+          <input id="merkle-leaf" class="w-full p-2 border rounded-lg mb-2" placeholder="leaf hash" />
+          <div class="text-sm text-slate-600 mb-2">Root Hash</div>
+          <input id="merkle-root" class="w-full p-2 border rounded-lg mb-2" placeholder="root hash" />
+          <div class="text-sm text-slate-600 mb-2">Path Nodes (comma separated)</div>
+          <input id="merkle-path" class="w-full p-2 border rounded-lg mb-2" placeholder="node1,node2,..." />
+          <button onclick="verifyMerkleRootPath()" class="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm">Verify Merkle Path</button>
+          <div id="merkle-result" class="mt-3 text-sm text-slate-700"></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Security Event Timeline (simulated)</h3>
+        <div id="security-audit-log" class="text-sm text-slate-700 max-h-48 overflow-auto"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">Risk Posture Scorecard</h3>
+        <div class="flex gap-3">
+          <div class="p-4 bg-slate-50 rounded-lg flex-1">
+            <p class="text-sm text-slate-500">Identity Risk</p>
+            <p id="posture-identity" class="text-2xl font-bold text-teal-600">42</p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-lg flex-1">
+            <p class="text-sm text-slate-500">Supply Chain / Contract Risk</p>
+            <p id="posture-contract" class="text-2xl font-bold text-amber-600">58</p>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-lg flex-1">
+            <p class="text-sm text-slate-500">Data Integrity</p>
+            <p id="posture-data" class="text-2xl font-bold text-emerald-600">72</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1424,6 +1502,7 @@
             <button onclick="updateEnterpriseStatus('APPROVED')" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve Package</button>
             <button onclick="updateEnterpriseStatus('CONDITIONAL')" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
             <button onclick="updateEnterpriseStatus('REVIEW_REQUIRED')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
+            <button onclick="showScreen('security-command-center')" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
           </div>
         </div>
       </div>
@@ -2398,6 +2477,8 @@
       resetEnterpriseGovernance();
       resetSubmissionState();
       resetTriageQueue();
+      // Reset newly added security demo state
+      if (typeof resetSecurityState === 'function') resetSecurityState();
       showToast('Demo reset to defaults');
     }
     
@@ -2476,6 +2557,103 @@
     function toggleAssumption(id) {
       const el = document.getElementById('assumption-' + id);
       el.classList.toggle('hidden');
+    }
+
+    /* Security Command Center - Demo Simulation Helpers */
+    const baselineSecurityState = {
+      mfaMethod: 'totp',
+      backupCode: 'DEMO-0000',
+      lastStepUp: null,
+      contractValidation: { version: '', signature: '', status: 'REVIEW_REQUIRED', evidence: '' },
+      merkleVerification: { leaf: '', root: '', path: '', result: 'UNKNOWN' },
+      auditLog: [
+        { ts: new Date().toISOString(), event: 'Security demo initialized' }
+      ],
+      posture: { identity: 42, contract: 58, data: 72 }
+    };
+
+    let securityState = JSON.parse(JSON.stringify(baselineSecurityState));
+
+    function renderSecurityCommandCenter() {
+      const logEl = document.getElementById('security-audit-log');
+      if (logEl) {
+        logEl.innerHTML = securityState.auditLog.map(e => `<div class="py-2 border-b"><div class="text-xs text-slate-500">${e.ts}</div><div class="text-sm text-slate-800">${e.event}</div></div>`).join('');
+      }
+      const contractResult = document.getElementById('contract-result');
+      if (contractResult) contractResult.textContent = `Status: ${securityState.contractValidation.status}`;
+      const merkleResult = document.getElementById('merkle-result');
+      if (merkleResult) merkleResult.textContent = `Result: ${securityState.merkleVerification.result}`;
+      const idPost = document.getElementById('posture-identity'); if (idPost) idPost.textContent = String(securityState.posture.identity);
+      const cPost = document.getElementById('posture-contract'); if (cPost) cPost.textContent = String(securityState.posture.contract);
+      const dPost = document.getElementById('posture-data'); if (dPost) dPost.textContent = String(securityState.posture.data);
+      const mfaSelect = document.getElementById('mfa-method'); if (mfaSelect) mfaSelect.value = securityState.mfaMethod;
+      const backupInput = document.getElementById('backup-code'); if (backupInput) backupInput.value = '';
+    }
+
+    function updateMfaMethod() {
+      const sel = document.getElementById('mfa-method');
+      if (!sel) return;
+      securityState.mfaMethod = sel.value;
+      appendSecurityAuditEvent(`MFA method set to ${sel.value}`);
+      renderSecurityCommandCenter();
+      showToast(`MFA method set to ${sel.value} (demo)`);
+    }
+
+    function validateBackupCode() {
+      const input = document.getElementById('backup-code');
+      if (!input) return;
+      const v = input.value.trim();
+      const ok = v === securityState.backupCode || v === 'DEMO-0000';
+      appendSecurityAuditEvent(`Backup code validation attempted: ${ok ? 'ACCEPTED' : 'REJECTED'}`);
+      showToast(`Backup code ${ok ? 'accepted' : 'rejected'} (demo)`);
+      renderSecurityCommandCenter();
+    }
+
+    function triggerStepUpAuth(reason) {
+      securityState.lastStepUp = { ts: new Date().toISOString(), reason };
+      appendSecurityAuditEvent(`Step-up auth triggered for ${reason}`);
+      showToast('Step-up authentication (simulated)');
+      renderSecurityCommandCenter();
+    }
+
+    function validateSmartContractArtifact() {
+      const version = (document.getElementById('contract-version') || {}).value || '';
+      const signature = (document.getElementById('signature-hash') || {}).value || '';
+      // Deterministic simulation: hash ending with '00' => VALID, ending with 'ff' => INVALID
+      let status = 'REVIEW_REQUIRED';
+      if (/00$/.test(signature)) status = 'VALID';
+      if (/ff$/.test(signature)) status = 'INVALID';
+      securityState.contractValidation = { version, signature, status, evidence: `Simulated check on ${new Date().toISOString()}` };
+      appendSecurityAuditEvent(`Contract validation: ${status} (v${version})`);
+      renderSecurityCommandCenter();
+      showToast(`Contract ${status} (simulated)`);
+    }
+
+    function verifyMerkleRootPath() {
+      const leaf = (document.getElementById('merkle-leaf') || {}).value || '';
+      const root = (document.getElementById('merkle-root') || {}).value || '';
+      const path = (document.getElementById('merkle-path') || {}).value || '';
+      // Deterministic simulation: if root contains first 4 chars of leaf => VALID
+      let result = 'UNKNOWN';
+      if (leaf && root && root.indexOf(leaf.slice(0,4)) !== -1) result = 'VALID';
+      else if (leaf && root && root.indexOf('dead') !== -1) result = 'INVALID';
+      else result = 'REVIEW_REQUIRED';
+      securityState.merkleVerification = { leaf, root, path, result };
+      appendSecurityAuditEvent(`Merkle verification: ${result}`);
+      renderSecurityCommandCenter();
+      showToast(`Merkle verification: ${result} (simulated)`);
+    }
+
+    function appendSecurityAuditEvent(event) {
+      securityState.auditLog.unshift({ ts: new Date().toISOString(), event });
+      if (securityState.auditLog.length > 200) securityState.auditLog.length = 200;
+      renderSecurityCommandCenter();
+    }
+
+    function resetSecurityState() {
+      securityState = JSON.parse(JSON.stringify(baselineSecurityState));
+      renderSecurityCommandCenter();
+      appendSecurityAuditEvent('Security demo state reset to baseline');
     }
 
     renderMemoryReview();

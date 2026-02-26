@@ -35,7 +35,9 @@ const hasResetWiring =
   resetDemoMatch[1].includes('resetMemoryReview()') &&
   resetDemoMatch[1].includes('resetTreatmentPlan()') &&
   resetDemoMatch[1].includes('resetEnterpriseGovernance()') &&
-  resetDemoMatch[1].includes('resetSubmissionState()');
+  resetDemoMatch[1].includes('resetSubmissionState()') &&
+  resetDemoMatch[1].includes('resetTriageQueue()') &&
+  resetDemoMatch[1].includes('resetSecurityState()');
 
 checks.push({
   name: 'resetDemo() wires all reset hooks',
@@ -48,11 +50,18 @@ checks.push({
 // 3. Check for duplicate nav button patterns
 const resetDemoButtonCount = (indexHtml.match(/<button[^>]*onclick="resetDemo\(\)"[^>]*>Reset Demo<\/button>/g) || []).length;
 const commTriageCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('communication-triage-queue'\)"[^>]*>Communication Triage Queue<\/button>/g) || []).length;
+const securityCenterCount = (indexHtml.match(/<button[^>]*onclick="showScreen\('security-command-center'\)"[^>]*>Security Command Center<\/button>/g) || []).length;
 
 checks.push({
   name: 'Reset Demo button appears exactly once in DOM',
   pass: resetDemoButtonCount === 1,
   details: `Found ${resetDemoButtonCount} occurrence(s)`,
+});
+
+checks.push({
+  name: 'Security Command Center button appears exactly once in DOM',
+  pass: securityCenterCount >= 1 && securityCenterCount <= 2,
+  details: `Found ${securityCenterCount} occurrence(s) (expected 1-2)`,
 });
 
 // 4. Netlify config check

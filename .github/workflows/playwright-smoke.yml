@@ -1,0 +1,41 @@
+name: Playwright Smoke Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ 'feature/*', 'main' ]
+
+jobs:
+  smoke:
+    name: Playwright Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./prototype-web
+
+      - name: Build site
+        run: npm run build
+        working-directory: ./prototype-web
+
+      - name: Serve built site
+        run: |
+          npx http-server ./prototype-web/dist -p 5173 &
+          sleep 2
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: ./prototype-web
+
+      - name: Run Playwright smoke test
+        run: npx playwright test tests/smoke.spec.mjs --reporter=github
+        working-directory: ./prototype-web

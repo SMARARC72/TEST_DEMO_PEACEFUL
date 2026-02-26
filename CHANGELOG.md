@@ -9,6 +9,24 @@
 
 ## v2.4 — AI Communication Surfaces for Patient Submissions (NEW)
 
+## v2.5 — Security Command Center & Hardening (NEW)
+
+### Security Command Center (Demo Simulation)
+- **Added:** `security-command-center` screen in `prototype-web/index.html`
+- **Purpose:** Interactive demo simulation of MFA, smart contract validation, Merkle verification, and security audit timeline.
+- **Features:**
+  - Simulated MFA controls (SMS/TOTP/Hardware Key), backup code validation, and step-up auth trigger
+  - Simulated smart contract validation with deterministic status (VALID/INVALID/REVIEW_REQUIRED)
+  - Simulated Merkle path verification with explainable result
+  - Synthetic security event timeline and risk posture scorecard
+  - All simulation state is deterministic and reset by `resetSecurityState()` which is wired into `resetDemo()`
+
+### Hardening & Guardrails
+- **Updated:** `prototype-web/scripts/check-merge-artifacts.mjs` and `verify-demo-stability.mjs`
+  - Added duplicate-label guard for `Security Command Center`
+  - Ensures `resetDemo()` includes `resetSecurityState()` and checks run pre-build
+
+
 ### Patient Submission Success + AI Response
 - **Added:** `patient-submission-success` screen in `prototype-web/index.html`
 - **Purpose:** Show patient-safe, supportive AI response immediately after journal/voice submissions
