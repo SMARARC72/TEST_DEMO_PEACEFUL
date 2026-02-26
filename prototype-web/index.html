@@ -527,6 +527,9 @@
       </div>
       <h1 class="text-3xl font-bold text-slate-800 mb-2">Welcome to Peacefull.ai</h1>
       <p class="text-slate-600 text-center mb-8 max-w-md">Your clinician-supervised companion for between-session support. This is not a substitute for emergency care.</p>
+      <div class="w-full max-w-md bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
+        <p class="text-sm text-teal-900"><strong>You are supported between sessions.</strong> Your entries are routed into clinician-supervised workflows. For immediate danger or crisis, call emergency services or 988.</p>
+      </div>
       <button data-nav="patient-consent" class="w-full max-w-sm btn-primary text-white py-4 rounded-xl font-semibold">Get Started</button>
     </div>
   </div>
@@ -590,6 +593,9 @@
             <p class="text-sm text-slate-500">Tomorrow, 2:00 PM</p>
           </div>
         </div>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
+        <p class="text-sm text-emerald-900"><strong>Next best step:</strong> share one quick check-in or journal reflection today so your clinician has better between-session context.</p>
       </div>
       
       <h2 class="font-semibold text-slate-800 mb-4">Quick Actions</h2>
@@ -729,6 +735,14 @@
         <p id="patient-ai-tone" class="text-sm text-slate-700 mb-2"></p>
         <p id="patient-ai-summary" class="text-sm text-slate-700 mb-2"></p>
         <p id="patient-ai-next-step" class="text-sm text-slate-700"></p>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">What Happens Next</h3>
+        <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+          <li>Your update is stored in your synthetic demo timeline.</li>
+          <li>Clinician-facing summaries remain draft until clinician review.</li>
+          <li>If safety concerns escalate, urgent workflows are triggered in the clinician portal.</li>
+        </ul>
       </div>
       <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
         This response is supportive reflection, not diagnosis or emergency guidance. If urgent safety concerns arise, contact emergency services.
@@ -1166,6 +1180,9 @@
         <h1 class="text-xl font-bold text-white">Restricted Notes</h1>
         <div class="w-6"></div>
       </div>
+      <div class="max-w-4xl mx-auto mt-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Role Scope: Clinician-Only Surface</span>
+      </div>
     </div>
     <div class="p-6 max-w-4xl mx-auto space-y-6">
       <div class="restricted-banner">
@@ -1323,6 +1340,9 @@
         </button>
         <h1 class="text-xl font-bold text-white">Recommendation Status</h1>
         <div class="w-6"></div>
+      </div>
+      <div class="max-w-4xl mx-auto mt-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Role Scope: Clinician Decision Support Only</span>
       </div>
     </div>
     <div class="p-6 max-w-4xl mx-auto space-y-6">
@@ -1623,6 +1643,7 @@
           <p class="font-semibold text-amber-900">Simulated Demo Values</p>
         </div>
         <p class="text-sm text-amber-800">All metrics below are simulated for demonstration purposes. Toggle to view pilot targets vs. projections.</p>
+        <p class="text-xs text-amber-800 mt-2">Confidence band guidance (simulated): low/base/high scenarios are directional and not guaranteed outcomes.</p>
         <div class="flex gap-3 mt-3">
           <button id="roi-toggle-pilot" data-roi-mode="pilot" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Pilot Targets</button>
           <button id="roi-toggle-proj" data-roi-mode="projection" class="px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium">Projections</button>
