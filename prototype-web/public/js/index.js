@@ -13,7 +13,8 @@ import {
   renderTreatmentPlan,
   renderEnterpriseGovernance,
   renderSecurityCommandCenter,
-  renderDecisionRoom
+  renderDecisionRoom,
+  renderClinicianPatientProfile
 } from './render.js';
 import * as actions from './actions.js';
 import { initEventDelegation } from './events.js';
@@ -52,6 +53,7 @@ window.updateVoiceStatus = actions.updateVoiceStatus;
 
 // Triage queue
 window.selectTriageItem = actions.selectTriageItem;
+window.selectPatientProfile = actions.selectPatientProfile;
 window.updateTriageStatus = actions.updateTriageStatus;
 window.resetTriageQueue = actions.resetTriageQueueAction;
 
@@ -120,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderEnterpriseGovernance();
   renderSecurityCommandCenter();
   renderDecisionRoom();
+  renderClinicianPatientProfile();
 
   // Initialize hash-aware routing and active quick-nav state
   initScreenRouting();

@@ -1101,7 +1101,7 @@
           </div>
         </div>
         <div class="divide-y">
-          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" data-patient-profile="maria" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-red-600">MR</span>
@@ -1116,7 +1116,7 @@
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
           </div>
-          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" data-patient-profile="james" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-blue-600">JS</span>
@@ -1131,7 +1131,7 @@
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
           </div>
-          <div data-nav="clinician-patient" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+          <div data-nav="clinician-patient" data-patient-profile="emma" class="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span class="font-semibold text-green-600">EW</span>
@@ -2131,12 +2131,12 @@
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <div class="flex items-center gap-4 mb-6">
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <span class="text-xl font-bold text-red-600">MR</span>
+            <span id="clinician-patient-initials" class="text-xl font-bold text-red-600">MR</span>
           </div>
           <div>
-            <h2 class="text-2xl font-bold text-slate-800">Maria Rodriguez</h2>
-            <p class="text-slate-500">ID: PT-2847 • DOB: 03/15/1985</p>
-            <div class="flex gap-2 mt-2">
+            <h2 id="clinician-patient-name" class="text-2xl font-bold text-slate-800">Maria Rodriguez</h2>
+            <p id="clinician-patient-meta" class="text-slate-500">ID: PT-2847 • DOB: 03/15/1985</p>
+            <div id="clinician-patient-badges" class="flex gap-2 mt-2">
               <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">T2 ALERT</span>
               <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>
             </div>
@@ -2153,15 +2153,15 @@
           <ul id="clinician-profile-plan" class="list-disc pl-5 text-sm text-emerald-900"><li>No reviewed treatment plan items yet.</li></ul>
         </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
-            <p class="text-2xl font-bold text-slate-800">47</p>
+            <p id="clinician-patient-total-entries" class="text-2xl font-bold text-slate-800">47</p>
             <p class="text-sm text-slate-500">Total Entries</p>
           </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
-            <p class="text-2xl font-bold text-slate-800">12</p>
+            <p id="clinician-patient-weekly-entries" class="text-2xl font-bold text-slate-800">12</p>
             <p class="text-sm text-slate-500">This Week</p>
           </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
-            <p class="text-2xl font-bold text-slate-800">3</p>
+            <p id="clinician-patient-safety-alerts" class="text-2xl font-bold text-slate-800">3</p>
             <p class="text-sm text-slate-500">Safety Alerts</p>
           </div>
         </div>
@@ -2219,87 +2219,13 @@
           <button data-nav="ai-communication-compare" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
           <button data-nav="communication-triage-queue" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
         </div>
-        <div class="space-y-3">
-          <div class="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-500">Today, 9:15 AM</span>
-              <span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-bold">T2</span>
-            </div>
-            <p class="font-medium text-slate-800">Voice Note: Safety Signal Detected</p>
-            <p class="text-sm text-slate-600 mt-1">"I don't see the point anymore..."</p>
-            <button data-nav="inbox-detail" class="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">View Alert</button>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-500">Yesterday, 8:00 PM</span>
-            </div>
-            <p class="font-medium text-slate-800">Journal Entry</p>
-            <p class="text-sm text-slate-600 mt-1">"Had a difficult day at work. The new project is overwhelming..."</p>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-500">Feb 23, 7:30 PM</span>
-            </div>
-            <p class="font-medium text-slate-800">Daily Check-in</p>
-            <p class="text-sm text-slate-600 mt-1">Mood: 2/5 • Stress: 4/5 • Sleep: Poor</p>
-          </div>
-        </div>
+        <div id="clinician-patient-activity-list" class="space-y-3"></div>
       </div>
       
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <h3 class="font-semibold text-slate-800 mb-4">Mood & Stress Trends</h3>
         <p class="text-sm text-slate-600 mb-4">Clinician signal view for between-session change detection. Designed to support faster triage preparation while keeping final clinical judgment with the treating professional.</p>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <div class="flex items-center justify-between mb-3">
-              <p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p>
-              <span class="text-xs text-slate-500">Updated: Today 09:18</span>
-            </div>
-            <div class="space-y-3 text-sm">
-              <div>
-                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>2.4 / 5</span></div>
-                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 48%"></div></div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.1 / 5</span></div>
-                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 82%"></div></div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>3.8 / 5</span></div>
-                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 76%"></div></div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.9 / 5</span></div>
-                <div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 58%"></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <p class="text-sm font-semibold text-slate-700 mb-3">Clinical Interpretation</p>
-            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-              <li>Primary risk concentration: sustained workload strain plus sleep disruption.</li>
-              <li>Protective engagement remains visible through continued check-ins.</li>
-              <li>Escalation gate activates when elevated hopelessness language is detected.</li>
-            </ul>
-            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-900">
-              <strong>Immediate clinical priority:</strong> confirm intent, verify safety-plan access, and define a concrete next-24h support path.
-            </div>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-sm">
-          <div class="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-            <p class="font-semibold text-teal-800">Pattern</p>
-            <p class="text-teal-900">Evening symptom intensification sustained across three consecutive days.</p>
-          </div>
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p class="font-semibold text-amber-800">Likely Trigger Cluster</p>
-            <p class="text-amber-900">Deadline pressure, reduced sleep continuity, and unplanned schedule shifts.</p>
-          </div>
-          <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <p class="font-semibold text-indigo-800">Recommended Follow-up</p>
-            <p class="text-indigo-900">Reconfirm preferred coping strategy and assign one measurable 24-hour task.</p>
-          </div>
-        </div>
+        <div id="clinician-patient-trends-body"></div>
         <p class="text-xs text-slate-500 mt-3">Simulation boundary: trend outputs are decision-support signals for supervised review, not autonomous diagnosis or treatment decisions.</p>
         </div>
       </div>

@@ -258,3 +258,192 @@ export function renderDecisionRoom() {
   const packetEl = document.getElementById('procurement-packet');
   if (packetEl) packetEl.textContent = state.decisionRoomState.packet ? JSON.stringify(state.decisionRoomState.packet, null, 2) : '';
 }
+
+// ============ CLINICIAN PATIENT PROFILE ============
+
+export function renderClinicianPatientProfile() {
+  const profiles = {
+    maria: {
+      initials: 'MR',
+      name: 'Maria Rodriguez',
+      meta: 'ID: PT-2847 • DOB: 03/15/1985',
+      badges: [
+        '<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">T2 ALERT</span>',
+        '<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>'
+      ],
+      stats: { total: '47', weekly: '12', alerts: '3' },
+      activity: `
+        <div class="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-slate-500">Today, 9:15 AM</span>
+            <span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-bold">T2</span>
+          </div>
+          <p class="font-medium text-slate-800">Voice Note: Safety Signal Detected</p>
+          <p class="text-sm text-slate-600 mt-1">"I don't see the point anymore..."</p>
+          <button data-nav="inbox-detail" class="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">View Alert</button>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">Yesterday, 8:00 PM</span></div>
+          <p class="font-medium text-slate-800">Journal Entry</p>
+          <p class="text-sm text-slate-600 mt-1">"Had a difficult day at work. The new project is overwhelming..."</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">Feb 23, 7:30 PM</span></div>
+          <p class="font-medium text-slate-800">Daily Check-in</p>
+          <p class="text-sm text-slate-600 mt-1">Mood: 2/5 • Stress: 4/5 • Sleep: Poor</p>
+        </div>
+      `,
+      trends: `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p><span class="text-xs text-slate-500">Updated: Today 09:18</span>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>2.4 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 48%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.1 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 82%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>3.8 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 76%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.9 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 58%"></div></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <p class="text-sm font-semibold text-slate-700 mb-3">Clinical Interpretation</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+              <li>Primary risk concentration: sustained workload strain plus sleep disruption.</li>
+              <li>Protective engagement remains visible through continued check-ins.</li>
+              <li>Escalation gate activates when elevated hopelessness language is detected.</li>
+            </ul>
+            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-900"><strong>Immediate clinical priority:</strong> confirm intent, verify safety-plan access, and define a concrete next-24h support path.</div>
+          </div>
+        </div>
+      `
+    },
+    james: {
+      initials: 'JS',
+      name: 'James Smith',
+      meta: 'ID: PT-3192 • DOB: 08/21/1992',
+      badges: [
+        '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">ADHD</span>',
+        '<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Draft Summary</span>'
+      ],
+      stats: { total: '39', weekly: '9', alerts: '2' },
+      activity: `
+        <div class="p-4 bg-amber-50 rounded-xl border-l-4 border-amber-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-slate-500">Yesterday, 6:30 PM</span>
+            <span class="px-2 py-1 bg-amber-600 text-white rounded text-xs font-bold">T2</span>
+          </div>
+          <p class="font-medium text-slate-800">Adherence Signal: Multiple Missed Check-ins</p>
+          <p class="text-sm text-slate-600 mt-1">Missed evening check-ins during deadline period; stress language escalated.</p>
+          <button data-nav="inbox-detail" class="mt-3 px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">View Alert</button>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">Yesterday, 8:00 PM</span></div>
+          <p class="font-medium text-slate-800">Routine Prompt Response</p>
+          <p class="text-sm text-slate-600 mt-1">"I started three tasks and finished none. I feel behind and scattered."</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">2 days ago, 9:10 PM</span></div>
+          <p class="font-medium text-slate-800">Daily Check-in</p>
+          <p class="text-sm text-slate-600 mt-1">Mood: 3/5 • Stress: 4/5 • Focus: 2/5</p>
+        </div>
+      `,
+      trends: `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div class="flex items-center justify-between mb-3"><p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p><span class="text-xs text-slate-500">Updated: Today 09:20</span></div>
+            <div class="space-y-3 text-sm">
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Task Initiation Consistency</span><span>2.1 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 42%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.0 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 80%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Focus Fragmentation</span><span>4.2 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 84%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.8 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 56%"></div></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <p class="text-sm font-semibold text-slate-700 mb-3">Clinical Interpretation</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+              <li>Pattern consistent with executive-function overload under time pressure.</li>
+              <li>Supportive prompts improve engagement but task completion remains low.</li>
+              <li>Review cadence benefits from short-interval check-ins and concrete task framing.</li>
+            </ul>
+            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900"><strong>Immediate clinical priority:</strong> validate ADHD coping fit, reduce task scope, and confirm adherence strategy for next 48 hours.</div>
+          </div>
+        </div>
+      `
+    },
+    emma: {
+      initials: 'EW',
+      name: 'Emma Wilson',
+      meta: 'ID: PT-2251 • DOB: 11/04/1990',
+      badges: [
+        '<span class="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-bold">Mood/Anxiety</span>',
+        '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Stable</span>'
+      ],
+      stats: { total: '52', weekly: '11', alerts: '1' },
+      activity: `
+        <div class="p-4 bg-teal-50 rounded-xl border-l-4 border-teal-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-slate-500">Feb 23, 2:00 PM</span>
+            <span class="px-2 py-1 bg-teal-600 text-white rounded text-xs font-bold">T1</span>
+          </div>
+          <p class="font-medium text-slate-800">Mood Trend Review Completed</p>
+          <p class="text-sm text-slate-600 mt-1">Declining scores addressed with clinician follow-up and coping refresh plan.</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">Feb 23, 7:30 PM</span></div>
+          <p class="font-medium text-slate-800">Daily Check-in</p>
+          <p class="text-sm text-slate-600 mt-1">Mood: 3/5 • Stress: 3/5 • Sleep: Fair</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-2"><span class="text-sm text-slate-500">Feb 22, 8:10 PM</span></div>
+          <p class="font-medium text-slate-800">Journal Reflection</p>
+          <p class="text-sm text-slate-600 mt-1">"I had a better afternoon after taking a short walk and pausing before work."</p>
+        </div>
+      `,
+      trends: `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div class="flex items-center justify-between mb-3"><p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p><span class="text-xs text-slate-500">Updated: Today 09:12</span></div>
+            <div class="space-y-3 text-sm">
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>3.6 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 72%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>2.9 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 58%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>2.5 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 50%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>3.7 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-indigo-500 h-2 rounded-full" style="width: 74%"></div></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <p class="text-sm font-semibold text-slate-700 mb-3">Clinical Interpretation</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+              <li>Trend indicates gradual stabilization after prior decline period.</li>
+              <li>Protective routines are increasingly consistent across evenings.</li>
+              <li>Residual sleep variability remains a watch area for relapse risk.</li>
+            </ul>
+            <div class="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-900"><strong>Immediate clinical priority:</strong> consolidate protective routines and maintain relapse-prevention check cadence.</div>
+          </div>
+        </div>
+      `
+    }
+  };
+
+  const profile = profiles[state.selectedPatientProfile] || profiles.maria;
+
+  const initialsEl = document.getElementById('clinician-patient-initials');
+  const nameEl = document.getElementById('clinician-patient-name');
+  const metaEl = document.getElementById('clinician-patient-meta');
+  const badgesEl = document.getElementById('clinician-patient-badges');
+  const totalEl = document.getElementById('clinician-patient-total-entries');
+  const weeklyEl = document.getElementById('clinician-patient-weekly-entries');
+  const alertsEl = document.getElementById('clinician-patient-safety-alerts');
+  const activityEl = document.getElementById('clinician-patient-activity-list');
+  const trendsEl = document.getElementById('clinician-patient-trends-body');
+
+  if (initialsEl) initialsEl.textContent = profile.initials;
+  if (nameEl) nameEl.textContent = profile.name;
+  if (metaEl) metaEl.textContent = profile.meta;
+  if (badgesEl) badgesEl.innerHTML = profile.badges.join('');
+  if (totalEl) totalEl.textContent = profile.stats.total;
+  if (weeklyEl) weeklyEl.textContent = profile.stats.weekly;
+  if (alertsEl) alertsEl.textContent = profile.stats.alerts;
+  if (activityEl) activityEl.innerHTML = profile.activity;
+  if (trendsEl) trendsEl.innerHTML = profile.trends;
+}

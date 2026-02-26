@@ -21,7 +21,8 @@ import {
   renderTreatmentPlan, 
   renderEnterpriseGovernance, 
   renderSecurityCommandCenter,
-  renderDecisionRoom
+  renderDecisionRoom,
+  renderClinicianPatientProfile
 } from './render.js';
 
 // ============ DEMO PANEL ============
@@ -298,6 +299,13 @@ export function resetEnterpriseGovernanceAction() {
   renderEnterpriseGovernance();
 }
 
+// ============ CLINICIAN PATIENT PROFILE ============
+
+export function selectPatientProfile(profileId) {
+  state.selectedPatientProfile = profileId || 'maria';
+  renderClinicianPatientProfile();
+}
+
 // ============ INBOX / DRAFT ACTIONS ============
 
 export function acknowledgeAlert() { showToast('Alert acknowledged'); }
@@ -489,6 +497,9 @@ export function resetDemo() {
   
   state.decisionRoomState = JSON.parse(JSON.stringify(baselineDecisionRoomState));
   renderDecisionRoom();
+
+  state.selectedPatientProfile = 'maria';
+  renderClinicianPatientProfile();
   
   showToast('Demo reset to defaults');
 }
