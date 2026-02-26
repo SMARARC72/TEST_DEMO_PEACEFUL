@@ -5,7 +5,7 @@
 
 // Import all modules
 import { state } from './state.js';
-import { showScreen, showToast } from './helpers.js';
+import { showScreen, showToast, initScreenRouting } from './helpers.js';
 import {
   renderSubmissionSurfaces,
   renderTriageQueue,
@@ -120,6 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderEnterpriseGovernance();
   renderSecurityCommandCenter();
   renderDecisionRoom();
+
+  // Initialize hash-aware routing and active quick-nav state
+  initScreenRouting();
   
   // MFA input navigation
   const mfaInputs = document.querySelectorAll('#clinician-mfa input');
