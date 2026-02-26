@@ -527,6 +527,16 @@
           </div>
         </div>
       </div>
+
+      <div class="bg-cyan-50 border border-cyan-200 rounded-xl p-4 mb-6">
+        <label for="patient-session-profile" class="block text-sm font-semibold text-cyan-900 mb-2">Demo Patient Context</label>
+        <select id="patient-session-profile" onchange="setPatientSessionProfile(this.value)" class="w-full p-3 bg-white border border-cyan-200 rounded-lg text-sm text-slate-700">
+          <option value="maria">Maria — Stress/Anxiety pathway</option>
+          <option value="james">James — ADHD + Anxiety pathway</option>
+          <option value="emma">Emma — Mood/Anxiety stabilization pathway</option>
+        </select>
+        <p class="text-xs text-cyan-900 mt-2">Used to simulate patient-specific memory retrieval from clinician-approved history.</p>
+      </div>
       
       <h2 class="font-semibold text-slate-800 mb-4">Quick Actions</h2>
       <div class="space-y-3">
@@ -571,6 +581,14 @@
       <h1 class="text-xl font-bold text-slate-800">Journal Entry</h1>
     </div>
     <div class="flex-1 p-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+        <p class="text-sm font-semibold text-blue-900 mb-2">Guided Journal Prompts</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="applyJournalPrompt('What emotion felt strongest today, and when did it peak?')" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Emotion peak</button>
+          <button type="button" onclick="applyJournalPrompt('What was one moment that felt easier, and what helped in that moment?')" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">What helped</button>
+          <button type="button" onclick="applyJournalPrompt('What feels hardest right now, and what support would help in the next 24 hours?')" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Next-24h support</button>
+        </div>
+      </div>
       <textarea id="journal-text" aria-label="Journal entry text" oninput="checkJournal()" class="w-full h-64 p-4 bg-slate-50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="How are you feeling today?"></textarea>
       
       <div id="draft-banner" class="draft-banner hidden mt-4">
@@ -615,6 +633,29 @@
           <span>High</span>
         </div>
       </div>
+
+      <div>
+        <div class="flex justify-between mb-2">
+          <span class="font-medium text-slate-700">Sleep Quality</span>
+          <span id="sleep-value" class="text-2xl font-bold text-indigo-500">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" aria-label="Sleep quality score" oninput="updateSlider('sleep', this.value)" class="w-full">
+        <div class="flex justify-between text-xs text-slate-400 mt-1">
+          <span>Poor</span>
+          <span>Rested</span>
+        </div>
+      </div>
+
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+        <p class="text-sm font-semibold text-teal-900 mb-2">What needs support today?</p>
+        <div class="grid grid-cols-2 gap-2 text-sm text-teal-900">
+          <label class="flex items-center gap-2"><input type="checkbox" name="checkin-focus" value="focus" class="rounded"> Focus</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="checkin-focus" value="sleep" class="rounded"> Sleep</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="checkin-focus" value="anxiety" class="rounded"> Anxiety</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="checkin-focus" value="motivation" class="rounded"> Motivation</label>
+        </div>
+        <textarea id="checkin-note" class="w-full mt-3 p-3 bg-white border border-teal-200 rounded-lg text-sm" rows="2" placeholder="Optional: add one sentence about what happened today."></textarea>
+      </div>
       
       <button onclick="submitCheckin()" class="w-full btn-primary text-white py-4 rounded-xl font-semibold">Submit Check-in</button>
     </div>
@@ -628,6 +669,20 @@
       <h1 class="text-xl font-bold text-slate-800">Voice Note</h1>
     </div>
     <div class="flex-1 flex flex-col items-center justify-center p-6">
+      <div class="w-full max-w-sm bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
+        <p class="text-sm font-semibold text-purple-900 mb-2">Voice Guidance Prompts</p>
+        <ul class="list-disc pl-5 text-sm text-purple-900 space-y-1">
+          <li>What feeling was strongest today?</li>
+          <li>What helped even a little?</li>
+          <li>What feels hardest in the next 24 hours?</li>
+        </ul>
+        <div class="grid grid-cols-2 gap-2 mt-3 text-sm text-purple-900">
+          <label class="flex items-center gap-2"><input type="checkbox" name="voice-focus" value="mood" class="rounded"> Mood</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="voice-focus" value="stress" class="rounded"> Stress</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="voice-focus" value="sleep" class="rounded"> Sleep</label>
+          <label class="flex items-center gap-2"><input type="checkbox" name="voice-focus" value="focus" class="rounded"> Focus</label>
+        </div>
+      </div>
       <button id="record-btn" onclick="toggleRecording()" aria-label="Start or stop voice recording" class="w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl transition-all">
         <svg id="record-icon" class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
         <svg id="stop-icon" class="w-12 h-12 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
@@ -644,6 +699,41 @@
       </div>
       
       <button id="upload-btn" onclick="uploadVoice()" class="hidden w-full max-w-sm mt-8 btn-primary text-white py-4 rounded-xl font-semibold">Upload Voice Note</button>
+    </div>
+  </div>
+
+  <div id="patient-submission-success" class="screen min-h-screen bg-white flex flex-col">
+    <div class="p-4 border-b flex items-center">
+      <button onclick="showScreen('patient-home')" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">Submission Complete</h1>
+    </div>
+    <div class="p-6 max-w-3xl mx-auto w-full space-y-4">
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+        <p class="text-sm text-green-900"><strong id="submission-success-title">Journal entry submitted.</strong> Your clinician-supervised companion generated a supportive response for reflection. Synthetic demo only.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">Your AI Reflection (Patient View)</h3>
+        <p id="patient-ai-tone" class="text-sm text-slate-700 mb-2"></p>
+        <p id="patient-ai-summary" class="text-sm text-slate-700 mb-2"></p>
+        <p id="patient-ai-next-step" class="text-sm text-slate-700"></p>
+        <p id="patient-ai-memory" class="text-sm text-indigo-700 mt-3"></p>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <h3 class="font-semibold text-slate-800 mb-2">What Happens Next</h3>
+        <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
+          <li>Your update is stored in your synthetic demo timeline.</li>
+          <li>Clinician-facing summaries remain draft until clinician review.</li>
+          <li>If safety concerns escalate, urgent workflows are triggered in the clinician portal.</li>
+        </ul>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+        This response is supportive reflection, not diagnosis or emergency guidance. If urgent safety concerns arise, contact emergency services.
+      </div>
+      <div class="flex gap-3">
+        <button onclick="showScreen('patient-home')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Back to Home</button>
+      </div>
     </div>
   </div>
 
@@ -2040,6 +2130,76 @@
       showScreen('clinician-patient');
     }
 
+    let patientSessionProfile = 'maria';
+
+    function setPatientSessionProfile(profileId) {
+      patientSessionProfile = profileId || 'maria';
+      showToast(`Active patient demo profile: ${patientSessionProfile.toUpperCase()}`);
+    }
+
+    function applyJournalPrompt(promptText) {
+      const textEl = document.getElementById('journal-text');
+      if (!textEl) return;
+      const prefix = textEl.value.trim().length ? '\n\n' : '';
+      textEl.value = `${textEl.value}${prefix}${promptText}`;
+      checkJournal();
+      textEl.focus();
+    }
+
+    function getPatientMemoryContext() {
+      const map = {
+        maria: {
+          label: 'Maria (stress/anxiety pathway)',
+          moodPattern: 'evening stress spikes after commute and poor sleep nights',
+          workedBefore: ['4-6 breathing cadence', 'short evening check-in', 'structured next-day plan'],
+          signalBand: 'GUARDED'
+        },
+        james: {
+          label: 'James (ADHD + anxiety pathway)',
+          moodPattern: 'task-initiation overload during deadline clusters with focus fragmentation',
+          workedBefore: ['micro-task breakdown (5-minute start)', 'single-priority planning', 'timed reset prompts'],
+          signalBand: 'MODERATE'
+        },
+        emma: {
+          label: 'Emma (mood/anxiety stabilization pathway)',
+          moodPattern: 'low mood and sleep variability under sustained stress',
+          workedBefore: ['brief walk reset', 'reflective journaling', 'consistent evening routine'],
+          signalBand: 'GUARDED'
+        }
+      };
+      return map[patientSessionProfile] || map.maria;
+    }
+
+    function buildPatientAwareSubmission(source, rawText = '', checkinMeta = '') {
+      const memory = getPatientMemoryContext();
+      const normalized = (rawText || '').trim();
+      const summaryBase = normalized
+        ? `What I heard: ${normalized.slice(0, 130)}${normalized.length > 130 ? '…' : ''}`
+        : `What I heard: today's update reflects ${memory.moodPattern}.`;
+      const memoryLine = `From your clinician-approved plan, what has helped before includes ${memory.workedBefore[0]} and ${memory.workedBefore[1]}.`;
+      return {
+        source,
+        tone: `Thanks for sharing this update. I used your reviewed support memory (${memory.label}) to keep this response personalized and safe.`,
+        summary: `${summaryBase} ${memoryLine}`.trim(),
+        nextStep: `${checkinMeta ? `Current check-in context: ${checkinMeta}. ` : ''}Suggested next step: try ${memory.workedBefore[0]} now, then log whether it helped so your clinician can review.`.trim(),
+        memoryReference: `Clinician-approved memory retrieved: previous helpful strategies include ${memory.workedBefore.join(', ')}.`
+      };
+    }
+
+    function renderPatientSubmissionSuccess(payload) {
+      const title = document.getElementById('submission-success-title');
+      const tone = document.getElementById('patient-ai-tone');
+      const summary = document.getElementById('patient-ai-summary');
+      const next = document.getElementById('patient-ai-next-step');
+      const memory = document.getElementById('patient-ai-memory');
+      if (title) title.textContent = `${payload.source.replace('_', ' ')} submitted.`;
+      if (tone) tone.textContent = payload.tone;
+      if (summary) summary.textContent = payload.summary;
+      if (next) next.textContent = payload.nextStep;
+      if (memory) memory.textContent = payload.memoryReference;
+      showScreen('patient-submission-success');
+    }
+
     function setQuickNavActive(screenId) {
       document.querySelectorAll('[data-quick-nav]').forEach((button) => {
         const isActive = button.dataset.quickNav === screenId;
@@ -2125,8 +2285,10 @@
     }
     
     function saveJournal() {
-      showToast('Journal entry saved (draft)');
-      setTimeout(() => showScreen('patient-home'), 1000);
+      const text = document.getElementById('journal-text')?.value?.trim() || '';
+      const payload = buildPatientAwareSubmission('JOURNAL', text);
+      renderPatientSubmissionSuccess(payload);
+      showToast('Journal entry saved and routed for clinician review');
     }
     
     // Sliders
@@ -2135,8 +2297,15 @@
     }
     
     function submitCheckin() {
-      showToast('Check-in submitted');
-      setTimeout(() => showScreen('patient-home'), 1000);
+      const mood = document.getElementById('mood-value')?.textContent || '3';
+      const stress = document.getElementById('stress-value')?.textContent || '3';
+      const sleep = document.getElementById('sleep-value')?.textContent || '3';
+      const focus = Array.from(document.querySelectorAll('input[name="checkin-focus"]:checked')).map((item) => item.value);
+      const note = document.getElementById('checkin-note')?.value?.trim() || '';
+      const checkinMeta = `Mood ${mood}/5, Stress ${stress}/5, Sleep ${sleep}/5${focus.length ? `, focus areas: ${focus.join(', ')}` : ''}`;
+      const payload = buildPatientAwareSubmission('CHECKIN', note || checkinMeta, checkinMeta);
+      renderPatientSubmissionSuccess(payload);
+      showToast('Check-in submitted and routed for clinician review');
     }
     
     // Voice recording
@@ -2179,8 +2348,10 @@
     }
     
     function uploadVoice() {
-      showToast('Voice note uploaded for processing');
-      setTimeout(() => showScreen('patient-home'), 1000);
+      const voiceFocus = Array.from(document.querySelectorAll('input[name="voice-focus"]:checked')).map((item) => item.value).join(', ');
+      const payload = buildPatientAwareSubmission('VOICE_MEMO', `Voice focus topics: ${voiceFocus || 'general emotional update'}`);
+      renderPatientSubmissionSuccess(payload);
+      showToast('Voice note uploaded and routed for clinician review');
     }
     
     // MFA
@@ -2234,6 +2405,9 @@
       document.getElementById('rec-status').value = 'SUPPRESSED';
       document.getElementById('export-status').value = 'BLOCKED_POLICY';
       document.getElementById('voice-status').value = 'PROCESSING';
+      patientSessionProfile = 'maria';
+      const patientSel = document.getElementById('patient-session-profile');
+      if (patientSel) patientSel.value = 'maria';
       currentPatientProfile = 'maria';
       renderClinicianPatientProfile();
       const banner = document.getElementById('degraded-banner');
@@ -2320,6 +2494,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       renderClinicianPatientProfile();
+      const patientSel = document.getElementById('patient-session-profile');
+      if (patientSel) patientSel.value = patientSessionProfile;
       initScreenFromHash();
     });
   </script>

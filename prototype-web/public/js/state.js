@@ -103,6 +103,7 @@ export const state = {
   securityState: JSON.parse(JSON.stringify(baselineSecurityState)),
   decisionRoomState: JSON.parse(JSON.stringify(baselineDecisionRoomState)),
   selectedPatientProfile: 'maria',
+  patientSessionProfile: 'maria',
   roiMode: 'pilot',
   recording: false,
   recordInterval: null,

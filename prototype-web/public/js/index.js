@@ -124,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDecisionRoom();
   renderClinicianPatientProfile();
 
+  const patientSel = document.getElementById('patient-session-profile');
+  if (patientSel) patientSel.value = state.patientSessionProfile;
+
   // Initialize hash-aware routing and active quick-nav state
   initScreenRouting();
   

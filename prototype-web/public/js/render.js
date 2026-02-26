@@ -26,6 +26,7 @@ export function renderSubmissionSurfaces() {
   const toneEl = document.getElementById('patient-ai-tone');
   const summaryEl = document.getElementById('patient-ai-summary');
   const nextEl = document.getElementById('patient-ai-next-step');
+  const memoryEl = document.getElementById('patient-ai-memory');
   const cpm = document.getElementById('compare-patient-mode');
   const cps = document.getElementById('compare-patient-summary');
   const cpn = document.getElementById('compare-patient-next');
@@ -40,6 +41,7 @@ export function renderSubmissionSurfaces() {
   if (toneEl) toneEl.textContent = state.latestSubmission.patientReport.tone;
   if (summaryEl) summaryEl.textContent = state.latestSubmission.patientReport.summary;
   if (nextEl) nextEl.textContent = state.latestSubmission.patientReport.nextStep;
+  if (memoryEl) memoryEl.textContent = state.latestSubmission.patientReport.memoryReference || 'Memory retrieval uses clinician-approved, reviewed context only.';
 
   if (cpm) cpm.textContent = patientMode;
   if (cps) cps.textContent = state.latestSubmission.patientReport.summary;

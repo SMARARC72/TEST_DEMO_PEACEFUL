@@ -58,6 +58,72 @@ export function checkJournal() {
   if (banner) banner.classList.toggle('hidden', text.length < 10);
 }
 
+export function setPatientSessionProfile(profileId) {
+  state.patientSessionProfile = profileId || 'maria';
+  showToast(`Active patient demo profile: ${state.patientSessionProfile.toUpperCase()}`);
+}
+
+export function applyJournalPrompt(promptText) {
+  const textEl = document.getElementById('journal-text');
+  if (!textEl) return;
+  const prefix = textEl.value.trim().length ? '\n\n' : '';
+  textEl.value = `${textEl.value}${prefix}${promptText}`;
+  checkJournal();
+  textEl.focus();
+}
+
+function getPatientMemoryContext() {
+  const map = {
+    maria: {
+      label: 'Maria (stress/anxiety pathway)',
+      moodPattern: 'evening stress spikes after commute and poor sleep nights',
+      workedBefore: ['4-6 breathing cadence', 'short evening check-in', 'structured next-day plan'],
+      supportFrame: 'grounding + gentle planning',
+      signalBand: 'GUARDED'
+    },
+    james: {
+      label: 'James (ADHD + anxiety pathway)',
+      moodPattern: 'task-initiation overload during deadline clusters with focus fragmentation',
+      workedBefore: ['micro-task breakdown (5-minute start)', 'single-priority planning', 'timed reset prompts'],
+      supportFrame: 'task simplification + adherence cueing',
+      signalBand: 'MODERATE'
+    },
+    emma: {
+      label: 'Emma (mood/anxiety stabilization pathway)',
+      moodPattern: 'low mood and sleep variability under sustained stress',
+      workedBefore: ['brief walk reset', 'reflective journaling', 'consistent evening routine'],
+      supportFrame: 'stabilization + relapse-prevention cues',
+      signalBand: 'GUARDED'
+    }
+  };
+  return map[state.patientSessionProfile] || map.maria;
+}
+
+function buildPatientAwareSubmission(source, rawText = '', checkinMeta = '') {
+  const memory = getPatientMemoryContext();
+  const normalized = rawText.trim();
+  const summaryBase = normalized
+    ? `What I heard: ${normalized.slice(0, 130)}${normalized.length > 130 ? '…' : ''}`
+    : `What I heard: today's update reflects ${memory.moodPattern}.`;
+  const memoryLine = `From your clinician-approved plan, what has helped before includes ${memory.workedBefore[0]} and ${memory.workedBefore[1]}.`;
+  const checkinLine = checkinMeta ? `Current check-in context: ${checkinMeta}.` : '';
+
+  return {
+    patientPayload: {
+      tone: `Thanks for sharing this update. I used your reviewed support memory (${memory.label}) to keep this response personalized and safe.`,
+      summary: `${summaryBase} ${memoryLine}`.trim(),
+      nextStep: `${checkinLine} Suggested next step: try ${memory.workedBefore[0]} now, then log whether it helped so your clinician can review.`.trim(),
+      memoryReference: `Clinician-approved memory retrieved: previous helpful strategies include ${memory.workedBefore.join(', ')}.`
+    },
+    clinicianPayload: {
+      signalBand: memory.signalBand,
+      summary: `${source} update aligned to ${memory.label}; trend context indicates ${memory.moodPattern}.`,
+      evidence: `Patient-submitted ${source.toLowerCase()} + reviewed memory references: ${memory.workedBefore.join(', ')}.`,
+      unknowns: 'Response remains assistive; clinician confirmation required for risk interpretation and plan adjustment.'
+    }
+  };
+}
+
 // ============ SUBMISSION PROCESSING ============
 
 export function processSubmission(source, patientPayload, clinicianPayload) {
@@ -77,20 +143,8 @@ export function processSubmission(source, patientPayload, clinicianPayload) {
 export function saveJournal() {
   const textEl = document.getElementById('journal-text');
   const text = textEl ? textEl.value.trim() : '';
-  processSubmission(
-    'JOURNAL',
-    {
-      tone: 'Thanks for sharing this. Your reflection was received and prepared for clinician-supervised review.',
-      summary: text ? `What I heard: ${text.slice(0, 110)}${text.length > 110 ? '…' : ''}` : 'What I heard: You shared an emotionally difficult day with continued effort to cope.',
-      nextStep: 'Suggested next step: add one coping action you want to try before your next session.'
-    },
-    {
-      signalBand: 'GUARDED',
-      summary: 'Journal indicates elevated stress narrative with intact forward-looking engagement.',
-      evidence: 'Journal segment ref #J-NEW-01 and lexical stress cues set #L-4.',
-      unknowns: 'No concurrent voice corroboration yet; sleep impact not fully specified.'
-    }
-  );
+  const payload = buildPatientAwareSubmission('JOURNAL', text);
+  processSubmission('JOURNAL', payload.patientPayload, payload.clinicianPayload);
   showToast('Journal entry saved and routed for clinician review');
 }
 
@@ -102,8 +156,15 @@ export function updateSlider(type, value) {
 }
 
 export function submitCheckin() {
-  showToast('Check-in submitted');
-  setTimeout(() => showScreen('patient-home'), 1000);
+  const mood = document.getElementById('mood-value')?.textContent || '3';
+  const stress = document.getElementById('stress-value')?.textContent || '3';
+  const sleep = document.getElementById('sleep-value')?.textContent || '3';
+  const focus = Array.from(document.querySelectorAll('input[name="checkin-focus"]:checked')).map((item) => item.value);
+  const note = document.getElementById('checkin-note')?.value?.trim() || '';
+  const checkinMeta = `Mood ${mood}/5, Stress ${stress}/5, Sleep ${sleep}/5${focus.length ? `, focus areas: ${focus.join(', ')}` : ''}`;
+  const payload = buildPatientAwareSubmission('CHECKIN', note || checkinMeta, checkinMeta);
+  processSubmission('CHECKIN', payload.patientPayload, payload.clinicianPayload);
+  showToast('Check-in submitted and routed for clinician review');
 }
 
 // ============ VOICE RECORDING ============
@@ -143,20 +204,9 @@ export function toggleRecording() {
 }
 
 export function uploadVoice() {
-  processSubmission(
-    'VOICE_MEMO',
-    {
-      tone: 'Voice memo received. A supportive summary is now available while your clinician view updates internally.',
-      summary: 'What I heard: you described feeling overwhelmed today while still seeking support and structure.',
-      nextStep: 'Suggested next step: complete a brief check-in later today to track whether stress intensity changes.'
-    },
-    {
-      signalBand: 'MODERATE',
-      summary: 'Voice memo indicates high emotional load with coherent speech and help-seeking language.',
-      evidence: 'Voice transcript segment #V-NEW-01, pacing marker set #P-3.',
-      unknowns: 'Context for trigger onset timing remains incomplete; follow-up prompt suggested.'
-    }
-  );
+  const voiceFocus = Array.from(document.querySelectorAll('input[name="voice-focus"]:checked')).map((item) => item.value).join(', ');
+  const payload = buildPatientAwareSubmission('VOICE_MEMO', `Voice focus topics: ${voiceFocus || 'general emotional update'}`);
+  processSubmission('VOICE_MEMO', payload.patientPayload, payload.clinicianPayload);
   showToast('Voice note uploaded and routed for clinician review');
 }
 
@@ -500,6 +550,9 @@ export function resetDemo() {
 
   state.selectedPatientProfile = 'maria';
   renderClinicianPatientProfile();
+  state.patientSessionProfile = 'maria';
+  const patientSel = document.getElementById('patient-session-profile');
+  if (patientSel) patientSel.value = 'maria';
   
   showToast('Demo reset to defaults');
 }

@@ -79,8 +79,15 @@ const actionRegistry = {
  */
 export function initEventDelegation() {
   document.body.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-nav], [data-action], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-enterprise-status], [data-roi-mode], [data-step-up], [data-toggle-assumption], [data-toast]');
+    const target = event.target.closest('[data-nav], [data-action], [data-journal-prompt], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-enterprise-status], [data-roi-mode], [data-step-up], [data-toggle-assumption], [data-toast]');
     if (!target) return;
+
+    const journalPrompt = target.dataset.journalPrompt;
+    if (journalPrompt) {
+      event.preventDefault();
+      actions.applyJournalPrompt(journalPrompt);
+      return;
+    }
 
     // Profile selection: data-patient-profile="profile-id"
     const patientProfile = target.dataset.patientProfile;
@@ -176,6 +183,11 @@ export function initEventDelegation() {
     // Consent checkboxes
     if (target.classList.contains('consent-check')) {
       actions.checkConsents();
+      return;
+    }
+
+    if (target.id === 'patient-session-profile') {
+      actions.setPatientSessionProfile(target.value);
       return;
     }
   });
