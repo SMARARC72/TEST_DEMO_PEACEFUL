@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "check:artifacts": "node scripts/check-merge-artifacts.mjs",
+    "verify:no-conflicts": "node scripts/verify-demo-stability.mjs",
+    "build": "npm run check:artifacts && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
