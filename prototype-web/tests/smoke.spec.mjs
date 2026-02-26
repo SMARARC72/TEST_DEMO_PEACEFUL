@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('Security Command Center smoke', async ({ page }) => {
-  // Point to the preview server (vite preview picked port 5174)
-  await page.goto('http://localhost:5174/');
+  // Point to the preview server (vite preview picked port 5173)
+  await page.goto('http://localhost:5173/');
 
   // Open Security Command Center
   const sccBtn = page.locator('text=Security Command Center').first();
