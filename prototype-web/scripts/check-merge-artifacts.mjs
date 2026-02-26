@@ -41,26 +41,26 @@ const leakedBranchPatterns = [
   />>>>>>> [a-zA-Z0-9/_-]+/,
 ];
 
-// Patterns for duplicate UI elements in index.html
+// Patterns for duplicate UI elements in index.html (supports both onclick and data-* attributes)
 const duplicatePatterns = [
   {
     name: 'Communication Triage Queue button (in buttons only, not headings)',
-    pattern: /<button[^>]*onclick="showScreen\('communication-triage-queue'\)"[^>]*>Communication Triage Queue<\/button>/g,
+    pattern: /<button[^>]*(onclick="showScreen\('communication-triage-queue'\)"|data-nav="communication-triage-queue")[^>]*>Communication Triage Queue<\/button>/g,
     maxCount: 1,
   },
   {
     name: 'Reset Demo button (in DOM, not comments)',
-    pattern: /<button[^>]*onclick="resetDemo\(\)"[^>]*>Reset Demo<\/button>/g,
+    pattern: /<button[^>]*(onclick="resetDemo\(\)"|data-action="reset-demo")[^>]*>Reset Demo<\/button>/g,
     maxCount: 1,
   },
   {
     name: 'Security Command Center button (in buttons only)',
-    pattern: /<button[^>]*onclick="showScreen\('security-command-center'\)"[^>]*>Security Command Center<\/button>/g,
+    pattern: /<button[^>]*(onclick="showScreen\('security-command-center'\)"|data-nav="security-command-center")[^>]*>Security Command Center<\/button>/g,
     maxCount: 2,
   },
   {
     name: 'Decision Room button (in buttons only)',
-    pattern: /<button[^>]*onclick="showScreen\('decision-room'\)"[^>]*>Decision Room<\/button>/g,
+    pattern: /<button[^>]*(onclick="showScreen\('decision-room'\)"|data-nav="decision-room")[^>]*>Decision Room<\/button>/g,
     maxCount: 2,
   },
 ];

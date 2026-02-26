@@ -16,6 +16,7 @@ import {
   renderDecisionRoom
 } from './render.js';
 import * as actions from './actions.js';
+import { initEventDelegation } from './events.js';
 
 // Expose to global scope for inline onclick handlers
 window.showScreen = showScreen;
@@ -108,6 +109,9 @@ window.demoState = state;
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize event delegation (Step 2 tech debt)
+  initEventDelegation();
+  
   // Initial renders
   renderSubmissionSurfaces();
   renderTriageQueue();
