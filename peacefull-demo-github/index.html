@@ -137,6 +137,13 @@
           <button onclick="showScreen('restricted-notes')" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
           <button onclick="showScreen('exports-center')" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
           <button onclick="showScreen('suppression-ui')" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
+          <button onclick="showScreen('mbc-dashboard')" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">MBC Dashboard (F1)</button>
+          <button onclick="showScreen('adherence-tracker')" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Adherence Tracker (F2)</button>
+          <button onclick="showScreen('guided-demo')" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Guided Demo Mode (F3)</button>
+          <button onclick="showScreen('kpi-panel')" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">KPI Panel (F4)</button>
+          <button onclick="showScreen('escalation-protocols')" class="w-full py-2 px-3 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium hover:bg-orange-200">Escalation Protocols (F5)</button>
+          <button onclick="showScreen('procurement-artifacts')" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Procurement Artifacts (F8)</button>
+          <button onclick="showScreen('fhir-integration')" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">FHIR Integration (F10)</button>
           <button onclick="resetDemo()" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -156,6 +163,9 @@
       <button type="button" data-quick-nav="suppression-ui" onclick="showScreen('suppression-ui')" aria-label="Go to suppression view">Suppression</button>
       <button type="button" data-quick-nav="exports-center" onclick="showScreen('exports-center')" aria-label="Go to exports center">Exports</button>
       <button type="button" data-quick-nav="roi-dashboard" onclick="showScreen('roi-dashboard')" aria-label="Go to ROI dashboard">ROI</button>
+      <button type="button" data-quick-nav="mbc-dashboard" onclick="showScreen('mbc-dashboard')" aria-label="Go to MBC dashboard">MBC</button>
+      <button type="button" data-quick-nav="escalation-protocols" onclick="showScreen('escalation-protocols')" aria-label="Go to escalation protocols">Escalation</button>
+      <button type="button" data-quick-nav="kpi-panel" onclick="showScreen('kpi-panel')" aria-label="Go to KPI panel">KPIs</button>
     </div>
   </nav>
 
@@ -167,8 +177,8 @@
           <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
         </div>
         <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Peacefull.ai</h1>
-        <p class="text-lg md:text-xl text-teal-100 mb-2">Clinician-Supervised Behavioral Health AI Companion</p>
-        <p class="text-sm text-teal-200/80">Workflow Simulation Demo • Synthetic Data Only</p>
+        <p class="text-lg md:text-xl text-teal-100 mb-2">Clinician-Supervised AI That Bridges Between-Session Gaps in Behavioral Health</p>
+        <p class="text-sm text-teal-200/80">Measurement-Based • Memory-Aware • Clinician-Governed • Enterprise-Ready</p>
       </div>
 
       <div class="hero-panel">
@@ -183,6 +193,8 @@
           <button onclick="showScreen('roi-dashboard')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
           <button onclick="showScreen('ai-live-chat-demo')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Live AI Chat</button>
           <button onclick="showScreen('workflow-simulation')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Workflow</button>
+          <button onclick="showScreen('guided-demo')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Guided Demo (8 min)</button>
+          <button onclick="showScreen('kpi-panel')" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">KPI Panel</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 text-left">
@@ -202,16 +214,16 @@
 
         <div class="hero-metrics">
           <div class="hero-metric">
-            <strong>20+</strong>
+            <strong>30+</strong>
             <span>Interactive demo surfaces</span>
           </div>
           <div class="hero-metric">
-            <strong>5 Core</strong>
-            <span>Safety and governance invariants</span>
+            <strong>6 Core</strong>
+            <span>Safety, MBC, and governance layers</span>
           </div>
           <div class="hero-metric">
-            <strong>8–10 min</strong>
-            <span>End-to-end investor walkthrough</span>
+            <strong>8 min</strong>
+            <span>Guided investor walkthrough</span>
           </div>
         </div>
       </div>
@@ -2007,6 +2019,204 @@
     </div>
   </div>
 
+  <!-- F1: MBC DASHBOARD -->
+  <div id="mbc-dashboard" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">Measurement-Based Care</h1>
+        <button onclick="resetMBCDashboard()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Total Assessments</p><p class="text-2xl font-bold text-slate-800">6</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Worsening</p><p id="mbc-worsening-count" class="text-2xl font-bold text-red-600">2</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Improving</p><p id="mbc-improving-count" class="text-2xl font-bold text-green-600">3</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Instruments</p><p class="text-2xl font-bold text-teal-600">PHQ-9 / GAD-7</p></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Score Registry</h2>
+        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="border-b text-slate-500"><th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Instrument</th><th class="py-2 pr-2">Score</th><th class="py-2 pr-2">Severity</th><th class="py-2 pr-2">Trend</th><th class="py-2">Date</th></tr></thead><tbody id="mbc-table-body"></tbody></table></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Score Detail</h2>
+        <div id="mbc-detail" class="space-y-2 text-sm text-slate-700"></div>
+        <div class="mt-4 pt-4 border-t"><label class="block text-sm font-semibold text-slate-700 mb-2">Add Clinician Note</label><textarea id="mbc-clinician-note" rows="2" class="w-full p-3 border rounded-lg text-sm" placeholder="e.g., Discussed worsening trend with patient..."></textarea><button onclick="addMBCNote()" class="mt-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Save Note</button></div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><p class="text-sm text-amber-900"><strong>Synthetic Data Notice:</strong> All PHQ-9 and GAD-7 scores shown are synthetic demonstration data.</p></div>
+    </div>
+  </div>
+
+  <!-- F2: ADHERENCE TRACKER -->
+  <div id="adherence-tracker" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">Care Plan Adherence</h1>
+        <button onclick="resetAdherence()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">On Track</p><p id="adherence-on-track-count" class="text-2xl font-bold text-green-600">3</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">At Risk</p><p id="adherence-at-risk-count" class="text-2xl font-bold text-red-600">1</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Total Tasks</p><p class="text-2xl font-bold text-slate-800">6</p></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Adherence Items</h2>
+        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="border-b text-slate-500"><th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Task</th><th class="py-2 pr-2">Progress</th><th class="py-2 pr-2">Streak</th><th class="py-2">Status</th></tr></thead><tbody id="adherence-table-body"></tbody></table></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Item Detail</h2>
+        <div id="adherence-detail" class="space-y-2 text-sm text-slate-700"></div>
+        <button onclick="logAdherenceCompletion()" class="mt-4 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Log Completion (+1)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- F3: GUIDED DEMO MODE -->
+  <div id="guided-demo" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-4xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">Guided Demo Mode</h1>
+        <button onclick="resetGuidedDemo()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-4xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4"><div><h2 class="text-lg font-bold text-slate-800">8-Minute Investor Walkthrough</h2><p class="text-sm text-slate-500">Follow the guided path through key demo surfaces</p></div><p id="guided-demo-current-label" class="text-sm font-semibold text-teal-600">Not Started</p></div>
+        <div class="w-full bg-slate-200 rounded-full h-3 mb-6"><div id="guided-demo-progress" class="bg-teal-500 h-3 rounded-full transition-all" style="width: 0%"></div></div>
+        <div class="flex gap-3 mb-6"><button onclick="startGuidedDemo()" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700">Start Demo</button><button onclick="advanceGuidedDemo()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300">Next Step →</button></div>
+      </div>
+      <div id="guided-demo-steps" class="space-y-0"></div>
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4"><p class="text-sm text-teal-900"><strong>Tip:</strong> Use "Start Demo" to begin, then click "Next Step" after visiting each screen.</p></div>
+    </div>
+  </div>
+
+  <!-- F4: KPI PANEL -->
+  <div id="kpi-panel" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button onclick="showScreen('roi-dashboard')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">KPI Panel — Transparent Assumptions</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6"><h2 class="text-lg font-bold text-slate-800 mb-2">Key Performance Indicators</h2><p class="text-sm text-slate-500 mb-6">Each metric includes its underlying assumption, data source, and confidence level.</p></div>
+      <div id="kpi-metrics-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><p class="text-sm text-amber-900"><strong>Transparency Notice:</strong> All KPIs are based on synthetic pilot data or published benchmarks.</p></div>
+    </div>
+  </div>
+
+  <!-- F5: ESCALATION PROTOCOLS -->
+  <div id="escalation-protocols" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button onclick="showScreen('clinician-caseload')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">Escalation Protocols (T2/T3)</h1>
+        <button onclick="resetEscalation()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Open</p><p id="escalation-open-count" class="text-2xl font-bold text-red-600">1</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Acknowledged</p><p class="text-2xl font-bold text-blue-600">1</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Resolved</p><p id="escalation-resolved-count" class="text-2xl font-bold text-green-600">1</p></div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center"><p class="text-sm text-slate-500">Total Protocols</p><p class="text-2xl font-bold text-slate-800">3</p></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Escalation Registry</h2>
+        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="border-b text-slate-500"><th class="py-2 pr-2">Tier</th><th class="py-2 pr-2">Patient</th><th class="py-2 pr-2">Trigger</th><th class="py-2 pr-2">Detected</th><th class="py-2">Status</th></tr></thead><tbody id="escalation-table-body"></tbody></table></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">Protocol Detail</h2>
+          <div id="escalation-detail" class="space-y-2 text-sm text-slate-700"></div>
+          <div class="mt-4 pt-4 border-t flex flex-wrap gap-2"><button onclick="acknowledgeEscalation()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button><button onclick="resolveEscalation()" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button></div>
+          <div class="mt-3"><textarea id="escalation-resolve-note" rows="2" class="w-full p-3 border rounded-lg text-sm" placeholder="Resolution note (optional)..."></textarea></div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6"><h2 class="text-lg font-bold text-slate-800 mb-4">Audit Trail</h2><div id="escalation-audit-trail" class="space-y-0 max-h-64 overflow-y-auto"></div></div>
+      </div>
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4"><p class="text-sm text-red-900"><strong>Escalation Protocol:</strong> T2 alerts require clinician acknowledgment within 15 minutes. T3 alerts trigger immediate notification cascade.</p></div>
+    </div>
+  </div>
+
+  <!-- F8: PROCUREMENT ARTIFACTS -->
+  <div id="procurement-artifacts" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-4xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">Procurement Artifacts</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-4xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Enterprise Procurement Package</h2>
+        <p class="text-sm text-slate-500 mb-6">Downloadable artifacts for procurement committee review.</p>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">Security & Compliance Questionnaire (HECVAT Lite)</p><p class="text-sm text-slate-500">Pre-filled responses covering HIPAA, SOC 2, encryption</p></div><span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span></div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">BAA Template</p><p class="text-sm text-slate-500">Standard BAA with Peacefull.ai-specific addenda</p></div><span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span></div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">SOC 2 Type I Report (Summary)</p><p class="text-sm text-slate-500">Trust service criteria coverage</p></div><span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">In Progress</span></div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">Clinical Safety Case Study</p><p class="text-sm text-slate-500">De-identified pilot outcomes and engagement data</p></div><span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span></div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">Integration Architecture Diagram</p><p class="text-sm text-slate-500">EHR integration topology, FHIR R4 resource mapping</p></div><span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">Draft</span></div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200"><div><p class="font-semibold text-slate-800">Pricing & Licensing Summary</p><p class="text-sm text-slate-500">Per-seat pricing, volume tiers</p></div><span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span></div>
+        </div>
+      </div>
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4"><p class="text-sm text-teal-900"><strong>Note:</strong> All procurement artifacts shown are synthetic demo representations.</p></div>
+    </div>
+  </div>
+
+  <!-- F10: FHIR/EHR INTEGRATION -->
+  <div id="fhir-integration" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button onclick="showScreen('landing')" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        <h1 class="text-xl font-bold text-white">FHIR / EHR Integration</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-2">Integration Architecture — Phase 2 Roadmap</h2>
+        <p class="text-sm text-slate-500 mb-6">Peacefull.ai is designed for standards-based interoperability.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4"><p class="font-semibold text-blue-900 mb-2">FHIR R4 Resources</p><ul class="list-disc pl-5 text-sm text-blue-800 space-y-1"><li><strong>Patient</strong> — Demographics sync</li><li><strong>Observation</strong> — PHQ-9, GAD-7</li><li><strong>QuestionnaireResponse</strong> — Check-in data</li><li><strong>CarePlan</strong> — Treatment plan sync</li><li><strong>CommunicationRequest</strong> — Alerts</li><li><strong>DocumentReference</strong> — Summaries</li></ul></div>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4"><p class="font-semibold text-indigo-900 mb-2">EHR Integration Targets</p><ul class="list-disc pl-5 text-sm text-indigo-800 space-y-1"><li><strong>Epic</strong> — SMART on FHIR</li><li><strong>Cerner</strong> — CDS Hooks</li><li><strong>Athenahealth</strong> — API marketplace</li><li><strong>Generic FHIR</strong> — Any R4 endpoint</li></ul></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Data Flow</h2>
+        <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+          <div class="flex flex-col md:flex-row items-center gap-4 text-center text-sm">
+            <div class="bg-teal-100 text-teal-800 rounded-xl p-4 font-semibold flex-1">Patient App</div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-blue-100 text-blue-800 rounded-xl p-4 font-semibold flex-1">Platform</div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-indigo-100 text-indigo-800 rounded-xl p-4 font-semibold flex-1">FHIR R4</div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-purple-100 text-purple-800 rounded-xl p-4 font-semibold flex-1">EHR System</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4"><p class="text-sm text-amber-900"><strong>Phase 2 Roadmap:</strong> FHIR integration is planned for Phase 2.</p></div>
+    </div>
+  </div>
+
+  <!-- F7: FOOTER -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:80;">
+    <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+      <span>© 2026 Peacefull.ai</span><span>•</span>
+      <button onclick="showToast('Privacy Policy: All patient data encrypted at rest (AES-256) and in transit (TLS 1.3). HIPAA-compliant.')" class="hover:text-white underline">Privacy</button><span>•</span>
+      <button onclick="showToast('Terms: This is a demonstration prototype. Synthetic data only.')" class="hover:text-white underline">Terms</button><span>•</span>
+      <button onclick="showScreen('compliance-posture')" class="hover:text-white underline">Compliance</button><span>•</span>
+      <span class="text-slate-500">Synthetic Demo Data Only</span>
+    </div>
+  </footer>
+
   <!-- JAVASCRIPT -->
   <script>
     let currentPatientProfile = 'maria';
@@ -2412,6 +2622,10 @@
       renderClinicianPatientProfile();
       const banner = document.getElementById('degraded-banner');
       if (banner) banner.classList.add('hidden');
+      resetMBCDashboard();
+      resetAdherence();
+      resetGuidedDemo();
+      resetEscalation();
       showToast('Demo reset to defaults');
     }
     
@@ -2496,8 +2710,195 @@
       renderClinicianPatientProfile();
       const patientSel = document.getElementById('patient-session-profile');
       if (patientSel) patientSel.value = patientSessionProfile;
+      renderMBCDashboard();
+      renderAdherenceTracker();
+      renderGuidedDemo();
+      renderKPIPanel();
+      renderEscalationProtocols();
       initScreenFromHash();
     });
+
+    // ============ MBC STATE & FUNCTIONS (F1) ============
+    const mbcScores = [
+      { id: 'mbc-1', patient: 'Maria Rodriguez', instrument: 'PHQ-9', score: 14, severity: 'Moderate', date: '2026-02-25', trend: 'worsening', priorScores: [10, 12, 14], clinicianNote: '' },
+      { id: 'mbc-2', patient: 'Maria Rodriguez', instrument: 'GAD-7', score: 11, severity: 'Moderate', date: '2026-02-25', trend: 'stable', priorScores: [12, 11, 11], clinicianNote: '' },
+      { id: 'mbc-3', patient: 'James Smith', instrument: 'PHQ-9', score: 8, severity: 'Mild', date: '2026-02-24', trend: 'improving', priorScores: [12, 10, 8], clinicianNote: '' },
+      { id: 'mbc-4', patient: 'James Smith', instrument: 'GAD-7', score: 13, severity: 'Moderate', date: '2026-02-24', trend: 'worsening', priorScores: [9, 11, 13], clinicianNote: '' },
+      { id: 'mbc-5', patient: 'Emma Wilson', instrument: 'PHQ-9', score: 6, severity: 'Mild', date: '2026-02-26', trend: 'improving', priorScores: [11, 8, 6], clinicianNote: '' },
+      { id: 'mbc-6', patient: 'Emma Wilson', instrument: 'GAD-7', score: 7, severity: 'Mild', date: '2026-02-26', trend: 'improving', priorScores: [10, 9, 7], clinicianNote: '' }
+    ];
+    let selectedMBCId = 'mbc-1';
+
+    function mbcSeverityClass(s) { return s === 'Moderate' ? 'bg-amber-100 text-amber-700' : s === 'Mild' ? 'bg-blue-100 text-blue-700' : s === 'Severe' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'; }
+    function mbcTrendIcon(t) { return t === 'improving' ? '↓ Improving' : t === 'worsening' ? '↑ Worsening' : '→ Stable'; }
+
+    function selectMBC(id) { selectedMBCId = id; renderMBCDashboard(); }
+    function addMBCNote() {
+      const noteEl = document.getElementById('mbc-clinician-note');
+      const note = noteEl ? noteEl.value.trim() : '';
+      if (!note) { showToast('Please enter a clinician note'); return; }
+      const item = mbcScores.find(i => i.id === selectedMBCId);
+      if (item) item.clinicianNote = note;
+      showToast('Clinician note saved');
+      renderMBCDashboard();
+      if (noteEl) noteEl.value = '';
+    }
+    function resetMBCDashboard() { selectedMBCId = 'mbc-1'; mbcScores.forEach((m,i) => { m.clinicianNote = ''; }); renderMBCDashboard(); }
+
+    function renderMBCDashboard() {
+      const tbody = document.getElementById('mbc-table-body');
+      const detail = document.getElementById('mbc-detail');
+      if (!tbody || !detail) return;
+      tbody.innerHTML = mbcScores.map(item => `<tr onclick="selectMBC('${item.id}')" class="border-b cursor-pointer ${item.id === selectedMBCId ? 'bg-teal-50' : ''}"><td class="py-2 pr-2">${item.patient}</td><td class="py-2 pr-2">${item.instrument}</td><td class="py-2 pr-2 font-semibold">${item.score}</td><td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-semibold ${mbcSeverityClass(item.severity)}">${item.severity}</span></td><td class="py-2 pr-2 text-sm">${mbcTrendIcon(item.trend)}</td><td class="py-2 text-sm text-slate-500">${item.date}</td></tr>`).join('');
+      const s = mbcScores.find(i => i.id === selectedMBCId) || mbcScores[0];
+      const spark = s.priorScores.map((v,i) => `T${i+1}: ${v}`).join(' → ');
+      detail.innerHTML = `<p><strong>Patient:</strong> ${s.patient}</p><p><strong>Instrument:</strong> ${s.instrument}</p><p><strong>Score:</strong> ${s.score} (${s.severity})</p><p><strong>Trend:</strong> ${mbcTrendIcon(s.trend)}</p><p><strong>History:</strong> ${spark} → <strong>${s.score}</strong></p>${s.clinicianNote ? `<p><strong>Note:</strong> ${s.clinicianNote}</p>` : '<p class="text-sm text-slate-500 italic">No note yet.</p>'}`;
+      const w = document.getElementById('mbc-worsening-count');
+      const im = document.getElementById('mbc-improving-count');
+      if (w) w.textContent = String(mbcScores.filter(i => i.trend === 'worsening').length);
+      if (im) im.textContent = String(mbcScores.filter(i => i.trend === 'improving').length);
+    }
+
+    // ============ ADHERENCE STATE & FUNCTIONS (F2) ============
+    const adherenceItems = [
+      { id: 'adh-1', patient: 'Maria Rodriguez', task: 'Evening breathing exercise (4-6 cadence)', frequency: 'Daily', completed: 4, target: 7, streak: 2, lastLogged: '2026-02-25 21:30', status: 'PARTIAL' },
+      { id: 'adh-2', patient: 'Maria Rodriguez', task: 'Mood journal entry', frequency: 'Daily', completed: 5, target: 7, streak: 3, lastLogged: '2026-02-25 20:00', status: 'ON_TRACK' },
+      { id: 'adh-3', patient: 'James Smith', task: 'Single-priority task planning', frequency: 'Daily', completed: 3, target: 7, streak: 0, lastLogged: '2026-02-23 08:15', status: 'AT_RISK' },
+      { id: 'adh-4', patient: 'James Smith', task: 'Timed reset prompt (5-min break)', frequency: '3x/day', completed: 8, target: 21, streak: 1, lastLogged: '2026-02-25 14:00', status: 'PARTIAL' },
+      { id: 'adh-5', patient: 'Emma Wilson', task: 'Evening routine consistency', frequency: 'Daily', completed: 6, target: 7, streak: 5, lastLogged: '2026-02-26 21:45', status: 'ON_TRACK' },
+      { id: 'adh-6', patient: 'Emma Wilson', task: 'Brief walk reset', frequency: '4x/week', completed: 3, target: 4, streak: 3, lastLogged: '2026-02-26 12:30', status: 'ON_TRACK' }
+    ];
+    let selectedAdherenceId = 'adh-1';
+
+    function adherenceBadgeClass(s) { return s === 'ON_TRACK' ? 'bg-green-100 text-green-700' : s === 'AT_RISK' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'; }
+    function selectAdherence(id) { selectedAdherenceId = id; renderAdherenceTracker(); }
+    function logAdherenceCompletion() {
+      const item = adherenceItems.find(i => i.id === selectedAdherenceId);
+      if (!item) return;
+      item.completed = Math.min(item.completed + 1, item.target);
+      item.streak++;
+      item.status = (item.completed / item.target) >= 0.7 ? 'ON_TRACK' : (item.completed / item.target) >= 0.4 ? 'PARTIAL' : 'AT_RISK';
+      item.lastLogged = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      showToast('Adherence completion logged');
+      renderAdherenceTracker();
+    }
+    function resetAdherence() { selectedAdherenceId = 'adh-1'; adherenceItems.forEach(i => { i.completed = [4,5,3,8,6,3][adherenceItems.indexOf(i)]; i.streak = [2,3,0,1,5,3][adherenceItems.indexOf(i)]; i.status = ['PARTIAL','ON_TRACK','AT_RISK','PARTIAL','ON_TRACK','ON_TRACK'][adherenceItems.indexOf(i)]; }); renderAdherenceTracker(); }
+
+    function renderAdherenceTracker() {
+      const tbody = document.getElementById('adherence-table-body');
+      const detail = document.getElementById('adherence-detail');
+      if (!tbody || !detail) return;
+      tbody.innerHTML = adherenceItems.map(item => { const pct = Math.round((item.completed / item.target) * 100); return `<tr onclick="selectAdherence('${item.id}')" class="border-b cursor-pointer ${item.id === selectedAdherenceId ? 'bg-emerald-50' : ''}"><td class="py-2 pr-2">${item.patient}</td><td class="py-2 pr-2">${item.task}</td><td class="py-2 pr-2">${item.completed}/${item.target} (${pct}%)</td><td class="py-2 pr-2">${item.streak}d</td><td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${adherenceBadgeClass(item.status)}">${item.status}</span></td></tr>`; }).join('');
+      const s = adherenceItems.find(i => i.id === selectedAdherenceId) || adherenceItems[0];
+      const pct = Math.round((s.completed / s.target) * 100);
+      detail.innerHTML = `<p><strong>Patient:</strong> ${s.patient}</p><p><strong>Task:</strong> ${s.task}</p><p><strong>Progress:</strong> ${s.completed}/${s.target} (${pct}%)</p><div class="w-full bg-slate-200 rounded-full h-3 my-2"><div class="h-3 rounded-full ${pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${pct}%"></div></div><p><strong>Streak:</strong> ${s.streak}d</p><p><strong>Last:</strong> ${s.lastLogged}</p>`;
+      const onEl = document.getElementById('adherence-on-track-count');
+      const riskEl = document.getElementById('adherence-at-risk-count');
+      if (onEl) onEl.textContent = String(adherenceItems.filter(i => i.status === 'ON_TRACK').length);
+      if (riskEl) riskEl.textContent = String(adherenceItems.filter(i => i.status === 'AT_RISK').length);
+    }
+
+    // ============ GUIDED DEMO (F3) ============
+    const guidedDemoSteps = [
+      { label: 'Landing & Positioning', screen: 'landing', duration: '1 min', description: 'Platform overview and value proposition' },
+      { label: 'Patient Experience', screen: 'patient-home', duration: '1.5 min', description: 'Patient check-in, journal, and voice flows' },
+      { label: 'Clinician Inbox', screen: 'clinician-inbox', duration: '1 min', description: 'Triage queue and alert management' },
+      { label: 'MBC Dashboard', screen: 'mbc-dashboard', duration: '1 min', description: 'PHQ-9/GAD-7 scoring and trend visualization' },
+      { label: 'Escalation Protocols', screen: 'escalation-protocols', duration: '1 min', description: 'T2/T3 escalation cards with audit trail' },
+      { label: 'KPI & ROI', screen: 'kpi-panel', duration: '1 min', description: 'Transparent KPIs with assumption drawers' },
+      { label: 'ROI Dashboard', screen: 'roi-dashboard', duration: '1 min', description: 'Financial metrics and projections' },
+      { label: 'Procurement', screen: 'procurement-artifacts', duration: '0.5 min', description: 'Procurement package overview' }
+    ];
+    let guidedDemoActive = false, guidedDemoStep = 0, guidedDemoCompleted = [];
+
+    function startGuidedDemo() { guidedDemoActive = true; guidedDemoStep = 0; guidedDemoCompleted = []; renderGuidedDemo(); showToast('Guided demo started'); }
+    function advanceGuidedDemo() { if (!guidedDemoActive) return; if (!guidedDemoCompleted.includes(guidedDemoStep)) guidedDemoCompleted.push(guidedDemoStep); if (guidedDemoStep < guidedDemoSteps.length - 1) guidedDemoStep++; else { guidedDemoActive = false; showToast('Guided demo complete!'); } renderGuidedDemo(); }
+    function resetGuidedDemo() { guidedDemoActive = false; guidedDemoStep = 0; guidedDemoCompleted = []; renderGuidedDemo(); }
+
+    function renderGuidedDemo() {
+      const stepsEl = document.getElementById('guided-demo-steps');
+      const progressEl = document.getElementById('guided-demo-progress');
+      const currentLabel = document.getElementById('guided-demo-current-label');
+      if (!stepsEl) return;
+      const pct = guidedDemoSteps.length > 0 ? Math.round((guidedDemoCompleted.length / guidedDemoSteps.length) * 100) : 0;
+      if (progressEl) progressEl.style.width = `${pct}%`;
+      if (currentLabel) currentLabel.textContent = guidedDemoActive && guidedDemoStep < guidedDemoSteps.length ? guidedDemoSteps[guidedDemoStep].label : (guidedDemoCompleted.length === guidedDemoSteps.length ? 'Demo Complete' : 'Not Started');
+      stepsEl.innerHTML = guidedDemoSteps.map((step, i) => {
+        const isCompleted = guidedDemoCompleted.includes(i);
+        const isCurrent = guidedDemoActive && guidedDemoStep === i;
+        return `<div class="script-step"><div class="script-dot ${isCompleted ? 'completed' : isCurrent ? 'active' : ''}">${isCompleted ? '✓' : i + 1}</div><div class="bg-white rounded-xl shadow-sm p-4 ${isCurrent ? 'ring-2 ring-teal-500' : ''}"><div class="flex items-center justify-between mb-2"><h3 class="font-semibold text-slate-800">${step.label}</h3><span class="text-sm text-slate-500">${step.duration}</span></div><p class="text-sm text-slate-600 mb-3">${step.description}</p>${isCurrent ? `<button onclick="showScreen('${step.screen}')" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Go to Screen →</button>` : ''}</div></div>`;
+      }).join('');
+    }
+
+    // ============ KPI PANEL (F4) ============
+    const kpiMetrics = [
+      { label: 'Avg Clinician Prep Time Saved', value: '5.2 min/patient', baseline: '12.4 min', assumption: 'Based on 3-clinician pilot over 4 weeks.', confidence: 'Medium' },
+      { label: 'Patient Engagement Rate', value: '78%', baseline: '42%', assumption: 'Measured as ≥3 check-ins per week.', confidence: 'Medium' },
+      { label: 'Safety Signal Detection (T2+)', value: '< 4 min median', baseline: '> 24 hrs', assumption: 'Time from patient submission to clinician alert.', confidence: 'High' },
+      { label: 'Memory Conflict Resolution Rate', value: '92%', baseline: 'N/A', assumption: 'Percentage of auto-flagged conflicts resolved within 48h.', confidence: 'Low-Medium' },
+      { label: 'Between-Session Continuity Score', value: '3.8 / 5', baseline: '2.1 / 5', assumption: 'Clinician-rated continuity of care.', confidence: 'Low' },
+      { label: 'Projected Annual Cost Savings', value: '$1.6M', baseline: 'N/A', assumption: 'Extrapolated from prep time savings × $180/hr.', confidence: 'Low (projection)' }
+    ];
+
+    function renderKPIPanel() {
+      const container = document.getElementById('kpi-metrics-container');
+      if (!container) return;
+      container.innerHTML = kpiMetrics.map(m => `<div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 ${m.confidence === 'High' ? 'border-green-500' : m.confidence.startsWith('Low') ? 'border-red-400' : 'border-amber-400'}"><div class="flex items-center justify-between mb-2"><h3 class="font-semibold text-slate-800 text-sm">${m.label}</h3><span class="px-2 py-1 rounded text-xs font-semibold ${m.confidence === 'High' ? 'bg-green-100 text-green-700' : m.confidence.startsWith('Low') ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">${m.confidence}</span></div><p class="text-2xl font-bold text-slate-900 mb-1">${m.value}</p><p class="text-sm text-slate-500 mb-3">Baseline: ${m.baseline}</p><div class="assumptions-drawer"><p class="text-xs font-semibold text-slate-500 uppercase mb-1">Assumption</p><p class="text-sm text-slate-700">${m.assumption}</p></div></div>`).join('');
+    }
+
+    // ============ ESCALATION PROTOCOLS (F5) ============
+    const escalationItems = [
+      { id: 'esc-1', patient: 'Maria Rodriguez', tier: 'T2', trigger: 'Hopelessness language detected in voice note', detectedAt: '2026-02-25 09:15', acknowledgedAt: '', resolvedAt: '', clinicianAction: '', status: 'OPEN', auditTrail: ['2026-02-25 09:15 — System: T2 escalation triggered.', '2026-02-25 09:16 — System: Clinician notification dispatched.'] },
+      { id: 'esc-2', patient: 'Alex Kim', tier: 'T2', trigger: 'Escalated anxiety + missed check-ins (3 days)', detectedAt: '2026-02-25 10:01', acknowledgedAt: '2026-02-25 10:08', resolvedAt: '', clinicianAction: 'Outreach call scheduled', status: 'ACK', auditTrail: ['2026-02-25 10:01 — System: T2 escalation triggered.', '2026-02-25 10:08 — Dr. Chen: Acknowledged.'] },
+      { id: 'esc-3', patient: 'Maria Rodriguez', tier: 'T3', trigger: 'Explicit self-harm ideation detected', detectedAt: '2026-02-20 14:22', acknowledgedAt: '2026-02-20 14:23', resolvedAt: '2026-02-20 15:10', clinicianAction: 'Safety plan reviewed, emergency contact notified', status: 'RESOLVED', auditTrail: ['2026-02-20 14:22 — System: T3 CRITICAL.', '2026-02-20 14:23 — Dr. Chen: Immediate acknowledgment.', '2026-02-20 15:10 — Dr. Chen: Resolved.'] }
+    ];
+    let selectedEscalationId = 'esc-1';
+
+    function escalationBadgeClass(s) { return s === 'RESOLVED' ? 'bg-green-100 text-green-700' : s === 'ACK' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'; }
+    function escalationTierClass(t) { return t === 'T3' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'; }
+    function selectEscalation(id) { selectedEscalationId = id; renderEscalationProtocols(); }
+
+    function acknowledgeEscalation() {
+      const item = escalationItems.find(i => i.id === selectedEscalationId);
+      if (!item || item.status !== 'OPEN') return;
+      const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      item.status = 'ACK'; item.acknowledgedAt = now;
+      item.auditTrail.push(`${now} — Clinician: Acknowledged.`);
+      showToast('Escalation acknowledged'); renderEscalationProtocols();
+    }
+
+    function resolveEscalation() {
+      const item = escalationItems.find(i => i.id === selectedEscalationId);
+      if (!item || item.status === 'RESOLVED') return;
+      const note = document.getElementById('escalation-resolve-note')?.value?.trim() || '';
+      const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      item.status = 'RESOLVED'; item.resolvedAt = now;
+      item.clinicianAction = note || item.clinicianAction || 'Resolved';
+      item.auditTrail.push(`${now} — Clinician: Resolved. ${note}`);
+      showToast('Escalation resolved'); renderEscalationProtocols();
+    }
+
+    function resetEscalation() {
+      escalationItems[0].status = 'OPEN'; escalationItems[0].acknowledgedAt = ''; escalationItems[0].resolvedAt = '';
+      escalationItems[1].status = 'ACK'; escalationItems[1].resolvedAt = '';
+      escalationItems[2].status = 'RESOLVED';
+      selectedEscalationId = 'esc-1'; renderEscalationProtocols();
+    }
+
+    function renderEscalationProtocols() {
+      const tbody = document.getElementById('escalation-table-body');
+      const detail = document.getElementById('escalation-detail');
+      const auditEl = document.getElementById('escalation-audit-trail');
+      if (!tbody || !detail) return;
+      tbody.innerHTML = escalationItems.map(item => `<tr onclick="selectEscalation('${item.id}')" class="border-b cursor-pointer ${item.id === selectedEscalationId ? 'bg-orange-50' : ''}"><td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(item.tier)}">${item.tier}</span></td><td class="py-2 pr-2">${item.patient}</td><td class="py-2 pr-2 text-sm">${item.trigger}</td><td class="py-2 pr-2 text-sm">${item.detectedAt}</td><td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${escalationBadgeClass(item.status)}">${item.status}</span></td></tr>`).join('');
+      const s = escalationItems.find(i => i.id === selectedEscalationId) || escalationItems[0];
+      detail.innerHTML = `<p><strong>Patient:</strong> ${s.patient}</p><p><strong>Tier:</strong> <span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(s.tier)}">${s.tier}</span></p><p><strong>Trigger:</strong> ${s.trigger}</p><p><strong>Detected:</strong> ${s.detectedAt}</p>${s.acknowledgedAt ? `<p><strong>Acknowledged:</strong> ${s.acknowledgedAt}</p>` : ''}${s.resolvedAt ? `<p><strong>Resolved:</strong> ${s.resolvedAt}</p>` : ''}${s.clinicianAction ? `<p><strong>Action:</strong> ${s.clinicianAction}</p>` : ''}<p><strong>Status:</strong> ${s.status}</p>`;
+      if (auditEl) auditEl.innerHTML = s.auditTrail.map(e => `<div class="py-2 border-b text-sm text-slate-700">${e}</div>`).join('');
+      const openEl = document.getElementById('escalation-open-count');
+      const resEl = document.getElementById('escalation-resolved-count');
+      if (openEl) openEl.textContent = String(escalationItems.filter(i => i.status === 'OPEN').length);
+      if (resEl) resEl.textContent = String(escalationItems.filter(i => i.status === 'RESOLVED').length);
+    }
   </script>
 </body>
 </html>

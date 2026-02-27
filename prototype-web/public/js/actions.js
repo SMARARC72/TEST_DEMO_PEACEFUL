@@ -11,9 +11,14 @@ import {
   baselinePlanItems,
   baselineEnterpriseItems,
   baselineSecurityState,
-  baselineDecisionRoomState
+  baselineDecisionRoomState,
+  baselineMBCScores,
+  baselineAdherenceItems,
+  baselineGuidedDemoState,
+  baselineKPIData,
+  baselineEscalationItems
 } from './state.js';
-import { showToast, showScreen, computeReadinessVerdict, getSelectedTriageItem, getSelectedMemory, getSelectedPlan } from './helpers.js';
+import { showToast, showScreen, computeReadinessVerdict, getSelectedTriageItem, getSelectedMemory, getSelectedPlan, getSelectedMBC, getSelectedAdherence, getSelectedEscalation } from './helpers.js';
 import { 
   renderSubmissionSurfaces, 
   renderTriageQueue, 
@@ -22,7 +27,12 @@ import {
   renderEnterpriseGovernance, 
   renderSecurityCommandCenter,
   renderDecisionRoom,
-  renderClinicianPatientProfile
+  renderClinicianPatientProfile,
+  renderMBCDashboard,
+  renderAdherenceTracker,
+  renderGuidedDemo,
+  renderKPIPanel,
+  renderEscalationProtocols
 } from './render.js';
 
 // ============ DEMO PANEL ============
@@ -508,6 +518,123 @@ export function resetDecisionRoomStateAction() {
   renderDecisionRoom();
 }
 
+// ============ MBC DASHBOARD (F1) ============
+
+export function selectMBC(id) {
+  state.selectedMBCId = id;
+  renderMBCDashboard();
+}
+
+export function addMBCNote() {
+  const noteEl = document.getElementById('mbc-clinician-note');
+  const note = noteEl ? noteEl.value.trim() : '';
+  if (!note) { showToast('Please enter a clinician note'); return; }
+  state.mbcScores = state.mbcScores.map(item => item.id === state.selectedMBCId ? { ...item, clinicianNote: note } : item);
+  showToast('Clinician note saved on MBC score');
+  renderMBCDashboard();
+  if (noteEl) noteEl.value = '';
+}
+
+export function resetMBCDashboardAction() {
+  state.mbcScores = JSON.parse(JSON.stringify(baselineMBCScores));
+  state.selectedMBCId = state.mbcScores[0].id;
+  renderMBCDashboard();
+}
+
+// ============ ADHERENCE TRACKER (F2) ============
+
+export function selectAdherence(id) {
+  state.selectedAdherenceId = id;
+  renderAdherenceTracker();
+}
+
+export function logAdherenceCompletion() {
+  const selected = getSelectedAdherence();
+  if (!selected) return;
+  state.adherenceItems = state.adherenceItems.map(item => {
+    if (item.id !== state.selectedAdherenceId) return item;
+    const newCompleted = Math.min(item.completed + 1, item.target);
+    const newStreak = item.streak + 1;
+    const newStatus = (newCompleted / item.target) >= 0.7 ? 'ON_TRACK' : (newCompleted / item.target) >= 0.4 ? 'PARTIAL' : 'AT_RISK';
+    return { ...item, completed: newCompleted, streak: newStreak, status: newStatus, lastLogged: new Date().toISOString().slice(0, 16).replace('T', ' ') };
+  });
+  showToast('Adherence completion logged');
+  renderAdherenceTracker();
+}
+
+export function resetAdherenceAction() {
+  state.adherenceItems = JSON.parse(JSON.stringify(baselineAdherenceItems));
+  state.selectedAdherenceId = state.adherenceItems[0].id;
+  renderAdherenceTracker();
+}
+
+// ============ GUIDED DEMO (F3) ============
+
+export function startGuidedDemo() {
+  state.guidedDemoState.active = true;
+  state.guidedDemoState.currentStep = 0;
+  state.guidedDemoState.completedSteps = [];
+  renderGuidedDemo();
+  showToast('Guided demo started — follow the highlighted steps');
+}
+
+export function advanceGuidedDemo() {
+  const gs = state.guidedDemoState;
+  if (!gs.active) return;
+  if (!gs.completedSteps.includes(gs.currentStep)) {
+    gs.completedSteps.push(gs.currentStep);
+  }
+  if (gs.currentStep < gs.steps.length - 1) {
+    gs.currentStep++;
+  } else {
+    gs.active = false;
+    showToast('Guided demo complete! All steps covered.');
+  }
+  renderGuidedDemo();
+}
+
+export function resetGuidedDemoAction() {
+  state.guidedDemoState = JSON.parse(JSON.stringify(baselineGuidedDemoState));
+  renderGuidedDemo();
+}
+
+// ============ ESCALATION PROTOCOLS (F5) ============
+
+export function selectEscalation(id) {
+  state.selectedEscalationId = id;
+  renderEscalationProtocols();
+}
+
+export function acknowledgeEscalation() {
+  state.escalationItems = state.escalationItems.map(item => {
+    if (item.id !== state.selectedEscalationId || item.status !== 'OPEN') return item;
+    const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    return { ...item, status: 'ACK', acknowledgedAt: now, auditTrail: [...item.auditTrail, `${now} — Clinician: Acknowledged escalation.`] };
+  });
+  showToast('Escalation acknowledged');
+  renderEscalationProtocols();
+}
+
+export function resolveEscalation() {
+  const noteEl = document.getElementById('escalation-resolve-note');
+  const note = noteEl ? noteEl.value.trim() : '';
+  state.escalationItems = state.escalationItems.map(item => {
+    if (item.id !== state.selectedEscalationId) return item;
+    if (item.status === 'RESOLVED') return item;
+    const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    return { ...item, status: 'RESOLVED', resolvedAt: now, clinicianAction: note || item.clinicianAction || 'Resolved by clinician', auditTrail: [...item.auditTrail, `${now} — Clinician: Resolved. ${note || ''}`] };
+  });
+  showToast('Escalation resolved');
+  renderEscalationProtocols();
+  if (noteEl) noteEl.value = '';
+}
+
+export function resetEscalationAction() {
+  state.escalationItems = JSON.parse(JSON.stringify(baselineEscalationItems));
+  state.selectedEscalationId = state.escalationItems[0].id;
+  renderEscalationProtocols();
+}
+
 // ============ FULL DEMO RESET ============
 
 export function resetDemo() {
@@ -553,6 +680,25 @@ export function resetDemo() {
   state.patientSessionProfile = 'maria';
   const patientSel = document.getElementById('patient-session-profile');
   if (patientSel) patientSel.value = 'maria';
+
+  // Reset new feature states
+  state.mbcScores = JSON.parse(JSON.stringify(baselineMBCScores));
+  state.selectedMBCId = state.mbcScores[0].id;
+  renderMBCDashboard();
+
+  state.adherenceItems = JSON.parse(JSON.stringify(baselineAdherenceItems));
+  state.selectedAdherenceId = state.adherenceItems[0].id;
+  renderAdherenceTracker();
+
+  state.guidedDemoState = JSON.parse(JSON.stringify(baselineGuidedDemoState));
+  renderGuidedDemo();
+
+  state.kpiData = JSON.parse(JSON.stringify(baselineKPIData));
+  renderKPIPanel();
+
+  state.escalationItems = JSON.parse(JSON.stringify(baselineEscalationItems));
+  state.selectedEscalationId = state.escalationItems[0].id;
+  renderEscalationProtocols();
   
   showToast('Demo reset to defaults');
 }

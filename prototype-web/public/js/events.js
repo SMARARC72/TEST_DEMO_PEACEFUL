@@ -69,6 +69,24 @@ const actionRegistry = {
   'generate-procurement-packet': actions.generateProcurementPacket,
   'reset-decision-room': actions.resetDecisionRoomStateAction,
   
+  // MBC Dashboard (F1)
+  'add-mbc-note': actions.addMBCNote,
+  'reset-mbc-dashboard': actions.resetMBCDashboardAction,
+  
+  // Adherence Tracker (F2)
+  'log-adherence-completion': actions.logAdherenceCompletion,
+  'reset-adherence': actions.resetAdherenceAction,
+  
+  // Guided Demo (F3)
+  'start-guided-demo': actions.startGuidedDemo,
+  'advance-guided-demo': actions.advanceGuidedDemo,
+  'reset-guided-demo': actions.resetGuidedDemoAction,
+  
+  // Escalation Protocols (F5)
+  'acknowledge-escalation': actions.acknowledgeEscalation,
+  'resolve-escalation': actions.resolveEscalation,
+  'reset-escalation': actions.resetEscalationAction,
+  
   // Full reset
   'reset-demo': actions.resetDemo,
 };

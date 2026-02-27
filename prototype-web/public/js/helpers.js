@@ -34,6 +34,52 @@ export function enterpriseBadgeClass(status) {
   return 'bg-red-100 text-red-700';
 }
 
+export function mbcSeverityClass(severity) {
+  if (severity === 'Minimal' || severity === 'None') return 'bg-green-100 text-green-700';
+  if (severity === 'Mild') return 'bg-blue-100 text-blue-700';
+  if (severity === 'Moderate') return 'bg-amber-100 text-amber-700';
+  if (severity === 'Moderately Severe' || severity === 'Severe') return 'bg-red-100 text-red-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
+export function mbcTrendIcon(trend) {
+  if (trend === 'improving') return '↓ Improving';
+  if (trend === 'worsening') return '↑ Worsening';
+  return '→ Stable';
+}
+
+export function adherenceBadgeClass(status) {
+  if (status === 'ON_TRACK') return 'bg-green-100 text-green-700';
+  if (status === 'PARTIAL') return 'bg-amber-100 text-amber-700';
+  if (status === 'AT_RISK') return 'bg-red-100 text-red-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
+export function escalationBadgeClass(status) {
+  if (status === 'RESOLVED') return 'bg-green-100 text-green-700';
+  if (status === 'ACK') return 'bg-blue-100 text-blue-700';
+  if (status === 'OPEN') return 'bg-red-100 text-red-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
+export function escalationTierClass(tier) {
+  if (tier === 'T3') return 'bg-red-600 text-white';
+  if (tier === 'T2') return 'bg-amber-500 text-white';
+  return 'bg-blue-500 text-white';
+}
+
+export function getSelectedMBC() {
+  return state.mbcScores.find(i => i.id === state.selectedMBCId) || state.mbcScores[0];
+}
+
+export function getSelectedAdherence() {
+  return state.adherenceItems.find(i => i.id === state.selectedAdherenceId) || state.adherenceItems[0];
+}
+
+export function getSelectedEscalation() {
+  return state.escalationItems.find(i => i.id === state.selectedEscalationId) || state.escalationItems[0];
+}
+
 // ============ SELECTION GETTERS ============
 
 export function getSelectedTriageItem() {

@@ -144,6 +144,13 @@
           <button data-nav="communication-triage-queue" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
           <button data-nav="security-command-center" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
           <button data-nav="decision-room" class="w-full py-2 px-3 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
+          <button data-nav="mbc-dashboard" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">MBC Dashboard (F1)</button>
+          <button data-nav="adherence-tracker" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Adherence Tracker (F2)</button>
+          <button data-nav="guided-demo" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Guided Demo Mode (F3)</button>
+          <button data-nav="kpi-panel" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">KPI Panel (F4)</button>
+          <button data-nav="escalation-protocols" class="w-full py-2 px-3 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium hover:bg-orange-200">Escalation Protocols (F5)</button>
+          <button data-nav="procurement-artifacts" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Procurement Artifacts (F8)</button>
+          <button data-nav="fhir-integration" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">FHIR Integration (F10)</button>
           <button data-action="reset-demo" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -163,6 +170,9 @@
       <button type="button" data-nav="suppression-ui" data-quick-nav="suppression-ui" aria-label="Go to suppression view">Suppression</button>
       <button type="button" data-nav="exports-center" data-quick-nav="exports-center" aria-label="Go to exports center">Exports</button>
       <button type="button" data-nav="roi-dashboard" data-quick-nav="roi-dashboard" aria-label="Go to ROI dashboard">ROI</button>
+      <button type="button" data-nav="mbc-dashboard" data-quick-nav="mbc-dashboard" aria-label="Go to MBC dashboard">MBC</button>
+      <button type="button" data-nav="escalation-protocols" data-quick-nav="escalation-protocols" aria-label="Go to escalation protocols">Escalation</button>
+      <button type="button" data-nav="kpi-panel" data-quick-nav="kpi-panel" aria-label="Go to KPI panel">KPIs</button>
     </div>
   </nav>
 
@@ -174,8 +184,8 @@
           <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
         </div>
         <h1 class="text-4xl md:text-5xl font-bold text-white mb-3">Peacefull.ai</h1>
-        <p class="text-lg md:text-xl text-teal-100 mb-2">Clinician-Supervised Behavioral Health AI Companion</p>
-        <p class="text-sm text-teal-200/80">Workflow Simulation Demo • Synthetic Data Only</p>
+        <p class="text-lg md:text-xl text-teal-100 mb-2">Clinician-Supervised AI That Bridges Between-Session Gaps in Behavioral Health</p>
+        <p class="text-sm text-teal-200/80">Measurement-Based • Memory-Aware • Clinician-Governed • Enterprise-Ready</p>
       </div>
 
       <div class="hero-panel">
@@ -190,6 +200,8 @@
           <button data-nav="roi-dashboard" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
           <button data-nav="ai-live-chat-demo" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Live AI Chat</button>
           <button data-nav="enterprise-governance" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Enterprise Governance</button>
+          <button data-nav="guided-demo" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Guided Demo (8 min)</button>
+          <button data-nav="kpi-panel" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">KPI Panel</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 text-left">
@@ -209,16 +221,16 @@
 
         <div class="hero-metrics">
           <div class="hero-metric">
-            <strong>20+</strong>
+            <strong>30+</strong>
             <span>Interactive demo surfaces</span>
           </div>
           <div class="hero-metric">
-            <strong>5 Core</strong>
-            <span>Safety and governance invariants</span>
+            <strong>6 Core</strong>
+            <span>Safety, MBC, and governance layers</span>
           </div>
           <div class="hero-metric">
-            <strong>8–10 min</strong>
-            <span>End-to-end investor walkthrough</span>
+            <strong>8 min</strong>
+            <span>Guided investor walkthrough</span>
           </div>
         </div>
       </div>
@@ -2421,6 +2433,406 @@
       </div>
     </div>
   </div>
+
+  <!-- F1: MBC DASHBOARD (Measurement-Based Care) -->
+  <div id="mbc-dashboard" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Measurement-Based Care</h1>
+        <button data-action="reset-mbc-dashboard" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Total Assessments</p>
+          <p class="text-2xl font-bold text-slate-800">6</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Worsening</p>
+          <p id="mbc-worsening-count" class="text-2xl font-bold text-red-600">2</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Improving</p>
+          <p id="mbc-improving-count" class="text-2xl font-bold text-green-600">3</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Instruments</p>
+          <p class="text-2xl font-bold text-teal-600">PHQ-9 / GAD-7</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Score Registry</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b text-slate-500">
+                <th class="py-2 pr-2">Patient</th>
+                <th class="py-2 pr-2">Instrument</th>
+                <th class="py-2 pr-2">Score</th>
+                <th class="py-2 pr-2">Severity</th>
+                <th class="py-2 pr-2">Trend</th>
+                <th class="py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody id="mbc-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Score Detail</h2>
+        <div id="mbc-detail" class="space-y-2 text-sm text-slate-700"></div>
+        <div class="mt-4 pt-4 border-t">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Add Clinician Note</label>
+          <textarea id="mbc-clinician-note" rows="2" class="w-full p-3 border rounded-lg text-sm" placeholder="e.g., Discussed worsening trend with patient, adjusting intervention..."></textarea>
+          <button data-action="add-mbc-note" class="mt-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Save Note</button>
+        </div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p class="text-sm text-amber-900"><strong>Synthetic Data Notice:</strong> All PHQ-9 and GAD-7 scores shown are synthetic demonstration data. In production, these would be computed from validated patient-completed questionnaires with clinical scoring algorithms.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F2: ADHERENCE TRACKER -->
+  <div id="adherence-tracker" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Care Plan Adherence</h1>
+        <button data-action="reset-adherence" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">On Track</p>
+          <p id="adherence-on-track-count" class="text-2xl font-bold text-green-600">3</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">At Risk</p>
+          <p id="adherence-at-risk-count" class="text-2xl font-bold text-red-600">1</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Total Tasks</p>
+          <p class="text-2xl font-bold text-slate-800">6</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Adherence Items</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b text-slate-500">
+                <th class="py-2 pr-2">Patient</th>
+                <th class="py-2 pr-2">Task</th>
+                <th class="py-2 pr-2">Progress</th>
+                <th class="py-2 pr-2">Streak</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="adherence-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Item Detail</h2>
+        <div id="adherence-detail" class="space-y-2 text-sm text-slate-700"></div>
+        <button data-action="log-adherence-completion" class="mt-4 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Log Completion (+1)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- F3: GUIDED DEMO MODE -->
+  <div id="guided-demo" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-4xl mx-auto">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Guided Demo Mode</h1>
+        <button data-action="reset-guided-demo" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-4xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">8-Minute Investor Walkthrough</h2>
+            <p class="text-sm text-slate-500">Follow the guided path through key demo surfaces</p>
+          </div>
+          <p id="guided-demo-current-label" class="text-sm font-semibold text-teal-600">Not Started</p>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-3 mb-6">
+          <div id="guided-demo-progress" class="bg-teal-500 h-3 rounded-full transition-all" style="width: 0%"></div>
+        </div>
+        <div class="flex gap-3 mb-6">
+          <button data-action="start-guided-demo" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all">Start Demo</button>
+          <button data-action="advance-guided-demo" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-all">Next Step →</button>
+        </div>
+      </div>
+      <div id="guided-demo-steps" class="space-y-0"></div>
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+        <p class="text-sm text-teal-900"><strong>Tip:</strong> Use "Start Demo" to begin, then click "Next Step" after visiting each screen. The guided path covers all key investor-facing surfaces in approximately 8 minutes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F4: KPI PANEL -->
+  <div id="kpi-panel" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="roi-dashboard" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">KPI Panel — Transparent Assumptions</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-2">Key Performance Indicators</h2>
+        <p class="text-sm text-slate-500 mb-6">Each metric includes its underlying assumption, data source, and confidence level. Click to expand.</p>
+      </div>
+      <div id="kpi-metrics-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p class="text-sm text-amber-900"><strong>Transparency Notice:</strong> All KPIs are based on synthetic pilot data or published benchmarks. Confidence levels indicate the maturity and sample size of each data source. Projected values use clearly labeled financial models with stated assumptions.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F5: ESCALATION PROTOCOLS -->
+  <div id="escalation-protocols" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Escalation Protocols (T2/T3)</h1>
+        <button data-action="reset-escalation" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Open</p>
+          <p id="escalation-open-count" class="text-2xl font-bold text-red-600">1</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Acknowledged</p>
+          <p class="text-2xl font-bold text-blue-600">1</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Resolved</p>
+          <p id="escalation-resolved-count" class="text-2xl font-bold text-green-600">1</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+          <p class="text-sm text-slate-500">Total Protocols</p>
+          <p class="text-2xl font-bold text-slate-800">3</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Escalation Registry</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b text-slate-500">
+                <th class="py-2 pr-2">Tier</th>
+                <th class="py-2 pr-2">Patient</th>
+                <th class="py-2 pr-2">Trigger</th>
+                <th class="py-2 pr-2">Detected</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="escalation-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">Protocol Detail</h2>
+          <div id="escalation-detail" class="space-y-2 text-sm text-slate-700"></div>
+          <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+            <button data-action="acknowledge-escalation" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Acknowledge</button>
+            <button data-action="resolve-escalation" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Resolve</button>
+          </div>
+          <div class="mt-3">
+            <textarea id="escalation-resolve-note" rows="2" class="w-full p-3 border rounded-lg text-sm" placeholder="Resolution note (optional)..."></textarea>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-slate-800 mb-4">Audit Trail</h2>
+          <div id="escalation-audit-trail" class="space-y-0 max-h-64 overflow-y-auto"></div>
+        </div>
+      </div>
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+        <p class="text-sm text-red-900"><strong>Escalation Protocol:</strong> T2 alerts require clinician acknowledgment within 15 minutes. T3 alerts trigger immediate notification cascade including emergency contacts and supervisor notification per institutional policy.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F8: PROCUREMENT ARTIFACTS -->
+  <div id="procurement-artifacts" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-4xl mx-auto">
+        <button data-nav="decision-room" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Procurement Artifacts</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-4xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Enterprise Procurement Package</h2>
+        <p class="text-sm text-slate-500 mb-6">Downloadable artifacts for procurement committee review. All items are pre-formatted for standard health-system vendor questionnaires.</p>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">Security & Compliance Questionnaire (HECVAT Lite)</p>
+              <p class="text-sm text-slate-500">Pre-filled responses covering HIPAA, SOC 2, encryption, access controls</p>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">BAA (Business Associate Agreement) Template</p>
+              <p class="text-sm text-slate-500">Standard BAA template with Peacefull.ai-specific addenda</p>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">SOC 2 Type I Report (Summary)</p>
+              <p class="text-sm text-slate-500">Trust service criteria coverage including security, availability, confidentiality</p>
+            </div>
+            <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">In Progress</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">Clinical Safety Case Study (Pilot Outcomes)</p>
+              <p class="text-sm text-slate-500">De-identified pilot outcomes, engagement data, clinician satisfaction scores</p>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">Integration Architecture Diagram</p>
+              <p class="text-sm text-slate-500">EHR integration topology, data flow, FHIR R4 resource mapping</p>
+            </div>
+            <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">Draft</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="font-semibold text-slate-800">Pricing & Licensing Summary</p>
+              <p class="text-sm text-slate-500">Per-seat pricing, volume tiers, pilot-to-enterprise conversion terms</p>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+        <p class="text-sm text-teal-900"><strong>Note:</strong> All procurement artifacts shown are synthetic demo representations. Actual documents are available under NDA through the sales engineering team.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F10: FHIR/EHR INTEGRATION STORY -->
+  <div id="fhir-integration" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="enterprise-governance" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">FHIR / EHR Integration</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-2">Integration Architecture — Phase 2 Roadmap</h2>
+        <p class="text-sm text-slate-500 mb-6">Peacefull.ai is designed for standards-based interoperability. The following FHIR R4 resources and integration patterns are planned for Phase 2 deployment.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p class="font-semibold text-blue-900 mb-2">FHIR R4 Resources Supported</p>
+            <ul class="list-disc pl-5 text-sm text-blue-800 space-y-1">
+              <li><strong>Patient</strong> — Demographics sync</li>
+              <li><strong>Observation</strong> — PHQ-9, GAD-7 scores</li>
+              <li><strong>QuestionnaireResponse</strong> — Check-in data</li>
+              <li><strong>CarePlan</strong> — Treatment plan sync</li>
+              <li><strong>CommunicationRequest</strong> — Clinician alerts</li>
+              <li><strong>DocumentReference</strong> — Session summaries</li>
+            </ul>
+          </div>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <p class="font-semibold text-indigo-900 mb-2">EHR Integration Targets</p>
+            <ul class="list-disc pl-5 text-sm text-indigo-800 space-y-1">
+              <li><strong>Epic</strong> — SMART on FHIR launch context</li>
+              <li><strong>Cerner (Oracle Health)</strong> — CDS Hooks integration</li>
+              <li><strong>Athenahealth</strong> — API-first marketplace app</li>
+              <li><strong>Generic FHIR</strong> — Any R4-compliant endpoint</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Data Flow Architecture</h2>
+        <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+          <div class="flex flex-col md:flex-row items-center gap-4 text-center text-sm">
+            <div class="bg-teal-100 text-teal-800 rounded-xl p-4 font-semibold flex-1">Patient App<br><span class="text-xs font-normal">Check-in, Journal, Voice</span></div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-blue-100 text-blue-800 rounded-xl p-4 font-semibold flex-1">Peacefull.ai Platform<br><span class="text-xs font-normal">Processing + Memory</span></div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-indigo-100 text-indigo-800 rounded-xl p-4 font-semibold flex-1">FHIR R4 Interface<br><span class="text-xs font-normal">Observation, CarePlan</span></div>
+            <span class="text-slate-400 text-lg">→</span>
+            <div class="bg-purple-100 text-purple-800 rounded-xl p-4 font-semibold flex-1">EHR System<br><span class="text-xs font-normal">Epic / Cerner / Athena</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <p class="text-sm font-semibold text-slate-800 mb-2">Authentication</p>
+          <p class="text-sm text-slate-600">OAuth 2.0 + SMART on FHIR launch context. Token-based access with scope-limited permissions.</p>
+          <span class="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Designed</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <p class="text-sm font-semibold text-slate-800 mb-2">Data Mapping</p>
+          <p class="text-sm text-slate-600">Automated mapping from internal schema to FHIR R4 resources. Bi-directional sync for CarePlan and Observation.</p>
+          <span class="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">In Design</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <p class="text-sm font-semibold text-slate-800 mb-2">Compliance</p>
+          <p class="text-sm text-slate-600">HIPAA-compliant data exchange with BAA coverage. Audit logging for all cross-system transfers.</p>
+          <span class="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Planned</span>
+        </div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p class="text-sm text-amber-900"><strong>Phase 2 Roadmap:</strong> FHIR integration is planned for Phase 2. Current demo shows the integration architecture and resource mapping design. Production deployment requires EHR partnership agreements and certification.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- F7: PRIVACY / TERMS / SECURITY FOOTER -->
+  <footer class="fixed bottom-0 left-0 right-0 z-80 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:80;">
+    <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+      <span>© 2026 Peacefull.ai</span>
+      <span>•</span>
+      <button data-toast="Privacy Policy: All patient data is encrypted at rest (AES-256) and in transit (TLS 1.3). No data is shared with third parties. HIPAA-compliant architecture." class="hover:text-white underline">Privacy</button>
+      <span>•</span>
+      <button data-toast="Terms of Service: This is a demonstration prototype. No real patient data is processed. All interactions use synthetic data only." class="hover:text-white underline">Terms</button>
+      <span>•</span>
+      <button data-nav="security-command-center" class="hover:text-white underline">Security</button>
+      <span>•</span>
+      <button data-nav="compliance-posture" class="hover:text-white underline">Compliance</button>
+      <span>•</span>
+      <span class="text-slate-500">Synthetic Demo Data Only</span>
+    </div>
+  </footer>
 
   <!-- JAVASCRIPT (Modular) -->
   <script type="module" src="/js/index.js"></script>

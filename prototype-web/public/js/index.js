@@ -14,7 +14,12 @@ import {
   renderEnterpriseGovernance,
   renderSecurityCommandCenter,
   renderDecisionRoom,
-  renderClinicianPatientProfile
+  renderClinicianPatientProfile,
+  renderMBCDashboard,
+  renderAdherenceTracker,
+  renderGuidedDemo,
+  renderKPIPanel,
+  renderEscalationProtocols
 } from './render.js';
 import * as actions from './actions.js';
 import { initEventDelegation } from './events.js';
@@ -103,6 +108,27 @@ window.resetSecurityState = actions.resetSecurityStateAction;
 window.generateProcurementPacket = actions.generateProcurementPacket;
 window.resetDecisionRoomState = actions.resetDecisionRoomStateAction;
 
+// MBC Dashboard (F1)
+window.selectMBC = actions.selectMBC;
+window.addMBCNote = actions.addMBCNote;
+window.resetMBCDashboard = actions.resetMBCDashboardAction;
+
+// Adherence Tracker (F2)
+window.selectAdherence = actions.selectAdherence;
+window.logAdherenceCompletion = actions.logAdherenceCompletion;
+window.resetAdherence = actions.resetAdherenceAction;
+
+// Guided Demo (F3)
+window.startGuidedDemo = actions.startGuidedDemo;
+window.advanceGuidedDemo = actions.advanceGuidedDemo;
+window.resetGuidedDemo = actions.resetGuidedDemoAction;
+
+// Escalation Protocols (F5)
+window.selectEscalation = actions.selectEscalation;
+window.acknowledgeEscalation = actions.acknowledgeEscalation;
+window.resolveEscalation = actions.resolveEscalation;
+window.resetEscalation = actions.resetEscalationAction;
+
 // Full demo reset
 window.resetDemo = actions.resetDemo;
 
@@ -123,6 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSecurityCommandCenter();
   renderDecisionRoom();
   renderClinicianPatientProfile();
+  renderMBCDashboard();
+  renderAdherenceTracker();
+  renderGuidedDemo();
+  renderKPIPanel();
+  renderEscalationProtocols();
 
   const patientSel = document.getElementById('patient-session-profile');
   if (patientSel) patientSel.value = state.patientSessionProfile;

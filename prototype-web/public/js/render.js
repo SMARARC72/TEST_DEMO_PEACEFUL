@@ -9,10 +9,18 @@ import {
   memoryBadgeClass,
   planBadgeClass,
   enterpriseBadgeClass,
+  mbcSeverityClass,
+  mbcTrendIcon,
+  adherenceBadgeClass,
+  escalationBadgeClass,
+  escalationTierClass,
   getSelectedTriageItem,
   getSelectedMemory,
   getSelectedPlan,
   getSelectedEnterprise,
+  getSelectedMBC,
+  getSelectedAdherence,
+  getSelectedEscalation,
   computeRiskPosture,
   computeReadinessVerdict,
   computePilotExpansionScore
@@ -456,4 +464,180 @@ export function renderClinicianPatientProfile() {
   if (chipMaria) chipMaria.className = `${base} ${state.selectedPatientProfile === 'maria' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
   if (chipJames) chipJames.className = `${base} ${state.selectedPatientProfile === 'james' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
   if (chipEmma) chipEmma.className = `${base} ${state.selectedPatientProfile === 'emma' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
+}
+
+// ============ MBC DASHBOARD (F1) ============
+
+export function renderMBCDashboard() {
+  const tbody = document.getElementById('mbc-table-body');
+  const detail = document.getElementById('mbc-detail');
+  if (!tbody || !detail) return;
+
+  tbody.innerHTML = state.mbcScores.map(item => `
+    <tr onclick="selectMBC('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedMBCId ? 'bg-teal-50' : ''}">
+      <td class="py-2 pr-2">${item.patient}</td>
+      <td class="py-2 pr-2">${item.instrument}</td>
+      <td class="py-2 pr-2 font-semibold">${item.score}</td>
+      <td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-semibold ${mbcSeverityClass(item.severity)}">${item.severity}</span></td>
+      <td class="py-2 pr-2 text-sm">${mbcTrendIcon(item.trend)}</td>
+      <td class="py-2 text-sm text-slate-500">${item.date}</td>
+    </tr>`).join('');
+
+  const selected = getSelectedMBC();
+  const sparkline = selected.priorScores.map((s, i) => `T${i + 1}: ${s}`).join(' → ');
+  detail.innerHTML = `
+    <p><strong>Patient:</strong> ${selected.patient}</p>
+    <p><strong>Instrument:</strong> ${selected.instrument}</p>
+    <p><strong>Current Score:</strong> ${selected.score} (${selected.severity})</p>
+    <p><strong>Trend:</strong> ${mbcTrendIcon(selected.trend)}</p>
+    <p><strong>Score History:</strong> ${sparkline} → <strong>${selected.score}</strong></p>
+    <p><strong>Date:</strong> ${selected.date}</p>
+    ${selected.clinicianNote ? `<p><strong>Clinician Note:</strong> ${selected.clinicianNote}</p>` : '<p class="text-sm text-slate-500 italic">No clinician note yet.</p>'}
+  `;
+
+  // Update summary counts
+  const worsening = state.mbcScores.filter(i => i.trend === 'worsening').length;
+  const improving = state.mbcScores.filter(i => i.trend === 'improving').length;
+  const worseEl = document.getElementById('mbc-worsening-count');
+  const improveEl = document.getElementById('mbc-improving-count');
+  if (worseEl) worseEl.textContent = String(worsening);
+  if (improveEl) improveEl.textContent = String(improving);
+}
+
+// ============ ADHERENCE TRACKER (F2) ============
+
+export function renderAdherenceTracker() {
+  const tbody = document.getElementById('adherence-table-body');
+  const detail = document.getElementById('adherence-detail');
+  if (!tbody || !detail) return;
+
+  tbody.innerHTML = state.adherenceItems.map(item => {
+    const pct = Math.round((item.completed / item.target) * 100);
+    return `
+    <tr onclick="selectAdherence('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedAdherenceId ? 'bg-emerald-50' : ''}">
+      <td class="py-2 pr-2">${item.patient}</td>
+      <td class="py-2 pr-2">${item.task}</td>
+      <td class="py-2 pr-2">${item.completed}/${item.target} (${pct}%)</td>
+      <td class="py-2 pr-2">${item.streak}d</td>
+      <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${adherenceBadgeClass(item.status)}">${item.status}</span></td>
+    </tr>`;
+  }).join('');
+
+  const selected = getSelectedAdherence();
+  const pct = Math.round((selected.completed / selected.target) * 100);
+  detail.innerHTML = `
+    <p><strong>Patient:</strong> ${selected.patient}</p>
+    <p><strong>Task:</strong> ${selected.task}</p>
+    <p><strong>Frequency:</strong> ${selected.frequency}</p>
+    <p><strong>Progress:</strong> ${selected.completed}/${selected.target} (${pct}%)</p>
+    <div class="w-full bg-slate-200 rounded-full h-3 my-2"><div class="h-3 rounded-full ${pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${pct}%"></div></div>
+    <p><strong>Current Streak:</strong> ${selected.streak} days</p>
+    <p><strong>Last Logged:</strong> ${selected.lastLogged}</p>
+    <p><strong>Status:</strong> ${selected.status}</p>
+  `;
+
+  const onTrack = state.adherenceItems.filter(i => i.status === 'ON_TRACK').length;
+  const atRisk = state.adherenceItems.filter(i => i.status === 'AT_RISK').length;
+  const onEl = document.getElementById('adherence-on-track-count');
+  const riskEl = document.getElementById('adherence-at-risk-count');
+  if (onEl) onEl.textContent = String(onTrack);
+  if (riskEl) riskEl.textContent = String(atRisk);
+}
+
+// ============ GUIDED DEMO (F3) ============
+
+export function renderGuidedDemo() {
+  const stepsEl = document.getElementById('guided-demo-steps');
+  const progressEl = document.getElementById('guided-demo-progress');
+  const currentLabel = document.getElementById('guided-demo-current-label');
+  if (!stepsEl) return;
+
+  const gs = state.guidedDemoState;
+  const totalSteps = gs.steps.length;
+  const completedCount = gs.completedSteps.length;
+  const pct = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
+
+  if (progressEl) progressEl.style.width = `${pct}%`;
+  if (currentLabel) currentLabel.textContent = gs.active && gs.currentStep < totalSteps ? gs.steps[gs.currentStep].label : (completedCount === totalSteps ? 'Demo Complete' : 'Not Started');
+
+  stepsEl.innerHTML = gs.steps.map((step, i) => {
+    const isCompleted = gs.completedSteps.includes(i);
+    const isCurrent = gs.active && gs.currentStep === i;
+    const dotClass = isCompleted ? 'completed' : (isCurrent ? 'active' : '');
+    return `
+      <div class="script-step">
+        <div class="script-dot ${dotClass}">${isCompleted ? '✓' : i + 1}</div>
+        <div class="bg-white rounded-xl shadow-sm p-4 ${isCurrent ? 'ring-2 ring-teal-500' : ''}">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-800">${step.label}</h3>
+            <span class="text-sm text-slate-500">${step.duration}</span>
+          </div>
+          <p class="text-sm text-slate-600 mb-3">${step.description}</p>
+          ${isCurrent ? `<button data-nav="${step.screen}" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Go to Screen →</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============ KPI PANEL (F4) ============
+
+export function renderKPIPanel() {
+  const container = document.getElementById('kpi-metrics-container');
+  if (!container) return;
+
+  container.innerHTML = state.kpiData.metrics.map(m => `
+    <div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 ${m.confidence === 'High' ? 'border-green-500' : m.confidence.startsWith('Low') ? 'border-red-400' : 'border-amber-400'}">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-slate-800 text-sm">${m.label}</h3>
+        <span class="px-2 py-1 rounded text-xs font-semibold ${m.confidence === 'High' ? 'bg-green-100 text-green-700' : m.confidence.startsWith('Low') ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">${m.confidence}</span>
+      </div>
+      <p class="text-2xl font-bold text-slate-900 mb-1">${m.value}</p>
+      <p class="text-sm text-slate-500 mb-3">Baseline: ${m.baseline}</p>
+      <div class="assumptions-drawer">
+        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Assumption</p>
+        <p class="text-sm text-slate-700">${m.assumption}</p>
+        <p class="text-xs text-slate-500 mt-2">Source: ${m.source}</p>
+      </div>
+    </div>`).join('');
+}
+
+// ============ ESCALATION PROTOCOLS (F5) ============
+
+export function renderEscalationProtocols() {
+  const tbody = document.getElementById('escalation-table-body');
+  const detail = document.getElementById('escalation-detail');
+  const auditEl = document.getElementById('escalation-audit-trail');
+  if (!tbody || !detail) return;
+
+  tbody.innerHTML = state.escalationItems.map(item => `
+    <tr onclick="selectEscalation('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedEscalationId ? 'bg-orange-50' : ''}">
+      <td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(item.tier)}">${item.tier}</span></td>
+      <td class="py-2 pr-2">${item.patient}</td>
+      <td class="py-2 pr-2 text-sm">${item.trigger}</td>
+      <td class="py-2 pr-2 text-sm">${item.detectedAt}</td>
+      <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${escalationBadgeClass(item.status)}">${item.status}</span></td>
+    </tr>`).join('');
+
+  const selected = getSelectedEscalation();
+  detail.innerHTML = `
+    <p><strong>Patient:</strong> ${selected.patient}</p>
+    <p><strong>Tier:</strong> <span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(selected.tier)}">${selected.tier}</span></p>
+    <p><strong>Trigger:</strong> ${selected.trigger}</p>
+    <p><strong>Detected:</strong> ${selected.detectedAt}</p>
+    ${selected.acknowledgedAt ? `<p><strong>Acknowledged:</strong> ${selected.acknowledgedAt}</p>` : ''}
+    ${selected.resolvedAt ? `<p><strong>Resolved:</strong> ${selected.resolvedAt}</p>` : ''}
+    ${selected.clinicianAction ? `<p><strong>Clinician Action:</strong> ${selected.clinicianAction}</p>` : ''}
+    <p><strong>Status:</strong> ${selected.status}</p>
+  `;
+
+  if (auditEl) {
+    auditEl.innerHTML = selected.auditTrail.map(e => `<div class="py-2 border-b text-sm text-slate-700">${e}</div>`).join('');
+  }
+
+  const openCount = state.escalationItems.filter(i => i.status === 'OPEN').length;
+  const resolvedCount = state.escalationItems.filter(i => i.status === 'RESOLVED').length;
+  const openEl = document.getElementById('escalation-open-count');
+  const resolvedEl = document.getElementById('escalation-resolved-count');
+  if (openEl) openEl.textContent = String(openCount);
+  if (resolvedEl) resolvedEl.textContent = String(resolvedCount);
 }
