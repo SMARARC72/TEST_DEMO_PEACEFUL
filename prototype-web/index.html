@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peacefull.ai - Behavioral Health AI Companion (VC Demo)</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta name="theme-color" content="#0f766e">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
@@ -71,7 +73,7 @@
     .badge-card.locked { opacity: 0.5; filter: grayscale(0.8); }
     .skeleton-pulse { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton 1.5s ease-in-out infinite; }
     @keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    .quick-nav { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 90; width: min(960px, calc(100vw - 24px)); }
+    .quick-nav { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 90; width: min(960px, calc(100vw - 24px)); }
     .quick-nav-inner { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.14); }
     .quick-nav button { padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; background: rgba(148, 163, 184, 0.16); transition: all 0.2s ease; }
     .quick-nav button:hover { color: #ffffff; background: rgba(20, 184, 166, 0.4); }
@@ -89,9 +91,25 @@
       .quick-nav { bottom: 12px; }
       .quick-nav-inner { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
     }
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f172a; color: #e2e8f0; }
+      .glass { background: rgba(30, 41, 59, 0.85); border-color: rgba(255,255,255,0.1); }
+      .bg-white { background: #1e293b !important; }
+      .bg-slate-50 { background: #0f172a !important; }
+      .bg-slate-100 { background: #1e293b !important; }
+      .text-slate-800 { color: #f1f5f9 !important; }
+      .text-slate-600, .text-slate-500 { color: #94a3b8 !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+    .skip-link { position: absolute; top: -100%; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 12px 24px; background: #0f766e; color: white; border-radius: 0 0 8px 8px; font-weight: 600; }
+    .skip-link:focus { top: 0; }
   </style>
 </head>
 <body class="bg-slate-50">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <!-- Demo Control Panel -->
   <div id="demo-panel" class="demo-panel">
     <div class="glass rounded-xl shadow-2xl overflow-hidden">
@@ -176,12 +194,22 @@
           <button data-nav="fhir-integration" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">FHIR Integration (F10)</button>
           <button data-nav="workflow-simulation" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Workflow Overview</button>
           <button data-nav="evidence-base" class="w-full py-2 px-3 bg-rose-100 text-rose-700 rounded-lg text-sm font-medium hover:bg-rose-200">Evidence Base</button>
+          <button data-nav="clinician-analytics" class="w-full py-2 px-3 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Clinician Analytics</button>
+          <button data-nav="population-health" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Population Health</button>
+          <button data-nav="session-notes" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Session Notes</button>
+          <button data-nav="investor-financials" class="w-full py-2 px-3 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Investor Financials</button>
+          <button data-nav="regulatory-hub" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Regulatory Hub</button>
+          <button data-nav="sdoh-assessment" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">SDOH Assessment</button>
+          <button data-nav="caregiver-view" class="w-full py-2 px-3 bg-pink-100 text-pink-700 rounded-lg text-sm font-medium hover:bg-pink-200">Caregiver View</button>
+          <button data-nav="breathing-exercise" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Breathing Exercise</button>
+          <button data-nav="supervisor-cosign" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Supervisor Co-Sign</button>
           <button data-action="reset-demo" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
     </div>
   </div>
 
+  <div id="main-content"></div>
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <nav class="quick-nav" role="navigation" aria-label="Quick Navigation">
@@ -194,6 +222,10 @@
       <button type="button" data-nav="mbc-dashboard" data-quick-nav="mbc-dashboard" aria-label="Go to MBC dashboard">MBC</button>
       <button type="button" data-nav="escalation-protocols" data-quick-nav="escalation-protocols" aria-label="Go to escalation protocols">Escalation</button>
       <button type="button" data-nav="evidence-base" data-quick-nav="evidence-base" aria-label="Go to evidence base">Evidence</button>
+      <button type="button" data-nav="clinician-analytics" data-quick-nav="clinician-analytics" aria-label="Go to clinician analytics">Analytics</button>
+      <button type="button" data-nav="population-health" data-quick-nav="population-health" aria-label="Go to population health">Population</button>
+      <button type="button" data-nav="investor-financials" data-quick-nav="investor-financials" aria-label="Go to financial model">Financials</button>
+      <button type="button" data-nav="regulatory-hub" data-quick-nav="regulatory-hub" aria-label="Go to regulatory hub">Regulatory</button>
     </div>
   </nav>
 
@@ -234,6 +266,7 @@
               <div class="flex flex-wrap gap-2">
                 <button data-nav="roi-dashboard" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">ROI Dashboard</button>
                 <button data-nav="kpi-panel" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">KPI Panel</button>
+                <button data-nav="investor-financials" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">TAM/SAM/SOM</button>
               </div>
             </div>
             <div>
@@ -243,6 +276,7 @@
                 <button data-nav="escalation-protocols" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Escalation Protocols</button>
                 <button data-nav="security-command-center" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Security Command</button>
                 <button data-nav="decision-room" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Decision Room</button>
+                <button data-nav="regulatory-hub" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Regulatory Hub</button>
               </div>
             </div>
             <div>
@@ -282,11 +316,11 @@
 
         <div class="hero-metrics">
           <div class="hero-metric">
-            <strong>48</strong>
+            <strong>58+</strong>
             <span>Interactive demo surfaces</span>
           </div>
           <div class="hero-metric">
-            <strong>14</strong>
+            <strong>65</strong>
             <span>Published evidence citations</span>
           </div>
           <div class="hero-metric">
@@ -400,7 +434,7 @@
         <h3 class="font-semibold text-slate-800 mb-2">Doctor Sees This Now</h3>
         <p class="text-sm text-slate-700">Triage tier, rationale, and draft evidence are visible immediately, while recommendations stay policy-gated until clinician review and action are recorded.</p>
         <div class="mt-3 flex flex-wrap gap-2">
-          <button data-nav="clinician-inbox" class="px-3 py-2 bg-coral-100 text-coral-700 rounded-lg text-xs font-semibold hover:bg-coral-200">Inbox Event</button>
+          <button data-nav="clinician-inbox" class="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-200">Inbox Event</button>
           <button data-nav="draft-review" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Draft + Evidence</button>
           <button data-nav="suppression-ui" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200">Policy Gate</button>
         </div>
@@ -1139,7 +1173,7 @@
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
             <p class="font-semibold text-slate-800 mb-1">1) Portal Inbox Event</p>
             <p class="text-slate-700">Severity tier, timestamp, and concise rationale are posted to the authoritative clinician inbox.</p>
-            <button data-nav="clinician-inbox" class="mt-3 px-3 py-2 bg-coral-100 text-coral-700 rounded-lg text-xs font-semibold hover:bg-coral-200">Open Inbox</button>
+            <button data-nav="clinician-inbox" class="mt-3 px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold hover:bg-orange-200">Open Inbox</button>
           </div>
           <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
             <p class="font-semibold text-slate-800 mb-1">2) Draft Summary + Evidence</p>
@@ -1429,7 +1463,7 @@
     </div>
     <div class="p-6 max-w-4xl mx-auto">
       <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm text-emerald-900">
-        <strong>14 published citations</strong> underpin every AI interaction, assessment tool, and therapeutic feature in Peacefull.ai.
+        <strong>65 published citations</strong> underpin every AI interaction, assessment tool, and therapeutic feature in Peacefull.ai.
       </div>
       <div id="evidence-filter-bar" class="flex gap-2 flex-wrap mb-4">
         <button data-evidence-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white">All</button>
@@ -1439,6 +1473,18 @@
         <button data-evidence-filter="Safety & Crisis" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Safety</button>
         <button data-evidence-filter="Sleep & Wellness" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Sleep</button>
         <button data-evidence-filter="Digital Health" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Digital</button>
+        <button data-evidence-filter="PTSD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">PTSD</button>
+        <button data-evidence-filter="Substance Use" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">SUD</button>
+        <button data-evidence-filter="ADHD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">ADHD</button>
+        <button data-evidence-filter="Bipolar Disorder" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Bipolar</button>
+        <button data-evidence-filter="OCD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">OCD</button>
+        <button data-evidence-filter="Eating Disorders" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Eating</button>
+        <button data-evidence-filter="Clinical Frameworks" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Frameworks</button>
+        <button data-evidence-filter="SDOH" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">SDOH</button>
+        <button data-evidence-filter="Regulatory" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Regulatory</button>
+        <button data-evidence-filter="Pharmacotherapy" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Pharma</button>
+        <button data-evidence-filter="Family & Caregiver" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Family</button>
+        <button data-evidence-filter="Gratitude & Positive Psychology" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Positive Psych</button>
       </div>
       <div id="evidence-base-content" class="space-y-3">
         <!-- rendered dynamically -->
@@ -1450,7 +1496,7 @@
   <div id="clinician-login" class="screen min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-gradient-to-br from-coral-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         </div>
         <h1 class="text-2xl font-bold text-slate-800">Clinician Portal</h1>
@@ -1458,8 +1504,8 @@
       </div>
       
       <div class="space-y-4">
-        <input type="email" value="dr.chen@example.com" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Email">
-        <input type="password" value="********" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500" placeholder="Password">
+        <input type="email" value="dr.chen@example.com" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Email">
+        <input type="password" value="********" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Password">
         <button data-nav="clinician-mfa" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Continue</button>
       </div>
     </div>
@@ -1467,20 +1513,20 @@
 
   <div id="clinician-mfa" class="screen min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-coral-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-coral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </div>
       <h1 class="text-2xl font-bold text-slate-800">Two-Factor Authentication</h1>
       <p class="text-slate-500">Enter the code from your authenticator app</p>
     </div>
     
     <div class="flex gap-3 mb-8">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 2" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 3" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 4" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 5" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
-      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 6" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-coral-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 2" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 3" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 4" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 5" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 6" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-orange-500">
     </div>
     
     <button id="mfa-btn" data-nav="clinician-caseload" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
@@ -1532,7 +1578,7 @@
         <div class="p-4 border-b flex items-center justify-between">
           <h2 class="font-semibold text-slate-800">Patients</h2>
           <div class="flex gap-2">
-            <button class="px-3 py-1.5 bg-coral-100 text-coral-700 rounded-lg text-sm font-medium">All</button>
+            <button class="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">All</button>
             <button class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">Alerts</button>
             <button class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">Pending Review</button>
           </div>
@@ -1921,7 +1967,7 @@
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-slate-800">Maria Rodriguez</h2>
-          <button data-toast="New restricted note created" class="px-4 py-2 bg-coral-500 text-white rounded-lg text-sm font-semibold hover:bg-coral-600">+ New Note</button>
+          <button data-toast="New restricted note created" class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600">+ New Note</button>
         </div>
         <div class="space-y-4">
           <div class="p-4 bg-slate-50 rounded-xl border-l-4 border-red-400">
@@ -2476,7 +2522,7 @@
           <p class="text-xs text-slate-400 mt-2">Per clinician</p>
         </div>
         <div class="bg-white rounded-xl p-6 text-center">
-          <p id="roi-metric-2" class="text-3xl font-bold text-coral-600">340%</p>
+          <p id="roi-metric-2" class="text-3xl font-bold text-orange-600">340%</p>
           <p class="text-sm text-slate-500 mt-1">ROI</p>
           <p class="text-xs text-slate-400 mt-2">Year 1</p>
         </div>
@@ -2738,8 +2784,8 @@
         
         <div class="bg-white rounded-2xl shadow-sm p-6">
           <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-coral-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-coral-600">3</span>
+            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <span class="font-bold text-orange-600">3</span>
             </div>
             <div>
               <h3 class="font-semibold text-slate-800">Portal Inbox</h3>
@@ -3186,8 +3232,205 @@
     </div>
   </div>
 
+  <!-- CLINICIAN ANALYTICS DASHBOARD -->
+  <div id="clinician-analytics" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Clinician Analytics</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="clinician-analytics-content">
+        <div class="text-center py-12 text-slate-400">Loading analytics...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPULATION HEALTH DASHBOARD -->
+  <div id="population-health" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Population Health Dashboard</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="population-health-content">
+        <div class="text-center py-12 text-slate-400">Loading population data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLINICIAN SESSION NOTES -->
+  <div id="session-notes" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-patient" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Session Notes (SOAP)</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="session-notes-content">
+        <div class="text-center py-12 text-slate-400">Loading session notes...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVESTOR FINANCIAL MODEL -->
+  <div id="investor-financials" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="roi-dashboard" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Financial Model & Market Analysis</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="investor-financials-content">
+        <div class="text-center py-12 text-slate-400">Loading financial model...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGULATORY COMPLIANCE HUB -->
+  <div id="regulatory-hub" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="compliance-posture" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Regulatory Compliance Hub</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="regulatory-hub-content">
+        <div class="text-center py-12 text-slate-400">Loading regulatory data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SDOH ASSESSMENT -->
+  <div id="sdoh-assessment" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-patient" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">SDOH Assessment</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div id="sdoh-assessment-content">
+        <div class="text-center py-12 text-slate-400">Loading SDOH data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAREGIVER / FAMILY VIEW -->
+  <div id="caregiver-view" class="screen min-h-screen bg-slate-50">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="patient-home" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Family & Caregiver View</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+        <p class="text-sm text-amber-900"><strong>Caregiver Access:</strong> This view shows limited, patient-consented information only. Clinical details, session notes, and AI interactions are not shared.</p>
+      </div>
+      <div id="caregiver-view-content">
+        <div class="text-center py-12 text-slate-400">Loading caregiver view...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREATHING EXERCISE -->
+  <div id="breathing-exercise" class="screen min-h-screen bg-white flex flex-col items-center justify-center">
+    <div class="text-center p-6">
+      <h1 class="text-2xl font-bold text-slate-800 mb-2">Guided Breathing</h1>
+      <p class="text-slate-500 mb-8">4-6 Breathing Cadence: Inhale 4 seconds, Exhale 6 seconds</p>
+      <div class="relative w-48 h-48 mx-auto mb-8">
+        <div id="breathing-circle" class="w-48 h-48 rounded-full bg-gradient-to-br from-teal-200 to-teal-400 flex items-center justify-center transition-all duration-1000">
+          <span id="breathing-label" class="text-2xl font-bold text-teal-800">Ready</span>
+        </div>
+      </div>
+      <div class="flex gap-4 justify-center">
+        <button data-action="start-breathing" class="px-6 py-3 btn-primary text-white rounded-xl font-semibold">Start</button>
+        <button data-action="stop-breathing" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold">Stop</button>
+        <button data-nav="patient-home" class="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-semibold">Back</button>
+      </div>
+      <p class="mt-6 text-xs text-slate-400">Evidence: Extended exhalation activates the vagus nerve (Relaxation Response Literature)</p>
+    </div>
+  </div>
+
+  <!-- SUPERVISOR CO-SIGN -->
+  <div id="supervisor-cosign" class="screen min-h-screen bg-slate-100">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-5xl mx-auto">
+        <button data-nav="clinician-caseload" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Supervisor Co-Sign Queue</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-5xl mx-auto space-y-6">
+      <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+        <p class="text-sm text-purple-900"><strong>Supervisor:</strong> Dr. Patricia Warren, PsyD — All T2+ escalations and treatment plan changes require co-sign within 24 hours.</p>
+      </div>
+      <div class="space-y-3">
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-slate-800">T2 Escalation — Maria Rodriguez</span>
+            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">PENDING</span>
+          </div>
+          <p class="text-sm text-slate-600 mb-3">Hopelessness language detected in voice note. Clinician action: Outreach call scheduled.</p>
+          <div class="flex gap-2">
+            <button data-toast="Supervisor co-sign recorded. Escalation protocol validated." class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium">Co-Sign</button>
+            <button data-toast="Returned to clinician with supervisor notes." class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium">Return with Notes</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-slate-800">Treatment Plan Change — Emma Wilson</span>
+            <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-bold">PENDING</span>
+          </div>
+          <p class="text-sm text-slate-600 mb-3">Proposed reduction in session frequency from weekly to biweekly. Clinician rationale: stable mood, high adherence.</p>
+          <div class="flex gap-2">
+            <button data-toast="Supervisor co-sign recorded. Treatment plan change approved." class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium">Co-Sign</button>
+            <button data-toast="Returned to clinician with supervisor notes." class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium">Return with Notes</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-slate-800">Session Note — James Smith</span>
+            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">CO-SIGNED</span>
+          </div>
+          <p class="text-sm text-slate-600">SOAP note from Feb 22 session. Micro-task approach confirmed effective.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- F7: PRIVACY / TERMS / SECURITY FOOTER -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:70;">
+  <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:95;">
     <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
       <span>© 2026 Peacefull.ai</span>
       <span>•</span>

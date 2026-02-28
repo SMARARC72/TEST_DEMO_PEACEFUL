@@ -305,10 +305,195 @@ export const baselineEvidenceItems = [
   { id: 'ev-11', domain: 'Gratitude & Positive Psychology', title: 'Gratitude Journaling', citation: 'Emmons, R. A., & McCullough, M. E. (2003). Counting blessings versus burdens. Journal of Personality and Social Psychology, 84(2), 377-389.', doi: '10.1037/0022-3514.84.2.377', usedIn: ['Journal Prompts', 'Resources'] },
   { id: 'ev-12', domain: 'Digital Health', title: 'Digital Mental Health', citation: 'Lattie, E. G., et al. (2019). Digital mental health interventions for depression, anxiety, and enhancement of psychological well-being. Current Psychiatry Reports, 21(7), 1-12.', doi: '10.1007/s11920-019-1044-9', usedIn: ['Chat Simulation', 'Session Prep'] },
   { id: 'ev-13', domain: 'Digital Health', title: 'Mental Health Apps Review', citation: 'Torous, J., et al. (2018). Clinical review of user engagement with mental health smartphone apps. BMJ, 363, k4596.', doi: '10.1136/bmj.k4596', usedIn: ['Evidence Base'] },
-  { id: 'ev-14', domain: 'Engagement & Adherence', title: 'Gamification for Health', citation: 'Johnson, D., et al. (2016). Gamification for health and wellbeing. Internet Interventions, 6, 89-106.', doi: '10.1016/j.invent.2016.10.002', usedIn: ['Progress & Gamification'] }
+  { id: 'ev-14', domain: 'Engagement & Adherence', title: 'Gamification for Health', citation: 'Johnson, D., et al. (2016). Gamification for health and wellbeing. Internet Interventions, 6, 89-106.', doi: '10.1016/j.invent.2016.10.002', usedIn: ['Progress & Gamification'] },
+  // ──── Disorder-Specific Evidence ────
+  { id: 'ev-15', domain: 'PTSD', title: 'Prolonged Exposure Therapy', citation: 'Foa, E. B., et al. (2007). Prolonged exposure therapy for PTSD. Oxford University Press.', doi: '10.1093/med:psych/9780195308501.001.0001', usedIn: ['Evidence Base'] },
+  { id: 'ev-16', domain: 'PTSD', title: 'CPT for PTSD', citation: 'Resick, P. A., Monson, C. M., & Chard, K. M. (2017). Cognitive Processing Therapy for PTSD. Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-17', domain: 'PTSD', title: 'EMDR Therapy', citation: 'Shapiro, F. (2018). Eye movement desensitization and reprocessing (3rd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-18', domain: 'Substance Use', title: 'MI for SUD', citation: 'Miller, W. R., & Rollnick, S. (2013). Motivational interviewing (3rd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-19', domain: 'Substance Use', title: 'Contingency Management', citation: 'Petry, N. M. (2012). Contingency management for substance abuse treatment. Routledge.', doi: '10.4324/9780203113554', usedIn: ['Evidence Base'] },
+  { id: 'ev-20', domain: 'Substance Use', title: 'Relapse Prevention', citation: 'Marlatt, G. A., & Donovan, D. M. (2005). Relapse prevention (2nd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-21', domain: 'ADHD', title: 'CBT for Adult ADHD', citation: 'Safren, S. A., et al. (2017). Cognitive-behavioral therapy for adult ADHD. Guilford Press.', doi: '', usedIn: ['Evidence Base', 'Chat Simulation'] },
+  { id: 'ev-22', domain: 'ADHD', title: 'Self-Regulation in ADHD', citation: 'Barkley, R. A. (2015). Attention-deficit hyperactivity disorder (4th ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-23', domain: 'Bipolar Disorder', title: 'IPSRT for Bipolar', citation: 'Frank, E. (2005). Treating bipolar disorder: A clinician\'s guide to interpersonal and social rhythm therapy. Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-24', domain: 'Bipolar Disorder', title: 'FFT for Bipolar', citation: 'Miklowitz, D. J. (2010). Bipolar Disorder: A Family-Focused Treatment Approach (2nd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-25', domain: 'OCD', title: 'ERP for OCD', citation: 'Foa, E. B., Yadin, E., & Lichner, T. K. (2012). Exposure and response prevention for OCD. Oxford University Press.', doi: '10.1093/med:psych/9780195335286.001.0001', usedIn: ['Evidence Base'] },
+  { id: 'ev-26', domain: 'Eating Disorders', title: 'CBT-E for Eating Disorders', citation: 'Fairburn, C. G. (2008). Cognitive behavior therapy and eating disorders. Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-27', domain: 'Eating Disorders', title: 'FBT for Adolescents', citation: 'Lock, J., & Le Grange, D. (2013). Treatment manual for anorexia nervosa: A family-based approach (2nd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  // ──── Assessment Instruments ────
+  { id: 'ev-28', domain: 'Assessment Tools', title: 'PCL-5 (PTSD)', citation: 'Weathers, F. W., et al. (2013). The PTSD Checklist for DSM-5 (PCL-5). National Center for PTSD.', doi: '', usedIn: ['MBC Dashboard'] },
+  { id: 'ev-29', domain: 'Assessment Tools', title: 'AUDIT (Alcohol)', citation: 'Saunders, J. B., et al. (1993). Development of the AUDIT. Addiction, 88(6), 791-804.', doi: '10.1111/j.1360-0443.1993.tb02093.x', usedIn: ['MBC Dashboard'] },
+  { id: 'ev-30', domain: 'Assessment Tools', title: 'ASRS (ADHD)', citation: 'Kessler, R. C., et al. (2005). The WHO ASRS-v1.1. Psychological Medicine, 35(2), 245-256.', doi: '10.1017/S0033291704002892', usedIn: ['MBC Dashboard'] },
+  { id: 'ev-31', domain: 'Assessment Tools', title: 'MDQ (Bipolar)', citation: 'Hirschfeld, R. M. A., et al. (2000). Development and validation of the MDQ. American Journal of Psychiatry, 157(11), 1873-1875.', doi: '10.1176/appi.ajp.157.11.1873', usedIn: ['MBC Dashboard'] },
+  { id: 'ev-32', domain: 'Assessment Tools', title: 'Y-BOCS (OCD)', citation: 'Goodman, W. K., et al. (1989). The Yale-Brown Obsessive Compulsive Scale. Archives of General Psychiatry, 46(11), 1006-1011.', doi: '10.1001/archpsyc.1989.01810110048007', usedIn: ['MBC Dashboard'] },
+  { id: 'ev-33', domain: 'Assessment Tools', title: 'Columbia Protocol', citation: 'Posner, K., et al. (2011). The Columbia-Suicide Severity Rating Scale. American Journal of Psychiatry, 168(12), 1266-1277.', doi: '10.1176/appi.ajp.2011.10111704', usedIn: ['Escalation Protocols', 'Safety Plan'] },
+  // ──── Therapeutic Modalities ────
+  { id: 'ev-34', domain: 'Therapeutic Modalities', title: 'ACT', citation: 'Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2012). Acceptance and commitment therapy (2nd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base', 'Journal Prompts'] },
+  { id: 'ev-35', domain: 'Therapeutic Modalities', title: 'Schema Therapy', citation: 'Young, J. E., Klosko, J. S., & Weishaar, M. E. (2003). Schema therapy. Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-36', domain: 'Therapeutic Modalities', title: 'Motivational Interviewing', citation: 'Miller, W. R., & Rollnick, S. (2013). Motivational interviewing (3rd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base', 'Chat Simulation'] },
+  { id: 'ev-37', domain: 'Therapeutic Modalities', title: 'Solution-Focused Brief Therapy', citation: 'de Shazer, S., et al. (2007). More than miracles: The state of the art of SFBT. Routledge.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-38', domain: 'Therapeutic Modalities', title: 'IPT for Depression', citation: 'Weissman, M. M., Markowitz, J. C., & Klerman, G. L. (2018). The guide to interpersonal psychotherapy. Oxford University Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-39', domain: 'Therapeutic Modalities', title: 'MBCT', citation: 'Segal, Z. V., Williams, J. M. G., & Teasdale, J. D. (2013). Mindfulness-based cognitive therapy for depression (2nd ed.). Guilford Press.', doi: '', usedIn: ['Evidence Base', 'Resources'] },
+  // ──── Clinical Frameworks ────
+  { id: 'ev-40', domain: 'Clinical Frameworks', title: 'Stepped Care Model', citation: 'Bower, P., & Gilbody, S. (2005). Stepped care in psychological therapies. British Journal of Psychiatry, 186(1), 11-17.', doi: '10.1192/bjp.186.1.11', usedIn: ['Evidence Base'] },
+  { id: 'ev-41', domain: 'Clinical Frameworks', title: 'Collaborative Care', citation: 'Unützer, J., et al. (2002). Collaborative care management of late-life depression. JAMA, 288(22), 2836-2845.', doi: '10.1001/jama.288.22.2836', usedIn: ['Evidence Base'] },
+  { id: 'ev-42', domain: 'Clinical Frameworks', title: 'Measurement-Based Care', citation: 'Fortney, J. C., et al. (2017). A tipping point for MBC. Psychiatric Services, 68(2), 179-188.', doi: '10.1176/appi.ps.201500439', usedIn: ['MBC Dashboard', 'Evidence Base'] },
+  { id: 'ev-43', domain: 'Clinical Frameworks', title: 'Trauma-Informed Care', citation: 'Substance Abuse and Mental Health Services Administration (2014). SAMHSA\'s concept of trauma and guidance. HHS Publication No. (SMA) 14-4884.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-44', domain: 'Clinical Frameworks', title: 'Recovery-Oriented Care', citation: 'Anthony, W. A. (1993). Recovery from mental illness. Psychosocial Rehabilitation Journal, 16(4), 11-23.', doi: '10.1037/h0095655', usedIn: ['Evidence Base'] },
+  { id: 'ev-45', domain: 'Clinical Frameworks', title: 'Therapeutic Alliance', citation: 'Bordin, E. S. (1979). The generalizability of the psychoanalytic concept of the working alliance. Psychotherapy, 16(3), 252-260.', doi: '10.1037/h0085885', usedIn: ['Evidence Base', 'Chat Simulation'] },
+  // ──── Digital Therapeutics ────
+  { id: 'ev-46', domain: 'Digital Health', title: 'DTx Evidence Review', citation: 'Patel, N. A., & Butte, A. J. (2020). Characteristics and challenges of the clinical pipeline of digital therapeutics. npj Digital Medicine, 3(1), 1-5.', doi: '10.1038/s41746-020-00370-8', usedIn: ['Evidence Base'] },
+  { id: 'ev-47', domain: 'Digital Health', title: 'AI in Mental Health', citation: 'Graham, S., et al. (2019). Artificial intelligence for mental health and mental illnesses. Current Treatment Options in Psychiatry, 6(3), 261-276.', doi: '10.1007/s40501-019-00175-9', usedIn: ['Evidence Base', 'AI Chat'] },
+  { id: 'ev-48', domain: 'Digital Health', title: 'Chatbot Therapy Review', citation: 'Abd-Alrazaq, A. A., et al. (2019). An overview of chatbots in mental health. Journal of Medical Internet Research, 21(7), e13869.', doi: '10.2196/13869', usedIn: ['Evidence Base', 'Chat Simulation'] },
+  { id: 'ev-49', domain: 'Digital Health', title: 'Wearable Mental Health', citation: 'Jacobson, N. C., et al. (2019). Digital biomarkers of mood disorders. Trends in Cognitive Sciences, 23(11), 987-1005.', doi: '10.1016/j.tics.2019.09.002', usedIn: ['Evidence Base'] },
+  // ──── Pharmacotherapy Awareness ────
+  { id: 'ev-50', domain: 'Pharmacotherapy', title: 'APA Practice Guidelines', citation: 'American Psychiatric Association (2010). Practice guidelines for the treatment of patients with major depressive disorder (3rd ed.).', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-51', domain: 'Pharmacotherapy', title: 'Medication Adherence', citation: 'Velligan, D. I., et al. (2017). Strategies for addressing adherence problems in patients with serious and persistent mental illness. Journal of Psychiatric Practice, 23(5), 340-349.', doi: '10.1097/PRA.0000000000000247', usedIn: ['Adherence Tracker', 'Evidence Base'] },
+  // ──── SDOH & Health Equity ────
+  { id: 'ev-52', domain: 'SDOH', title: 'Social Determinants Framework', citation: 'Marmot, M., & Wilkinson, R. G. (2006). Social determinants of health (2nd ed.). Oxford University Press.', doi: '', usedIn: ['Evidence Base', 'SDOH Assessment'] },
+  { id: 'ev-53', domain: 'SDOH', title: 'Mental Health Disparities', citation: 'McGuire, T. G., & Miranda, J. (2008). New evidence regarding racial and ethnic disparities in mental health. Milbank Quarterly, 86(2), 264-289.', doi: '10.1111/j.1468-0009.2008.00521.x', usedIn: ['Evidence Base'] },
+  { id: 'ev-54', domain: 'SDOH', title: 'Cultural Competence', citation: 'Sue, D. W., et al. (2019). Counseling the culturally diverse: Theory and practice (8th ed.). Wiley.', doi: '', usedIn: ['Evidence Base'] },
+  // ──── Regulatory & Compliance ────
+  { id: 'ev-55', domain: 'Regulatory', title: 'FDA SaMD Framework', citation: 'FDA (2017). Software as a Medical Device (SaMD): Clinical evaluation. FDA guidance document.', doi: '', usedIn: ['Regulatory Hub', 'Evidence Base'] },
+  { id: 'ev-56', domain: 'Regulatory', title: 'HIPAA Security Rule', citation: 'U.S. Department of HHS (2013). HIPAA Security Rule. 45 CFR Parts 160, 162, and 164.', doi: '', usedIn: ['Security Command', 'Evidence Base'] },
+  { id: 'ev-57', domain: 'Regulatory', title: '42 CFR Part 2', citation: 'SAMHSA (2020). 42 CFR Part 2: Confidentiality of SUD patient records. Final rule.', doi: '', usedIn: ['Evidence Base', 'Compliance'] },
+  // ──── Caregiver & Family ────
+  { id: 'ev-58', domain: 'Family & Caregiver', title: 'Family Psychoeducation', citation: 'McFarlane, W. R. (2002). Multifamily groups in the treatment of severe psychiatric disorders. Guilford Press.', doi: '', usedIn: ['Evidence Base'] },
+  { id: 'ev-59', domain: 'Family & Caregiver', title: 'Caregiver Burden', citation: 'Zarit, S. H., Reever, K. E., & Bach-Peterson, J. (1980). Relatives of the impaired elderly. The Gerontologist, 20(6), 649-655.', doi: '10.1093/geront/20.6.649', usedIn: ['Evidence Base', 'Caregiver View'] },
+  // ──── Positive Psychology & Wellbeing ────
+  { id: 'ev-60', domain: 'Gratitude & Positive Psychology', title: 'Positive Psychology Interventions', citation: 'Seligman, M. E. P., et al. (2005). Positive psychology progress: Empirical validation. American Psychologist, 60(5), 410-421.', doi: '10.1037/0003-066X.60.5.410', usedIn: ['Evidence Base', 'Resources'] },
+  { id: 'ev-61', domain: 'Gratitude & Positive Psychology', title: 'Self-Compassion', citation: 'Neff, K. D. (2003). Self-compassion: An alternative conceptualization of a healthy attitude toward oneself. Self and Identity, 2(2), 85-101.', doi: '10.1080/15298860309032', usedIn: ['Evidence Base', 'Journal Prompts'] },
+  // ──── Exercise & Lifestyle ────
+  { id: 'ev-62', domain: 'Sleep & Wellness', title: 'Exercise for Depression', citation: 'Schuch, F. B., et al. (2016). Exercise as a treatment for depression: A meta-analysis. Journal of Psychiatric Research, 77, 42-51.', doi: '10.1016/j.jpsychires.2016.02.023', usedIn: ['Evidence Base', 'Resources'] },
+  { id: 'ev-63', domain: 'Sleep & Wellness', title: 'Circadian Rhythm & Mood', citation: 'Walker, W. H., et al. (2020). Circadian rhythm disruption and mental health. Translational Psychiatry, 10(1), 28.', doi: '10.1038/s41398-020-0694-0', usedIn: ['Evidence Base'] },
+  // ──── Technology Ethics ────
+  { id: 'ev-64', domain: 'Digital Health', title: 'AI Ethics in Healthcare', citation: 'Char, D. S., Shah, N. H., & Magnus, D. (2018). Implementing machine learning in health care. New England Journal of Medicine, 378(11), 981-983.', doi: '10.1056/NEJMp1714229', usedIn: ['Evidence Base'] },
+  { id: 'ev-65', domain: 'Digital Health', title: 'Patient Data Rights', citation: 'Vayena, E., & Blasimme, A. (2018). Health research with big data: Time for systemic oversight. Journal of Law, Medicine & Ethics, 46(1), 119-129.', doi: '10.1177/1073110518766026', usedIn: ['Evidence Base'] }
 ];
 
 // ============ MUTABLE STATE (initialized from baselines) ============
+
+// ──── Clinician Profile ────
+export const baselineClinicianProfile = {
+  name: 'Dr. Sarah Chen',
+  credentials: 'PhD, Licensed Clinical Psychologist',
+  specialty: 'Anxiety, ADHD, Depression, Trauma-Informed Care',
+  npi: '1234567890',
+  activeSince: '2025-08-01',
+  caseloadSize: 24,
+  avgSessionsPerWeek: 32,
+  supervisorName: 'Dr. Patricia Warren, PsyD',
+  certifications: ['Licensed Clinical Psychologist (CA)', 'Board Certified in CBT', 'Trauma-Informed Care Certified'],
+  notifications: [
+    { id: 'notif-1', type: 'alert', message: 'T2 alert: Maria Rodriguez — hopelessness language detected', time: '9:15 AM', read: false },
+    { id: 'notif-2', type: 'draft', message: 'New draft summary ready for review: Emma Wilson', time: '8:45 AM', read: false },
+    { id: 'notif-3', type: 'reminder', message: 'Session with Maria Rodriguez at 2:00 PM today', time: '7:00 AM', read: true },
+    { id: 'notif-4', type: 'system', message: 'Measurement-based care scores updated for 3 patients', time: 'Yesterday', read: true }
+  ]
+};
+
+// ──── Population Health ────
+export const baselinePopulationHealth = {
+  totalPatients: 24,
+  avgPHQ9: 9.3,
+  avgGAD7: 10.3,
+  improvingPct: 58,
+  stablePct: 25,
+  worseningPct: 17,
+  riskDistribution: { low: 8, moderate: 10, high: 4, critical: 2 },
+  diagnosisMix: [
+    { label: 'GAD', count: 8, pct: 33 },
+    { label: 'MDD', count: 6, pct: 25 },
+    { label: 'ADHD', count: 4, pct: 17 },
+    { label: 'PTSD', count: 3, pct: 13 },
+    { label: 'Bipolar', count: 2, pct: 8 },
+    { label: 'Other', count: 1, pct: 4 }
+  ],
+  engagementRate: 78,
+  avgCheckInsPerWeek: 4.2,
+  noShowRate: 8
+};
+
+// ──── Investor Financials ────
+export const baselineInvestorFinancials = {
+  tam: { value: '$68B', description: 'Global behavioral health market (2026)' },
+  sam: { value: '$12B', description: 'Digital behavioral health platforms (US)' },
+  som: { value: '$240M', description: 'AI-augmented clinical workflow tools' },
+  unitEconomics: {
+    arpu: '$45/patient/month',
+    cac: '$180',
+    ltv: '$2,160',
+    ltvCacRatio: '12:1',
+    grossMargin: '82%',
+    paybackMonths: 4,
+    churnRate: '3.5%/month'
+  },
+  competitiveMatrix: [
+    { name: 'Peacefull.ai', clinician: true, mbc: true, memory: true, safety: true, enterprise: true, fhir: true },
+    { name: 'Woebot', clinician: false, mbc: false, memory: false, safety: true, enterprise: false, fhir: false },
+    { name: 'Talkspace', clinician: true, mbc: false, memory: false, safety: true, enterprise: true, fhir: false },
+    { name: 'Ginger/Headspace', clinician: true, mbc: false, memory: false, safety: true, enterprise: true, fhir: false },
+    { name: 'Spring Health', clinician: true, mbc: true, memory: false, safety: true, enterprise: true, fhir: true }
+  ],
+  pilotFunnel: [
+    { stage: 'Awareness', count: 200, pct: 100 },
+    { stage: 'Demo Request', count: 60, pct: 30 },
+    { stage: 'Pilot Agreement', count: 15, pct: 7.5 },
+    { stage: 'Active Pilot', count: 8, pct: 4 },
+    { stage: 'Paid Contract', count: 3, pct: 1.5 }
+  ]
+};
+
+// ──── Regulatory Compliance Hub ────
+export const baselineRegulatoryStatus = {
+  fdaSamd: { classification: 'Class II (510(k) pathway)', status: 'Pre-Submission Planning', riskLevel: 'Non-significant risk', clinicalUse: 'Clinical Decision Support', timeline: 'Q3 2026 Pre-Sub Meeting' },
+  hipaa: { status: 'Compliant', lastAudit: '2026-01-15', controls: 12, implemented: 10, planned: 2, baaCount: 4 },
+  cfr42: { status: 'Designed', substanceDataIsolation: true, consentTracking: true, breachProtocol: 'Defined' },
+  soc2: { status: 'In Progress', type: 'Type II', auditor: 'Pending Selection', targetDate: 'Q4 2026' },
+  accessibility: { wcag: 'AA', status: 'Partial', automated: 85, manual: 72 }
+};
+
+// ──── SDOH Assessment ────
+export const baselineSDOHData = {
+  maria: {
+    housing: { status: 'Stable', risk: 'Low' },
+    food: { status: 'Adequate', risk: 'Low' },
+    transportation: { status: 'Public transit dependent', risk: 'Moderate' },
+    employment: { status: 'Full-time employed', risk: 'Low' },
+    socialSupport: { status: 'Family nearby', risk: 'Low' },
+    education: { status: 'College degree', risk: 'Low' },
+    screenedDate: '2026-02-15',
+    notes: 'Commute-related stress identified as key SDOH factor.'
+  },
+  james: {
+    housing: { status: 'Renting, stable', risk: 'Low' },
+    food: { status: 'Adequate', risk: 'Low' },
+    transportation: { status: 'Personal vehicle', risk: 'Low' },
+    employment: { status: 'Full-time, deadline-driven', risk: 'Moderate' },
+    socialSupport: { status: 'Limited peer network', risk: 'Moderate' },
+    education: { status: 'College degree', risk: 'Low' },
+    screenedDate: '2026-02-18',
+    notes: 'Work stress and social isolation flagged.'
+  },
+  emma: {
+    housing: { status: 'Homeowner, stable', risk: 'Low' },
+    food: { status: 'Adequate', risk: 'Low' },
+    transportation: { status: 'Personal vehicle', risk: 'Low' },
+    employment: { status: 'Leave of absence', risk: 'Moderate' },
+    socialSupport: { status: 'Spouse supportive', risk: 'Low' },
+    education: { status: 'Graduate degree', risk: 'Low' },
+    screenedDate: '2026-02-20',
+    notes: 'Return-to-work planning is current focus.'
+  }
+};
+
+// ──── Session Notes Template ────
+export const baselineSessionNotes = {
+  maria: { date: '2026-02-21', format: 'SOAP', subjective: 'Patient reports evening anxiety persists but 4-6 breathing is helping. Work stress remains primary trigger.', objective: 'PHQ-9: 14 (moderate), GAD-7: 11 (moderate). Engagement rate: 78%. Adherence to breathing exercise: 57%.', assessment: 'Anxiety remains moderate with positive response to coping strategies. Sleep improving with evening routine.', plan: 'Continue 4-6 breathing cadence. Introduce structured next-day planning. Review sleep hygiene checklist. Follow-up in 1 week.', signed: false },
+  james: { date: '2026-02-22', format: 'SOAP', subjective: 'Patient describes difficulty with task initiation and focus fragmentation. Micro-task approach showing promise.', objective: 'PHQ-9: 8 (mild), GAD-7: 13 (moderate). Engagement rate: 62%. Timed reset utilization: 38%.', assessment: 'ADHD management improving with behavioral strategies. Anxiety elevated during deadline periods.', plan: 'Continue micro-task breakdown. Increase timed reset frequency. Monitor GAD-7 trend. Follow-up in 1 week.', signed: false },
+  emma: { date: '2026-02-23', format: 'SOAP', subjective: 'Patient reports mood stabilization with consistent evening routine. Mild concern about relapse.', objective: 'PHQ-9: 6 (mild), GAD-7: 7 (mild). Engagement rate: 92%. Evening routine adherence: 85%.', assessment: 'Significant improvement in mood stability. Relapse prevention planning appropriate.', plan: 'Continue current routine. Begin return-to-work planning discussion. Assess readiness for reduced session frequency. Follow-up in 2 weeks.', signed: false }
+};
+
 
 export const state = {
   latestSubmission: JSON.parse(JSON.stringify(baselineSubmissionState)),
@@ -362,7 +547,19 @@ export const state = {
 
   // Phase 5 – Evidence
   evidenceFilter: 'All',
-  expandedEvidenceId: null
+  expandedEvidenceId: null,
+
+  // Phase 6 – New screens
+  clinicianProfile: JSON.parse(JSON.stringify(baselineClinicianProfile)),
+  populationHealth: JSON.parse(JSON.stringify(baselinePopulationHealth)),
+  investorFinancials: JSON.parse(JSON.stringify(baselineInvestorFinancials)),
+  regulatoryStatus: JSON.parse(JSON.stringify(baselineRegulatoryStatus)),
+  sdohData: JSON.parse(JSON.stringify(baselineSDOHData)),
+  sessionNotes: JSON.parse(JSON.stringify(baselineSessionNotes)),
+  currentSessionNoteProfile: 'maria',
+  expandedRegSection: null,
+  breathingActive: false,
+  breathingPhase: 'idle'
 };
 
 // ============ STATE RESET FUNCTIONS ============
@@ -466,4 +663,22 @@ export function resetPatientMemoryView() {
 export function resetEvidence() {
   state.evidenceFilter = 'All';
   state.expandedEvidenceId = null;
+}
+
+export function resetClinicianProfile() {
+  state.clinicianProfile = JSON.parse(JSON.stringify(baselineClinicianProfile));
+}
+
+export function resetPopulationHealth() {
+  state.populationHealth = JSON.parse(JSON.stringify(baselinePopulationHealth));
+}
+
+export function resetSessionNotes() {
+  state.sessionNotes = JSON.parse(JSON.stringify(baselineSessionNotes));
+  state.currentSessionNoteProfile = 'maria';
+}
+
+export function resetRegulatoryStatus() {
+  state.regulatoryStatus = JSON.parse(JSON.stringify(baselineRegulatoryStatus));
+  state.expandedRegSection = null;
 }

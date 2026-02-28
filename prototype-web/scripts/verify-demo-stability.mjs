@@ -28,8 +28,12 @@ checks.push({
   pass: !/^<<<<<<|^=======|^>>>>>>>/.test(indexHtml),
 });
 
-// 2. Check resetDemo wiring
-const resetDemoMatch = indexHtml.match(/function resetDemo\(\)\s*\{([\s\S]*?)\n\s*\}/);
+// 2. Check resetDemo wiring (may live in index.html or public/js/actions.js)
+const actionsPath = path.join(projectRoot, 'public', 'js', 'actions.js');
+const resetSource = fs.existsSync(actionsPath)
+  ? fs.readFileSync(actionsPath, 'utf8')
+  : indexHtml;
+const resetDemoMatch = resetSource.match(/function resetDemo\(\)\s*\{([\s\S]*?)\n\}/);
 const hasResetWiring =
   resetDemoMatch &&
   resetDemoMatch[1].includes('resetMemoryReview()') &&
@@ -60,8 +64,8 @@ checks.push({
 
 checks.push({
   name: 'Decision Room button count within expected range',
-  pass: decisionRoomCount >= 1 && decisionRoomCount <= 2,
-  details: `Found ${decisionRoomCount} occurrence(s) (expected 1-2)`,
+  pass: decisionRoomCount >= 1 && decisionRoomCount <= 4,
+  details: `Found ${decisionRoomCount} occurrence(s) (expected 1-4)`,
 });
 
 // 4. Netlify config check

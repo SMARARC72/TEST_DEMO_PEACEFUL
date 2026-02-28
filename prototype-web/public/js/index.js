@@ -30,7 +30,14 @@ import {
   renderSafetyPlan,
   renderOnboarding,
   renderPatientMemoryView,
-  renderEvidenceBase
+  renderEvidenceBase,
+  renderClinicianAnalytics,
+  renderPopulationHealth,
+  renderSessionNotes,
+  renderInvestorFinancials,
+  renderRegulatoryHub,
+  renderSDOHAssessment,
+  renderCaregiverView
 } from './render.js';
 import * as actions from './actions.js';
 import { initEventDelegation } from './events.js';
@@ -140,6 +147,14 @@ window.acknowledgeEscalation = actions.acknowledgeEscalation;
 window.resolveEscalation = actions.resolveEscalation;
 window.resetEscalation = actions.resetEscalationAction;
 
+// Session Notes
+window.selectSessionNote = actions.selectSessionNote;
+window.signSessionNote = actions.signSessionNote;
+
+// Breathing Exercise
+window.startBreathing = actions.startBreathing;
+window.stopBreathing = actions.stopBreathing;
+
 // Full demo reset
 window.resetDemo = actions.resetDemo;
 
@@ -177,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
   renderOnboarding();
   renderPatientMemoryView();
   renderEvidenceBase();
+
+  // Phase 6+ renders
+  renderClinicianAnalytics();
+  renderPopulationHealth();
+  renderSessionNotes();
+  renderInvestorFinancials();
+  renderRegulatoryHub();
+  renderSDOHAssessment();
+  renderCaregiverView();
 
   const patientSel = document.getElementById('patient-session-profile');
   if (patientSel) patientSel.value = state.patientSessionProfile;

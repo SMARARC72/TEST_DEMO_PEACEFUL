@@ -94,6 +94,16 @@ const actionRegistry = {
   // Onboarding (F-P8)
   'onboarding-next': actions.onboardingNext,
   'onboarding-back': actions.onboardingBack,
+
+  // Session Notes
+  'sign-session-note': actions.signSessionNote,
+  'select-session-note-maria': () => actions.selectSessionNote('maria'),
+  'select-session-note-james': () => actions.selectSessionNote('james'),
+  'select-session-note-emma': () => actions.selectSessionNote('emma'),
+
+  // Breathing Exercise
+  'start-breathing': actions.startBreathing,
+  'stop-breathing': actions.stopBreathing,
   
   // Full reset
   'reset-demo': actions.resetDemo,

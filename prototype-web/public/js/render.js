@@ -3,7 +3,7 @@
  * Part of Peacefull.ai Demo technical debt cleanup
  */
 
-import { state, baselinePatientProfiles, baselineSessionPrep, baselineProgressData, baselineResources, baselineSafetyPlan, baselineOnboardingSteps, baselineChatScript, baselineHistoryEntries, baselinePatientMemories, baselineJournalPrompts, baselineEvidenceItems } from './state.js';
+import { state, baselinePatientProfiles, baselineSessionPrep, baselineProgressData, baselineResources, baselineSafetyPlan, baselineOnboardingSteps, baselineChatScript, baselineHistoryEntries, baselinePatientMemories, baselineJournalPrompts, baselineEvidenceItems, baselineClinicianProfile, baselinePopulationHealth, baselineInvestorFinancials, baselineRegulatoryStatus, baselineSDOHData, baselineSessionNotes } from './state.js';
 import {
   triageBadgeClass,
   memoryBadgeClass,
@@ -1076,4 +1076,388 @@ export function renderEvidenceBase() {
       btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
     }
   });
+}
+
+// ============ CLINICIAN ANALYTICS ============
+
+export function renderClinicianAnalytics() {
+  const el = document.getElementById('clinician-analytics-content');
+  if (!el) return;
+  const p = state.clinicianProfile;
+  const ph = state.populationHealth;
+
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-white">SC</div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">${p.name}</h2>
+          <p class="text-sm text-slate-500">${p.credentials}</p>
+          <p class="text-xs text-slate-400">NPI: ${p.npi} • Active since ${p.activeSince}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-3 mb-4">
+        <div class="bg-teal-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-teal-700">${p.caseloadSize}</p><p class="text-xs text-slate-500">Active Patients</p></div>
+        <div class="bg-blue-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-blue-700">${p.avgSessionsPerWeek}</p><p class="text-xs text-slate-500">Sessions/Week</p></div>
+        <div class="bg-green-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-green-700">${ph.engagementRate}%</p><p class="text-xs text-slate-500">Engagement Rate</p></div>
+        <div class="bg-amber-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-amber-700">${ph.noShowRate}%</p><p class="text-xs text-slate-500">No-Show Rate</p></div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        ${p.certifications.map(c => `<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">${c}</span>`).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Notifications</h3>
+      <div class="space-y-2">
+        ${p.notifications.map(n => `
+          <div class="flex items-center gap-3 p-3 ${n.read ? 'bg-slate-50' : 'bg-blue-50'} rounded-xl">
+            <div class="w-2 h-2 rounded-full ${n.read ? 'bg-slate-300' : 'bg-blue-500'}"></div>
+            <div class="flex-1">
+              <p class="text-sm ${n.read ? 'text-slate-600' : 'text-slate-800 font-medium'}">${n.message}</p>
+              <p class="text-xs text-slate-400">${n.time}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-semibold ${n.type === 'alert' ? 'bg-red-100 text-red-700' : n.type === 'draft' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}">${n.type}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <button data-nav="population-health" class="p-3 bg-teal-50 rounded-xl text-sm font-medium text-teal-700 hover:bg-teal-100">Population Health Dashboard</button>
+        <button data-nav="supervisor-cosign" class="p-3 bg-purple-50 rounded-xl text-sm font-medium text-purple-700 hover:bg-purple-100">Supervisor Co-Sign Queue</button>
+        <button data-nav="mbc-dashboard" class="p-3 bg-blue-50 rounded-xl text-sm font-medium text-blue-700 hover:bg-blue-100">MBC Dashboard</button>
+        <button data-nav="escalation-protocols" class="p-3 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100">Escalation Protocols</button>
+      </div>
+    </div>
+  `;
+}
+
+// ============ POPULATION HEALTH DASHBOARD ============
+
+export function renderPopulationHealth() {
+  const el = document.getElementById('population-health-content');
+  if (!el) return;
+  const ph = state.populationHealth;
+
+  el.innerHTML = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-slate-800">${ph.totalPatients}</p><p class="text-sm text-slate-500">Total Patients</p></div>
+      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-teal-600">${ph.engagementRate}%</p><p class="text-sm text-slate-500">Engagement</p></div>
+      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-blue-600">${ph.avgPHQ9}</p><p class="text-sm text-slate-500">Avg PHQ-9</p></div>
+      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-amber-600">${ph.avgGAD7}</p><p class="text-sm text-slate-500">Avg GAD-7</p></div>
+    </div>
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h3 class="font-semibold text-slate-800 mb-4">Outcome Trends</h3>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-green-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Improving</span><span class="font-semibold text-green-700">${ph.improvingPct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-green-500 rounded-full" style="width:${ph.improvingPct}%"></div></div></div></div>
+          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-blue-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Stable</span><span class="font-semibold text-blue-700">${ph.stablePct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-blue-500 rounded-full" style="width:${ph.stablePct}%"></div></div></div></div>
+          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Worsening</span><span class="font-semibold text-red-700">${ph.worseningPct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-red-500 rounded-full" style="width:${ph.worseningPct}%"></div></div></div></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h3 class="font-semibold text-slate-800 mb-4">Risk Distribution</h3>
+        <div class="space-y-3">
+          ${Object.entries(ph.riskDistribution).map(([level, count]) => {
+            const colors = { low: 'green', moderate: 'blue', high: 'amber', critical: 'red' };
+            const c = colors[level] || 'slate';
+            return `<div class="flex items-center justify-between p-2 bg-${c}-50 rounded-lg"><span class="text-sm font-medium text-${c}-700 capitalize">${level}</span><span class="text-lg font-bold text-${c}-700">${count}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Diagnosis Mix</h3>
+      <div class="space-y-2">
+        ${ph.diagnosisMix.map(d => `
+          <div class="flex items-center gap-3">
+            <span class="w-16 text-sm font-medium text-slate-700">${d.label}</span>
+            <div class="flex-1 h-4 bg-slate-100 rounded-full"><div class="h-4 bg-teal-500 rounded-full" style="width:${d.pct}%"></div></div>
+            <span class="text-sm text-slate-600">${d.count} (${d.pct}%)</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============ SESSION NOTES ============
+
+export function renderSessionNotes() {
+  const el = document.getElementById('session-notes-content');
+  if (!el) return;
+  const profile = state.currentSessionNoteProfile;
+  const note = state.sessionNotes[profile];
+  if (!note) return;
+  const patientName = baselinePatientProfiles[profile]?.name || profile;
+
+  el.innerHTML = `
+    <div class="flex gap-2 mb-4">
+      ${['maria', 'james', 'emma'].map(p => `
+        <button data-action="select-session-note-${p}" class="px-3 py-1.5 rounded-lg text-sm font-medium ${state.currentSessionNoteProfile === p ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-700'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>
+      `).join('')}
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-800">${patientName}</h3>
+          <p class="text-sm text-slate-500">Session: ${note.date} • Format: ${note.format}</p>
+        </div>
+        <span class="px-3 py-1 rounded-lg text-sm font-semibold ${note.signed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${note.signed ? 'SIGNED' : 'DRAFT'}</span>
+      </div>
+      <div class="space-y-4">
+        <div class="p-4 bg-blue-50 rounded-xl"><p class="text-xs font-semibold text-blue-600 mb-1">SUBJECTIVE</p><p class="text-sm text-slate-700">${note.subjective}</p></div>
+        <div class="p-4 bg-green-50 rounded-xl"><p class="text-xs font-semibold text-green-600 mb-1">OBJECTIVE</p><p class="text-sm text-slate-700">${note.objective}</p></div>
+        <div class="p-4 bg-amber-50 rounded-xl"><p class="text-xs font-semibold text-amber-600 mb-1">ASSESSMENT</p><p class="text-sm text-slate-700">${note.assessment}</p></div>
+        <div class="p-4 bg-purple-50 rounded-xl"><p class="text-xs font-semibold text-purple-600 mb-1">PLAN</p><p class="text-sm text-slate-700">${note.plan}</p></div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button data-action="sign-session-note" class="px-4 py-2 ${note.signed ? 'bg-slate-300 text-slate-500' : 'bg-teal-600 text-white'} rounded-xl text-sm font-semibold">${note.signed ? 'Already Signed' : 'Sign Note'}</button>
+        <button data-nav="supervisor-cosign" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl text-sm font-semibold">Send to Supervisor</button>
+        <button data-nav="sdoh-assessment" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-semibold">SDOH Assessment</button>
+      </div>
+    </div>
+  `;
+}
+
+// ============ INVESTOR FINANCIALS ============
+
+export function renderInvestorFinancials() {
+  const el = document.getElementById('investor-financials-content');
+  if (!el) return;
+  const f = state.investorFinancials;
+
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Total Addressable Market</h3>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="text-center p-4 bg-teal-50 rounded-xl"><p class="text-3xl font-bold text-teal-700">${f.tam.value}</p><p class="text-xs text-slate-600 mt-1">TAM</p><p class="text-xs text-slate-500">${f.tam.description}</p></div>
+        <div class="text-center p-4 bg-blue-50 rounded-xl"><p class="text-3xl font-bold text-blue-700">${f.sam.value}</p><p class="text-xs text-slate-600 mt-1">SAM</p><p class="text-xs text-slate-500">${f.sam.description}</p></div>
+        <div class="text-center p-4 bg-green-50 rounded-xl"><p class="text-3xl font-bold text-green-700">${f.som.value}</p><p class="text-xs text-slate-600 mt-1">SOM</p><p class="text-xs text-slate-500">${f.som.description}</p></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Unit Economics</h3>
+      <div class="grid grid-cols-4 gap-3">
+        ${Object.entries(f.unitEconomics).map(([key, val]) => {
+          const labels = { arpu: 'ARPU', cac: 'CAC', ltv: 'LTV', ltvCacRatio: 'LTV:CAC', grossMargin: 'Gross Margin', paybackMonths: 'Payback', churnRate: 'Monthly Churn' };
+          return `<div class="p-3 bg-slate-50 rounded-xl text-center"><p class="text-lg font-bold text-slate-800">${val}</p><p class="text-xs text-slate-500">${labels[key] || key}</p></div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Competitive Matrix</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b">
+            <th class="text-left p-2 text-slate-600">Platform</th>
+            <th class="p-2 text-slate-600">Clinician</th>
+            <th class="p-2 text-slate-600">MBC</th>
+            <th class="p-2 text-slate-600">Memory</th>
+            <th class="p-2 text-slate-600">Safety</th>
+            <th class="p-2 text-slate-600">Enterprise</th>
+            <th class="p-2 text-slate-600">FHIR</th>
+          </tr></thead>
+          <tbody>
+            ${f.competitiveMatrix.map(c => `
+              <tr class="border-b ${c.name === 'Peacefull.ai' ? 'bg-teal-50 font-semibold' : ''}">
+                <td class="p-2 text-slate-800">${c.name}</td>
+                <td class="p-2 text-center">${c.clinician ? '✅' : '❌'}</td>
+                <td class="p-2 text-center">${c.mbc ? '✅' : '❌'}</td>
+                <td class="p-2 text-center">${c.memory ? '✅' : '❌'}</td>
+                <td class="p-2 text-center">${c.safety ? '✅' : '❌'}</td>
+                <td class="p-2 text-center">${c.enterprise ? '✅' : '❌'}</td>
+                <td class="p-2 text-center">${c.fhir ? '✅' : '❌'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <h3 class="font-semibold text-slate-800 mb-4">Pilot Funnel</h3>
+      <div class="space-y-2">
+        ${f.pilotFunnel.map((s, i) => `
+          <div class="flex items-center gap-3">
+            <span class="w-32 text-sm text-slate-700">${s.stage}</span>
+            <div class="flex-1 h-6 bg-slate-100 rounded-full"><div class="h-6 bg-gradient-to-r from-teal-500 to-teal-400 rounded-full flex items-center justify-end pr-2" style="width:${Math.max(s.pct, 5)}%"><span class="text-xs font-bold text-white">${s.count}</span></div></div>
+            <span class="text-xs text-slate-500">${s.pct}%</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============ REGULATORY COMPLIANCE HUB ============
+
+export function renderRegulatoryHub() {
+  const el = document.getElementById('regulatory-hub-content');
+  if (!el) return;
+  const r = state.regulatoryStatus;
+
+  el.innerHTML = `
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-lg">🏛️</div>
+          <div><h3 class="font-semibold text-slate-800">FDA SaMD</h3><p class="text-xs text-slate-500">${r.fdaSamd.status}</p></div>
+        </div>
+        <div class="space-y-2 text-sm">
+          <p><span class="text-slate-500">Classification:</span> <span class="font-medium">${r.fdaSamd.classification}</span></p>
+          <p><span class="text-slate-500">Risk Level:</span> <span class="font-medium">${r.fdaSamd.riskLevel}</span></p>
+          <p><span class="text-slate-500">Clinical Use:</span> <span class="font-medium">${r.fdaSamd.clinicalUse}</span></p>
+          <p><span class="text-slate-500">Timeline:</span> <span class="font-medium">${r.fdaSamd.timeline}</span></p>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-lg">🔒</div>
+          <div><h3 class="font-semibold text-slate-800">HIPAA</h3><p class="text-xs text-slate-500">${r.hipaa.status}</p></div>
+        </div>
+        <div class="space-y-2 text-sm">
+          <p><span class="text-slate-500">Last Audit:</span> <span class="font-medium">${r.hipaa.lastAudit}</span></p>
+          <p><span class="text-slate-500">Controls:</span> <span class="font-medium">${r.hipaa.implemented}/${r.hipaa.controls} implemented</span></p>
+          <p><span class="text-slate-500">BAAs Executed:</span> <span class="font-medium">${r.hipaa.baaCount}</span></p>
+          <div class="h-2 bg-slate-100 rounded-full mt-2"><div class="h-2 bg-green-500 rounded-full" style="width:${(r.hipaa.implemented/r.hipaa.controls)*100}%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h4 class="font-semibold text-slate-800 text-sm mb-2">42 CFR Part 2</h4>
+        <span class="px-2 py-1 rounded text-xs font-semibold bg-amber-100 text-amber-700">${r.cfr42.status}</span>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+          <p>SUD Data Isolation: ${r.cfr42.substanceDataIsolation ? '✅' : '❌'}</p>
+          <p>Consent Tracking: ${r.cfr42.consentTracking ? '✅' : '❌'}</p>
+          <p>Breach Protocol: ${r.cfr42.breachProtocol}</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h4 class="font-semibold text-slate-800 text-sm mb-2">SOC 2</h4>
+        <span class="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-700">${r.soc2.status}</span>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+          <p>Type: ${r.soc2.type}</p>
+          <p>Auditor: ${r.soc2.auditor}</p>
+          <p>Target: ${r.soc2.targetDate}</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h4 class="font-semibold text-slate-800 text-sm mb-2">Accessibility</h4>
+        <span class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-700">WCAG ${r.accessibility.wcag}</span>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+          <p>Automated: ${r.accessibility.automated}%</p>
+          <p>Manual: ${r.accessibility.manual}%</p>
+          <p>Status: ${r.accessibility.status}</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+      <p class="text-sm text-teal-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> for full citations.</p>
+    </div>
+  `;
+}
+
+// ============ SDOH ASSESSMENT ============
+
+export function renderSDOHAssessment() {
+  const el = document.getElementById('sdoh-assessment-content');
+  if (!el) return;
+  const profile = state.selectedPatientProfile;
+  const sdoh = state.sdohData[profile];
+  if (!sdoh) { el.innerHTML = '<p class="text-slate-500 text-center py-8">No SDOH data for this patient.</p>'; return; }
+  const patientName = baselinePatientProfiles[profile]?.name || profile;
+
+  const riskColor = (r) => r === 'Low' ? 'green' : r === 'Moderate' ? 'amber' : 'red';
+  const domains = [
+    { label: 'Housing', data: sdoh.housing, icon: '🏠' },
+    { label: 'Food Security', data: sdoh.food, icon: '🍎' },
+    { label: 'Transportation', data: sdoh.transportation, icon: '🚌' },
+    { label: 'Employment', data: sdoh.employment, icon: '💼' },
+    { label: 'Social Support', data: sdoh.socialSupport, icon: '👥' },
+    { label: 'Education', data: sdoh.education, icon: '📚' }
+  ];
+
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-800">${patientName}</h3>
+          <p class="text-sm text-slate-500">Screened: ${sdoh.screenedDate}</p>
+        </div>
+        <div class="flex gap-2">
+          ${['maria', 'james', 'emma'].map(p => `<button data-patient-profile="${p}" class="px-3 py-1 rounded-lg text-xs font-medium ${profile === p ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-600'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>`).join('')}
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        ${domains.map(d => `
+          <div class="p-3 bg-slate-50 rounded-xl flex items-center gap-3">
+            <span class="text-2xl">${d.icon}</span>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-slate-800">${d.label}</p>
+              <p class="text-xs text-slate-500">${d.data.status}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-${riskColor(d.data.risk)}-100 text-${riskColor(d.data.risk)}-700">${d.data.risk}</span>
+          </div>
+        `).join('')}
+      </div>
+      ${sdoh.notes ? `<div class="mt-4 p-3 bg-amber-50 rounded-xl text-sm text-amber-900"><strong>Notes:</strong> ${sdoh.notes}</div>` : ''}
+    </div>
+    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+      <p class="text-sm text-indigo-900"><strong>Evidence:</strong> Social determinants framework (Marmot & Wilkinson, 2006). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> ev-52.</p>
+    </div>
+  `;
+}
+
+// ============ CAREGIVER VIEW ============
+
+export function renderCaregiverView() {
+  const el = document.getElementById('caregiver-view-content');
+  if (!el) return;
+  const profile = state.selectedPatientProfile;
+  const p = baselinePatientProfiles[profile];
+  const prog = baselineProgressData[profile];
+  if (!p || !prog) return;
+
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h3 class="text-lg font-semibold text-slate-800 mb-2">${p.name}'s Wellness Summary</h3>
+      <p class="text-sm text-slate-500 mb-4">This view is shared with your consent. Your clinician controls what is visible.</p>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-teal-50 rounded-xl p-4 text-center">
+          <p class="text-3xl font-bold text-teal-700">${prog.streak}</p>
+          <p class="text-xs text-slate-500">Day Streak</p>
+        </div>
+        <div class="bg-blue-50 rounded-xl p-4 text-center">
+          <p class="text-3xl font-bold text-blue-700">Level ${prog.level}</p>
+          <p class="text-xs text-slate-500">${prog.levelName}</p>
+        </div>
+        <div class="bg-green-50 rounded-xl p-4 text-center">
+          <p class="text-3xl font-bold text-green-700">${prog.badges.filter(b => b.earned).length}</p>
+          <p class="text-xs text-slate-500">Badges Earned</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <h4 class="font-semibold text-slate-800 mb-3">Weekly Mood Trend</h4>
+      <div class="flex gap-2 items-end h-24">
+        ${prog.weeklyMood.map((m, i) => {
+          const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+          const h = m ? m * 20 : 0;
+          const c = m >= 4 ? 'bg-green-400' : m >= 3 ? 'bg-blue-400' : m >= 2 ? 'bg-amber-400' : 'bg-red-400';
+          return `<div class="flex-1 flex flex-col items-center"><div class="${m ? c : 'bg-slate-200'} rounded-t" style="height:${h || 4}px;width:100%"></div><span class="text-[10px] text-slate-400 mt-1">${dayNames[i]}</span></div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+      <h4 class="font-semibold text-slate-800 mb-3">How You Can Help</h4>
+      <div class="space-y-2 text-sm text-slate-700">
+        <p>• Encourage ${p.name.split(' ')[0]} to complete their daily check-in</p>
+        <p>• Be available for the coping strategies they've been practicing</p>
+        <p>• If you notice warning signs, contact the care team at 555-0300</p>
+        <p>• <strong>Crisis Line:</strong> 988 Suicide & Crisis Lifeline (available 24/7)</p>
+      </div>
+    </div>
+  `;
 }

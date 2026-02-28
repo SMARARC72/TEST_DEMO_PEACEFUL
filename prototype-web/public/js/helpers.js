@@ -163,6 +163,13 @@ export function showScreen(screenId, options = {}) {
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
+  
+  // Focus management for accessibility
+  const heading = screen.querySelector('h1, h2, [role="heading"]');
+  if (heading) {
+    heading.setAttribute('tabindex', '-1');
+    heading.focus({ preventScroll: true });
+  }
   // Trigger render for decision room
   if (screenId === 'decision-room' && typeof window.renderDecisionRoom === 'function') {
     window.renderDecisionRoom();

@@ -19,7 +19,10 @@ import {
   baselineEscalationItems,
   baselineSessionPrep,
   baselineChatScript,
-  baselineOnboardingSteps
+  baselineOnboardingSteps,
+  baselineClinicianProfile,
+  baselineSessionNotes,
+  baselinePatientProfiles
 } from './state.js';
 import { showToast, showScreen, computeReadinessVerdict, getSelectedTriageItem, getSelectedMemory, getSelectedPlan, getSelectedMBC, getSelectedAdherence, getSelectedEscalation } from './helpers.js';
 import { 
@@ -46,7 +49,14 @@ import {
   renderSafetyPlan,
   renderOnboarding,
   renderPatientMemoryView,
-  renderEvidenceBase
+  renderEvidenceBase,
+  renderClinicianAnalytics,
+  renderPopulationHealth,
+  renderSessionNotes,
+  renderInvestorFinancials,
+  renderRegulatoryHub,
+  renderSDOHAssessment,
+  renderCaregiverView
 } from './render.js';
 
 // ============ DEMO PANEL ============
@@ -746,6 +756,14 @@ export function resetDemo() {
   state.expandedPatientMemoryId = null;
   state.evidenceFilter = 'All';
   state.expandedEvidenceId = null;
+
+  // Reset new Phase 6+ states
+  state.clinicianProfile = JSON.parse(JSON.stringify(baselineClinicianProfile));
+  state.sessionNotes = JSON.parse(JSON.stringify(baselineSessionNotes));
+  state.currentSessionNoteProfile = 'maria';
+  state.expandedRegSection = null;
+  state.breathingActive = false;
+  state.breathingPhase = 'idle';
   
   showToast('Demo reset to defaults');
 }
@@ -912,4 +930,64 @@ export function setJournalFilter(filter) {
       btn.className = 'px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600';
     }
   });
+}
+
+// ============ SESSION NOTE ACTIONS ============
+
+export function selectSessionNote(profile) {
+  state.currentSessionNoteProfile = profile;
+  renderSessionNotes();
+}
+
+export function signSessionNote() {
+  const profile = state.currentSessionNoteProfile;
+  const note = state.sessionNotes[profile];
+  if (!note || note.signed) return;
+  note.signed = true;
+  renderSessionNotes();
+  showToast(`Session note for ${baselinePatientProfiles[profile]?.name || profile} signed`);
+}
+
+// ============ BREATHING EXERCISE ACTIONS ============
+
+let breathingInterval = null;
+
+export function startBreathing() {
+  if (state.breathingActive) return;
+  state.breathingActive = true;
+  const circle = document.getElementById('breathing-circle');
+  const label = document.getElementById('breathing-label');
+  if (!circle || !label) return;
+
+  let phase = 'inhale';
+  let seconds = 4;
+  label.textContent = 'Inhale...';
+  circle.style.transform = 'scale(1.3)';
+
+  breathingInterval = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) {
+      if (phase === 'inhale') {
+        phase = 'exhale';
+        seconds = 6;
+        label.textContent = 'Exhale...';
+        circle.style.transform = 'scale(1)';
+      } else {
+        phase = 'inhale';
+        seconds = 4;
+        label.textContent = 'Inhale...';
+        circle.style.transform = 'scale(1.3)';
+      }
+    }
+  }, 1000);
+}
+
+export function stopBreathing() {
+  state.breathingActive = false;
+  clearInterval(breathingInterval);
+  breathingInterval = null;
+  const circle = document.getElementById('breathing-circle');
+  const label = document.getElementById('breathing-label');
+  if (circle) circle.style.transform = 'scale(1)';
+  if (label) label.textContent = 'Ready';
 }
