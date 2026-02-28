@@ -1,0 +1,19 @@
+# Terraform local state and plugin caches
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Auto-loaded variable files may contain secrets
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash logs
+crash.log
+crash.*.log
