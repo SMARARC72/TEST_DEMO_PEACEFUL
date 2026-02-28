@@ -1,0 +1,611 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── TENANCY & AUTH ───────────────────────────────────
+
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  domain      String?
+  plan        TenantPlan @default(PILOT)
+  ssoEnabled  Boolean  @default(false)
+  scimEnabled Boolean  @default(false)
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users             User[]
+  patients          Patient[]
+  enterpriseConfigs EnterpriseConfig[]
+  auditLogs         AuditLog[]
+
+  @@map("tenants")
+}
+
+enum TenantPlan {
+  PILOT
+  GROWTH
+  ENTERPRISE
+}
+
+model User {
+  id           String     @id @default(uuid())
+  tenantId     String
+  email        String     
+  passwordHash String
+  role         UserRole
+  firstName    String
+  lastName     String
+  phone        String?
+  mfaEnabled   Boolean    @default(false)
+  mfaMethod    MfaMethod?
+  mfaSecret    String?    // encrypted
+  lastLogin    DateTime?
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  clinician   Clinician?
+  patient     Patient?
+  sessionNotes SessionNote[] @relation("AuthoredNotes")
+  coSignedNotes SessionNote[] @relation("CoSignedNotes")
+  auditLogs   AuditLog[]
+  draftReviews AIDraft[]   @relation("ReviewedDrafts")
+  memoryReviews MemoryProposal[] @relation("ReviewedMemories")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+enum UserRole {
+  PATIENT
+  CLINICIAN
+  SUPERVISOR
+  ADMIN
+  COMPLIANCE_OFFICER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum MfaMethod {
+  TOTP
+  SMS
+  FIDO2
+}
+
+// ─── CLINICAL PROFILES ───────────────────────────────
+
+model Clinician {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  credentials  String   // e.g., "PhD, LCSW"
+  specialty    String
+  npi          String?  @unique
+  caseloadSize Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id])
+  patients       CareTeamAssignment[]
+  triageItems    TriageItem[]
+  escalations    EscalationItem[] @relation("AssignedEscalations")
+
+  @@map("clinicians")
+}
+
+model Patient {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  tenantId        String
+  age             Int
+  pronouns        String?
+  language        String   @default("en")
+  emergencyName   String?  // encrypted PHI
+  emergencyPhone  String?  // encrypted PHI
+  emergencyRel    String?
+  diagnosisPrimary String? // encrypted PHI
+  diagnosisCode    String? // ICD-10
+  treatmentStart  DateTime?
+  medications     Json     @default("[]") // encrypted PHI
+  allergies       Json     @default("[]")
+  preferences     Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  careTeam        CareTeamAssignment[]
+  submissions     Submission[]
+  triageItems     TriageItem[]
+  aiDrafts        AIDraft[]
+  memoryProposals MemoryProposal[]
+  treatmentPlans  TreatmentPlan[]
+  mbcScores       MBCScore[]
+  adherenceItems  AdherenceItem[]
+  sessionNotes    SessionNote[]
+  escalations     EscalationItem[]
+  safetyPlan      SafetyPlan?
+  progressData    ProgressData?
+  sdohAssessments SDOHAssessment[]
+  chatSessions    ChatSession[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("patients")
+}
+
+model CareTeamAssignment {
+  id          String   @id @default(uuid())
+  patientId   String
+  clinicianId String
+  role        String   // "Primary Therapist", "Supervisor", "Psychiatrist"
+  assignedAt  DateTime @default(now())
+  active      Boolean  @default(true)
+
+  patient   Patient   @relation(fields: [patientId], references: [id])
+  clinician Clinician @relation(fields: [clinicianId], references: [id])
+
+  @@unique([patientId, clinicianId])
+  @@map("care_team_assignments")
+}
+
+// ─── SUBMISSIONS & TRIAGE ──────────────────────────────
+
+model Submission {
+  id             String           @id @default(uuid())
+  patientId      String
+  source         SubmissionSource
+  status         SubmissionStatus @default(PENDING)
+  rawContent     String           // encrypted PHI - journal text, transcription, or check-in JSON
+  audioUrl       String?          // S3 URL for voice memos
+  audioDuration  Int?             // seconds
+  patientTone    String?
+  patientSummary String?          // encrypted PHI
+  patientNextStep String?
+  clinicianSignalBand SignalBand?
+  clinicianSummary    String?     // encrypted PHI
+  clinicianEvidence   Json        @default("[]")
+  clinicianUnknowns   Json        @default("[]")
+  processedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  triageItem  TriageItem?
+  aiDrafts    AIDraft[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("submissions")
+}
+
+enum SubmissionSource {
+  JOURNAL
+  CHECKIN
+  VOICE_MEMO
+}
+
+enum SubmissionStatus {
+  PENDING
+  PROCESSING
+  READY
+  REVIEWED
+}
+
+enum SignalBand {
+  LOW
+  GUARDED
+  MODERATE
+  ELEVATED
+}
+
+model TriageItem {
+  id          String       @id @default(uuid())
+  submissionId String      @unique
+  patientId   String
+  clinicianId String?
+  signalBand  SignalBand
+  summary     String       // encrypted PHI
+  status      TriageStatus @default(ACK)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  submission Submission @relation(fields: [submissionId], references: [id])
+  patient    Patient    @relation(fields: [patientId], references: [id])
+  clinician  Clinician? @relation(fields: [clinicianId], references: [id])
+
+  @@index([clinicianId])
+  @@index([status])
+  @@index([signalBand])
+  @@map("triage_items")
+}
+
+enum TriageStatus {
+  ACK
+  IN_REVIEW
+  ESCALATED
+  RESOLVED
+}
+
+// ─── AI DRAFTS & MEMORY ────────────────────────────────
+
+model AIDraft {
+  id            String      @id @default(uuid())
+  submissionId  String
+  patientId     String
+  content       String      // encrypted PHI - the AI-generated summary
+  format        DraftFormat @default(SOAP)
+  status        DraftStatus @default(DRAFT)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNotes   String?
+  suppressedItems Json      @default("[]")
+  modelVersion  String      @default("claude-sonnet-4-20250514")
+  tokenUsage    Json        @default("{}")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  submission Patient    @relation(fields: [patientId], references: [id])
+  sourceSubmission Submission @relation(fields: [submissionId], references: [id])
+  reviewedBy User?      @relation("ReviewedDrafts", fields: [reviewedById], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@map("ai_drafts")
+}
+
+enum DraftFormat {
+  SOAP
+  NARRATIVE
+  STRUCTURED
+}
+
+enum DraftStatus {
+  DRAFT
+  REVIEWED
+  APPROVED
+  REJECTED
+  ESCALATED
+}
+
+model MemoryProposal {
+  id           String       @id @default(uuid())
+  patientId    String
+  category     String
+  statement    String       // encrypted PHI
+  confidence   Float
+  conflict     Boolean      @default(false)
+  status       MemoryStatus @default(PROPOSED)
+  evidence     Json         @default("[]")
+  existing     String?
+  uncertainty  String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  reviewedBy User?   @relation("ReviewedMemories", fields: [reviewedById], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@map("memory_proposals")
+}
+
+enum MemoryStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+  CONFLICT_FLAGGED
+}
+
+// ─── TREATMENT & MBC ────────────────────────────────
+
+model TreatmentPlan {
+  id           String      @id @default(uuid())
+  patientId    String
+  goal         String
+  intervention String
+  owner        String
+  target       String
+  status       PlanStatus  @default(DRAFT)
+  evidence     Json        @default("[]")
+  uncertainty  String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@map("treatment_plans")
+}
+
+enum PlanStatus {
+  DRAFT
+  REVIEWED
+  HOLD
+  ACTIVE
+}
+
+model MBCScore {
+  id           String     @id @default(uuid())
+  patientId    String
+  instrument   Instrument
+  score        Int
+  severity     String
+  date         DateTime
+  trend        Trend      @default(STABLE)
+  priorScores  Json       @default("[]")
+  clinicianNote String?   // encrypted PHI
+  createdAt    DateTime   @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([date])
+  @@map("mbc_scores")
+}
+
+enum Instrument {
+  PHQ9
+  GAD7
+}
+
+enum Trend {
+  UP
+  DOWN
+  STABLE
+}
+
+model AdherenceItem {
+  id        String          @id @default(uuid())
+  patientId String
+  task      String
+  frequency String
+  completed Int             @default(0)
+  target    Int
+  streak    Int             @default(0)
+  lastLogged DateTime?
+  status    AdherenceStatus @default(ON_TRACK)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@map("adherence_items")
+}
+
+enum AdherenceStatus {
+  ON_TRACK
+  PARTIAL
+  AT_RISK
+}
+
+// ─── SESSION NOTES & ESCALATION ──────────────────────
+
+model SessionNote {
+  id          String   @id @default(uuid())
+  patientId   String
+  clinicianId String
+  date        DateTime
+  format      String   @default("SOAP")
+  subjective  String   // encrypted PHI
+  objective   String   // encrypted PHI
+  assessment  String   // encrypted PHI
+  plan        String   // encrypted PHI
+  signed      Boolean  @default(false)
+  signedAt    DateTime?
+  coSignedById String?
+  coSignedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  clinician  User    @relation("AuthoredNotes", fields: [clinicianId], references: [id])
+  coSignedBy User?   @relation("CoSignedNotes", fields: [coSignedById], references: [id])
+
+  @@index([patientId])
+  @@index([clinicianId])
+  @@map("session_notes")
+}
+
+model EscalationItem {
+  id              String           @id @default(uuid())
+  patientId       String
+  clinicianId     String?
+  tier            EscalationTier
+  trigger         String
+  detectedAt      DateTime         @default(now())
+  acknowledgedAt  DateTime?
+  resolvedAt      DateTime?
+  clinicianAction String?
+  status          EscalationStatus @default(OPEN)
+  auditTrail      Json             @default("[]")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  patient   Patient   @relation(fields: [patientId], references: [id])
+  clinician Clinician? @relation("AssignedEscalations", fields: [clinicianId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@index([tier])
+  @@map("escalation_items")
+}
+
+enum EscalationTier {
+  T2
+  T3
+}
+
+enum EscalationStatus {
+  OPEN
+  ACK
+  RESOLVED
+}
+
+// ─── SAFETY & WELLNESS ──────────────────────────────
+
+model SafetyPlan {
+  id          String   @id @default(uuid())
+  patientId   String   @unique
+  steps       Json     // encrypted PHI - array of { title, items[] }
+  reviewedDate DateTime
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("safety_plans")
+}
+
+model ProgressData {
+  id         String   @id @default(uuid())
+  patientId  String   @unique
+  streak     Int      @default(0)
+  xp         Int      @default(0)
+  level      Int      @default(1)
+  levelName  String   @default("Seedling")
+  badges     Json     @default("[]")
+  weeklyMood Json     @default("[]")
+  milestones Json     @default("[]")
+  updatedAt  DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("progress_data")
+}
+
+model SDOHAssessment {
+  id              String   @id @default(uuid())
+  patientId       String
+  housing         String
+  food            String
+  transportation  String
+  employment      String
+  socialSupport   String
+  education       String
+  screenedDate    DateTime
+  notes           String?  // encrypted PHI
+  createdAt       DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@map("sdoh_assessments")
+}
+
+// ─── CHAT & AI ──────────────────────────────────────
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  patientId String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient  Patient       @relation(fields: [patientId], references: [id])
+  messages ChatMessage[]
+
+  @@index([patientId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  sessionId  String
+  role       ChatRole
+  content    String   // encrypted PHI
+  memoryRef  String?
+  createdAt  DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ─── ENTERPRISE & COMPLIANCE ─────────────────────────
+
+model EnterpriseConfig {
+  id       String           @id @default(uuid())
+  tenantId String           @unique
+  sso      Json             @default("{}")
+  rbac     Json             @default("{}")
+  audit    Json             @default("{}")
+  status   EnterpriseStatus @default(REVIEW_REQUIRED)
+  evidence Json             @default("[]")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("enterprise_configs")
+}
+
+enum EnterpriseStatus {
+  APPROVED
+  CONDITIONAL
+  REVIEW_REQUIRED
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  tenantId     String
+  userId       String?
+  action       String
+  resource     String
+  resourceId   String?
+  details      Json     @default("{}")
+  ipAddress    String?
+  userAgent    String?
+  previousHash String?
+  hash         String
+  timestamp    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([resource])
+  @@map("audit_logs")
+}
+
+model ConsentRecord {
+  id        String   @id @default(uuid())
+  patientId String
+  type      String   // "data_processing", "ai_analysis", "voice_recording"
+  version   Int
+  granted   Boolean
+  grantedAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+  @@map("consent_records")
+}

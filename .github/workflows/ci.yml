@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '22'
+  AWS_REGION: us-east-1
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            prototype-web/package-lock.json
+      - name: Install prototype dependencies
+        run: cd prototype-web && npm ci
+      - name: Type check prototype
+        run: cd prototype-web && npx tsc -b
+      - name: Check artifacts
+        run: cd prototype-web && npm run check:artifacts
+
+  test-prototype:
+    name: Test Prototype
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: prototype-web/package-lock.json
+      - run: cd prototype-web && npm ci
+      - run: cd prototype-web && npx vitest run
+      - run: cd prototype-web && node scripts/verify-demo-stability.mjs
+
+  build-prototype:
+    name: Build Prototype
+    runs-on: ubuntu-latest
+    needs: test-prototype
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: prototype-web/package-lock.json
+      - run: cd prototype-web && npm ci
+      - run: cd prototype-web && npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prototype-dist
+          path: prototype-web/dist/
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Run npm audit (prototype)
+        run: cd prototype-web && npm ci && npm audit --audit-level=high || true
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # Future: API build, test, and deploy jobs will be added here
+  # when packages/api is ready for CI integration
