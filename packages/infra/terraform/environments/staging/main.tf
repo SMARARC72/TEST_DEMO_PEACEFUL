@@ -119,9 +119,14 @@ module "ecs" {
   anthropic_api_key_arn   = module.secrets.secret_arns.anthropic_api_key
   jwt_secret_arn          = module.secrets.secret_arns.jwt_secret
   jwt_refresh_secret_arn  = module.secrets.secret_arns.jwt_refresh_secret
-  encryption_key_arn      = module.secrets.secret_arns.encryption_key
-  redis_url               = "redis://${module.database.redis_endpoint}:${module.database.redis_port}"
-  uploads_bucket_arn      = module.storage.uploads_bucket_arn
+  encryption_key_arn              = module.secrets.secret_arns.encryption_key
+  auth0_domain_secret_arn         = module.secrets.secret_arns.auth0_domain
+  auth0_client_id_secret_arn      = module.secrets.secret_arns.auth0_client_id
+  auth0_client_secret_secret_arn  = module.secrets.secret_arns.auth0_client_secret
+  auth0_audience                  = "https://api.peacefull.ai"
+  s3_uploads_bucket               = module.storage.uploads_bucket_name
+  redis_url                       = "redis://${module.database.redis_endpoint}:${module.database.redis_port}"
+  uploads_bucket_arn              = module.storage.uploads_bucket_arn
 }
 
 module "monitoring" {

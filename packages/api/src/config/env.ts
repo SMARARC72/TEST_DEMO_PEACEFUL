@@ -39,12 +39,12 @@ const envSchema = z.object({
   /** S3 bucket for file uploads. */
   AWS_S3_BUCKET: z.string().default('peacefull-uploads'),
 
-  /** HTTP port the server listens on. */
-  PORT: z.coerce.number().int().positive().default(3001),
+  /** HTTP port the server listens on (0 = random port, used in tests). */
+  PORT: z.coerce.number().int().min(0).default(3001),
 
   /** Application environment. */
   NODE_ENV: z
-    .enum(['development', 'staging', 'production'])
+    .enum(['development', 'staging', 'production', 'test'])
     .default('development'),
 
   /** Allowed CORS origin for the web client. */

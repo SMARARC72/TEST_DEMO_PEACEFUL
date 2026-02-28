@@ -118,3 +118,32 @@ variable "alb_logs_bucket" {
   type        = string
   default     = ""
 }
+
+# --- Auth0 ---
+
+variable "auth0_domain_secret_arn" {
+  description = "ARN of the AUTH0_DOMAIN secret"
+  type        = string
+}
+
+variable "auth0_client_id_secret_arn" {
+  description = "ARN of the AUTH0_CLIENT_ID secret"
+  type        = string
+}
+
+variable "auth0_client_secret_secret_arn" {
+  description = "ARN of the AUTH0_CLIENT_SECRET secret"
+  type        = string
+}
+
+variable "auth0_audience" {
+  description = "Auth0 API audience identifier"
+  type        = string
+  default     = "https://api.peacefull.ai"
+}
+
+variable "s3_uploads_bucket" {
+  description = "Name of the S3 bucket for file uploads"
+  type        = string
+  default     = ""
+}

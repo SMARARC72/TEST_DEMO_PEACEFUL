@@ -231,6 +231,18 @@ resource "aws_ecs_task_definition" "api" {
         {
           name      = "ENCRYPTION_KEY"
           valueFrom = var.encryption_key_arn
+        },
+        {
+          name      = "AUTH0_DOMAIN"
+          valueFrom = var.auth0_domain_secret_arn
+        },
+        {
+          name      = "AUTH0_CLIENT_ID"
+          valueFrom = var.auth0_client_id_secret_arn
+        },
+        {
+          name      = "AUTH0_CLIENT_SECRET"
+          valueFrom = var.auth0_client_secret_secret_arn
         }
       ]
 
@@ -238,7 +250,10 @@ resource "aws_ecs_task_definition" "api" {
         { name = "REDIS_URL", value = var.redis_url },
         { name = "NODE_ENV", value = var.environment },
         { name = "PORT", value = "3001" },
-        { name = "CORS_ORIGIN", value = var.cors_origin }
+        { name = "CORS_ORIGIN", value = var.cors_origin },
+        { name = "AUTH0_AUDIENCE", value = var.auth0_audience },
+        { name = "AWS_S3_BUCKET", value = var.s3_uploads_bucket },
+        { name = "AWS_REGION", value = data.aws_region.current.name }
       ]
 
       logConfiguration = {

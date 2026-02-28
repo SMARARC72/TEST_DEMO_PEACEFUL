@@ -10,6 +10,7 @@ process.env.PORT = '0'; // random port
 process.env.JWT_SECRET = 'test-jwt-secret-minimum-thirty-two-characters-long-for-hs256';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-minimum-thirty-two-characters-long';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.ANTHROPIC_API_KEY = 'sk-ant-test-placeholder-for-unit-tests';
 process.env.CORS_ORIGIN = '*';
 
 // Mock the Prisma client (all tests use this mock)
@@ -17,6 +18,7 @@ vi.mock('../models/index.js', () => {
   const mockPrisma = {
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -77,6 +79,7 @@ vi.mock('../models/index.js', () => {
     },
     $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockPrisma)),
     $disconnect: vi.fn(),
+    $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
   };
 
   return { prisma: mockPrisma, default: mockPrisma };

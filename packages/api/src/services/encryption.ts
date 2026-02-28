@@ -74,19 +74,25 @@ export function encryptField(plaintext: string): string {
  * @returns The original plaintext.
  */
 export function decryptField(ciphertext: string): string {
-  const [ivB64, authTagB64, encryptedB64] = ciphertext.split(':');
-  if (!ivB64 || !authTagB64 || !encryptedB64) {
+  const parts = ciphertext.split(':');
+  if (parts.length < 2) {
+    throw new Error('Invalid ciphertext format — expected iv:authTag:encrypted');
+  }
+
+  const [ivB64, authTagB64] = parts;
+  const encryptedB64 = parts.slice(2).join(':'); // may be empty for empty plaintext
+
+  if (!ivB64 || !authTagB64) {
     throw new Error('Invalid ciphertext format — expected iv:authTag:encrypted');
   }
 
   const iv = Buffer.from(ivB64, 'base64');
   const authTag = Buffer.from(authTagB64, 'base64');
-  const encrypted = encryptedB64;
 
   const decipher = createDecipheriv(ALGORITHM, encryptionKey, iv);
   decipher.setAuthTag(authTag);
 
-  let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+  let decrypted = decipher.update(encryptedB64, 'base64', 'utf8');
   decrypted += decipher.final('utf8');
 
   return decrypted;

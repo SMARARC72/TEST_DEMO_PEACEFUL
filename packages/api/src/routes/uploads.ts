@@ -78,9 +78,10 @@ uploadRouter.post('/download-url', async (req, res, next) => {
 
 // ─── DELETE /:key — Delete a file from S3 ────────────────────────────
 
-uploadRouter.delete('/:key(*)', async (req, res, next) => {
+uploadRouter.delete('/*key', async (req, res, next) => {
   try {
-    const key = (req.params as Record<string, string>)['key(*)'];
+    const rawKey = req.params['key'];
+    const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
     if (!key) {
       throw new AppError('File key is required', 400);
     }
