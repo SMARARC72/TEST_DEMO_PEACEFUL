@@ -6,8 +6,11 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const envSchema = z.object({
-  /** PostgreSQL connection string. */
+  /** PostgreSQL connection string (pooled — via Neon connection pooler). */
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+
+  /** Direct (non-pooled) PostgreSQL connection for migrations/introspection. */
+  DIRECT_DATABASE_URL: z.string().optional(),
 
   /** Redis connection URL. */
   REDIS_URL: z.string().default('redis://localhost:6379'),

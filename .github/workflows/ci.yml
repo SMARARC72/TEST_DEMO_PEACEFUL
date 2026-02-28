@@ -84,7 +84,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
     env:
-      DATABASE_URL: postgresql://peacefull:peacefull@localhost:5432/peacefull_test
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
       REDIS_URL: redis://localhost:6379
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       JWT_SECRET: ci-test-jwt-secret-minimum-thirty-two-characters-long
@@ -92,19 +93,6 @@ jobs:
       NODE_ENV: development
       PORT: 3001
     services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: peacefull_test
-          POSTGRES_USER: peacefull
-          POSTGRES_PASSWORD: peacefull
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
       redis:
         image: redis:7-alpine
         ports:
@@ -125,9 +113,9 @@ jobs:
         run: cd packages/api && npm ci
       - name: Generate Prisma client
         run: cd packages/api && npx prisma generate
-      - name: Push schema to test DB
-        run: cd packages/api && npx prisma db push --skip-generate
-      - name: Seed test database
+      - name: Push schema to Neon DB
+        run: cd packages/api && npx prisma db push --skip-generate --accept-data-loss
+      - name: Seed database
         run: cd packages/api && npx tsx prisma/seed.ts
       - name: Type check API
         run: cd packages/api && npx tsc --noEmit
