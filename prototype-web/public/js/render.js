@@ -310,7 +310,7 @@ export function renderClinicianPatientProfile() {
               <p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p><span class="text-xs text-slate-500">Updated: Today 09:18</span>
             </div>
             <div class="space-y-3 text-sm">
-              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>2.4 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 48%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>2.4 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-emerald-600 h-2 rounded-full" style="width: 48%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.1 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 82%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>3.8 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 76%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.9 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 58%"></div></div></div>
@@ -366,7 +366,7 @@ export function renderClinicianPatientProfile() {
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Task Initiation Consistency</span><span>2.1 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 42%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>4.0 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 80%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Focus Fragmentation</span><span>4.2 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-red-500 h-2 rounded-full" style="width: 84%"></div></div></div>
-              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.8 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 56%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>2.8 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-emerald-600 h-2 rounded-full" style="width: 56%"></div></div></div>
             </div>
           </div>
           <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
@@ -391,10 +391,10 @@ export function renderClinicianPatientProfile() {
       ],
       stats: { total: '52', weekly: '11', alerts: '1' },
       activity: `
-        <div class="p-4 bg-teal-50 rounded-xl border-l-4 border-teal-500">
+        <div class="p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500">
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-slate-500">Feb 23, 2:00 PM</span>
-            <span class="px-2 py-1 bg-teal-600 text-white rounded text-xs font-bold">T1</span>
+            <span class="px-2 py-1 bg-emerald-700 text-white rounded text-xs font-bold">T1</span>
           </div>
           <p class="font-medium text-slate-800">Mood Trend Review Completed</p>
           <p class="text-sm text-slate-600 mt-1">Declining scores addressed with clinician follow-up and coping refresh plan.</p>
@@ -415,7 +415,7 @@ export function renderClinicianPatientProfile() {
           <div class="lg:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
             <div class="flex items-center justify-between mb-3"><p class="text-sm font-semibold text-slate-700">7-Day Symptom Trend (Synthetic)</p><span class="text-xs text-slate-500">Updated: Today 09:12</span></div>
             <div class="space-y-3 text-sm">
-              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>3.6 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-teal-500 h-2 rounded-full" style="width: 72%"></div></div></div>
+              <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Mood Stability</span><span>3.6 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-emerald-600 h-2 rounded-full" style="width: 72%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Stress Load</span><span>2.9 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 58%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Sleep Disruption</span><span>2.5 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 50%"></div></div></div>
               <div><div class="flex items-center justify-between text-slate-600 mb-1"><span>Coping Adherence</span><span>3.7 / 5</span></div><div class="w-full bg-slate-200 rounded-full h-2"><div class="bg-indigo-500 h-2 rounded-full" style="width: 74%"></div></div></div>
@@ -474,7 +474,7 @@ export function renderMBCDashboard() {
   if (!tbody || !detail) return;
 
   tbody.innerHTML = state.mbcScores.map(item => `
-    <tr onclick="selectMBC('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedMBCId ? 'bg-teal-50' : ''}">
+    <tr onclick="selectMBC('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedMBCId ? 'bg-emerald-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.instrument}</td>
       <td class="py-2 pr-2 font-semibold">${item.score}</td>
@@ -567,13 +567,13 @@ export function renderGuidedDemo() {
     return `
       <div class="script-step">
         <div class="script-dot ${dotClass}">${isCompleted ? '✓' : i + 1}</div>
-        <div class="bg-white rounded-xl shadow-sm p-4 ${isCurrent ? 'ring-2 ring-teal-500' : ''}">
+        <div class="bg-white rounded-xl shadow-sm p-4 ${isCurrent ? 'ring-2 ring-emerald-500' : ''}">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-slate-800">${step.label}</h3>
             <span class="text-sm text-slate-500">${step.duration}</span>
           </div>
           <p class="text-sm text-slate-600 mb-3">${step.description}</p>
-          ${isCurrent ? `<button data-nav="${step.screen}" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Go to Screen →</button>` : ''}
+          ${isCurrent ? `<button data-nav="${step.screen}" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Go to Screen →</button>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -610,7 +610,7 @@ export function renderEscalationProtocols() {
   if (!tbody || !detail) return;
 
   tbody.innerHTML = state.escalationItems.map(item => `
-    <tr onclick="selectEscalation('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedEscalationId ? 'bg-orange-50' : ''}">
+    <tr onclick="selectEscalation('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedEscalationId ? 'bg-amber-50' : ''}">
       <td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(item.tier)}">${item.tier}</span></td>
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2 text-sm">${item.trigger}</td>
@@ -672,7 +672,7 @@ export function renderPatientProfile() {
   el.innerHTML = `
     <div class="bg-white rounded-2xl shadow-sm p-5">
       <div class="flex items-center gap-4 mb-4">
-        <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center text-2xl font-bold text-teal-700">${p.name.charAt(0)}</div>
+        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-2xl font-bold text-emerald-800">${p.name.charAt(0)}</div>
         <div>
           <h2 class="text-xl font-bold text-slate-800">${p.name}</h2>
           <p class="text-sm text-slate-500">${p.age} y/o · ${p.pronouns} · ${p.language}</p>
@@ -729,7 +729,7 @@ export function renderSessionPrep() {
       <div class="space-y-2">
         ${s.topics.map(t => `
           <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
-            <input type="checkbox" data-topic-id="${t.id}" ${t.checked ? 'checked' : ''} class="w-5 h-5 text-teal-600 rounded">
+            <input type="checkbox" data-topic-id="${t.id}" ${t.checked ? 'checked' : ''} class="w-5 h-5 text-emerald-700 rounded">
             <span class="text-sm text-slate-700">${t.label}</span>
           </label>
         `).join('')}
@@ -779,9 +779,9 @@ export function renderProgress() {
         <div class="streak-ring relative w-20 h-20">
           <svg viewBox="0 0 36 36" class="w-20 h-20">
             <path class="text-slate-200" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            <path class="text-teal-500" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="${streakPct}, 100" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="text-emerald-600" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="${streakPct}, 100" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
           </svg>
-          <div class="absolute inset-0 flex items-center justify-center font-bold text-lg text-teal-700">${p.streak}</div>
+          <div class="absolute inset-0 flex items-center justify-center font-bold text-lg text-emerald-800">${p.streak}</div>
         </div>
         <div>
           <p class="font-semibold text-slate-800">${p.streak} of ${p.streakTarget} days</p>
@@ -855,7 +855,7 @@ export function renderResources() {
   // update filter bar active state
   document.querySelectorAll('[data-resource-filter]').forEach(btn => {
     if (btn.dataset.resourceFilter === filter) {
-      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white';
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700 text-white';
     } else {
       btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
     }
@@ -894,7 +894,7 @@ export function renderHistory() {
   const filtered = filter === 'All' ? entries : entries.filter(e => e.type === filter);
 
   const typeIcons = { CHECKIN: '📋', JOURNAL: '✍️', VOICE: '🎤' };
-  const typeColors = { CHECKIN: 'teal', JOURNAL: 'blue', VOICE: 'purple' };
+  const typeColors = { CHECKIN: 'emerald', JOURNAL: 'blue', VOICE: 'purple' };
 
   el.innerHTML = filtered.map(e => {
     const color = typeColors[e.type] || 'slate';
@@ -938,7 +938,7 @@ export function renderHistory() {
   // update filter bar
   document.querySelectorAll('[data-history-filter]').forEach(btn => {
     if (btn.dataset.historyFilter === filter) {
-      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white';
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-700 text-white';
     } else {
       btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
     }
@@ -992,7 +992,7 @@ export function renderOnboarding() {
   `;
 
   if (progressEl) {
-    progressEl.innerHTML = baselineOnboardingSteps.map((_, i) => `<div class="w-8 h-1 rounded ${i <= state.onboardingStep ? 'bg-teal-600' : 'bg-slate-200'}"></div>`).join('');
+    progressEl.innerHTML = baselineOnboardingSteps.map((_, i) => `<div class="w-8 h-1 rounded ${i <= state.onboardingStep ? 'bg-emerald-700' : 'bg-slate-200'}"></div>`).join('');
   }
 
   if (backBtn) backBtn.classList.toggle('hidden', state.onboardingStep === 0);
@@ -1089,7 +1089,7 @@ export function renderClinicianAnalytics() {
   el.innerHTML = `
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <div class="flex items-center gap-4 mb-4">
-        <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-white">SC</div>
+        <div class="w-16 h-16 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-white">SC</div>
         <div>
           <h2 class="text-xl font-bold text-slate-800">${p.name}</h2>
           <p class="text-sm text-slate-500">${p.credentials}</p>
@@ -1097,7 +1097,7 @@ export function renderClinicianAnalytics() {
         </div>
       </div>
       <div class="grid grid-cols-4 gap-3 mb-4">
-        <div class="bg-teal-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-teal-700">${p.caseloadSize}</p><p class="text-xs text-slate-500">Active Patients</p></div>
+        <div class="bg-emerald-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-emerald-800">${p.caseloadSize}</p><p class="text-xs text-slate-500">Active Patients</p></div>
         <div class="bg-blue-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-blue-700">${p.avgSessionsPerWeek}</p><p class="text-xs text-slate-500">Sessions/Week</p></div>
         <div class="bg-green-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-green-700">${ph.engagementRate}%</p><p class="text-xs text-slate-500">Engagement Rate</p></div>
         <div class="bg-amber-50 rounded-xl p-3 text-center"><p class="text-2xl font-bold text-amber-700">${ph.noShowRate}%</p><p class="text-xs text-slate-500">No-Show Rate</p></div>
@@ -1124,7 +1124,7 @@ export function renderClinicianAnalytics() {
     <div class="bg-white rounded-2xl shadow-sm p-6">
       <h3 class="font-semibold text-slate-800 mb-4">Quick Actions</h3>
       <div class="grid grid-cols-2 gap-3">
-        <button data-nav="population-health" class="p-3 bg-teal-50 rounded-xl text-sm font-medium text-teal-700 hover:bg-teal-100">Population Health Dashboard</button>
+        <button data-nav="population-health" class="p-3 bg-emerald-50 rounded-xl text-sm font-medium text-emerald-800 hover:bg-emerald-100">Population Health Dashboard</button>
         <button data-nav="supervisor-cosign" class="p-3 bg-purple-50 rounded-xl text-sm font-medium text-purple-700 hover:bg-purple-100">Supervisor Co-Sign Queue</button>
         <button data-nav="mbc-dashboard" class="p-3 bg-blue-50 rounded-xl text-sm font-medium text-blue-700 hover:bg-blue-100">MBC Dashboard</button>
         <button data-nav="escalation-protocols" class="p-3 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100">Escalation Protocols</button>
@@ -1143,7 +1143,7 @@ export function renderPopulationHealth() {
   el.innerHTML = `
     <div class="grid grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-slate-800">${ph.totalPatients}</p><p class="text-sm text-slate-500">Total Patients</p></div>
-      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-teal-600">${ph.engagementRate}%</p><p class="text-sm text-slate-500">Engagement</p></div>
+      <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-emerald-700">${ph.engagementRate}%</p><p class="text-sm text-slate-500">Engagement</p></div>
       <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-blue-600">${ph.avgPHQ9}</p><p class="text-sm text-slate-500">Avg PHQ-9</p></div>
       <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-amber-600">${ph.avgGAD7}</p><p class="text-sm text-slate-500">Avg GAD-7</p></div>
     </div>
@@ -1163,7 +1163,7 @@ export function renderPopulationHealth() {
         ${ph.diagnosisMix.map(d => `
           <div class="flex items-center gap-3">
             <span class="w-16 text-sm font-medium text-slate-700">${d.label}</span>
-            <div class="flex-1 h-4 bg-slate-100 rounded-full"><div class="h-4 bg-teal-500 rounded-full" style="width:${d.pct}%"></div></div>
+            <div class="flex-1 h-4 bg-slate-100 rounded-full"><div class="h-4 bg-emerald-600 rounded-full" style="width:${d.pct}%"></div></div>
             <span class="text-sm text-slate-600">${d.count} (${d.pct}%)</span>
           </div>
         `).join('')}
@@ -1213,7 +1213,7 @@ export function renderSessionNotes() {
   el.innerHTML = `
     <div class="flex gap-2 mb-4">
       ${['maria', 'james', 'emma'].map(p => `
-        <button data-action="select-session-note-${p}" class="px-3 py-1.5 rounded-lg text-sm font-medium ${state.currentSessionNoteProfile === p ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-700'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>
+        <button data-action="select-session-note-${p}" class="px-3 py-1.5 rounded-lg text-sm font-medium ${state.currentSessionNoteProfile === p ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>
       `).join('')}
     </div>
     <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -1231,7 +1231,7 @@ export function renderSessionNotes() {
         <div class="p-4 bg-purple-50 rounded-xl"><p class="text-xs font-semibold text-purple-600 mb-1">PLAN</p><p class="text-sm text-slate-700">${note.plan}</p></div>
       </div>
       <div class="flex gap-3 mt-6">
-        <button data-action="sign-session-note" class="px-4 py-2 ${note.signed ? 'bg-slate-300 text-slate-500' : 'bg-teal-600 text-white'} rounded-xl text-sm font-semibold">${note.signed ? 'Already Signed' : 'Sign Note'}</button>
+        <button data-action="sign-session-note" class="px-4 py-2 ${note.signed ? 'bg-slate-300 text-slate-500' : 'bg-emerald-700 text-white'} rounded-xl text-sm font-semibold">${note.signed ? 'Already Signed' : 'Sign Note'}</button>
         <button data-nav="supervisor-cosign" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl text-sm font-semibold">Send to Supervisor</button>
         <button data-nav="sdoh-assessment" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-semibold">SDOH Assessment</button>
       </div>
@@ -1250,7 +1250,7 @@ export function renderInvestorFinancials() {
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <h3 class="font-semibold text-slate-800 mb-4">Total Addressable Market</h3>
       <div class="grid grid-cols-3 gap-4">
-        <div class="text-center p-4 bg-teal-50 rounded-xl"><p class="text-3xl font-bold text-teal-700">${f.tam.value}</p><p class="text-xs text-slate-600 mt-1">TAM</p><p class="text-xs text-slate-500">${f.tam.description}</p></div>
+        <div class="text-center p-4 bg-emerald-50 rounded-xl"><p class="text-3xl font-bold text-emerald-800">${f.tam.value}</p><p class="text-xs text-slate-600 mt-1">TAM</p><p class="text-xs text-slate-500">${f.tam.description}</p></div>
         <div class="text-center p-4 bg-blue-50 rounded-xl"><p class="text-3xl font-bold text-blue-700">${f.sam.value}</p><p class="text-xs text-slate-600 mt-1">SAM</p><p class="text-xs text-slate-500">${f.sam.description}</p></div>
         <div class="text-center p-4 bg-green-50 rounded-xl"><p class="text-3xl font-bold text-green-700">${f.som.value}</p><p class="text-xs text-slate-600 mt-1">SOM</p><p class="text-xs text-slate-500">${f.som.description}</p></div>
       </div>
@@ -1279,7 +1279,7 @@ export function renderInvestorFinancials() {
           </tr></thead>
           <tbody>
             ${f.competitiveMatrix.map(c => `
-              <tr class="border-b ${c.name === 'Peacefull.ai' ? 'bg-teal-50 font-semibold' : ''}">
+              <tr class="border-b ${c.name === 'Peacefull.ai' ? 'bg-emerald-50 font-semibold' : ''}">
                 <td class="p-2 text-slate-800">${c.name}</td>
                 <td class="p-2 text-center">${c.clinician ? '✅' : '❌'}</td>
                 <td class="p-2 text-center">${c.mbc ? '✅' : '❌'}</td>
@@ -1299,7 +1299,7 @@ export function renderInvestorFinancials() {
         ${f.pilotFunnel.map((s, i) => `
           <div class="flex items-center gap-3">
             <span class="w-32 text-sm text-slate-700">${s.stage}</span>
-            <div class="flex-1 h-6 bg-slate-100 rounded-full"><div class="h-6 bg-gradient-to-r from-teal-500 to-teal-400 rounded-full flex items-center justify-end pr-2" style="width:${Math.max(s.pct, 5)}%"><span class="text-xs font-bold text-white">${s.count}</span></div></div>
+            <div class="flex-1 h-6 bg-slate-100 rounded-full"><div class="h-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full flex items-center justify-end pr-2" style="width:${Math.max(s.pct, 5)}%"><span class="text-xs font-bold text-white">${s.count}</span></div></div>
             <span class="text-xs text-slate-500">${s.pct}%</span>
           </div>
         `).join('')}
@@ -1371,8 +1371,8 @@ export function renderRegulatoryHub() {
         </div>
       </div>
     </div>
-    <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
-      <p class="text-sm text-teal-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> for full citations.</p>
+    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+      <p class="text-sm text-emerald-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> for full citations.</p>
     </div>
   `;
 }
@@ -1405,7 +1405,7 @@ export function renderSDOHAssessment() {
           <p class="text-sm text-slate-500">Screened: ${sdoh.screenedDate}</p>
         </div>
         <div class="flex gap-2">
-          ${['maria', 'james', 'emma'].map(p => `<button data-patient-profile="${p}" class="px-3 py-1 rounded-lg text-xs font-medium ${profile === p ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-600'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>`).join('')}
+          ${['maria', 'james', 'emma'].map(p => `<button data-patient-profile="${p}" class="px-3 py-1 rounded-lg text-xs font-medium ${profile === p ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-600'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>`).join('')}
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -1443,8 +1443,8 @@ export function renderCaregiverView() {
       <h3 class="text-lg font-semibold text-slate-800 mb-2">${p.name}'s Wellness Summary</h3>
       <p class="text-sm text-slate-500 mb-4">This view is shared with your consent. Your clinician controls what is visible.</p>
       <div class="grid grid-cols-3 gap-4">
-        <div class="bg-teal-50 rounded-xl p-4 text-center">
-          <p class="text-3xl font-bold text-teal-700">${prog.streak}</p>
+        <div class="bg-emerald-50 rounded-xl p-4 text-center">
+          <p class="text-3xl font-bold text-emerald-800">${prog.streak}</p>
           <p class="text-xs text-slate-500">Day Streak</p>
         </div>
         <div class="bg-blue-50 rounded-xl p-4 text-center">
@@ -1484,12 +1484,12 @@ export function renderCaregiverView() {
           datasets: [{
             label: 'Mood (1-5)',
             data: prog.weeklyMood,
-            borderColor: '#0d9488',
+            borderColor: '#2D6A4F',
             backgroundColor: 'rgba(13, 148, 136, 0.1)',
             fill: true,
             tension: 0.4,
             pointRadius: 5,
-            pointBackgroundColor: '#0d9488'
+            pointBackgroundColor: '#2D6A4F'
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }

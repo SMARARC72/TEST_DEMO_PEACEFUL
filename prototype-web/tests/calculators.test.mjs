@@ -48,7 +48,7 @@ describe('Badge Class Helpers', () => {
     });
 
     it('returns green for RESOLVED status', () => {
-      expect(triageBadgeClass('RESOLVED')).toBe('bg-green-100 text-green-700');
+      expect(triageBadgeClass('RESOLVED')).toBe('bg-emerald-100 text-emerald-700');
     });
 
     it('returns slate for unknown status', () => {
@@ -58,7 +58,7 @@ describe('Badge Class Helpers', () => {
 
   describe('memoryBadgeClass', () => {
     it('returns green for APPROVED status', () => {
-      expect(memoryBadgeClass('APPROVED')).toBe('bg-green-100 text-green-700');
+      expect(memoryBadgeClass('APPROVED')).toBe('bg-emerald-100 text-emerald-700');
     });
 
     it('returns red for REJECTED status', () => {
@@ -76,7 +76,7 @@ describe('Badge Class Helpers', () => {
 
   describe('planBadgeClass', () => {
     it('returns green for REVIEWED status', () => {
-      expect(planBadgeClass('REVIEWED')).toBe('bg-green-100 text-green-700');
+      expect(planBadgeClass('REVIEWED')).toBe('bg-emerald-100 text-emerald-700');
     });
 
     it('returns amber for HOLD status', () => {
@@ -90,7 +90,7 @@ describe('Badge Class Helpers', () => {
 
   describe('enterpriseBadgeClass', () => {
     it('returns green for APPROVED status', () => {
-      expect(enterpriseBadgeClass('APPROVED')).toBe('bg-green-100 text-green-700');
+      expect(enterpriseBadgeClass('APPROVED')).toBe('bg-emerald-100 text-emerald-700');
     });
 
     it('returns amber for CONDITIONAL status', () => {

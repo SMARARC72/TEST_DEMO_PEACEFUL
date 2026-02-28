@@ -11,31 +11,31 @@ export function triageBadgeClass(status) {
   if (status === 'ACK') return 'bg-blue-100 text-blue-700';
   if (status === 'IN_REVIEW') return 'bg-amber-100 text-amber-700';
   if (status === 'ESCALATED') return 'bg-red-100 text-red-700';
-  if (status === 'RESOLVED') return 'bg-green-100 text-green-700';
+  if (status === 'RESOLVED') return 'bg-emerald-100 text-emerald-700';
   return 'bg-slate-100 text-slate-700';
 }
 
 export function memoryBadgeClass(status) {
-  if (status === 'APPROVED') return 'bg-green-100 text-green-700';
+  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-700';
   if (status === 'REJECTED') return 'bg-red-100 text-red-700';
   if (status === 'CONFLICT_FLAGGED') return 'bg-amber-100 text-amber-700';
   return 'bg-blue-100 text-blue-700';
 }
 
 export function planBadgeClass(status) {
-  if (status === 'REVIEWED') return 'bg-green-100 text-green-700';
+  if (status === 'REVIEWED') return 'bg-emerald-100 text-emerald-700';
   if (status === 'HOLD') return 'bg-amber-100 text-amber-700';
   return 'bg-slate-100 text-slate-700';
 }
 
 export function enterpriseBadgeClass(status) {
-  if (status === 'APPROVED') return 'bg-green-100 text-green-700';
+  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-700';
   if (status === 'CONDITIONAL') return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 }
 
 export function mbcSeverityClass(severity) {
-  if (severity === 'Minimal' || severity === 'None') return 'bg-green-100 text-green-700';
+  if (severity === 'Minimal' || severity === 'None') return 'bg-emerald-100 text-emerald-700';
   if (severity === 'Mild') return 'bg-blue-100 text-blue-700';
   if (severity === 'Moderate') return 'bg-amber-100 text-amber-700';
   if (severity === 'Moderately Severe' || severity === 'Severe') return 'bg-red-100 text-red-700';
@@ -49,14 +49,14 @@ export function mbcTrendIcon(trend) {
 }
 
 export function adherenceBadgeClass(status) {
-  if (status === 'ON_TRACK') return 'bg-green-100 text-green-700';
+  if (status === 'ON_TRACK') return 'bg-emerald-100 text-emerald-700';
   if (status === 'PARTIAL') return 'bg-amber-100 text-amber-700';
   if (status === 'AT_RISK') return 'bg-red-100 text-red-700';
   return 'bg-slate-100 text-slate-700';
 }
 
 export function escalationBadgeClass(status) {
-  if (status === 'RESOLVED') return 'bg-green-100 text-green-700';
+  if (status === 'RESOLVED') return 'bg-emerald-100 text-emerald-700';
   if (status === 'ACK') return 'bg-blue-100 text-blue-700';
   if (status === 'OPEN') return 'bg-red-100 text-red-700';
   return 'bg-slate-100 text-slate-700';
@@ -133,7 +133,7 @@ export function showToast(message) {
   if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 export function setQuickNavActive(screenId) {
