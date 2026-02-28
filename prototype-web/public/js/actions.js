@@ -16,7 +16,10 @@ import {
   baselineAdherenceItems,
   baselineGuidedDemoState,
   baselineKPIData,
-  baselineEscalationItems
+  baselineEscalationItems,
+  baselineSessionPrep,
+  baselineChatScript,
+  baselineOnboardingSteps
 } from './state.js';
 import { showToast, showScreen, computeReadinessVerdict, getSelectedTriageItem, getSelectedMemory, getSelectedPlan, getSelectedMBC, getSelectedAdherence, getSelectedEscalation } from './helpers.js';
 import { 
@@ -32,7 +35,18 @@ import {
   renderAdherenceTracker,
   renderGuidedDemo,
   renderKPIPanel,
-  renderEscalationProtocols
+  renderEscalationProtocols,
+  renderPatientHome,
+  renderPatientProfile,
+  renderSessionPrep,
+  renderProgress,
+  renderResources,
+  renderChat,
+  renderHistory,
+  renderSafetyPlan,
+  renderOnboarding,
+  renderPatientMemoryView,
+  renderEvidenceBase
 } from './render.js';
 
 // ============ DEMO PANEL ============
@@ -70,6 +84,20 @@ export function checkJournal() {
 
 export function setPatientSessionProfile(profileId) {
   state.patientSessionProfile = profileId || 'maria';
+  state.selectedPatientProfile = profileId || 'maria';
+  // Re-render all patient-facing screens with new profile data
+  renderPatientHome();
+  renderPatientProfile();
+  renderSessionPrep();
+  renderProgress();
+  renderHistory();
+  renderSafetyPlan();
+  renderPatientMemoryView();
+  // Reset chat for new profile
+  state.chatMessages = [];
+  state.chatTyping = false;
+  state.chatMessageIndex = 0;
+  renderChat();
   showToast(`Active patient demo profile: ${state.patientSessionProfile.toUpperCase()}`);
 }
 
@@ -699,6 +727,189 @@ export function resetDemo() {
   state.escalationItems = JSON.parse(JSON.stringify(baselineEscalationItems));
   state.selectedEscalationId = state.escalationItems[0].id;
   renderEscalationProtocols();
+
+  // Reset new Phase 2+ states
+  state.sessionTopics = JSON.parse(JSON.stringify(baselineSessionPrep));
+  state.resourceFilter = 'All';
+  state.expandedResourceId = null;
+  state.expandedSafetySteps = [];
+  state.onboardingStep = 0;
+  state.onboardingComplete = false;
+  state.chatMessages = [];
+  state.chatTyping = false;
+  state.chatMessageIndex = 0;
+  state.historyFilter = 'All';
+  state.expandedHistoryId = null;
+  state.journalFilter = 'All';
+  state.selectedJournalPrompt = null;
+  state.patientMemoryFilter = 'All';
+  state.expandedPatientMemoryId = null;
+  state.evidenceFilter = 'All';
+  state.expandedEvidenceId = null;
   
   showToast('Demo reset to defaults');
+}
+
+// ============ SESSION PREP ACTIONS (F-P2) ============
+
+export function toggleSessionTopic(topicId) {
+  const profile = state.selectedPatientProfile;
+  const prepData = state.sessionTopics[profile];
+  if (!prepData) return;
+  const topic = prepData.topics.find(t => t.id === topicId);
+  if (topic) {
+    topic.checked = !topic.checked;
+    renderSessionPrep();
+  }
+}
+
+export function addCustomTopic() {
+  const input = document.getElementById('custom-topic-input');
+  if (!input || !input.value.trim()) return;
+  const profile = state.selectedPatientProfile;
+  const prepData = state.sessionTopics[profile];
+  if (!prepData) return;
+  const newId = 'ct-' + Date.now();
+  prepData.topics.push({ id: newId, label: input.value.trim(), checked: true });
+  input.value = '';
+  renderSessionPrep();
+  showToast('Topic added');
+}
+
+// ============ RESOURCE ACTIONS (F-P4) ============
+
+export function setResourceFilter(filter) {
+  state.resourceFilter = filter;
+  renderResources();
+}
+
+export function toggleResourceExpand(id) {
+  state.expandedResourceId = state.expandedResourceId === id ? null : id;
+  renderResources();
+}
+
+// ============ CHAT ACTIONS (F-P5) ============
+
+export function advanceChat() {
+  const script = baselineChatScript[state.selectedPatientProfile] || baselineChatScript.maria;
+  if (state.chatMessageIndex >= script.length) return;
+
+  const nextMsg = script[state.chatMessageIndex];
+  
+  if (nextMsg.sender === 'ai' || nextMsg.sender === 'system') {
+    // Show typing indicator first
+    state.chatTyping = true;
+    renderChat();
+    setTimeout(() => {
+      state.chatTyping = false;
+      state.chatMessages.push(nextMsg);
+      state.chatMessageIndex++;
+      renderChat();
+    }, 800);
+  } else {
+    state.chatMessages.push(nextMsg);
+    state.chatMessageIndex++;
+    renderChat();
+  }
+}
+
+export function resetChatAction() {
+  state.chatMessages = [];
+  state.chatTyping = false;
+  state.chatMessageIndex = 0;
+  renderChat();
+}
+
+// ============ HISTORY ACTIONS (F-P6) ============
+
+export function setHistoryFilter(filter) {
+  state.historyFilter = filter;
+  renderHistory();
+}
+
+export function toggleHistoryExpand(id) {
+  state.expandedHistoryId = state.expandedHistoryId === id ? null : id;
+  renderHistory();
+}
+
+// ============ SAFETY PLAN ACTIONS (F-P7) ============
+
+export function toggleSafetyStep(index) {
+  const idx = state.expandedSafetySteps.indexOf(index);
+  if (idx >= 0) {
+    state.expandedSafetySteps.splice(idx, 1);
+  } else {
+    state.expandedSafetySteps.push(index);
+  }
+  renderSafetyPlan();
+}
+
+// ============ ONBOARDING ACTIONS (F-P8) ============
+
+export function onboardingNext() {
+  if (state.onboardingStep >= baselineOnboardingSteps.length - 1) {
+    state.onboardingComplete = true;
+    showScreen('patient-consent');
+    return;
+  }
+  state.onboardingStep++;
+  renderOnboarding();
+}
+
+export function onboardingBack() {
+  if (state.onboardingStep > 0) {
+    state.onboardingStep--;
+    renderOnboarding();
+  }
+}
+
+// ============ PATIENT MEMORY VIEW ACTIONS (F-M1) ============
+
+export function setPatientMemoryFilter(filter) {
+  state.patientMemoryFilter = filter;
+  renderPatientMemoryView();
+}
+
+export function togglePatientMemoryExpand(id) {
+  state.expandedPatientMemoryId = state.expandedPatientMemoryId === id ? null : id;
+  renderPatientMemoryView();
+}
+
+// ============ EVIDENCE ACTIONS (F-E1) ============
+
+export function setEvidenceFilter(filter) {
+  state.evidenceFilter = filter;
+  renderEvidenceBase();
+}
+
+export function toggleEvidenceExpand(id) {
+  state.expandedEvidenceId = state.expandedEvidenceId === id ? null : id;
+  renderEvidenceBase();
+}
+
+// ============ JOURNAL FILTER ACTIONS (F-PE2) ============
+
+export function setJournalFilter(filter) {
+  state.journalFilter = filter;
+  // Filter journal prompts in the UI
+  const promptList = document.getElementById('journal-prompts-list');
+  if (!promptList) return;
+  
+  const promptCategories = { 'Emotion peak': 'Mood', 'What helped': 'Coping', 'Next-24h support': 'Coping', 'Thought record': 'Mood', 'Small win': 'Coping', 'Gratitude': 'Gratitude', 'Body scan': 'Mood', 'Sleep reflection': 'Sleep' };
+  
+  const buttons = promptList.querySelectorAll('[data-journal-prompt]');
+  buttons.forEach(btn => {
+    const label = btn.textContent.trim();
+    const cat = promptCategories[label];
+    btn.style.display = (filter === 'All' || cat === filter) ? '' : 'none';
+  });
+
+  // Update filter bar styling
+  document.querySelectorAll('[data-journal-filter]').forEach(btn => {
+    if (btn.dataset.journalFilter === filter) {
+      btn.className = 'px-2 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white';
+    } else {
+      btn.className = 'px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600';
+    }
+  });
 }

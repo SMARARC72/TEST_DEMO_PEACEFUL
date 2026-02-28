@@ -3,7 +3,7 @@
  * Part of Peacefull.ai Demo technical debt cleanup
  */
 
-import { state } from './state.js';
+import { state, baselinePatientProfiles, baselineSessionPrep, baselineProgressData, baselineResources, baselineSafetyPlan, baselineOnboardingSteps, baselineChatScript, baselineHistoryEntries, baselinePatientMemories, baselineJournalPrompts, baselineEvidenceItems } from './state.js';
 import {
   triageBadgeClass,
   memoryBadgeClass,
@@ -640,4 +640,440 @@ export function renderEscalationProtocols() {
   const resolvedEl = document.getElementById('escalation-resolved-count');
   if (openEl) openEl.textContent = String(openCount);
   if (resolvedEl) resolvedEl.textContent = String(resolvedCount);
+}
+
+// ============ PATIENT PROFILE (F-P1) ============
+
+export function renderPatientHome() {
+  const profile = baselinePatientProfiles[state.selectedPatientProfile] || baselinePatientProfiles.maria;
+  const progress = baselineProgressData[state.selectedPatientProfile] || baselineProgressData.maria;
+  const session = state.sessionTopics[state.selectedPatientProfile] || state.sessionTopics.maria;
+  
+  const nameEl = document.getElementById('patient-home-name');
+  if (nameEl) nameEl.textContent = profile.name.split(' ')[0];
+  
+  const sessionDateEl = document.getElementById('patient-home-session-date');
+  if (sessionDateEl) sessionDateEl.textContent = `${session.date} at ${session.time} · ${session.format}`;
+  
+  const streakEl = document.getElementById('patient-home-streak');
+  if (streakEl) streakEl.textContent = `${progress.streak} days`;
+  
+  const levelEl = document.getElementById('patient-home-level');
+  if (levelEl) levelEl.textContent = progress.levelName;
+  
+  const badgesEl = document.getElementById('patient-home-badges');
+  if (badgesEl) badgesEl.textContent = String(progress.badges.filter(b => b.earned).length);
+}
+
+export function renderPatientProfile() {
+  const el = document.getElementById('patient-profile-content');
+  if (!el) return;
+  const p = baselinePatientProfiles[state.selectedPatientProfile] || baselinePatientProfiles.maria;
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center text-2xl font-bold text-teal-700">${p.name.charAt(0)}</div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">${p.name}</h2>
+          <p class="text-sm text-slate-500">${p.age} y/o · ${p.pronouns} · ${p.language}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="bg-slate-50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">Diagnosis</p><p class="font-semibold text-slate-800">${p.diagnosis.primary}</p><p class="text-xs text-slate-500">${p.diagnosis.code}</p></div>
+        <div class="bg-slate-50 rounded-lg p-3"><p class="text-xs text-slate-500 mb-1">Treatment Start</p><p class="font-semibold text-slate-800">${p.treatmentStart}</p></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Medications</h3>
+      <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">${p.medications.map(m => `<li>${m}</li>`).join('')}</ul>
+      <p class="text-xs text-slate-500 mt-2">Allergies: ${p.allergies}</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Care Team</h3>
+      <div class="space-y-3">${p.careTeam.map(c => `<div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-sm font-bold text-indigo-700">${c.name.split(' ').map(w => w[0]).join('')}</div><div><p class="font-semibold text-slate-800 text-sm">${c.name}</p><p class="text-xs text-slate-500">${c.role} · ${c.credentials}</p></div></div>`).join('')}</div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Emergency Contact</h3>
+      <p class="text-sm text-slate-700">${p.emergencyContact.name}</p>
+      <p class="text-sm text-slate-500">${p.emergencyContact.phone}</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Preferences</h3>
+      <div class="grid grid-cols-3 gap-3 text-sm">
+        <div><p class="text-xs text-slate-500">Contact</p><p class="font-semibold text-slate-800">${p.preferences.contact}</p></div>
+        <div><p class="text-xs text-slate-500">Reminders</p><p class="font-semibold text-slate-800">${p.preferences.reminderTime}</p></div>
+        <div><p class="text-xs text-slate-500">Session alert</p><p class="font-semibold text-slate-800">${p.preferences.sessionAlert}</p></div>
+      </div>
+    </div>
+  `;
+}
+
+// ============ SESSION PREP (F-P2) ============
+
+export function renderSessionPrep() {
+  const el = document.getElementById('patient-session-prep-content');
+  if (!el) return;
+  const s = state.sessionTopics[state.selectedPatientProfile] || state.sessionTopics.maria;
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-xl">📅</div>
+        <div>
+          <p class="font-semibold text-slate-800">Next Session: ${s.date} at ${s.time}</p>
+          <p class="text-sm text-slate-500">${s.duration} min · ${s.format} · ${s.therapist.name}</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Discussion Topics</h3>
+      <div class="space-y-2">
+        ${s.topics.map(t => `
+          <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
+            <input type="checkbox" data-topic-id="${t.id}" ${t.checked ? 'checked' : ''} class="w-5 h-5 text-teal-600 rounded">
+            <span class="text-sm text-slate-700">${t.label}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="mt-3">
+        <input type="text" id="custom-topic-input" placeholder="Add a custom topic…" class="w-full p-2 border border-slate-200 rounded-lg text-sm">
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-2">Goals for This Session</h3>
+      <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">${s.goals.map(g => `<li>${g}</li>`).join('')}</ul>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-4">
+      <h3 class="font-semibold text-slate-800 mb-2">Previous Session Summary</h3>
+      <p class="text-sm text-slate-700">${s.previousSummary}</p>
+    </div>
+  `;
+}
+
+// ============ PROGRESS & GAMIFICATION (F-P3) ============
+
+export function renderProgress() {
+  const el = document.getElementById('patient-progress-content');
+  if (!el) return;
+  const p = baselineProgressData[state.selectedPatientProfile] || baselineProgressData.maria;
+  const moodDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const moodEmojis = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
+  const pct = Math.round((p.xp / p.xpToNext) * 100);
+  const streakPct = Math.round((p.streak / p.streakTarget) * 100);
+
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="text-xs text-slate-500">Level ${p.level}</p>
+          <p class="font-bold text-lg text-slate-800">${p.levelName}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-slate-500">${p.xp} / ${p.xpToNext} XP</p>
+        </div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-1"><div class="bg-indigo-500 h-2 rounded-full" style="width:${pct}%"></div></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">🔥 Streak</h3>
+      <div class="flex items-center gap-4">
+        <div class="streak-ring relative w-20 h-20">
+          <svg viewBox="0 0 36 36" class="w-20 h-20">
+            <path class="text-slate-200" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="text-teal-500" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="${streakPct}, 100" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center font-bold text-lg text-teal-700">${p.streak}</div>
+        </div>
+        <div>
+          <p class="font-semibold text-slate-800">${p.streak} of ${p.streakTarget} days</p>
+          <p class="text-sm text-slate-500">${p.streakTarget - p.streak} more to earn ⭐ 7-Day Streak badge</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Weekly Mood</h3>
+      <div class="flex justify-between">
+        ${p.weeklyMood.map((m, i) => `
+          <div class="text-center">
+            <div class="text-xl mb-1">${m !== null ? (moodEmojis[m] || '😐') : '—'}</div>
+            <p class="text-xs text-slate-500">${moodDays[i]}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Badges</h3>
+      <div class="grid grid-cols-4 gap-3">
+        ${p.badges.map(b => `
+          <div class="badge-card text-center p-2 rounded-xl ${b.earned ? 'bg-amber-50' : 'bg-slate-100 locked'}">
+            <div class="text-2xl mb-1">${b.earned ? b.icon : '🔒'}</div>
+            <p class="text-xs font-semibold ${b.earned ? 'text-slate-800' : 'text-slate-400'}">${b.label}</p>
+            ${b.earned ? `<p class="text-[10px] text-slate-500">${b.earnedDate}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3">Milestones</h3>
+      <div class="space-y-2">
+        ${p.milestones.map(m => `
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${m.achieved ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}">${m.achieved ? '✓' : '○'}</div>
+            <div>
+              <p class="text-sm ${m.achieved ? 'text-slate-800' : 'text-slate-400'}">${m.label}</p>
+              ${m.date ? `<p class="text-xs text-slate-500">${m.date}</p>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============ RESOURCES (F-P4) ============
+
+export function renderResources() {
+  const el = document.getElementById('patient-resources-content');
+  if (!el) return;
+  const filter = state.resourceFilter;
+  const items = filter === 'All' ? baselineResources : baselineResources.filter(r => r.category === filter);
+  
+  el.innerHTML = items.map(r => `
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <button data-resource-expand="${r.id}" class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50">
+        <div class="text-2xl">${r.icon}</div>
+        <div class="flex-1">
+          <p class="font-semibold text-slate-800">${r.title}</p>
+          <p class="text-sm text-slate-500">${r.description}</p>
+          <p class="text-xs text-slate-400 mt-1">Source: ${r.source}</p>
+        </div>
+        <svg class="w-5 h-5 text-slate-400 transition-transform ${state.expandedResourceId === r.id ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      ${state.expandedResourceId === r.id ? `<div class="px-4 pb-4 pt-0 border-t"><p class="text-sm text-slate-700 mt-3">${r.expandedContent}</p></div>` : ''}
+    </div>
+  `).join('');
+
+  // update filter bar active state
+  document.querySelectorAll('[data-resource-filter]').forEach(btn => {
+    if (btn.dataset.resourceFilter === filter) {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white';
+    } else {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
+    }
+  });
+}
+
+// ============ CHAT SIMULATION (F-P5) ============
+
+export function renderChat() {
+  const el = document.getElementById('patient-chat-messages');
+  if (!el) return;
+  el.innerHTML = state.chatMessages.map(m => {
+    if (m.sender === 'system') {
+      return `<div class="chat-bubble chat-bubble-system text-center"><p class="text-xs text-slate-500 italic">${m.text}</p></div>`;
+    }
+    const isAI = m.sender === 'ai';
+    const bubbleClass = isAI ? 'chat-bubble chat-bubble-ai' : 'chat-bubble chat-bubble-patient';
+    const memoryChipHTML = m.memoryRef ? `<div class="memory-chip mt-2 inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs"><span>🧠</span><span>${m.memoryRef.strategy}</span><span class="text-indigo-400">· Approved by ${m.memoryRef.approvedBy}</span></div>` : '';
+    return `<div class="${bubbleClass}"><p class="text-sm">${m.text}</p>${memoryChipHTML}</div>`;
+  }).join('');
+
+  if (state.chatTyping) {
+    el.innerHTML += `<div class="chat-bubble chat-bubble-ai flex items-center gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  }
+
+  el.scrollTop = el.scrollHeight;
+}
+
+// ============ HISTORY (F-P6) ============
+
+export function renderHistory() {
+  const el = document.getElementById('patient-history-content');
+  if (!el) return;
+  const entries = baselineHistoryEntries[state.selectedPatientProfile] || baselineHistoryEntries.maria;
+  const filter = state.historyFilter;
+  const filtered = filter === 'All' ? entries : entries.filter(e => e.type === filter);
+
+  const typeIcons = { CHECKIN: '📋', JOURNAL: '✍️', VOICE: '🎤' };
+  const typeColors = { CHECKIN: 'teal', JOURNAL: 'blue', VOICE: 'purple' };
+
+  el.innerHTML = filtered.map(e => {
+    const color = typeColors[e.type] || 'slate';
+    const date = new Date(e.date);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const expanded = state.expandedHistoryId === e.id;
+
+    let details = '';
+    if (e.type === 'CHECKIN') {
+      details = `<div class="grid grid-cols-3 gap-2 text-sm mt-2"><div><span class="text-xs text-slate-500">Mood</span><p class="font-semibold">${e.mood}/5</p></div><div><span class="text-xs text-slate-500">Stress</span><p class="font-semibold">${e.stress}/5</p></div><div><span class="text-xs text-slate-500">Sleep</span><p class="font-semibold">${e.sleep}/5</p></div></div>`;
+    } else {
+      details = `<p class="text-sm text-slate-600 mt-2 italic">"${e.snippet}"</p>`;
+    }
+
+    return `
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <button data-history-expand="${e.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
+          <div class="w-10 h-10 bg-${color}-100 rounded-xl flex items-center justify-center text-xl">${typeIcons[e.type]}</div>
+          <div class="flex-1">
+            <p class="font-semibold text-slate-800 text-sm">${e.type === 'CHECKIN' ? 'Daily Check-in' : e.type === 'JOURNAL' ? 'Journal Entry' : 'Voice Note'}</p>
+            <p class="text-xs text-slate-500">${dateStr} · ${timeStr}</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        ${expanded ? `
+          <div class="px-4 pb-4 border-t">
+            ${details}
+            <div class="mt-3 bg-indigo-50 rounded-lg p-3">
+              <p class="text-xs font-semibold text-indigo-700 mb-1">AI Reflection</p>
+              <p class="text-sm text-indigo-900">${e.aiReflection.tone}</p>
+              <p class="text-xs text-indigo-700 mt-1">${e.aiReflection.summary}</p>
+              <p class="text-xs text-indigo-600 mt-1"><strong>Next step:</strong> ${e.aiReflection.nextStep}</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // update filter bar
+  document.querySelectorAll('[data-history-filter]').forEach(btn => {
+    if (btn.dataset.historyFilter === filter) {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white';
+    } else {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
+    }
+  });
+}
+
+// ============ SAFETY PLAN (F-P7) ============
+
+export function renderSafetyPlan() {
+  const el = document.getElementById('patient-safety-plan-content');
+  if (!el) return;
+  const plan = baselineSafetyPlan[state.selectedPatientProfile] || baselineSafetyPlan.maria;
+  const stepIcons = ['⚠️', '🧘', '🏖️', '👥', '📞', '🔒'];
+
+  el.innerHTML = plan.steps.map((step, i) => {
+    const expanded = state.expandedSafetySteps.includes(i);
+    return `
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <button data-safety-step="${i}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
+          <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-xl">${stepIcons[i] || '📋'}</div>
+          <div class="flex-1">
+            <p class="font-semibold text-slate-800 text-sm">Step ${i + 1}: ${step.title}</p>
+            <p class="text-xs text-slate-500">${step.items.length} items</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        ${expanded ? `
+          <div class="px-4 pb-4 border-t">
+            <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1 mt-2">${step.items.map(item => `<li>${item}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ ONBOARDING (F-P8) ============
+
+export function renderOnboarding() {
+  const contentEl = document.getElementById('onboarding-content');
+  const progressEl = document.getElementById('onboarding-progress');
+  const backBtn = document.getElementById('onboarding-back-btn');
+  const nextBtn = document.getElementById('onboarding-next-btn');
+  if (!contentEl) return;
+
+  const step = baselineOnboardingSteps[state.onboardingStep] || baselineOnboardingSteps[0];
+  contentEl.innerHTML = `
+    <div class="text-5xl mb-4">${step.icon}</div>
+    <h2 class="text-xl font-bold text-slate-800 mb-3">${step.title}</h2>
+    <p class="text-sm text-slate-600">${step.description}</p>
+  `;
+
+  if (progressEl) {
+    progressEl.innerHTML = baselineOnboardingSteps.map((_, i) => `<div class="w-8 h-1 rounded ${i <= state.onboardingStep ? 'bg-teal-600' : 'bg-slate-200'}"></div>`).join('');
+  }
+
+  if (backBtn) backBtn.classList.toggle('hidden', state.onboardingStep === 0);
+  if (nextBtn) {
+    nextBtn.textContent = state.onboardingStep >= baselineOnboardingSteps.length - 1 ? 'Get Started' : 'Next';
+  }
+}
+
+// ============ PATIENT MEMORY VIEW (F-M1) ============
+
+export function renderPatientMemoryView() {
+  const el = document.getElementById('patient-memory-view-content');
+  if (!el) return;
+  const memories = baselinePatientMemories[state.selectedPatientProfile] || baselinePatientMemories.maria;
+  const filter = state.patientMemoryFilter;
+  const filtered = filter === 'All' ? memories : memories.filter(m => m.category === filter);
+
+  el.innerHTML = filtered.map(m => {
+    const expanded = state.expandedPatientMemoryId === m.id;
+    return `
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <button data-pmem-expand="${m.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
+          <div class="memory-chip px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-semibold">🧠 ${m.category}</div>
+          <div class="flex-1">
+            <p class="font-semibold text-slate-800 text-sm">${m.strategy}</p>
+            <p class="text-xs text-slate-500">Approved by ${m.approvedBy} · ${m.approvedDate}</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        ${expanded ? `<div class="px-4 pb-4 border-t"><p class="text-sm text-slate-700 mt-2">${m.description}</p><div class="mt-2 inline-block px-2 py-1 bg-green-50 text-green-700 rounded text-xs">${m.status}</div></div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // update filter bar
+  document.querySelectorAll('[data-pmem-filter]').forEach(btn => {
+    if (btn.dataset.pmemFilter === filter) {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white';
+    } else {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
+    }
+  });
+}
+
+// ============ EVIDENCE BASE (F-E1) ============
+
+export function renderEvidenceBase() {
+  const el = document.getElementById('evidence-base-content');
+  if (!el) return;
+  const filter = state.evidenceFilter;
+  const items = filter === 'All' ? baselineEvidenceItems : baselineEvidenceItems.filter(e => e.domain === filter);
+
+  el.innerHTML = items.map(e => {
+    const expanded = state.expandedEvidenceId === e.id;
+    return `
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <button data-evidence-expand="${e.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
+          <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-xl">📖</div>
+          <div class="flex-1">
+            <p class="font-semibold text-slate-800 text-sm">${e.title}</p>
+            <p class="text-xs text-slate-500">${e.domain}</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        ${expanded ? `
+          <div class="px-4 pb-4 border-t">
+            <p class="text-sm text-slate-700 mt-2">${e.citation}</p>
+            ${e.doi ? `<p class="text-xs text-blue-600 mt-1">DOI: ${e.doi}</p>` : ''}
+            <div class="mt-2 flex gap-1 flex-wrap">${e.usedIn.map(u => `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">${u}</span>`).join('')}</div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // update filter bar
+  document.querySelectorAll('[data-evidence-filter]').forEach(btn => {
+    if (btn.dataset.evidenceFilter === filter) {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white';
+    } else {
+      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
+    }
+  });
 }

@@ -86,6 +86,14 @@ const actionRegistry = {
   'acknowledge-escalation': actions.acknowledgeEscalation,
   'resolve-escalation': actions.resolveEscalation,
   'reset-escalation': actions.resetEscalationAction,
+
+  // Chat Simulation (F-P5)
+  'advance-chat': actions.advanceChat,
+  'reset-chat': actions.resetChatAction,
+
+  // Onboarding (F-P8)
+  'onboarding-next': actions.onboardingNext,
+  'onboarding-back': actions.onboardingBack,
   
   // Full reset
   'reset-demo': actions.resetDemo,
@@ -97,7 +105,7 @@ const actionRegistry = {
  */
 export function initEventDelegation() {
   document.body.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-nav], [data-action], [data-journal-prompt], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-enterprise-status], [data-roi-mode], [data-step-up], [data-toggle-assumption], [data-toast]');
+    const target = event.target.closest('[data-nav], [data-action], [data-journal-prompt], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-enterprise-status], [data-roi-mode], [data-step-up], [data-toggle-assumption], [data-toast], [data-resource-filter], [data-resource-expand], [data-history-filter], [data-history-expand], [data-safety-step], [data-pmem-filter], [data-pmem-expand], [data-evidence-filter], [data-evidence-expand], [data-topic-id], [data-journal-filter]');
     if (!target) return;
 
     const journalPrompt = target.dataset.journalPrompt;
@@ -192,6 +200,86 @@ export function initEventDelegation() {
       showToast(toast);
       return;
     }
+
+    // Resource filter
+    const resourceFilter = target.dataset.resourceFilter;
+    if (resourceFilter) {
+      event.preventDefault();
+      actions.setResourceFilter(resourceFilter);
+      return;
+    }
+
+    // Resource expand
+    const resourceExpand = target.dataset.resourceExpand;
+    if (resourceExpand) {
+      event.preventDefault();
+      actions.toggleResourceExpand(resourceExpand);
+      return;
+    }
+
+    // History filter
+    const historyFilter = target.dataset.historyFilter;
+    if (historyFilter) {
+      event.preventDefault();
+      actions.setHistoryFilter(historyFilter);
+      return;
+    }
+
+    // History expand
+    const historyExpand = target.dataset.historyExpand;
+    if (historyExpand) {
+      event.preventDefault();
+      actions.toggleHistoryExpand(historyExpand);
+      return;
+    }
+
+    // Safety plan step toggle
+    const safetyStep = target.dataset.safetyStep;
+    if (safetyStep !== undefined) {
+      event.preventDefault();
+      actions.toggleSafetyStep(parseInt(safetyStep));
+      return;
+    }
+
+    // Patient memory filter
+    const pmemFilter = target.dataset.pmemFilter;
+    if (pmemFilter) {
+      event.preventDefault();
+      actions.setPatientMemoryFilter(pmemFilter);
+      return;
+    }
+
+    // Patient memory expand
+    const pmemExpand = target.dataset.pmemExpand;
+    if (pmemExpand) {
+      event.preventDefault();
+      actions.togglePatientMemoryExpand(pmemExpand);
+      return;
+    }
+
+    // Evidence filter
+    const evidenceFilter = target.dataset.evidenceFilter;
+    if (evidenceFilter) {
+      event.preventDefault();
+      actions.setEvidenceFilter(evidenceFilter);
+      return;
+    }
+
+    // Evidence expand
+    const evidenceExpand = target.dataset.evidenceExpand;
+    if (evidenceExpand) {
+      event.preventDefault();
+      actions.toggleEvidenceExpand(evidenceExpand);
+      return;
+    }
+
+    // Journal prompt filter
+    const journalFilterVal = target.dataset.journalFilter;
+    if (journalFilterVal) {
+      event.preventDefault();
+      actions.setJournalFilter(journalFilterVal);
+      return;
+    }
   });
   
   // Handle change events for select/checkbox via delegation
@@ -206,6 +294,13 @@ export function initEventDelegation() {
 
     if (target.id === 'patient-session-profile') {
       actions.setPatientSessionProfile(target.value);
+      return;
+    }
+
+    // Session prep topic checkboxes
+    const topicId = target.dataset.topicId;
+    if (topicId) {
+      actions.toggleSessionTopic(topicId);
       return;
     }
   });

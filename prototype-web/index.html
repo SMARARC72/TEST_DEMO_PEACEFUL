@@ -48,6 +48,29 @@
     .script-dot { position: absolute; left: 0; top: 0; width: 28px; height: 28px; background: white; border: 3px solid #0d9488; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #0d9488; }
     .script-dot.active { background: #0d9488; color: white; }
     .script-dot.completed { background: #10b981; border-color: #10b981; color: white; }
+    @keyframes recording-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } }
+    @keyframes waveform { 0%, 100% { height: 10px; } 50% { height: 40px; } }
+    @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.5); opacity: 1; } }
+    @keyframes typingDot { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+    .recording-active { animation: recording-pulse 1.5s ease infinite; background: linear-gradient(135deg, #ef4444, #dc2626) !important; }
+    .waveform-bar { width: 4px; background: linear-gradient(to top, #0d9488, #14b8a6); border-radius: 2px; animation: waveform 0.5s ease infinite; }
+    .breathing-circle { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(13,148,136,0.3), rgba(13,148,136,0.1)); animation: breathe 10s ease-in-out infinite; }
+    .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+    .chat-bubble-ai { background: #f0fdfa; border: 1px solid #99f6e4; border-bottom-left-radius: 4px; }
+    .chat-bubble-patient { background: #eff6ff; border: 1px solid #bfdbfe; border-bottom-right-radius: 4px; margin-left: auto; }
+    .chat-bubble-system { background: #fef3c7; border: 1px solid #fde68a; text-align: center; font-size: 12px; margin: 0 auto; }
+    .typing-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; display: inline-block; animation: typingDot 1.4s ease-in-out infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    .memory-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 9999px; font-size: 11px; color: #0f766e; cursor: pointer; }
+    .memory-chip:hover { background: #ccfbf1; }
+    .investor-accordion { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease; opacity: 0; }
+    .investor-accordion.open { max-height: 600px; opacity: 1; }
+    .streak-ring { transform: rotate(-90deg); }
+    .badge-card { transition: all 0.2s ease; }
+    .badge-card.locked { opacity: 0.5; filter: grayscale(0.8); }
+    .skeleton-pulse { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton 1.5s ease-in-out infinite; }
+    @keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .quick-nav { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 90; width: min(960px, calc(100vw - 24px)); }
     .quick-nav-inner { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; border-radius: 14px; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.14); }
     .quick-nav button { padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #cbd5e1; background: rgba(148, 163, 184, 0.16); transition: all 0.2s ease; }
@@ -151,6 +174,8 @@
           <button data-nav="escalation-protocols" class="w-full py-2 px-3 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium hover:bg-orange-200">Escalation Protocols (F5)</button>
           <button data-nav="procurement-artifacts" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Procurement Artifacts (F8)</button>
           <button data-nav="fhir-integration" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">FHIR Integration (F10)</button>
+          <button data-nav="workflow-simulation" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Workflow Overview</button>
+          <button data-nav="evidence-base" class="w-full py-2 px-3 bg-rose-100 text-rose-700 rounded-lg text-sm font-medium hover:bg-rose-200">Evidence Base</button>
           <button data-action="reset-demo" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
         </div>
       </div>
@@ -159,20 +184,16 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <nav class="quick-nav" aria-label="Quick Navigation">
+  <nav class="quick-nav" role="navigation" aria-label="Quick Navigation">
     <div class="quick-nav-inner">
       <button type="button" data-nav="landing" data-quick-nav="landing" aria-label="Go to home screen">Home</button>
-      <button type="button" data-nav="patient-home" data-quick-nav="patient-home" aria-label="Go to patient home">Patient Home</button>
+      <button type="button" data-nav="patient-home" data-quick-nav="patient-home" aria-label="Go to patient home">Patient</button>
       <button type="button" data-nav="clinician-caseload" data-quick-nav="clinician-caseload" aria-label="Go to clinician caseload">Caseload</button>
       <button type="button" data-nav="clinician-inbox" data-quick-nav="clinician-inbox" aria-label="Go to clinician inbox">Inbox</button>
-      <button type="button" data-nav="draft-review" data-quick-nav="draft-review" aria-label="Go to draft review">Draft Review</button>
-      <button type="button" data-nav="ai-live-chat-demo" data-quick-nav="ai-live-chat-demo" aria-label="Go to live AI chat demo">Live Chat</button>
-      <button type="button" data-nav="suppression-ui" data-quick-nav="suppression-ui" aria-label="Go to suppression view">Suppression</button>
-      <button type="button" data-nav="exports-center" data-quick-nav="exports-center" aria-label="Go to exports center">Exports</button>
       <button type="button" data-nav="roi-dashboard" data-quick-nav="roi-dashboard" aria-label="Go to ROI dashboard">ROI</button>
       <button type="button" data-nav="mbc-dashboard" data-quick-nav="mbc-dashboard" aria-label="Go to MBC dashboard">MBC</button>
       <button type="button" data-nav="escalation-protocols" data-quick-nav="escalation-protocols" aria-label="Go to escalation protocols">Escalation</button>
-      <button type="button" data-nav="kpi-panel" data-quick-nav="kpi-panel" aria-label="Go to KPI panel">KPIs</button>
+      <button type="button" data-nav="evidence-base" data-quick-nav="evidence-base" aria-label="Go to evidence base">Evidence</button>
     </div>
   </nav>
 
@@ -189,44 +210,84 @@
       </div>
 
       <div class="hero-panel">
-        <div class="flex flex-wrap gap-3 justify-center mb-6">
-          <button data-nav="patient-welcome" class="px-8 py-4 bg-white text-teal-700 rounded-xl font-semibold hover:bg-teal-50 transition-all">Patient Experience</button>
-          <button data-nav="clinician-login" class="px-8 py-4 bg-teal-800 text-white rounded-xl font-semibold hover:bg-teal-900 transition-all">Clinician Portal</button>
+        <!-- Primary CTAs -->
+        <div class="flex flex-wrap gap-3 justify-center mb-4">
+          <button data-nav="patient-welcome" class="px-8 py-4 bg-white text-teal-700 rounded-xl font-semibold hover:bg-teal-50 transition-all shadow-lg">Patient Experience</button>
+          <button data-nav="clinician-login" class="px-8 py-4 bg-teal-800 text-white rounded-xl font-semibold hover:bg-teal-900 transition-all shadow-lg">Clinician Portal</button>
+          <button onclick="document.getElementById('investor-accordion').classList.toggle('open')" class="px-8 py-4 border-2 border-white/60 text-white rounded-xl font-semibold hover:bg-white/10 transition-all">Investor &amp; Enterprise ▾</button>
         </div>
 
-        <div class="flex gap-3 justify-center flex-wrap mb-4">
-          <button data-nav="compliance-posture" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Compliance Posture</button>
-          <button data-nav="demo-script" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Demo Script</button>
-          <button data-nav="roi-dashboard" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">ROI Dashboard</button>
-          <button data-nav="ai-live-chat-demo" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Live AI Chat</button>
-          <button data-nav="enterprise-governance" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Enterprise Governance</button>
-          <button data-nav="guided-demo" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">Guided Demo (8 min)</button>
-          <button data-nav="kpi-panel" class="px-4 py-2 bg-white/20 text-white rounded-lg text-sm hover:bg-white/30">KPI Panel</button>
+        <!-- Investor Accordion -->
+        <div id="investor-accordion" class="investor-accordion mb-4">
+          <div class="bg-white/10 rounded-xl p-4 space-y-3">
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-teal-200 font-semibold mb-2">Demo &amp; Walkthrough</p>
+              <div class="flex flex-wrap gap-2">
+                <button data-nav="guided-demo" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Guided Demo (8 min)</button>
+                <button data-nav="demo-script" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Demo Script</button>
+                <button data-nav="ai-live-chat-demo" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Live AI Chat</button>
+                <button data-nav="workflow-simulation" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Workflow Overview</button>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-teal-200 font-semibold mb-2">Financial &amp; ROI</p>
+              <div class="flex flex-wrap gap-2">
+                <button data-nav="roi-dashboard" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">ROI Dashboard</button>
+                <button data-nav="kpi-panel" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">KPI Panel</button>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-teal-200 font-semibold mb-2">Safety &amp; Compliance</p>
+              <div class="flex flex-wrap gap-2">
+                <button data-nav="compliance-posture" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Compliance Posture</button>
+                <button data-nav="escalation-protocols" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Escalation Protocols</button>
+                <button data-nav="security-command-center" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Security Command</button>
+                <button data-nav="decision-room" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Decision Room</button>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wider text-teal-200 font-semibold mb-2">Enterprise &amp; Integration</p>
+              <div class="flex flex-wrap gap-2">
+                <button data-nav="enterprise-governance" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Enterprise Governance</button>
+                <button data-nav="procurement-artifacts" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Procurement Artifacts</button>
+                <button data-nav="fhir-integration" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">FHIR Integration</button>
+                <button data-nav="evidence-base" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Evidence Base</button>
+              </div>
+            </div>
+          </div>
         </div>
 
+        <!-- How It Works -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4 text-left">
           <div class="px-3 py-2 rounded-lg bg-white/15 border border-white/20">
-            <p class="text-[11px] text-teal-100">Safety</p>
-            <p class="text-sm font-semibold text-white">Clinician-supervised workflow</p>
+            <p class="text-[11px] text-teal-200 font-semibold">Step 1</p>
+            <p class="text-sm font-semibold text-white">Patient logs between-session entries</p>
+            <p class="text-[11px] text-teal-100">Journal, voice notes, check-ins, chat</p>
           </div>
           <div class="px-3 py-2 rounded-lg bg-white/15 border border-white/20">
-            <p class="text-[11px] text-teal-100">Compliance</p>
-            <p class="text-sm font-semibold text-white">Implemented + roadmap tagged</p>
+            <p class="text-[11px] text-teal-200 font-semibold">Step 2</p>
+            <p class="text-sm font-semibold text-white">AI drafts clinician-ready summaries</p>
+            <p class="text-[11px] text-teal-100">Draft-until-reviewed, never autonomous</p>
           </div>
           <div class="px-3 py-2 rounded-lg bg-white/15 border border-white/20">
-            <p class="text-[11px] text-teal-100">Pilot Readiness</p>
-            <p class="text-sm font-semibold text-white">Synthetic KPIs + decision room</p>
+            <p class="text-[11px] text-teal-200 font-semibold">Step 3</p>
+            <p class="text-sm font-semibold text-white">Clinician reviews and acts</p>
+            <p class="text-[11px] text-teal-100">Full oversight, safety escalation, audit trail</p>
           </div>
+        </div>
+
+        <div class="text-center mb-4">
+          <a href="#" data-nav="evidence-base" class="text-sm text-teal-200 hover:text-white underline">New to Peacefull.ai? See our Evidence Base →</a>
         </div>
 
         <div class="hero-metrics">
           <div class="hero-metric">
-            <strong>30+</strong>
+            <strong>48</strong>
             <span>Interactive demo surfaces</span>
           </div>
           <div class="hero-metric">
-            <strong>6 Core</strong>
-            <span>Safety, MBC, and governance layers</span>
+            <strong>14</strong>
+            <span>Published evidence citations</span>
           </div>
           <div class="hero-metric">
             <strong>8 min</strong>
@@ -572,6 +633,36 @@
             <button data-nav="roi-dashboard" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">View ROI →</button>
           </div>
         </div>
+
+        <div class="script-step">
+          <div class="script-dot">8</div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-slate-800">Workflow Overview</h3>
+              <span class="text-sm text-slate-500">~1 min</span>
+            </div>
+            <p class="text-sm text-slate-600 mb-3">End-to-end 5-step workflow visualization from patient entry to clinician action.</p>
+            <button data-nav="workflow-simulation" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">View Workflow →</button>
+          </div>
+        </div>
+
+        <div class="script-step">
+          <div class="script-dot">9</div>
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-slate-800">Patient Experience Deep Dive</h3>
+              <span class="text-sm text-slate-500">~2 min</span>
+            </div>
+            <p class="text-sm text-slate-600 mb-3">Explore the expanded patient journey: AI chat companion, session prep, progress gamification, resource library, safety plan, history timeline, and memory transparency.</p>
+            <div class="flex flex-wrap gap-2">
+              <button data-nav="patient-chat" class="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-lg text-xs font-medium hover:bg-cyan-200">AI Chat →</button>
+              <button data-nav="patient-progress" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-200">Progress →</button>
+              <button data-nav="patient-resources" class="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200">Resources →</button>
+              <button data-nav="patient-safety-plan" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200">Safety Plan →</button>
+              <button data-nav="evidence-base" class="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200">Evidence Base →</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -631,7 +722,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <p class="text-teal-100 text-sm">Good morning,</p>
-          <h1 class="text-2xl font-bold text-white">Sarah</h1>
+          <h1 id="patient-home-name" class="text-2xl font-bold text-white">Maria</h1>
         </div>
         <button data-nav="patient-settings" aria-label="Open patient settings" class="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -640,16 +731,17 @@
     </div>
     
     <div class="px-6 -mt-6">
-      <div class="bg-white rounded-2xl shadow-lg p-5 mb-6">
+      <div id="patient-home-session-card" class="bg-white rounded-2xl shadow-lg p-5 mb-6">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
             <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </div>
           <div>
             <p class="font-semibold text-slate-800">Next Session</p>
-            <p class="text-sm text-slate-500">Tomorrow, 2:00 PM</p>
+            <p id="patient-home-session-date" class="text-sm text-slate-500">Tomorrow, 2:00 PM</p>
           </div>
         </div>
+        <button data-nav="patient-session-prep" class="text-xs text-teal-600 font-semibold hover:underline">Prepare for session →</button>
       </div>
       <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
         <p class="text-sm text-emerald-900"><strong>Next best step:</strong> share one quick check-in or journal reflection today so your clinician has better between-session context.</p>
@@ -659,15 +751,15 @@
         <div class="grid grid-cols-3 gap-3 text-sm text-indigo-900">
           <div>
             <p class="text-xs text-indigo-700">Streak</p>
-            <p class="font-semibold">4 days</p>
+            <p id="patient-home-streak" class="font-semibold">4 days</p>
           </div>
           <div>
-            <p class="text-xs text-indigo-700">Last check-in</p>
-            <p class="font-semibold">Today, 9:15 AM</p>
+            <p class="text-xs text-indigo-700">Level</p>
+            <p id="patient-home-level" class="font-semibold">Mindful Explorer</p>
           </div>
           <div>
-            <p class="text-xs text-indigo-700">Review window</p>
-            <p class="font-semibold">Within 24h</p>
+            <p class="text-xs text-indigo-700">Badges earned</p>
+            <p id="patient-home-badges" class="font-semibold">4</p>
           </div>
         </div>
       </div>
@@ -713,6 +805,70 @@
             <p class="text-sm text-slate-500">Record your thoughts</p>
           </div>
         </button>
+
+        <button data-nav="patient-chat" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-cyan-500">
+          <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-xl">💬</div>
+          <div>
+            <p class="font-semibold text-slate-800">AI Chat Companion</p>
+            <p class="text-sm text-slate-500">Supervised therapeutic chat</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-session-prep" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-amber-500">
+          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-xl">📋</div>
+          <div>
+            <p class="font-semibold text-slate-800">Session Prep</p>
+            <p class="text-sm text-slate-500">Prepare topics for your next session</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-progress" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-indigo-500">
+          <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-xl">🏆</div>
+          <div>
+            <p class="font-semibold text-slate-800">My Progress</p>
+            <p class="text-sm text-slate-500">Streak, badges, and milestones</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-history" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-slate-500">
+          <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-xl">📊</div>
+          <div>
+            <p class="font-semibold text-slate-800">My History</p>
+            <p class="text-sm text-slate-500">Review past check-ins and entries</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-resources" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-emerald-500">
+          <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-xl">📚</div>
+          <div>
+            <p class="font-semibold text-slate-800">Resources</p>
+            <p class="text-sm text-slate-500">Coping tools and psychoeducation</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-safety-plan" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-red-500">
+          <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-xl">🆘</div>
+          <div>
+            <p class="font-semibold text-slate-800">Safety Plan</p>
+            <p class="text-sm text-slate-500">Your crisis safety plan</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-memory-view" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-violet-500">
+          <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-xl">🧠</div>
+          <div>
+            <p class="font-semibold text-slate-800">What My AI Knows</p>
+            <p class="text-sm text-slate-500">Full transparency — see your memory items</p>
+          </div>
+        </button>
+
+        <button data-nav="patient-profile" class="w-full bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 text-left card-hover border-l-4 border-pink-500">
+          <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-xl">👤</div>
+          <div>
+            <p class="font-semibold text-slate-800">My Profile</p>
+            <p class="text-sm text-slate-500">Demographics, care team, preferences</p>
+          </div>
+        </button>
       </div>
     </div>
   </div>
@@ -727,10 +883,22 @@
     <div class="flex-1 p-6">
       <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
         <p class="text-sm font-semibold text-blue-900 mb-2">Guided Journal Prompts</p>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex gap-2 mb-2 flex-wrap">
+          <button data-journal-filter="All" class="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white">All</button>
+          <button data-journal-filter="Mood" class="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Mood</button>
+          <button data-journal-filter="Coping" class="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Coping</button>
+          <button data-journal-filter="Gratitude" class="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Gratitude</button>
+          <button data-journal-filter="Sleep" class="px-2 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Sleep</button>
+        </div>
+        <div id="journal-prompts-list" class="flex flex-wrap gap-2">
           <button type="button" data-journal-prompt="What emotion felt strongest today, and when did it peak?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Emotion peak</button>
           <button type="button" data-journal-prompt="What was one moment that felt easier, and what helped in that moment?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">What helped</button>
           <button type="button" data-journal-prompt="What feels hardest right now, and what support would help in the next 24 hours?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Next-24h support</button>
+          <button type="button" data-journal-prompt="What automatic thought was loudest today? How might you reframe it?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Thought record</button>
+          <button type="button" data-journal-prompt="What was one small thing you did today that gave you a sense of accomplishment?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Small win</button>
+          <button type="button" data-journal-prompt="Name three things you feel grateful for today, even small ones." class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Gratitude</button>
+          <button type="button" data-journal-prompt="Describe the strongest emotion you felt today. Where did you feel it in your body?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Body scan</button>
+          <button type="button" data-journal-prompt="How did your sleep affect your mood and energy today?" class="px-3 py-1.5 bg-white border border-blue-200 rounded-full text-xs font-semibold text-blue-800 hover:bg-blue-100">Sleep reflection</button>
         </div>
       </div>
       <textarea id="journal-text" aria-label="Journal entry text" oninput="checkJournal()" class="w-full h-64 p-4 bg-slate-50 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="How are you feeling today?"></textarea>
@@ -877,8 +1045,11 @@
       <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
         This response is supportive reflection, not diagnosis or emergency guidance. If urgent safety concerns arise, contact emergency services.
       </div>
-      <div class="flex gap-3">
+      <div class="flex gap-3 flex-wrap">
         <button data-nav="patient-home" class="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-200">Back to Home</button>
+        <button data-nav="patient-history" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">View History</button>
+        <button data-nav="patient-progress" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">My Progress</button>
+        <button data-nav="patient-chat" class="px-4 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Chat with AI</button>
       </div>
     </div>
   </div>
@@ -1074,6 +1245,204 @@
         </div>
       </div>
       <button data-nav="landing" class="w-full py-4 bg-white rounded-xl shadow-sm text-red-600 font-semibold hover:bg-red-50">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- ============ PATIENT PROFILE (F-P1) ============ -->
+  <div id="patient-profile" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">My Profile</h1>
+    </div>
+    <div id="patient-profile-content" class="p-6 space-y-4 max-w-2xl mx-auto w-full">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- ============ SESSION PREP (F-P2) ============ -->
+  <div id="patient-session-prep" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">Session Prep</h1>
+    </div>
+    <div id="patient-session-prep-content" class="p-6 space-y-4 max-w-2xl mx-auto w-full">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- ============ PROGRESS & GAMIFICATION (F-P3) ============ -->
+  <div id="patient-progress" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">My Progress</h1>
+    </div>
+    <div id="patient-progress-content" class="p-6 space-y-4 max-w-2xl mx-auto w-full">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- ============ RESOURCES (F-P4) ============ -->
+  <div id="patient-resources" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">Resources</h1>
+    </div>
+    <div class="px-6 pt-4">
+      <div id="resource-filter-bar" class="flex gap-2 flex-wrap mb-4">
+        <button data-resource-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white">All</button>
+        <button data-resource-filter="Coping" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Coping</button>
+        <button data-resource-filter="Mindfulness" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Mindfulness</button>
+        <button data-resource-filter="Sleep" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Sleep</button>
+        <button data-resource-filter="Anxiety" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Anxiety</button>
+        <button data-resource-filter="Crisis" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Crisis</button>
+      </div>
+    </div>
+    <div id="patient-resources-content" class="px-6 pb-6 space-y-3">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- ============ CHAT SIMULATION (F-P5) ============ -->
+  <div id="patient-chat" class="screen min-h-screen bg-white flex flex-col">
+    <div class="p-4 border-b flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">AI Chat Companion</h1>
+      <span class="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Supervised</span>
+    </div>
+    <div id="patient-chat-messages" class="flex-1 p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+      <!-- rendered dynamically -->
+    </div>
+    <div class="border-t p-4 bg-slate-50">
+      <div class="flex gap-2">
+        <button id="chat-next-btn" data-action="advance-chat" class="flex-1 py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors">Send Next Message</button>
+        <button id="chat-reset-btn" data-action="reset-chat" class="px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300">Reset</button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2 text-center">Simulated chat — AI responses are pre-approved by Dr. Chen. Not real-time generation.</p>
+    </div>
+  </div>
+
+  <!-- ============ HISTORY (F-P6) ============ -->
+  <div id="patient-history" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">My History</h1>
+    </div>
+    <div class="px-6 pt-4">
+      <div id="history-filter-bar" class="flex gap-2 flex-wrap mb-4">
+        <button data-history-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-600 text-white">All</button>
+        <button data-history-filter="CHECKIN" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Check-ins</button>
+        <button data-history-filter="JOURNAL" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Journal</button>
+        <button data-history-filter="VOICE" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Voice</button>
+      </div>
+    </div>
+    <div id="patient-history-content" class="px-6 pb-6 space-y-3">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- ============ SAFETY PLAN (F-P7) ============ -->
+  <div id="patient-safety-plan" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">My Safety Plan</h1>
+    </div>
+    <div class="p-6 max-w-2xl mx-auto w-full">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-sm text-amber-900">
+        <strong>Stanley-Brown Safety Planning Model.</strong> This plan was created with your clinician. Review and update it regularly.
+      </div>
+      <div id="patient-safety-plan-content" class="space-y-3">
+        <!-- rendered dynamically -->
+      </div>
+      <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-900">
+        <strong>In immediate crisis?</strong> Call <strong>988</strong> (Suicide & Crisis Lifeline) or text HOME to <strong>741741</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ONBOARDING (F-P8) ============ -->
+  <div id="patient-onboarding" class="screen min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-md">
+      <div id="onboarding-progress" class="flex gap-2 mb-8 justify-center">
+        <div class="w-8 h-1 rounded bg-teal-600"></div>
+        <div class="w-8 h-1 rounded bg-slate-200"></div>
+        <div class="w-8 h-1 rounded bg-slate-200"></div>
+      </div>
+      <div id="onboarding-content" class="text-center mb-8">
+        <!-- rendered dynamically -->
+      </div>
+      <div class="flex gap-3 justify-center">
+        <button id="onboarding-back-btn" data-action="onboarding-back" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-300 hidden">Back</button>
+        <button id="onboarding-next-btn" data-action="onboarding-next" class="px-6 py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PATIENT MEMORY VIEW (F-M1) ============ -->
+  <div id="patient-memory-view" class="screen min-h-screen bg-slate-50">
+    <div class="p-4 border-b bg-white flex items-center">
+      <button data-nav="patient-home" class="text-slate-600 mr-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-xl font-bold text-slate-800">What My AI Knows</h1>
+    </div>
+    <div class="p-6 max-w-2xl mx-auto w-full">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 text-sm text-indigo-900">
+        <strong>Full transparency.</strong> These are the strategies and patterns your AI companion uses. Every item was approved by your clinician.
+      </div>
+      <div id="patient-memory-filter-bar" class="flex gap-2 flex-wrap mb-4">
+        <button data-pmem-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white">All</button>
+        <button data-pmem-filter="Coping Strategy" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Coping</button>
+        <button data-pmem-filter="Routine" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Routine</button>
+        <button data-pmem-filter="Planning" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Planning</button>
+        <button data-pmem-filter="Mood Pattern" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Mood</button>
+      </div>
+      <div id="patient-memory-view-content" class="space-y-3">
+        <!-- rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EVIDENCE BASE (F-E1) ============ -->
+  <div id="evidence-base" class="screen min-h-screen bg-slate-50">
+    <div class="glass-dark p-4 sticky top-0 z-10">
+      <div class="flex items-center justify-between max-w-6xl mx-auto">
+        <button data-nav="landing" class="text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="text-xl font-bold text-white">Evidence Base</h1>
+        <div class="w-6"></div>
+      </div>
+    </div>
+    <div class="p-6 max-w-4xl mx-auto">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm text-emerald-900">
+        <strong>14 published citations</strong> underpin every AI interaction, assessment tool, and therapeutic feature in Peacefull.ai.
+      </div>
+      <div id="evidence-filter-bar" class="flex gap-2 flex-wrap mb-4">
+        <button data-evidence-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white">All</button>
+        <button data-evidence-filter="Assessment Tools" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Assessment</button>
+        <button data-evidence-filter="Therapeutic Modalities" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Therapeutic</button>
+        <button data-evidence-filter="Engagement & Adherence" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Engagement</button>
+        <button data-evidence-filter="Safety & Crisis" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Safety</button>
+        <button data-evidence-filter="Sleep & Wellness" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Sleep</button>
+        <button data-evidence-filter="Digital Health" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Digital</button>
+      </div>
+      <div id="evidence-base-content" class="space-y-3">
+        <!-- rendered dynamically -->
+      </div>
     </div>
   </div>
 
@@ -1557,7 +1926,7 @@
         <div class="space-y-4">
           <div class="p-4 bg-slate-50 rounded-xl border-l-4 border-red-400">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-500">Feb 20, 2024 • 3:45 PM</span>
+              <span class="text-sm text-slate-500">Feb 20, 2026 • 3:45 PM</span>
               <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">RESTRICTED</span>
             </div>
             <p class="text-slate-700">Patient disclosed history of suicide attempt (2019) during session. Safety plan reviewed and updated. Patient has emergency contacts in place.</p>
@@ -1567,7 +1936,7 @@
           </div>
           <div class="p-4 bg-slate-50 rounded-xl border-l-4 border-red-400">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-slate-500">Jan 15, 2024 • 2:30 PM</span>
+              <span class="text-sm text-slate-500">Jan 15, 2026 • 2:30 PM</span>
               <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">RESTRICTED</span>
             </div>
             <p class="text-slate-700">Legal involvement: Patient mentioned ongoing custody dispute. Advised to consult with attorney before sharing certain information.</p>
@@ -1661,7 +2030,7 @@
         <div class="space-y-3">
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
-              <span class="font-medium text-slate-800">Maria Rodriguez_Export_2024-02-25</span>
+              <span class="font-medium text-slate-800">Maria Rodriguez_Export_2026-02-25</span>
               <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">READY</span>
             </div>
             <p class="text-sm text-slate-500 mb-2">Standard Clinician Export • Generated: Today, 10:30 AM</p>
@@ -1674,7 +2043,7 @@
           </div>
           <div class="p-4 bg-slate-50 rounded-xl">
             <div class="flex items-center justify-between mb-2">
-              <span class="font-medium text-slate-800">James Smith_Export_2024-02-24</span>
+              <span class="font-medium text-slate-800">James Smith_Export_2026-02-24</span>
               <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">BLOCKED_POLICY (428)</span>
             </div>
             <p class="text-sm text-slate-500 mb-2">Restricted Notes Export • Attempted: Yesterday, 4:15 PM</p>
@@ -2818,7 +3187,7 @@
   </div>
 
   <!-- F7: PRIVACY / TERMS / SECURITY FOOTER -->
-  <footer class="fixed bottom-0 left-0 right-0 z-80 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:80;">
+  <footer class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur text-center py-2 px-4" style="z-index:70;">
     <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
       <span>© 2026 Peacefull.ai</span>
       <span>•</span>

@@ -19,7 +19,18 @@ import {
   renderAdherenceTracker,
   renderGuidedDemo,
   renderKPIPanel,
-  renderEscalationProtocols
+  renderEscalationProtocols,
+  renderPatientHome,
+  renderPatientProfile,
+  renderSessionPrep,
+  renderProgress,
+  renderResources,
+  renderChat,
+  renderHistory,
+  renderSafetyPlan,
+  renderOnboarding,
+  renderPatientMemoryView,
+  renderEvidenceBase
 } from './render.js';
 import * as actions from './actions.js';
 import { initEventDelegation } from './events.js';
@@ -154,6 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
   renderGuidedDemo();
   renderKPIPanel();
   renderEscalationProtocols();
+
+  // Phase 2+ renders
+  renderPatientHome();
+  renderPatientProfile();
+  renderSessionPrep();
+  renderProgress();
+  renderResources();
+  renderHistory();
+  renderSafetyPlan();
+  renderOnboarding();
+  renderPatientMemoryView();
+  renderEvidenceBase();
 
   const patientSel = document.getElementById('patient-session-profile');
   if (patientSel) patientSel.value = state.patientSessionProfile;
