@@ -12,9 +12,6 @@ const envSchema = z.object({
   /** Direct (non-pooled) PostgreSQL connection for migrations/introspection. */
   DIRECT_DATABASE_URL: z.string().optional(),
 
-  /** Redis connection URL. */
-  REDIS_URL: z.string().default('redis://localhost:6379'),
-
   /** Anthropic API key for Claude integration. */
   ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
 

@@ -14,6 +14,7 @@ import routes from './routes/index.js';
 import { auditLog } from './middleware/audit.js';
 import { notFound, errorHandler } from './middleware/error.js';
 import { apiLogger } from './utils/logger.js';
+import { prisma } from './models/index.js';
 
 // ─── Create App ──────────────────────────────────────────────────────
 
@@ -78,13 +79,13 @@ app.use(limiter);
 
 app.use(auditLog);
 
-// ─── Health Check ────────────────────────────────────────────────────
+// ─── Health / Ready / Version ────────────────────────────────────────
 
 const startedAt = Date.now();
 const APP_VERSION = '0.1.0';
 
 /**
- * Health check endpoint — always public, no auth required.
+ * Health check — always public, no auth required.
  * Returns server status, version, timestamp, and uptime.
  */
 app.get('/health', (_req, res) => {
@@ -94,6 +95,31 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     uptime: Math.floor((Date.now() - startedAt) / 1000),
     environment: env.NODE_ENV,
+  });
+});
+
+/**
+ * Readiness probe — checks database connectivity.
+ * Returns 503 if the database is unreachable.
+ */
+app.get('/ready', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ready', database: 'connected' });
+  } catch {
+    res.status(503).json({ status: 'not-ready', database: 'disconnected' });
+  }
+});
+
+/**
+ * Version endpoint — returns build metadata.
+ */
+app.get('/version', (_req, res) => {
+  res.json({
+    version: APP_VERSION,
+    node: process.version,
+    environment: env.NODE_ENV,
+    startedAt: new Date(startedAt).toISOString(),
   });
 });
 
@@ -123,11 +149,13 @@ async function shutdown(signal: string) {
     });
   }
 
-  // Close database connection (Prisma) — add when Prisma is initialized
-  // await prisma.$disconnect();
-
-  // Close Redis — add when Redis is initialized
-  // await redis.quit();
+  // Close Prisma connection pool
+  try {
+    await prisma.$disconnect();
+    apiLogger.info('Prisma disconnected');
+  } catch (err) {
+    apiLogger.error({ err }, 'Error disconnecting Prisma');
+  }
 
   // Give connections time to drain
   setTimeout(() => {
