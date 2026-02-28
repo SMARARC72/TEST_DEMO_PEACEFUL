@@ -124,15 +124,27 @@ export function showScreen(screenId, options = {}) {
     return;
   }
 
+  // Guard: skip if already showing this screen (prevents hashchange re-entry thrash)
+  if (screen.classList.contains('active')) {
+    // Still ensure scroll is at top
+    window.scrollTo(0, 0);
+    return;
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   screen.classList.add('active');
   setQuickNavActive(screenId);
 
-  if (updateHash && window.location.hash !== `#${screenId}`) {
-    window.location.hash = screenId;
+  // Use replaceState to update the URL hash without triggering native scroll-to-anchor
+  if (updateHash) {
+    const newHash = `#${screenId}`;
+    if (window.location.hash !== newHash) {
+      history.replaceState(null, '', newHash);
+    }
   }
 
-  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  // Force synchronous scroll reset (override smooth behavior)
+  window.scrollTo(0, 0);
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
   
@@ -142,7 +154,6 @@ export function showScreen(screenId, options = {}) {
     heading.setAttribute('tabindex', '-1');
     heading.focus({ preventScroll: true });
   }
-  // Trigger render for decision room
 }
 
 export function initScreenRouting() {
@@ -156,6 +167,15 @@ export function initScreenRouting() {
   };
 
   window.addEventListener('hashchange', () => {
+    const hashScreen = window.location.hash.replace('#', '').trim();
+    if (hashScreen && document.getElementById(hashScreen)) {
+      // showScreen already guards against re-entry
+      showScreen(hashScreen, { updateHash: false });
+    }
+  });
+
+  // Also handle browser back/forward navigation
+  window.addEventListener('popstate', () => {
     const hashScreen = window.location.hash.replace('#', '').trim();
     if (hashScreen && document.getElementById(hashScreen)) {
       showScreen(hashScreen, { updateHash: false });
