@@ -1,0 +1,13 @@
+node_modules
+.git
+.github
+*.md
+*.html
+prototype-web
+peacefull-demo-github
+packages/infra/terraform
+.env
+.env.*
+dist
+test-results
+coverage
