@@ -993,7 +993,7 @@ export function renderPopulationHealth() {
         type: 'doughnut',
         data: {
           labels: ['Improving', 'Stable', 'Worsening'],
-          datasets: [{ data: [ph.improvingPct, ph.stablePct, ph.worseningPct], backgroundColor: ['#10b981', '#3b82f6', '#ef4444'], borderWidth: 0, hoverOffset: 6 }]
+          datasets: [{ data: [ph.improvingPct, ph.stablePct, ph.worseningPct], backgroundColor: ['#6C5CE7', '#00B4D8', '#FF6B6B'], borderWidth: 0, hoverOffset: 6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } } }
       });
@@ -1006,7 +1006,7 @@ export function renderPopulationHealth() {
         type: 'bar',
         data: {
           labels: riskLabels,
-          datasets: [{ data: riskValues, backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderRadius: 6, barPercentage: 0.6 }]
+          datasets: [{ data: riskValues, backgroundColor: ['#6C5CE7', '#00B4D8', '#FFB347', '#FF6B6B'], borderRadius: 6, barPercentage: 0.6 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 2 } }, x: { grid: { display: false } } } }
       });
@@ -1229,12 +1229,12 @@ export function renderCaregiverView() {
           datasets: [{
             label: 'Mood (1-5)',
             data: prog.weeklyMood,
-            borderColor: '#2D6A4F',
-            backgroundColor: 'rgba(13, 148, 136, 0.1)',
+            borderColor: '#6C5CE7',
+            backgroundColor: 'rgba(108, 92, 231, 0.1)',
             fill: true,
             tension: 0.4,
             pointRadius: 5,
-            pointBackgroundColor: '#2D6A4F'
+            pointBackgroundColor: '#6C5CE7'
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }

@@ -5,59 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peacefull.ai - Clinical Platform</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta name="theme-color" content="#2D6A4F">
+  <meta name="theme-color" content="#6C5CE7">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              50: '#F5F3FF', 100: '#EDE8FF', 200: '#DDD9FF', 300: '#CEC9FF',
+              400: '#B8B3FF', 500: '#A29BFE', 600: '#8A7DF5', 700: '#6C5CE7',
+              800: '#5B4CC7', 900: '#3B2D9E', 950: '#2A1F73'
+            }
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'Plus Jakarta Sans', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'DM Sans', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
     /* ═══════════ DESIGN TOKENS ═══════════ */
     :root {
-      /* Brand — Sage + Gold */
-      --color-sage-900: #1B4332;
-      --color-sage-800: #2D6A4F;
-      --color-sage-700: #357A5B;
-      --color-sage-600: #40916C;
-      --color-sage-500: #52B788;
-      --color-sage-400: #74C69D;
-      --color-sage-300: #95D5B2;
-      --color-sage-200: #B7E4C7;
-      --color-sage-100: #D8F3DC;
-      --color-sage-50:  #F0FFF4;
-      --color-gold-700: #A67C1A;
-      --color-gold-600: #C9A227;
-      --color-gold-500: #DDA032;
-      --color-gold-400: #E6B84D;
-      --color-gold-300: #F0D078;
-      --color-gold-200: #F7E4A6;
-      --color-gold-100: #FDF4D8;
-      --color-gold-50:  #FFFBEB;
-      /* Neutrals — Warm scale */
-      --color-neutral-950: #0D1117;
-      --color-neutral-900: #161B22;
-      --color-neutral-800: #21262D;
-      --color-neutral-700: #30363D;
-      --color-neutral-600: #484F58;
-      --color-neutral-500: #6E7681;
-      --color-neutral-400: #8B949E;
-      --color-neutral-300: #B1BAC4;
-      --color-neutral-200: #D0D7DE;
-      --color-neutral-100: #E8ECF0;
-      --color-neutral-50:  #F7F8FA;
+      /* Brand — Purple + Teal (peacefullai.netlify.app) */
+      --color-sage-900: #3B2D9E;
+      --color-sage-800: #6C5CE7;
+      --color-sage-700: #7B6CEF;
+      --color-sage-600: #8A7DF5;
+      --color-sage-500: #A29BFE;
+      --color-sage-400: #B8B3FF;
+      --color-sage-300: #CEC9FF;
+      --color-sage-200: #DDD9FF;
+      --color-sage-100: #EDE8FF;
+      --color-sage-50:  #F5F3FF;
+      --color-gold-700: #0090B0;
+      --color-gold-600: #00B4D8;
+      --color-gold-500: #48CAE4;
+      --color-gold-400: #90E0EF;
+      --color-gold-300: #ADE8F4;
+      --color-gold-200: #CAF0F8;
+      --color-gold-100: #E0F7FA;
+      --color-gold-50:  #F0FBFF;
+      /* Neutrals — Cool scale */
+      --color-neutral-950: #0D0E1A;
+      --color-neutral-900: #1A1B2E;
+      --color-neutral-800: #2A2B40;
+      --color-neutral-700: #3B3C54;
+      --color-neutral-600: #4E4F68;
+      --color-neutral-500: #6E7081;
+      --color-neutral-400: #8B8D9E;
+      --color-neutral-300: #B1B3C4;
+      --color-neutral-200: #D0D2DE;
+      --color-neutral-100: #E8E9F0;
+      --color-neutral-50:  #FAFBFF;
       /* Surfaces */
       --surface-0: #FFFFFF;
-      --surface-1: var(--color-neutral-50);
-      --surface-2: var(--color-neutral-100);
+      --surface-1: #FAFBFF;
+      --surface-2: #F0F1F8;
       --surface-3: var(--color-neutral-200);
       /* Semantic */
-      --color-success: #2D6A4F;
-      --color-warning: #C9A227;
-      --color-danger: #C53030;
-      --color-info: #2B6CB0;
+      --color-success: #00C9A7;
+      --color-warning: #FFB347;
+      --color-danger: #FF6B6B;
+      --color-info: #6C5CE7;
       /* Type */
-      --font-display: 'Cabinet Grotesk', 'Inter', sans-serif;
-      --font-body: 'Inter', sans-serif;
+      --font-display: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+      --font-body: 'DM Sans', 'Plus Jakarta Sans', sans-serif;
       /* Radius */
       --radius-sm: 6px;
       --radius-md: 10px;
@@ -70,8 +88,8 @@
       --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
       --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
       --shadow-xl: 0 16px 48px rgba(0,0,0,0.14);
-      --shadow-glow-sage: 0 0 24px rgba(45,106,79,0.25);
-      --shadow-glow-gold: 0 0 24px rgba(201,162,39,0.25);
+      --shadow-glow-sage: 0 0 24px rgba(108,92,231,0.25);
+      --shadow-glow-gold: 0 0 24px rgba(0,180,216,0.25);
       /* Transitions */
       --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
       --transition-fast: 150ms var(--ease-out-expo);
@@ -115,13 +133,13 @@
 
     /* ═══════════ HERO ═══════════ */
     .gradient-hero {
-      background: linear-gradient(135deg, var(--color-sage-900) 0%, var(--color-sage-800) 25%, var(--color-sage-600) 50%, var(--color-sage-500) 75%, var(--color-sage-300) 100%);
+      background: linear-gradient(135deg, var(--color-sage-900) 0%, var(--color-sage-800) 30%, var(--color-gold-600) 70%, var(--color-gold-500) 100%);
       position: relative; overflow: hidden;
     }
     .gradient-hero::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 30% 20%, rgba(201,162,39,0.15) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 80%, rgba(82,183,136,0.2) 0%, transparent 50%);
+      background: radial-gradient(ellipse at 30% 20%, rgba(0,180,216,0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(108,92,231,0.2) 0%, transparent 50%);
       animation: heroShimmer 8s ease-in-out infinite alternate;
     }
     @keyframes heroShimmer { 0% { opacity: 0.6; } 100% { opacity: 1; } }
@@ -175,16 +193,6 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* ═══════════ DEMO PANEL ═══════════ */
-    .demo-panel {
-      position: fixed; top: 16px; right: 16px;
-      width: 300px; z-index: 100;
-      max-height: calc(100vh - 32px); overflow-y: auto;
-      scrollbar-width: thin; scrollbar-color: var(--color-neutral-300) transparent;
-    }
-    .demo-panel.collapsed { width: 52px; }
-
-
     /* ═══════════ ALERTS ═══════════ */
     .t2-alert { background: linear-gradient(135deg, #FFF5F5, #FED7D7); border-left: 4px solid var(--color-danger); border-radius: var(--radius-md); }
     .t1-alert { background: linear-gradient(135deg, var(--color-gold-50), var(--color-gold-100)); border-left: 4px solid var(--color-gold-600); border-radius: var(--radius-md); }
@@ -226,7 +234,7 @@
 
     .recording-active { animation: recording-pulse 1.5s ease infinite; background: linear-gradient(135deg, #E53E3E, #C53030) !important; }
     .waveform-bar { width: 4px; background: linear-gradient(to top, var(--color-sage-600), var(--color-sage-400)); border-radius: 2px; animation: waveform 0.5s ease infinite; }
-    .breathing-circle { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(45,106,79,0.3), rgba(45,106,79,0.1)); animation: breathe 10s ease-in-out infinite; }
+    .breathing-circle { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(108,92,231,0.3), rgba(108,92,231,0.1)); animation: breathe 10s ease-in-out infinite; }
 
     /* ═══════════ CHAT ═══════════ */
     .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: var(--radius-lg); font-size: 14px; line-height: 1.6; }
