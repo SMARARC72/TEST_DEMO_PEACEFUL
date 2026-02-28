@@ -362,6 +362,47 @@ clinicianRouter.get('/patients/:id/plans', async (req, res, next) => {
   }
 });
 
+// ─── POST /patients/:id/plans ────────────────────────────────────────
+
+const planCreateSchema = z.object({
+  goal: z.string().min(1).max(2000),
+  intervention: z.string().min(1).max(2000),
+  owner: z.string().min(1).max(200),
+  target: z.string().min(1).max(500),
+  status: z.enum(['DRAFT', 'REVIEWED', 'HOLD', 'ACTIVE']).default('DRAFT'),
+  evidence: z.array(z.unknown()).default([]),
+  uncertainty: z.string().max(2000).optional(),
+});
+
+clinicianRouter.post('/patients/:id/plans', async (req, res, next) => {
+  try {
+    const body = planCreateSchema.parse(req.body);
+
+    // Verify patient exists
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+
+    const plan = await prisma.treatmentPlan.create({
+      data: {
+        patientId: req.params.id,
+        goal: body.goal,
+        intervention: body.intervention,
+        owner: body.owner,
+        target: body.target,
+        status: body.status as 'DRAFT' | 'REVIEWED' | 'HOLD' | 'ACTIVE',
+        evidence: body.evidence,
+        uncertainty: body.uncertainty,
+      },
+    });
+
+    res.status(201).json(plan);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── PATCH /patients/:id/plans/:planId ───────────────────────────────
 
 const planPatchSchema = z.object({

@@ -142,6 +142,7 @@ model Patient {
   progressData    ProgressData?
   sdohAssessments SDOHAssessment[]
   chatSessions    ChatSession[]
+  consentRecords  ConsentRecord[]
 
   @@index([tenantId])
   @@index([userId])
@@ -606,6 +607,8 @@ model ConsentRecord {
   revokedAt DateTime?
   ipAddress String?
   createdAt DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
   @@map("consent_records")

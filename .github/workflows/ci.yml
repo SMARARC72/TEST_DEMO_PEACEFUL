@@ -102,12 +102,14 @@ jobs:
         run: cd packages/api && npm ci
       - name: Generate Prisma client
         run: cd packages/api && npx prisma generate
-      - name: Push schema to Neon DB
-        run: cd packages/api && npx prisma db push --skip-generate --accept-data-loss
+      - name: Apply database migrations
+        run: cd packages/api && npx prisma migrate deploy
       - name: Seed database
         run: cd packages/api && npx tsx prisma/seed.ts
       - name: Type check API
         run: cd packages/api && npx tsc --noEmit
+      - name: Run API unit tests
+        run: cd packages/api && npx vitest run
       - name: Start API server
         run: cd packages/api && npx tsx src/server.ts &
       - name: Wait for API health

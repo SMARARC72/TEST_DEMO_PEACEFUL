@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
 import { prisma } from '../models/index.js';
+import { processSubmission } from '../services/submission-pipeline.js';
 import type {
   Patient,
   PatientSubmission,
@@ -262,6 +263,14 @@ patientRouter.post('/:id/submissions', async (req, res, next) => {
       },
       include: submissionInclude,
     });
+
+    // Fire-and-forget: trigger AI processing pipeline asynchronously
+    processSubmission(row.id).catch((err) => {
+      // Errors are already handled inside processSubmission
+      // (submission gets reset to PENDING for retry)
+      void err;
+    });
+
     res.status(201).json(toSubmissionResponse(row));
   } catch (err) {
     next(err);
