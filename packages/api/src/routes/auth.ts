@@ -1,9 +1,9 @@
 // ─── Auth Routes ─────────────────────────────────────────────────────
 // Login, MFA verification, token refresh, logout, step-up auth, profile.
+// All queries now target Neon Postgres via Prisma.
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
 import {
@@ -15,33 +15,44 @@ import {
   verifyMFACode,
 } from '../services/auth.js';
 import { authLogger } from '../utils/logger.js';
-import { loginSchema, mfaVerifySchema, UserRole, UserStatus, MFAMethod } from '@peacefull/shared';
-import type { User } from '@peacefull/shared';
+import { prisma } from '../models/index.js';
+
+// Infer the User row type from the Prisma client's return type
+type PrismaUser = NonNullable<Awaited<ReturnType<typeof prisma.user.findUnique>>>;
 
 export const authRouter = Router();
 
-// ─── Mock User Store (replaced by Prisma in production) ──────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
 
-const MOCK_USERS: Record<string, User & { passwordHash: string }> = {
-  'demo-clinician': {
-    id: 'c1000000-0000-0000-0000-000000000001',
-    tenantId: 't1000000-0000-0000-0000-000000000001',
-    email: 'dr.chen@peacefull.ai',
-    role: UserRole.CLINICIAN,
-    profile: { firstName: 'Sarah', lastName: 'Chen', phone: '+15551234567' },
-    mfaEnabled: true,
-    mfaMethod: MFAMethod.TOTP,
-    lastLogin: new Date().toISOString(),
-    status: UserStatus.ACTIVE,
-    createdAt: '2025-01-15T00:00:00.000Z',
-    passwordHash: '$2a$12$LJ3m4ys48GYH.Wi0rG7SyeEMEhF/cWV5hX5s8/AqAhR6RuhG9hJQe', // "password123"
-  },
-};
+/**
+ * Maps a Prisma User row to the shared API `User` shape, nesting
+ * `firstName`, `lastName`, and `phone` under a `profile` key.
+ */
+function toUserResponse(u: PrismaUser) {
+  return {
+    id: u.id,
+    tenantId: u.tenantId,
+    email: u.email,
+    role: u.role,
+    profile: {
+      firstName: u.firstName,
+      lastName: u.lastName,
+      phone: u.phone,
+    },
+    mfaEnabled: u.mfaEnabled,
+    mfaMethod: u.mfaMethod,
+    lastLogin: u.lastLogin?.toISOString() ?? null,
+    status: u.status,
+    createdAt: u.createdAt.toISOString(),
+  };
+}
 
-// Mutable pending MFA codes
+// ─── In-memory stores (acceptable for MFA challenges & token revocation) ──
+
+/** Pending MFA verification codes keyed by userId. */
 const pendingMFA: Record<string, string> = {};
 
-// Mutable invalidated refresh tokens
+/** Revoked refresh tokens (move to Redis / DB for multi-instance). */
 const invalidatedTokens = new Set<string>();
 
 // ─── POST /login ─────────────────────────────────────────────────────
@@ -55,19 +66,23 @@ authRouter.post('/login', async (req, res, next) => {
   try {
     const body = loginBodySchema.parse(req.body);
 
-    // Find user by email
-    const user = Object.values(MOCK_USERS).find((u) => u.email === body.email);
+    // Look up user by email in Postgres
+    const user = await prisma.user.findFirst({ where: { email: body.email } });
     if (!user) {
       throw new AppError('Invalid credentials', 401);
     }
 
-    // In dev mode, accept "password123" for mock users
-    const valid =
-      body.password === 'password123' ||
-      (await verifyPassword(body.password, user.passwordHash));
+    // Verify bcrypt hash
+    const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) {
       throw new AppError('Invalid credentials', 401);
     }
+
+    // Update lastLogin timestamp
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
 
     // If MFA is enabled, send code and require verification
     if (user.mfaEnabled) {
@@ -82,15 +97,19 @@ authRouter.post('/login', async (req, res, next) => {
       return;
     }
 
-    // Generate tokens
-    const tokens = generateTokens(user);
+    // Generate tokens (expects { id, tenantId, role })
+    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     res.json({
       ...tokens,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
-        profile: user.profile,
+        profile: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+        },
       },
     });
   } catch (err) {
@@ -120,20 +139,24 @@ authRouter.post('/mfa-verify', async (req, res, next) => {
 
     delete pendingMFA[body.userId];
 
-    // Find user and generate tokens
-    const user = Object.values(MOCK_USERS).find((u) => u.id === body.userId);
+    // Fetch user from DB
+    const user = await prisma.user.findUnique({ where: { id: body.userId } });
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
-    const tokens = generateTokens(user);
+    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     res.json({
       ...tokens,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
-        profile: user.profile,
+        profile: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+        },
       },
     });
   } catch (err) {
@@ -160,13 +183,13 @@ authRouter.post('/refresh', async (req, res, next) => {
       throw new AppError('Invalid token type', 401);
     }
 
-    // Find user
-    const user = Object.values(MOCK_USERS).find((u) => u.id === payload.sub);
+    // Look up user by id
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
-    const tokens = generateTokens(user);
+    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     res.json(tokens);
   } catch (err) {
     next(err);
@@ -198,19 +221,17 @@ authRouter.post('/step-up', authenticate, async (req, res, next) => {
   try {
     const body = stepUpBodySchema.parse(req.body);
 
-    const user = Object.values(MOCK_USERS).find((u) => u.id === req.user!.sub);
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
-    const valid =
-      body.password === 'password123' ||
-      (await verifyPassword(body.password, user.passwordHash));
+    const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) {
       throw new AppError('Invalid credentials', 401);
     }
 
-    const stepUpTokens = generateStepUpToken(user);
+    const stepUpTokens = generateStepUpToken({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     authLogger.info({ userId: user.id }, 'Step-up auth completed');
     res.json(stepUpTokens);
   } catch (err) {
@@ -220,25 +241,14 @@ authRouter.post('/step-up', authenticate, async (req, res, next) => {
 
 // ─── GET /me ─────────────────────────────────────────────────────────
 
-authRouter.get('/me', authenticate, (req, res, next) => {
+authRouter.get('/me', authenticate, async (req, res, next) => {
   try {
-    const user = Object.values(MOCK_USERS).find((u) => u.id === req.user!.sub);
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
     if (!user) {
       throw new AppError('User not found', 404);
     }
 
-    res.json({
-      id: user.id,
-      tenantId: user.tenantId,
-      email: user.email,
-      role: user.role,
-      profile: user.profile,
-      mfaEnabled: user.mfaEnabled,
-      mfaMethod: user.mfaMethod,
-      lastLogin: user.lastLogin,
-      status: user.status,
-      createdAt: user.createdAt,
-    });
+    res.json(toUserResponse(user));
   } catch (err) {
     next(err);
   }

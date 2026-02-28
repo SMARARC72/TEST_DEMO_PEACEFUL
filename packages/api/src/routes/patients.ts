@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { prisma } from '../models/index.js';
 import type {
   Patient,
   PatientSubmission,
@@ -32,180 +33,205 @@ export const patientRouter = Router();
 patientRouter.use(authenticate);
 patientRouter.use(requireRole(UserRole.PATIENT, UserRole.CLINICIAN, UserRole.SUPERVISOR));
 
-// ─── Mock Data ───────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
 
-const MOCK_PATIENT: Patient = {
-  id: 'p1000000-0000-0000-0000-000000000001',
-  tenantId: 't1000000-0000-0000-0000-000000000001',
-  name: 'Alex Rivera',
-  age: 34,
-  pronouns: 'they/them',
-  language: 'en',
-  emergencyContact: {
-    name: 'Jordan Rivera',
-    phone: '+15559876543',
-    relationship: 'Sibling',
+/**
+ * Map a Prisma Patient row (with its User and CareTeam relations) to
+ * the shared `Patient` API contract.
+ */
+function toPatientResponse(
+  row: {
+    id: string;
+    tenantId: string;
+    age: number;
+    pronouns: string | null;
+    language: string;
+    emergencyName: string | null;
+    emergencyPhone: string | null;
+    emergencyRel: string | null;
+    diagnosisPrimary: string | null;
+    diagnosisCode: string | null;
+    treatmentStart: Date | null;
+    medications: unknown;
+    allergies: unknown;
+    preferences: unknown;
+    user: { firstName: string; lastName: string };
+    careTeam: {
+      role: string;
+      clinician: { user: { firstName: string; lastName: string }; credentials: string };
+    }[];
   },
-  diagnosis: { primary: 'Major Depressive Disorder, Recurrent', code: 'F33.1' },
-  treatmentStart: '2025-06-15T00:00:00.000Z',
-  medications: [
-    { name: 'Sertraline', dosage: '100mg', frequency: 'Daily' },
-    { name: 'Hydroxyzine', dosage: '25mg', frequency: 'As needed' },
-  ],
-  allergies: ['Penicillin'],
-  careTeam: [
-    { name: 'Dr. Sarah Chen', role: 'Primary Therapist' },
-    { name: 'Dr. James Park', role: 'Psychiatrist' },
-  ],
-  preferences: { notifications: true, language: 'en', theme: 'calm-blue' },
-};
+): Patient {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    name: `${row.user.firstName} ${row.user.lastName}`,
+    age: row.age,
+    pronouns: row.pronouns ?? '',
+    language: row.language,
+    emergencyContact: {
+      name: row.emergencyName ?? '',
+      phone: row.emergencyPhone ?? '',
+      relationship: row.emergencyRel ?? '',
+    },
+    diagnosis: {
+      primary: row.diagnosisPrimary ?? '',
+      code: row.diagnosisCode ?? '',
+    },
+    treatmentStart: row.treatmentStart?.toISOString() ?? '',
+    medications: (row.medications as { name: string; dosage: string; frequency: string }[]) ?? [],
+    allergies: (row.allergies as string[]) ?? [],
+    careTeam: row.careTeam.map((ct) => ({
+      name: `${ct.clinician.user.firstName} ${ct.clinician.user.lastName}`,
+      role: ct.role,
+    })),
+    preferences: (row.preferences as { notifications: boolean; language: string; theme: string }) ?? {
+      notifications: true,
+      language: 'en',
+      theme: 'calm-blue',
+    },
+  };
+}
 
-const MOCK_SUBMISSIONS: PatientSubmission[] = [
-  {
-    id: 's1000000-0000-0000-0000-000000000001',
-    patientId: MOCK_PATIENT.id,
-    tenantId: MOCK_PATIENT.tenantId,
-    source: SubmissionSource.JOURNAL,
-    status: SubmissionStatus.READY,
-    rawContent: 'Had a difficult day at work. Felt overwhelmed by deadlines and struggled to focus. Went for a walk which helped a bit.',
+/** Standard include clause for Patient queries that need the response shape. */
+const patientInclude = {
+  user: true,
+  careTeam: {
+    where: { active: true },
+    include: { clinician: { include: { user: true } } },
+  },
+} as const;
+
+/**
+ * Map a Prisma Submission row to the shared `PatientSubmission` contract.
+ */
+function toSubmissionResponse(
+  row: {
+    id: string;
+    patientId: string;
+    source: string;
+    status: string;
+    rawContent: string;
+    patientTone: string | null;
+    patientSummary: string | null;
+    patientNextStep: string | null;
+    clinicianSignalBand: string | null;
+    clinicianSummary: string | null;
+    clinicianEvidence: unknown;
+    clinicianUnknowns: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+    patient: { tenantId: string };
+  },
+): PatientSubmission {
+  return {
+    id: row.id,
+    patientId: row.patientId,
+    tenantId: row.patient.tenantId,
+    source: row.source as SubmissionSource,
+    status: row.status as SubmissionStatus,
+    rawContent: row.rawContent,
     patientReport: {
-      tone: 'supportive',
-      summary: 'It sounds like today was challenging, especially with work pressures. It\'s great that you recognized going for a walk helped.',
-      nextStep: 'Consider trying a 5-minute breathing exercise before your next work session.',
+      tone: row.patientTone ?? '',
+      summary: row.patientSummary ?? '',
+      nextStep: row.patientNextStep ?? '',
     },
     clinicianReport: {
-      signalBand: SignalBand.GUARDED,
-      summary: 'Patient reports work-related stress impacting concentration. Utilized adaptive coping (walking). No safety concerns noted.',
-      evidence: ['overwhelmed by deadlines', 'struggled to focus', 'walk helped'],
-      unknowns: ['Sleep quality not mentioned', 'Medication adherence unclear'],
+      signalBand: (row.clinicianSignalBand as SignalBand) ?? SignalBand.LOW,
+      summary: row.clinicianSummary ?? '',
+      evidence: (row.clinicianEvidence as string[]) ?? [],
+      unknowns: (row.clinicianUnknowns as string[]) ?? [],
     },
-    createdAt: '2025-12-10T14:30:00.000Z',
-    updatedAt: '2025-12-10T14:35:00.000Z',
-  },
-  {
-    id: 's1000000-0000-0000-0000-000000000002',
-    patientId: MOCK_PATIENT.id,
-    tenantId: MOCK_PATIENT.tenantId,
-    source: SubmissionSource.CHECKIN,
-    status: SubmissionStatus.REVIEWED,
-    rawContent: 'mood: 6, stress: 7, sleep: 5, focus: 4',
-    patientReport: {
-      tone: 'encouraging',
-      summary: 'Your mood is holding steady. Sleep and focus could use some attention — small improvements there can make a big difference.',
-      nextStep: 'Try winding down 30 minutes earlier tonight.',
-    },
-    clinicianReport: {
-      signalBand: SignalBand.MODERATE,
-      summary: 'Elevated stress (7/10) with reduced sleep (5/10) and focus (4/10). Mood stable at 6/10. Pattern warrants monitoring.',
-      evidence: ['stress: 7/10', 'sleep: 5/10', 'focus: 4/10'],
-      unknowns: ['Duration of sleep impairment'],
-    },
-    createdAt: '2025-12-09T09:00:00.000Z',
-    updatedAt: '2025-12-09T09:05:00.000Z',
-  },
-];
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
 
-const MOCK_SESSION_PREP: SessionPrep = {
-  date: '2025-12-15',
-  time: '10:00',
-  duration: 50,
-  format: 'Video',
-  therapistId: 'c1000000-0000-0000-0000-000000000001',
-  topics: ['Work stress management', 'Sleep hygiene', 'Coping strategy review'],
-  customTopics: [],
-  goals: ['Reduce workplace overwhelm', 'Improve sleep consistency'],
-  previousSummary: 'Last session focused on identifying cognitive distortions related to work performance.',
-};
+const submissionInclude = { patient: { select: { tenantId: true } } } as const;
 
-const MOCK_PROGRESS: ProgressData = {
-  streak: 12,
-  xp: 2450,
-  level: 5,
-  levelName: 'Mindful Explorer',
-  badges: [
-    { name: 'First Journal', earnedAt: '2025-06-20T00:00:00.000Z', icon: '📝' },
-    { name: 'Week Streak', earnedAt: '2025-07-01T00:00:00.000Z', icon: '🔥' },
-    { name: 'Voice Pioneer', earnedAt: '2025-08-15T00:00:00.000Z', icon: '🎙️' },
-  ],
-  weeklyMood: [6, 5, 7, 6, 5, 6, 7],
-  milestones: [
-    { title: '30-Day Streak', date: '2025-07-15', achieved: true },
-    { title: 'Complete Safety Plan', date: '2025-06-25', achieved: true },
-    { title: '100 Journal Entries', date: '', achieved: false },
-  ],
-};
+// ─── GET / ───────────────────────────────────────────────────────────
+// List all patients for the authenticated user's tenant.
 
-const MOCK_SAFETY_PLAN: SafetyPlan = {
-  id: 'sp1000000-0000-0000-0000-000000000001',
-  patientId: MOCK_PATIENT.id,
-  reviewedDate: '2025-11-01T00:00:00.000Z',
-  steps: [
-    {
-      title: 'Warning Signs',
-      items: ['Withdrawal from friends', 'Difficulty sleeping 3+ nights', 'Loss of appetite'],
-    },
-    {
-      title: 'Internal Coping Strategies',
-      items: ['Deep breathing (4-7-8)', 'Walking outside', 'Journaling'],
-    },
-    {
-      title: 'People & Places for Distraction',
-      items: ['Call Jordan (sibling)', 'Visit the park', 'Watch comfort show'],
-    },
-    {
-      title: 'Professional Contacts',
-      items: ['Dr. Sarah Chen: (555) 123-4567', 'Crisis Line: 988'],
-    },
-  ],
-  version: 2,
-};
-
-const MOCK_MEMORIES: PatientMemory[] = [
-  {
-    id: 'm1000000-0000-0000-0000-000000000001',
-    patientId: MOCK_PATIENT.id,
-    strategy: 'Walking helps when feeling overwhelmed',
-    category: 'COPING_STRATEGY',
-    description: 'Patient finds outdoor walks effective for reducing acute stress episodes',
-    approvedBy: 'c1000000-0000-0000-0000-000000000001',
-    approvedDate: '2025-10-15T00:00:00.000Z',
-    status: MemoryStatus.APPROVED,
-  },
-  {
-    id: 'm1000000-0000-0000-0000-000000000002',
-    patientId: MOCK_PATIENT.id,
-    strategy: 'Deadline pressure is a primary stressor',
-    category: 'TRIGGER',
-    description: 'Work deadlines consistently trigger stress and focus difficulties',
-    approvedBy: 'c1000000-0000-0000-0000-000000000001',
-    approvedDate: '2025-10-20T00:00:00.000Z',
-    status: MemoryStatus.APPROVED,
-  },
-];
-
-// ─── GET /:id ────────────────────────────────────────────────────────
-
-patientRouter.get('/:id', (req, res, next) => {
+patientRouter.get('/', async (req, res, next) => {
   try {
-    if (req.params.id !== MOCK_PATIENT.id) {
-      throw new AppError('Patient not found', 404);
-    }
-    res.json(MOCK_PATIENT);
+    const rows = await prisma.patient.findMany({
+      where: { tenantId: req.user!.tid },
+      include: patientInclude,
+    });
+    res.json(rows.map(toPatientResponse));
   } catch (err) {
     next(err);
   }
 });
 
-// ─── PUT /:id ────────────────────────────────────────────────────────
+// ─── GET /:id ────────────────────────────────────────────────────────
 
-patientRouter.put('/:id', (req, res, next) => {
+patientRouter.get('/:id', async (req, res, next) => {
   try {
-    if (req.params.id !== MOCK_PATIENT.id) {
-      throw new AppError('Patient not found', 404);
-    }
-    const updated = { ...MOCK_PATIENT, ...req.body, id: MOCK_PATIENT.id };
-    res.json(updated);
+    const row = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      include: patientInclude,
+    });
+    if (!row) throw new AppError('Patient not found', 404);
+    res.json(toPatientResponse(row));
   } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PATCH /:id ──────────────────────────────────────────────────────
+
+const updatePatientSchema = z.object({
+  pronouns: z.string().optional(),
+  language: z.string().optional(),
+  emergencyName: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  emergencyRel: z.string().optional(),
+  diagnosisPrimary: z.string().optional(),
+  diagnosisCode: z.string().optional(),
+  medications: z.array(z.object({ name: z.string(), dosage: z.string(), frequency: z.string() })).optional(),
+  allergies: z.array(z.string()).optional(),
+  preferences: z.object({
+    notifications: z.boolean().optional(),
+    language: z.string().optional(),
+    theme: z.string().optional(),
+  }).optional(),
+}).strict();
+
+patientRouter.patch('/:id', async (req, res, next) => {
+  try {
+    const data = updatePatientSchema.parse(req.body);
+    const row = await prisma.patient.update({
+      where: { id: req.params.id },
+      data,
+      include: patientInclude,
+    });
+    res.json(toPatientResponse(row));
+  } catch (err) {
+    // Prisma P2025 = record not found
+    if ((err as { code?: string }).code === 'P2025') {
+      next(new AppError('Patient not found', 404));
+      return;
+    }
+    next(err);
+  }
+});
+
+// ─── PUT /:id (legacy, forwards to PATCH) ───────────────────────────
+
+patientRouter.put('/:id', async (req, res, next) => {
+  try {
+    const row = await prisma.patient.update({
+      where: { id: req.params.id },
+      data: req.body,
+      include: patientInclude,
+    });
+    res.json(toPatientResponse(row));
+  } catch (err) {
+    if ((err as { code?: string }).code === 'P2025') {
+      next(new AppError('Patient not found', 404));
+      return;
+    }
     next(err);
   }
 });
@@ -217,27 +243,26 @@ const createSubmissionSchema = z.object({
   rawContent: z.string().min(1).max(50_000),
 });
 
-patientRouter.post('/:id/submissions', (req, res, next) => {
+patientRouter.post('/:id/submissions', async (req, res, next) => {
   try {
     const body = createSubmissionSchema.parse(req.body);
-    const submission: PatientSubmission = {
-      id: uuidv4(),
-      patientId: req.params.id,
-      tenantId: req.user!.tid,
-      source: body.source as SubmissionSource,
-      status: SubmissionStatus.PENDING,
-      rawContent: body.rawContent,
-      patientReport: { tone: 'pending', summary: 'Processing…', nextStep: '' },
-      clinicianReport: {
-        signalBand: SignalBand.LOW,
-        summary: 'Pending AI analysis',
-        evidence: [],
-        unknowns: [],
+    const row = await prisma.submission.create({
+      data: {
+        patientId: req.params.id,
+        source: body.source as SubmissionSource,
+        status: 'PENDING',
+        rawContent: body.rawContent,
+        patientTone: 'pending',
+        patientSummary: 'Processing…',
+        patientNextStep: '',
+        clinicianSignalBand: 'LOW',
+        clinicianSummary: 'Pending AI analysis',
+        clinicianEvidence: [],
+        clinicianUnknowns: [],
       },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    res.status(201).json(submission);
+      include: submissionInclude,
+    });
+    res.status(201).json(toSubmissionResponse(row));
   } catch (err) {
     next(err);
   }
@@ -245,14 +270,29 @@ patientRouter.post('/:id/submissions', (req, res, next) => {
 
 // ─── GET /:id/submissions ───────────────────────────────────────────
 
-patientRouter.get('/:id/submissions', (req, res, next) => {
+patientRouter.get('/:id/submissions', async (req, res, next) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
-    const items = MOCK_SUBMISSIONS.filter((s) => s.patientId === req.params.id);
-    const total = items.length;
-    const paginated = items.slice((page - 1) * limit, page * limit);
-    res.json({ data: paginated, page, limit, total });
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.submission.findMany({
+        where: { patientId: req.params.id },
+        include: submissionInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.submission.count({ where: { patientId: req.params.id } }),
+    ]);
+
+    res.json({
+      data: items.map(toSubmissionResponse),
+      page,
+      limit,
+      total,
+    });
   } catch (err) {
     next(err);
   }
@@ -260,73 +300,276 @@ patientRouter.get('/:id/submissions', (req, res, next) => {
 
 // ─── GET /:id/submissions/:subId ────────────────────────────────────
 
-patientRouter.get('/:id/submissions/:subId', (req, res, next) => {
+patientRouter.get('/:id/submissions/:subId', async (req, res, next) => {
   try {
-    const sub = MOCK_SUBMISSIONS.find(
-      (s) => s.id === req.params.subId && s.patientId === req.params.id,
-    );
-    if (!sub) throw new AppError('Submission not found', 404);
-    res.json(sub);
+    const row = await prisma.submission.findFirst({
+      where: { id: req.params.subId, patientId: req.params.id },
+      include: submissionInclude,
+    });
+    if (!row) throw new AppError('Submission not found', 404);
+    res.json(toSubmissionResponse(row));
   } catch (err) {
     next(err);
   }
 });
 
 // ─── GET /:id/session-prep ──────────────────────────────────────────
+// Construct a session-prep response from multiple real data sources.
 
-patientRouter.get('/:id/session-prep', (_req, res) => {
-  res.json(MOCK_SESSION_PREP);
+patientRouter.get('/:id/session-prep', async (req, res, next) => {
+  try {
+    const patientId = req.params.id;
+
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+      include: {
+        careTeam: {
+          where: { active: true, role: 'Primary Therapist' },
+          include: { clinician: true },
+        },
+        treatmentPlans: { where: { status: 'ACTIVE' }, select: { goal: true } },
+      },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+
+    const recentSubmissions = await prisma.submission.findMany({
+      where: { patientId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const approvedMemories = await prisma.memoryProposal.findMany({
+      where: { patientId, status: 'APPROVED' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    const mbcScores = await prisma.mBCScore.findMany({
+      where: { patientId },
+      orderBy: { date: 'desc' },
+      take: 2,
+    });
+
+    const latestNote = await prisma.sessionNote.findFirst({
+      where: { patientId },
+      orderBy: { date: 'desc' },
+      select: { assessment: true, plan: true },
+    });
+
+    // Derive topics from recent data
+    const topics: string[] = [];
+    const signalBands = recentSubmissions
+      .filter((s: { clinicianSignalBand: string | null }) => s.clinicianSignalBand)
+      .map((s: { clinicianSignalBand: string | null }) => s.clinicianSignalBand!);
+    if (signalBands.includes('ELEVATED') || signalBands.includes('MODERATE')) {
+      topics.push('Risk signal follow-up');
+    }
+    if (approvedMemories.length > 0) {
+      topics.push('Review approved memory items');
+    }
+    if (mbcScores.length > 0) {
+      topics.push(`MBC review (${mbcScores.map((s: { instrument: string; score: number }) => `${s.instrument}: ${s.score}`).join(', ')})`);
+    }
+    if (topics.length === 0) {
+      topics.push('General check-in');
+    }
+
+    const primaryTherapist = patient.careTeam[0];
+
+    const sessionPrep: SessionPrep = {
+      date: new Date().toISOString().slice(0, 10),
+      time: '10:00',
+      duration: 50,
+      format: 'Video',
+      therapistId: primaryTherapist?.clinicianId ?? '',
+      topics,
+      customTopics: [],
+      goals: patient.treatmentPlans.map((tp: { goal: string }) => tp.goal),
+      previousSummary: latestNote
+        ? `${latestNote.assessment} — Plan: ${latestNote.plan}`
+        : 'No previous session notes found.',
+    };
+
+    res.json(sessionPrep);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── PUT /:id/session-prep ──────────────────────────────────────────
+// Session-prep is constructed on-the-fly; PUT is a no-op passthrough.
 
 patientRouter.put('/:id/session-prep', (req, res) => {
-  const updated = { ...MOCK_SESSION_PREP, ...req.body };
-  res.json(updated);
+  res.json(req.body);
 });
 
 // ─── GET /:id/progress ──────────────────────────────────────────────
 
-patientRouter.get('/:id/progress', (_req, res) => {
-  res.json(MOCK_PROGRESS);
+patientRouter.get('/:id/progress', async (req, res, next) => {
+  try {
+    const row = await prisma.progressData.findUnique({
+      where: { patientId: req.params.id },
+    });
+    if (!row) throw new AppError('Progress data not found', 404);
+
+    const progress: ProgressData = {
+      streak: row.streak,
+      xp: row.xp,
+      level: row.level,
+      levelName: row.levelName,
+      badges: (row.badges as { name: string; earnedAt: string; icon: string }[]) ?? [],
+      weeklyMood: (row.weeklyMood as number[]) ?? [],
+      milestones: (row.milestones as { title: string; date: string; achieved: boolean }[]) ?? [],
+    };
+
+    res.json(progress);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── GET /:id/safety-plan ───────────────────────────────────────────
 
-patientRouter.get('/:id/safety-plan', (_req, res) => {
-  res.json(MOCK_SAFETY_PLAN);
+patientRouter.get('/:id/safety-plan', async (req, res, next) => {
+  try {
+    const row = await prisma.safetyPlan.findUnique({
+      where: { patientId: req.params.id },
+    });
+    if (!row) throw new AppError('Safety plan not found', 404);
+
+    const plan: SafetyPlan = {
+      id: row.id,
+      patientId: row.patientId,
+      reviewedDate: row.reviewedDate.toISOString(),
+      steps: (row.steps as { title: string; items: string[] }[]) ?? [],
+      version: row.version,
+    };
+
+    res.json(plan);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── PUT /:id/safety-plan ───────────────────────────────────────────
 
-patientRouter.put('/:id/safety-plan', (req, res) => {
-  const updated = { ...MOCK_SAFETY_PLAN, ...req.body, id: MOCK_SAFETY_PLAN.id };
-  res.json(updated);
+const updateSafetyPlanSchema = z.object({
+  steps: z.array(z.object({
+    title: z.string(),
+    items: z.array(z.string()),
+  })).optional(),
+  reviewedDate: z.string().datetime().optional(),
+}).strict();
+
+patientRouter.put('/:id/safety-plan', async (req, res, next) => {
+  try {
+    const data = updateSafetyPlanSchema.parse(req.body);
+    const row = await prisma.safetyPlan.upsert({
+      where: { patientId: req.params.id },
+      update: {
+        ...(data.steps !== undefined && { steps: data.steps }),
+        ...(data.reviewedDate !== undefined && { reviewedDate: new Date(data.reviewedDate) }),
+        version: { increment: 1 },
+      },
+      create: {
+        patientId: req.params.id,
+        steps: data.steps ?? [],
+        reviewedDate: data.reviewedDate ? new Date(data.reviewedDate) : new Date(),
+      },
+    });
+
+    const plan: SafetyPlan = {
+      id: row.id,
+      patientId: row.patientId,
+      reviewedDate: row.reviewedDate.toISOString(),
+      steps: (row.steps as { title: string; items: string[] }[]) ?? [],
+      version: row.version,
+    };
+
+    res.json(plan);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── GET /:id/memories ──────────────────────────────────────────────
 
-patientRouter.get('/:id/memories', (req, res) => {
-  const memories = MOCK_MEMORIES.filter(
-    (m) => m.patientId === req.params.id && m.status === MemoryStatus.APPROVED,
-  );
-  res.json(memories);
+patientRouter.get('/:id/memories', async (req, res, next) => {
+  try {
+    const rows = await prisma.memoryProposal.findMany({
+      where: { patientId: req.params.id, status: 'APPROVED' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const memories: PatientMemory[] = rows.map((m: {
+      id: string; patientId: string; statement: string; category: string;
+      evidence: unknown; reviewedById: string | null; reviewedAt: Date | null;
+      status: string;
+    }) => ({
+      id: m.id,
+      patientId: m.patientId,
+      strategy: m.statement,
+      category: m.category,
+      description: (m.evidence as string[])?.[0] ?? '',
+      approvedBy: m.reviewedById ?? '',
+      approvedDate: m.reviewedAt?.toISOString() ?? '',
+      status: m.status as MemoryStatus,
+    }));
+
+    res.json(memories);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── GET /:id/history ───────────────────────────────────────────────
+// Build a unified timeline from submissions and session notes.
 
-patientRouter.get('/:id/history', (req, res) => {
-  const timeline = [
-    { type: 'journal', date: '2025-12-10T14:30:00.000Z', summary: 'Journaled about work stress' },
-    { type: 'checkin', date: '2025-12-09T09:00:00.000Z', summary: 'Daily check-in completed' },
-    { type: 'session', date: '2025-12-08T10:00:00.000Z', summary: 'Therapy session with Dr. Chen' },
-    { type: 'voice', date: '2025-12-07T20:15:00.000Z', summary: 'Voice memo: evening reflection' },
-    { type: 'milestone', date: '2025-12-05T00:00:00.000Z', summary: 'Achieved 10-day streak' },
-  ];
-  res.json({ patientId: req.params.id, timeline });
+patientRouter.get('/:id/history', async (req, res, next) => {
+  try {
+    const patientId = req.params.id;
+
+    const submissions = await prisma.submission.findMany({
+      where: { patientId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, source: true, createdAt: true, patientSummary: true },
+    });
+
+    const notes = await prisma.sessionNote.findMany({
+      where: { patientId },
+      orderBy: { date: 'desc' },
+      take: 20,
+      select: { id: true, date: true, subjective: true },
+    });
+
+    const sourceTypeMap: Record<string, string> = {
+      JOURNAL: 'journal',
+      CHECKIN: 'checkin',
+      VOICE_MEMO: 'voice',
+    };
+
+    const timeline = [
+      ...submissions.map((s: { source: string; createdAt: Date; patientSummary: string | null }) => ({
+        type: sourceTypeMap[s.source] ?? 'submission',
+        date: s.createdAt.toISOString(),
+        summary: s.patientSummary ?? `${s.source} submission`,
+      })),
+      ...notes.map((n: { date: Date; subjective: string }) => ({
+        type: 'session',
+        date: n.date.toISOString(),
+        summary: n.subjective?.slice(0, 120) ?? 'Therapy session',
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    res.json({ patientId, timeline });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ─── GET /:id/resources ─────────────────────────────────────────────
+// Static resource list — no DB dependency.
 
 patientRouter.get('/:id/resources', (_req, res) => {
   res.json({
@@ -352,14 +595,32 @@ const checkinSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-patientRouter.post('/:id/checkin', (req, res, next) => {
+patientRouter.post('/:id/checkin', async (req, res, next) => {
   try {
     const body = checkinSchema.parse(req.body);
+    const rawContent = JSON.stringify(body);
+
+    const row = await prisma.submission.create({
+      data: {
+        patientId: req.params.id,
+        source: 'CHECKIN',
+        status: 'PENDING',
+        rawContent,
+        patientTone: 'pending',
+        patientSummary: 'Processing check-in…',
+        patientNextStep: '',
+        clinicianSignalBand: 'LOW',
+        clinicianSummary: 'Pending AI analysis',
+        clinicianEvidence: [],
+        clinicianUnknowns: [],
+      },
+    });
+
     const checkin: CheckinData & { id: string; patientId: string; createdAt: string } = {
       ...body,
-      id: uuidv4(),
+      id: row.id,
       patientId: req.params.id,
-      createdAt: new Date().toISOString(),
+      createdAt: row.createdAt.toISOString(),
     };
     res.status(201).json(checkin);
   } catch (err) {
@@ -375,16 +636,33 @@ const journalSchema = z.object({
   category: z.string().default('free-form'),
 });
 
-patientRouter.post('/:id/journal', (req, res, next) => {
+patientRouter.post('/:id/journal', async (req, res, next) => {
   try {
     const body = journalSchema.parse(req.body);
+
+    const row = await prisma.submission.create({
+      data: {
+        patientId: req.params.id,
+        source: 'JOURNAL',
+        status: 'PENDING',
+        rawContent: body.content,
+        patientTone: 'pending',
+        patientSummary: 'Processing journal entry…',
+        patientNextStep: '',
+        clinicianSignalBand: 'LOW',
+        clinicianSummary: 'Pending AI analysis',
+        clinicianEvidence: [],
+        clinicianUnknowns: [],
+      },
+    });
+
     const entry: JournalEntry = {
-      id: uuidv4(),
+      id: row.id,
       patientId: req.params.id,
       content: body.content,
       promptId: body.promptId,
       category: body.category,
-      createdAt: new Date().toISOString(),
+      createdAt: row.createdAt.toISOString(),
     };
     res.status(201).json(entry);
   } catch (err) {
@@ -394,16 +672,36 @@ patientRouter.post('/:id/journal', (req, res, next) => {
 
 // ─── POST /:id/voice ────────────────────────────────────────────────
 
-patientRouter.post('/:id/voice', (req, res, next) => {
+patientRouter.post('/:id/voice', async (req, res, next) => {
   try {
-    // In production this would handle multipart upload to S3
+    const audioKey = uuidv4();
+    const audioUrl = `https://s3.amazonaws.com/peacefull-uploads/voice/${audioKey}.webm`;
+
+    const row = await prisma.submission.create({
+      data: {
+        patientId: req.params.id,
+        source: 'VOICE_MEMO',
+        status: 'PENDING',
+        rawContent: 'Transcription pending…',
+        audioUrl,
+        audioDuration: 0,
+        patientTone: 'pending',
+        patientSummary: 'Processing voice memo…',
+        patientNextStep: '',
+        clinicianSignalBand: 'LOW',
+        clinicianSummary: 'Pending AI analysis',
+        clinicianEvidence: [],
+        clinicianUnknowns: [],
+      },
+    });
+
     const memo: VoiceMemo = {
-      id: uuidv4(),
+      id: row.id,
       patientId: req.params.id,
-      audioUrl: `https://s3.amazonaws.com/peacefull-uploads/voice/${uuidv4()}.webm`,
+      audioUrl,
       transcription: 'Transcription pending…',
       duration: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: row.createdAt.toISOString(),
     };
     res.status(201).json(memo);
   } catch (err) {
