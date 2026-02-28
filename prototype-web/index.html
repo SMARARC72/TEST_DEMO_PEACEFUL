@@ -645,6 +645,13 @@
             <span>Guided investor walkthrough</span>
           </div>
         </div>
+        <!-- Live API Status Badge -->
+        <div id="landing-live-badge" class="hidden mt-4 flex justify-center">
+          <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/15 border border-white/30 rounded-full text-sm text-white/90 font-medium backdrop-blur-sm">
+            <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+            Live API: Neon + Claude Sonnet 4
+          </span>
+        </div>
       </div>
     </div>
   </div>
@@ -1570,6 +1577,34 @@
           </ul>
         </div>
       </div>
+
+      <!-- Live Claude Chat Panel -->
+      <div id="live-chat-panel" class="bg-white rounded-2xl shadow-sm p-5 border-2 border-cyan-200">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <h3 class="font-semibold text-slate-800">Interactive Live Chat</h3>
+            <span id="live-chat-status" class="px-2 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold">Offline</span>
+          </div>
+          <button onclick="clearLiveChat()" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+        </div>
+        
+        <div id="live-chat-messages" class="space-y-3 max-h-96 overflow-y-auto mb-4 p-3 bg-slate-50 rounded-xl min-h-[120px]">
+          <div class="text-center text-sm text-slate-400 py-8">
+            <p>Sign in via Clinician Portal to enable live Claude AI chat.</p>
+            <p class="text-xs mt-1">Messages are powered by Claude Sonnet 4 via the live API.</p>
+          </div>
+        </div>
+        
+        <div class="flex gap-2">
+          <input id="live-chat-input" type="text" placeholder="Type a message to Claude AI..." 
+            class="flex-1 p-3 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
+            onkeydown="if(event.key==='Enter')sendLiveMessage()">
+          <button onclick="sendLiveMessage()" class="px-4 py-3 bg-cyan-600 text-white rounded-xl font-semibold text-sm hover:bg-cyan-700 transition-all">
+            Send
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Patient context: selected patient profile • Responses from Claude Sonnet 4 via Neon-backed API</p>
+      </div>
     </div>
   </div>
 
@@ -1818,12 +1853,21 @@
         </div>
         <h1 class="text-2xl font-bold text-slate-800">Clinician Portal</h1>
         <p class="text-slate-500">Sign in to access your dashboard</p>
+        <div id="login-live-badge" class="hidden mt-2">
+          <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            Live API Connected
+          </span>
+        </div>
       </div>
       
+      <div id="login-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
+      
       <div class="space-y-4">
-        <input type="email" value="dr.chen@example.com" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Email">
-        <input type="password" value="********" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Password">
-        <button data-nav="clinician-mfa" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Continue</button>
+        <input id="login-email" type="email" value="sarah.chen@peacefull.ai" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Email">
+        <input id="login-password" type="password" value="Demo2026!" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Password">
+        <button id="login-btn" onclick="handleLogin()" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Sign In</button>
+        <p class="text-xs text-center text-slate-400">Demo: sarah.chen@peacefull.ai / Demo2026!</p>
       </div>
     </div>
   </div>
@@ -1834,8 +1878,11 @@
         <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </div>
       <h1 class="text-2xl font-bold text-slate-800">Two-Factor Authentication</h1>
-      <p class="text-slate-500">Enter the code from your authenticator app</p>
+      <p class="text-slate-500">Enter the 6-digit code from your authenticator app</p>
+      <p id="mfa-hint" class="hidden mt-2 text-xs text-amber-600 font-medium"></p>
     </div>
+    
+    <div id="mfa-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 max-w-sm w-full"></div>
     
     <div class="flex gap-3 mb-8">
       <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 1" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -1846,7 +1893,7 @@
       <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="MFA digit 6" oninput="checkMFA()" class="w-14 h-14 text-center text-2xl font-bold bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500">
     </div>
     
-    <button id="mfa-btn" data-nav="clinician-caseload" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
+    <button id="mfa-btn" onclick="handleMfaVerify()" disabled class="w-full max-w-sm py-4 rounded-xl font-semibold bg-slate-700 text-slate-500 transition-all">Verify</button>
   </div>
 
   <!-- CLINICIAN CASELOAD -->
