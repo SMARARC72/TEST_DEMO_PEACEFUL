@@ -1,6 +1,6 @@
 /**
  * Actions Module - Event handlers and state update functions
- * Part of Peacefull.ai Demo technical debt cleanup
+ * Clinical platform action handlers
  */
 
 import { 
@@ -9,13 +9,8 @@ import {
   baselineTriageQueue,
   baselineMemoryItems,
   baselinePlanItems,
-  baselineEnterpriseItems,
-  baselineSecurityState,
-  baselineDecisionRoomState,
   baselineMBCScores,
   baselineAdherenceItems,
-  baselineGuidedDemoState,
-  baselineKPIData,
   baselineEscalationItems,
   baselineSessionPrep,
   baselineChatScript,
@@ -30,14 +25,9 @@ import {
   renderTriageQueue, 
   renderMemoryReview, 
   renderTreatmentPlan, 
-  renderEnterpriseGovernance, 
-  renderSecurityCommandCenter,
-  renderDecisionRoom,
   renderClinicianPatientProfile,
   renderMBCDashboard,
   renderAdherenceTracker,
-  renderGuidedDemo,
-  renderKPIPanel,
   renderEscalationProtocols,
   renderPatientHome,
   renderPatientProfile,
@@ -49,24 +39,13 @@ import {
   renderSafetyPlan,
   renderOnboarding,
   renderPatientMemoryView,
-  renderEvidenceBase,
   renderClinicianAnalytics,
   renderPopulationHealth,
   renderSessionNotes,
-  renderInvestorFinancials,
   renderRegulatoryHub,
   renderSDOHAssessment,
   renderCaregiverView
 } from './render.js';
-
-// ============ DEMO PANEL ============
-
-export function toggleDemoPanel() {
-  const panel = document.getElementById('demo-panel');
-  const chevron = document.getElementById('demo-chevron');
-  if (panel) panel.classList.toggle('collapsed');
-  if (chevron) chevron.style.transform = panel && panel.classList.contains('collapsed') ? 'rotate(180deg)' : 'rotate(0)';
-}
 
 // ============ CONSENT / JOURNAL ============
 
@@ -108,7 +87,7 @@ export function setPatientSessionProfile(profileId) {
   state.chatTyping = false;
   state.chatMessageIndex = 0;
   renderChat();
-  showToast(`Active patient demo profile: ${state.patientSessionProfile.toUpperCase()}`);
+  showToast(`Active patient profile: ${state.patientSessionProfile.toUpperCase()}`);
 }
 
 export function applyJournalPrompt(promptText) {
@@ -375,28 +354,6 @@ export function resetTreatmentPlanAction() {
   renderTreatmentPlan();
 }
 
-// ============ ENTERPRISE GOVERNANCE ============
-
-export function selectEnterprise(id) {
-  state.selectedEnterpriseId = id;
-  renderEnterpriseGovernance();
-}
-
-export function updateEnterpriseStatus(status) {
-  state.enterpriseItems = state.enterpriseItems.map(item => item.id === state.selectedEnterpriseId
-    ? { ...item, status, auditLog: [...item.auditLog, `Enterprise reviewer set status to ${status} at ${new Date().toISOString()}.`] }
-    : item
-  );
-  showToast(`Enterprise package status: ${status}`);
-  renderEnterpriseGovernance();
-}
-
-export function resetEnterpriseGovernanceAction() {
-  state.enterpriseItems = JSON.parse(JSON.stringify(baselineEnterpriseItems));
-  state.selectedEnterpriseId = state.enterpriseItems[0].id;
-  renderEnterpriseGovernance();
-}
-
 // ============ CLINICIAN PATIENT PROFILE ============
 
 export function selectPatientProfile(profileId) {
@@ -472,124 +429,6 @@ export function generateExport() {
   hideExportConfirmation();
 }
 
-// ============ ROI ============
-
-export function setROIMode(mode) {
-  state.roiMode = mode;
-  const pilotBtn = document.getElementById('roi-toggle-pilot');
-  const projBtn = document.getElementById('roi-toggle-proj');
-  if (pilotBtn) pilotBtn.className = mode === 'pilot' ? 'px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium' : 'px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium';
-  if (projBtn) projBtn.className = mode === 'projection' ? 'px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium' : 'px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium';
-  
-  const m1 = document.getElementById('roi-metric-1');
-  const m2 = document.getElementById('roi-metric-2');
-  const m3 = document.getElementById('roi-metric-3');
-  if (mode === 'pilot') {
-    if (m1) m1.textContent = '5.2';
-    if (m2) m2.textContent = '340%';
-    if (m3) m3.textContent = '$1.6M';
-  } else {
-    if (m1) m1.textContent = '4.0';
-    if (m2) m2.textContent = '250%';
-    if (m3) m3.textContent = '$1.2M';
-  }
-}
-
-export function toggleAssumption(id) {
-  const el = document.getElementById('assumption-' + id);
-  if (el) el.classList.toggle('hidden');
-}
-
-// ============ SECURITY COMMAND CENTER ============
-
-export function appendSecurityAuditEvent(event) {
-  state.securityState.auditLog.unshift({ ts: new Date().toISOString(), event });
-  if (state.securityState.auditLog.length > 200) state.securityState.auditLog.length = 200;
-  renderSecurityCommandCenter();
-}
-
-export function updateMfaMethod() {
-  const sel = document.getElementById('mfa-method');
-  if (!sel) return;
-  state.securityState.mfaMethod = sel.value;
-  appendSecurityAuditEvent(`MFA method set to ${sel.value}`);
-  renderSecurityCommandCenter();
-  showToast(`MFA method set to ${sel.value} (demo)`);
-}
-
-export function validateBackupCode() {
-  const input = document.getElementById('backup-code');
-  if (!input) return;
-  const v = input.value.trim();
-  const ok = v === state.securityState.backupCode || v === 'DEMO-0000';
-  appendSecurityAuditEvent(`Backup code validation attempted: ${ok ? 'ACCEPTED' : 'REJECTED'}`);
-  showToast(`Backup code ${ok ? 'accepted' : 'rejected'} (demo)`);
-  renderSecurityCommandCenter();
-}
-
-export function triggerStepUpAuth(reason) {
-  state.securityState.lastStepUp = { ts: new Date().toISOString(), reason };
-  appendSecurityAuditEvent(`Step-up auth triggered for ${reason}`);
-  showToast('Step-up authentication (simulated)');
-  renderSecurityCommandCenter();
-}
-
-export function validateSmartContractArtifact() {
-  const versionEl = document.getElementById('contract-version');
-  const signatureEl = document.getElementById('signature-hash');
-  const version = versionEl ? versionEl.value : '';
-  const signature = signatureEl ? signatureEl.value : '';
-  let status = 'REVIEW_REQUIRED';
-  if (/00$/.test(signature)) status = 'VALID';
-  if (/ff$/.test(signature)) status = 'INVALID';
-  state.securityState.contractValidation = { version, signature, status, evidence: `Simulated check on ${new Date().toISOString()}` };
-  appendSecurityAuditEvent(`Contract validation: ${status} (v${version})`);
-  renderSecurityCommandCenter();
-  showToast(`Contract ${status} (simulated)`);
-}
-
-export function verifyMerkleRootPath() {
-  const leafEl = document.getElementById('merkle-leaf');
-  const rootEl = document.getElementById('merkle-root');
-  const pathEl = document.getElementById('merkle-path');
-  const leaf = leafEl ? leafEl.value : '';
-  const root = rootEl ? rootEl.value : '';
-  const path = pathEl ? pathEl.value : '';
-  let result = 'UNKNOWN';
-  if (leaf && root && root.indexOf(leaf.slice(0,4)) !== -1) result = 'VALID';
-  else if (leaf && root && root.indexOf('dead') !== -1) result = 'INVALID';
-  else result = 'REVIEW_REQUIRED';
-  state.securityState.merkleVerification = { leaf, root, path, result };
-  appendSecurityAuditEvent(`Merkle verification: ${result}`);
-  renderSecurityCommandCenter();
-  showToast(`Merkle verification: ${result} (simulated)`);
-}
-
-export function resetSecurityStateAction() {
-  state.securityState = JSON.parse(JSON.stringify(baselineSecurityState));
-  renderSecurityCommandCenter();
-  appendSecurityAuditEvent('Security demo state reset to baseline');
-}
-
-// ============ DECISION ROOM ============
-
-export function generateProcurementPacket() {
-  const packet = {
-    controlsChecklist: ['MFA enabled', 'Audit logging', 'BAA-compliant cloud', 'Segregation enforced'],
-    latestAuditHighlights: state.securityState.auditLog.slice(0,3).map(e => e.event),
-    knownUnknowns: ['Regulatory approval timing', 'Third-party contract reviews pending'],
-    decisionRecommendation: computeReadinessVerdict()
-  };
-  state.decisionRoomState.packet = packet;
-  renderDecisionRoom();
-  showToast('Procurement packet generated (demo)');
-}
-
-export function resetDecisionRoomStateAction() {
-  state.decisionRoomState = JSON.parse(JSON.stringify(baselineDecisionRoomState));
-  renderDecisionRoom();
-}
-
 // ============ MBC DASHBOARD (F1) ============
 
 export function selectMBC(id) {
@@ -640,36 +479,6 @@ export function resetAdherenceAction() {
   renderAdherenceTracker();
 }
 
-// ============ GUIDED DEMO (F3) ============
-
-export function startGuidedDemo() {
-  state.guidedDemoState.active = true;
-  state.guidedDemoState.currentStep = 0;
-  state.guidedDemoState.completedSteps = [];
-  renderGuidedDemo();
-  showToast('Guided demo started — follow the highlighted steps');
-}
-
-export function advanceGuidedDemo() {
-  const gs = state.guidedDemoState;
-  if (!gs.active) return;
-  if (!gs.completedSteps.includes(gs.currentStep)) {
-    gs.completedSteps.push(gs.currentStep);
-  }
-  if (gs.currentStep < gs.steps.length - 1) {
-    gs.currentStep++;
-  } else {
-    gs.active = false;
-    showToast('Guided demo complete! All steps covered.');
-  }
-  renderGuidedDemo();
-}
-
-export function resetGuidedDemoAction() {
-  state.guidedDemoState = JSON.parse(JSON.stringify(baselineGuidedDemoState));
-  renderGuidedDemo();
-}
-
 // ============ ESCALATION PROTOCOLS (F5) ============
 
 export function selectEscalation(id) {
@@ -707,9 +516,9 @@ export function resetEscalationAction() {
   renderEscalationProtocols();
 }
 
-// ============ FULL DEMO RESET ============
+// ============ STATE RESET ============
 
-export function resetDemo() {
+export function resetState() {
   const sysEl = document.getElementById('system-status'); if (sysEl) sysEl.value = 'normal';
   const tierEl = document.getElementById('safety-tier'); if (tierEl) tierEl.value = 'T2';
   const inboxEl = document.getElementById('inbox-status'); if (inboxEl) inboxEl.value = 'OPEN';
@@ -736,17 +545,6 @@ export function resetDemo() {
   state.selectedPlanId = state.planItems[0].id;
   renderTreatmentPlan();
   
-  state.enterpriseItems = JSON.parse(JSON.stringify(baselineEnterpriseItems));
-  state.selectedEnterpriseId = state.enterpriseItems[0].id;
-  renderEnterpriseGovernance();
-  
-  state.securityState = JSON.parse(JSON.stringify(baselineSecurityState));
-  renderSecurityCommandCenter();
-  appendSecurityAuditEvent('Security demo state reset to baseline');
-  
-  state.decisionRoomState = JSON.parse(JSON.stringify(baselineDecisionRoomState));
-  renderDecisionRoom();
-
   state.selectedPatientProfile = 'maria';
   renderClinicianPatientProfile();
   state.patientSessionProfile = 'maria';
@@ -761,12 +559,6 @@ export function resetDemo() {
   state.adherenceItems = JSON.parse(JSON.stringify(baselineAdherenceItems));
   state.selectedAdherenceId = state.adherenceItems[0].id;
   renderAdherenceTracker();
-
-  state.guidedDemoState = JSON.parse(JSON.stringify(baselineGuidedDemoState));
-  renderGuidedDemo();
-
-  state.kpiData = JSON.parse(JSON.stringify(baselineKPIData));
-  renderKPIPanel();
 
   state.escalationItems = JSON.parse(JSON.stringify(baselineEscalationItems));
   state.selectedEscalationId = state.escalationItems[0].id;
@@ -788,8 +580,6 @@ export function resetDemo() {
   state.selectedJournalPrompt = null;
   state.patientMemoryFilter = 'All';
   state.expandedPatientMemoryId = null;
-  state.evidenceFilter = 'All';
-  state.expandedEvidenceId = null;
 
   // Reset new Phase 6+ states
   state.clinicianProfile = JSON.parse(JSON.stringify(baselineClinicianProfile));
@@ -803,12 +593,11 @@ export function resetDemo() {
   renderClinicianAnalytics();
   renderPopulationHealth();
   renderSessionNotes();
-  renderInvestorFinancials();
   renderRegulatoryHub();
   renderSDOHAssessment();
   renderCaregiverView();
 
-  showToast('Demo reset to defaults');
+  showToast('State reset to defaults');
 }
 
 // ============ SESSION PREP ACTIONS (F-P2) ============
@@ -934,18 +723,6 @@ export function setPatientMemoryFilter(filter) {
 export function togglePatientMemoryExpand(id) {
   state.expandedPatientMemoryId = state.expandedPatientMemoryId === id ? null : id;
   renderPatientMemoryView();
-}
-
-// ============ EVIDENCE ACTIONS (F-E1) ============
-
-export function setEvidenceFilter(filter) {
-  state.evidenceFilter = filter;
-  renderEvidenceBase();
-}
-
-export function toggleEvidenceExpand(id) {
-  state.expandedEvidenceId = state.expandedEvidenceId === id ? null : id;
-  renderEvidenceBase();
 }
 
 // ============ JOURNAL FILTER ACTIONS (F-PE2) ============

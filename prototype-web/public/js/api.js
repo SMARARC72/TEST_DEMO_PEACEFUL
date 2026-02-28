@@ -352,17 +352,7 @@ export async function getAnalyticsAdherence() {
 
 // ─── Compliance Endpoints ───────────────────────────────────────────
 
-export async function getCompliancePosture() {
-  return apiFetch('/compliance/posture');
-}
-
 export async function getAuditLog(params = {}) {
   const qs = new URLSearchParams(params).toString();
   return apiFetch(`/compliance/audit-log${qs ? `?${qs}` : ''}`);
-}
-
-// ─── Enterprise Endpoints ───────────────────────────────────────────
-
-export async function getEnterpriseConfig() {
-  return apiFetch('/enterprise/config');
 }

@@ -1,6 +1,5 @@
 /**
- * Main Entry Point - Exposes all demo functions globally for onclick handlers
- * Part of Peacefull.ai Demo technical debt cleanup
+ * Main Entry Point - Exposes functions globally for onclick handlers
  */
 
 // Import all modules
@@ -11,14 +10,9 @@ import {
   renderTriageQueue,
   renderMemoryReview,
   renderTreatmentPlan,
-  renderEnterpriseGovernance,
-  renderSecurityCommandCenter,
-  renderDecisionRoom,
   renderClinicianPatientProfile,
   renderMBCDashboard,
   renderAdherenceTracker,
-  renderGuidedDemo,
-  renderKPIPanel,
   renderEscalationProtocols,
   renderPatientHome,
   renderPatientProfile,
@@ -30,11 +24,9 @@ import {
   renderSafetyPlan,
   renderOnboarding,
   renderPatientMemoryView,
-  renderEvidenceBase,
   renderClinicianAnalytics,
   renderPopulationHealth,
   renderSessionNotes,
-  renderInvestorFinancials,
   renderRegulatoryHub,
   renderSDOHAssessment,
   renderCaregiverView
@@ -56,9 +48,6 @@ import {
 // Expose to global scope for inline onclick handlers
 window.showScreen = showScreen;
 window.showToast = showToast;
-
-// Demo panel
-window.toggleDemoPanel = actions.toggleDemoPanel;
 
 // Consent/journal
 window.checkConsents = actions.checkConsents;
@@ -101,11 +90,6 @@ window.selectPlan = actions.selectPlan;
 window.updatePlanStatus = actions.updatePlanStatus;
 window.resetTreatmentPlan = actions.resetTreatmentPlanAction;
 
-// Enterprise governance
-window.selectEnterprise = actions.selectEnterprise;
-window.updateEnterpriseStatus = actions.updateEnterpriseStatus;
-window.resetEnterpriseGovernance = actions.resetEnterpriseGovernanceAction;
-
 // Inbox/draft actions
 window.acknowledgeAlert = actions.acknowledgeAlert;
 window.resolveAlert = actions.resolveAlert;
@@ -121,22 +105,6 @@ window.showExportConfirmation = actions.showExportConfirmation;
 window.hideExportConfirmation = actions.hideExportConfirmation;
 window.generateExport = actions.generateExport;
 
-// ROI
-window.setROIMode = actions.setROIMode;
-window.toggleAssumption = actions.toggleAssumption;
-
-// Security Command Center
-window.updateMfaMethod = actions.updateMfaMethod;
-window.validateBackupCode = actions.validateBackupCode;
-window.triggerStepUpAuth = actions.triggerStepUpAuth;
-window.validateSmartContractArtifact = actions.validateSmartContractArtifact;
-window.verifyMerkleRootPath = actions.verifyMerkleRootPath;
-window.resetSecurityState = actions.resetSecurityStateAction;
-
-// Decision Room
-window.generateProcurementPacket = actions.generateProcurementPacket;
-window.resetDecisionRoomState = actions.resetDecisionRoomStateAction;
-
 // MBC Dashboard (F1)
 window.selectMBC = actions.selectMBC;
 window.addMBCNote = actions.addMBCNote;
@@ -146,11 +114,6 @@ window.resetMBCDashboard = actions.resetMBCDashboardAction;
 window.selectAdherence = actions.selectAdherence;
 window.logAdherenceCompletion = actions.logAdherenceCompletion;
 window.resetAdherence = actions.resetAdherenceAction;
-
-// Guided Demo (F3)
-window.startGuidedDemo = actions.startGuidedDemo;
-window.advanceGuidedDemo = actions.advanceGuidedDemo;
-window.resetGuidedDemo = actions.resetGuidedDemoAction;
 
 // Escalation Protocols (F5)
 window.selectEscalation = actions.selectEscalation;
@@ -166,19 +129,13 @@ window.signSessionNote = actions.signSessionNote;
 window.startBreathing = actions.startBreathing;
 window.stopBreathing = actions.stopBreathing;
 
-// Full demo reset
-window.resetDemo = actions.resetDemo;
-
-// State accessor (for debugging if needed)
-window.demoState = state;
-
 // ─── Live API Actions ─────────────────────────────────────────────
 
 // MFA challenge state (stored between login and MFA verify screens)
 let mfaChallengeState = null;
 
 /**
- * Handle clinician login — calls live API if available, falls back to demo flow.
+ * Handle clinician login — calls live API if available, falls back to offline flow.
  */
 window.handleLogin = async function handleLogin() {
   const email = document.getElementById('login-email')?.value?.trim();
@@ -248,7 +205,7 @@ window.handleMfaVerify = async function handleMfaVerify() {
     } else {
       // Demo fallback — any 6 digits works
       showScreen('clinician-caseload');
-      showToast('Clinician authenticated (demo mode)');
+      showToast('Clinician authenticated (offline mode)');
     }
   } catch (err) {
     console.error('[mfa] Error:', err);
@@ -427,14 +384,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTriageQueue();
   renderMemoryReview();
   renderTreatmentPlan();
-  renderEnterpriseGovernance();
-  renderSecurityCommandCenter();
-  renderDecisionRoom();
   renderClinicianPatientProfile();
   renderMBCDashboard();
   renderAdherenceTracker();
-  renderGuidedDemo();
-  renderKPIPanel();
   renderEscalationProtocols();
 
   // Phase 2+ renders
@@ -447,13 +399,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSafetyPlan();
   renderOnboarding();
   renderPatientMemoryView();
-  renderEvidenceBase();
 
   // Phase 6+ renders
   renderClinicianAnalytics();
   renderPopulationHealth();
   renderSessionNotes();
-  renderInvestorFinancials();
   renderRegulatoryHub();
   renderSDOHAssessment();
   renderCaregiverView();
@@ -474,5 +424,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
   
-  console.log('Peacefull.ai Demo initialized (modular + API integration)');
+  console.log('Peacefull.ai Clinical Platform initialized');
 });

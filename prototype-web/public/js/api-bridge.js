@@ -7,7 +7,7 @@ import {
   isApiAvailable, isAuthenticated, getMe, getCurrentUser,
   getPatients, getClinicianDashboard, getClinicianCaseload,
   getClinicianTriage, getEscalations, getAnalyticsOverview,
-  getCompliancePosture, getAuditLog, getEnterpriseConfig,
+  getAuditLog,
   getAnalyticsMBC, getAnalyticsAdherence,
   aiChat as apiAiChat, aiSummarize as apiAiSummarize,
   apiFetch,

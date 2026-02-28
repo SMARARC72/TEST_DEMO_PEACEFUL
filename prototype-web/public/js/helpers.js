@@ -1,6 +1,6 @@
 /**
- * Helpers Module - Utility functions for the demo
- * Part of Peacefull.ai Demo technical debt cleanup
+ * Helpers Module - Utility functions
+ * Clinical platform utilities
  */
 
 import { state } from './state.js';
@@ -26,12 +26,6 @@ export function planBadgeClass(status) {
   if (status === 'REVIEWED') return 'bg-emerald-100 text-emerald-700';
   if (status === 'HOLD') return 'bg-amber-100 text-amber-700';
   return 'bg-slate-100 text-slate-700';
-}
-
-export function enterpriseBadgeClass(status) {
-  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-700';
-  if (status === 'CONDITIONAL') return 'bg-amber-100 text-amber-700';
-  return 'bg-red-100 text-red-700';
 }
 
 export function mbcSeverityClass(severity) {
@@ -94,20 +88,7 @@ export function getSelectedPlan() {
   return state.planItems.find(item => item.id === state.selectedPlanId) || state.planItems[0];
 }
 
-export function getSelectedEnterprise() {
-  return state.enterpriseItems.find(i => i.id === state.selectedEnterpriseId) || state.enterpriseItems[0];
-}
-
 // ============ COMPUTATION HELPERS ============
-
-export function computeRiskPosture() {
-  const tierEl = document.getElementById('safety-tier');
-  const tier = tierEl ? tierEl.value : 'T2';
-  const escalated = state.triageQueue.some(i => i.status === 'ESCALATED' || i.signalBand === 'ELEVATED');
-  if (tier === 'T3' || escalated) return 'Elevated';
-  if (tier === 'T2') return 'Moderate';
-  return 'Guarded';
-}
 
 export function computeReadinessVerdict() {
   const signalEl = document.getElementById('enterprise-readiness-signal');
@@ -115,15 +96,6 @@ export function computeReadinessVerdict() {
   if (signal >= 70) return 'APPROVED';
   if (signal >= 40) return 'CONDITIONAL';
   return 'REVIEW_REQUIRED';
-}
-
-export function computePilotExpansionScore() {
-  const timeSavedEl = document.getElementById('roi-metric-1');
-  const readinessEl = document.getElementById('enterprise-readiness-signal');
-  const timeSaved = timeSavedEl ? parseFloat(timeSavedEl.textContent) || 0 : 0;
-  const readinessSignal = readinessEl ? parseInt(readinessEl.textContent) || 0 : 0;
-  const unresolvedHigh = state.triageQueue.filter(item => item.status !== 'RESOLVED' && item.signalBand === 'ELEVATED').length;
-  return Math.round(timeSaved + readinessSignal * 0.2 + unresolvedHigh * 5);
 }
 
 // ============ UI HELPERS ============
@@ -171,9 +143,6 @@ export function showScreen(screenId, options = {}) {
     heading.focus({ preventScroll: true });
   }
   // Trigger render for decision room
-  if (screenId === 'decision-room' && typeof window.renderDecisionRoom === 'function') {
-    window.renderDecisionRoom();
-  }
 }
 
 export function initScreenRouting() {

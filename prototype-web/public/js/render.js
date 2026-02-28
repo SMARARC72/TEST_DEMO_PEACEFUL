@@ -1,14 +1,13 @@
 /**
  * Render Module - All render functions for updating the DOM
- * Part of Peacefull.ai Demo technical debt cleanup
+ * Clinical platform render functions
  */
 
-import { state, baselinePatientProfiles, baselineSessionPrep, baselineProgressData, baselineResources, baselineSafetyPlan, baselineOnboardingSteps, baselineChatScript, baselineHistoryEntries, baselinePatientMemories, baselineJournalPrompts, baselineEvidenceItems, baselineClinicianProfile, baselinePopulationHealth, baselineInvestorFinancials, baselineRegulatoryStatus, baselineSDOHData, baselineSessionNotes } from './state.js';
+import { state, baselinePatientProfiles, baselineSessionPrep, baselineProgressData, baselineResources, baselineSafetyPlan, baselineOnboardingSteps, baselineChatScript, baselineHistoryEntries, baselinePatientMemories, baselineJournalPrompts, baselineClinicianProfile, baselinePopulationHealth, baselineRegulatoryStatus, baselineSDOHData, baselineSessionNotes } from './state.js';
 import {
   triageBadgeClass,
   memoryBadgeClass,
   planBadgeClass,
-  enterpriseBadgeClass,
   mbcSeverityClass,
   mbcTrendIcon,
   adherenceBadgeClass,
@@ -17,13 +16,10 @@ import {
   getSelectedTriageItem,
   getSelectedMemory,
   getSelectedPlan,
-  getSelectedEnterprise,
   getSelectedMBC,
   getSelectedAdherence,
   getSelectedEscalation,
-  computeRiskPosture,
-  computeReadinessVerdict,
-  computePilotExpansionScore
+  computeReadinessVerdict
 } from './helpers.js';
 
 // ============ SUBMISSION SURFACES ============
@@ -131,10 +127,8 @@ export function renderMemoryReview() {
 
   const prepReduction = `${Math.min(12 + approved.length * 3, 24)}%`;
   const linkEl = document.getElementById('memory-roi-link');
-  const roiSignal = document.querySelector('#roi-dashboard #roi-memory-signal');
   const profileList = document.getElementById('clinician-profile-memory');
   if (linkEl) linkEl.textContent = prepReduction;
-  if (roiSignal) roiSignal.textContent = prepReduction;
   if (profileList) {
     profileList.innerHTML = approved.length
       ? approved.map(item => `<li>${item.patient}: ${item.statement}</li>`).join('')
@@ -185,88 +179,6 @@ export function renderTreatmentPlan() {
       ? reviewed.map(item => `<li>${item.patient}: ${item.goal}</li>`).join('')
       : '<li>No reviewed treatment plan items yet.</li>';
   }
-}
-
-// ============ ENTERPRISE GOVERNANCE ============
-
-export function renderEnterpriseGovernance() {
-  const tbody = document.getElementById('enterprise-table-body');
-  const detail = document.getElementById('enterprise-detail');
-  if (!tbody || !detail) return;
-
-  tbody.innerHTML = state.enterpriseItems.map(item => `
-    <tr onclick="selectEnterprise('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedEnterpriseId ? 'bg-sky-50' : ''}">
-      <td class="py-2 pr-2">${item.tenant}</td>
-      <td class="py-2 pr-2">${item.sso}</td>
-      <td class="py-2 pr-2">${item.rbac}</td>
-      <td class="py-2 pr-2">${item.audit}</td>
-      <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${enterpriseBadgeClass(item.status)}">${item.status}</span></td>
-    </tr>`).join('');
-
-  const selected = getSelectedEnterprise();
-  detail.innerHTML = `
-    <p><strong>Tenant:</strong> ${selected.tenant}</p>
-    <p><strong>Status:</strong> ${selected.status}</p>
-    <p><strong>Notes:</strong> ${selected.notes}</p>
-    <p><strong>Evidence:</strong> ${selected.evidence.join(', ')}</p>
-    <p><strong>Last Audit Entry:</strong> ${selected.auditLog[selected.auditLog.length - 1]}</p>
-  `;
-
-  const approvedCount = state.enterpriseItems.filter(i => i.status === 'APPROVED').length;
-  const readiness = `${Math.min(35 + approvedCount * 15, 80)}%`;
-  const countEl = document.getElementById('enterprise-approved-count');
-  const signalEl = document.getElementById('enterprise-readiness-signal');
-  const roiEl = document.getElementById('roi-enterprise-signal');
-  if (countEl) countEl.textContent = String(approvedCount);
-  if (signalEl) signalEl.textContent = readiness;
-  if (roiEl) roiEl.textContent = readiness;
-}
-
-// ============ SECURITY COMMAND CENTER ============
-
-export function renderSecurityCommandCenter() {
-  const logEl = document.getElementById('security-audit-log');
-  if (logEl) {
-    logEl.innerHTML = state.securityState.auditLog.map(e => `<div class="py-2 border-b"><div class="text-xs text-slate-500">${e.ts}</div><div class="text-sm text-slate-800">${e.event}</div></div>`).join('');
-  }
-  const contractResult = document.getElementById('contract-result');
-  if (contractResult) contractResult.textContent = `Status: ${state.securityState.contractValidation.status}`;
-  const merkleResult = document.getElementById('merkle-result');
-  if (merkleResult) merkleResult.textContent = `Result: ${state.securityState.merkleVerification.result}`;
-  const idPost = document.getElementById('posture-identity'); 
-  if (idPost) idPost.textContent = String(state.securityState.posture.identity);
-  const cPost = document.getElementById('posture-contract'); 
-  if (cPost) cPost.textContent = String(state.securityState.posture.contract);
-  const dPost = document.getElementById('posture-data'); 
-  if (dPost) dPost.textContent = String(state.securityState.posture.data);
-  const mfaSelect = document.getElementById('mfa-method'); 
-  if (mfaSelect) mfaSelect.value = state.securityState.mfaMethod;
-  const backupInput = document.getElementById('backup-code'); 
-  if (backupInput) backupInput.value = '';
-}
-
-// ============ DECISION ROOM ============
-
-export function renderDecisionRoom() {
-  const riskEl = document.getElementById('risk-posture');
-  if (riskEl) riskEl.textContent = computeRiskPosture();
-  const suppEl = document.getElementById('suppression-reasons');
-  if (suppEl) {
-    const recEl = document.getElementById('rec-status');
-    const sup = recEl ? recEl.value : '';
-    suppEl.textContent = sup === 'SUPPRESSED' ? 'Recommendation suppressed due to open T2 items' : '';
-  }
-  const govEl = document.getElementById('governance-audits');
-  if (govEl) govEl.textContent = state.enterpriseItems.map(i => i.auditLog.slice(-1)[0] || '').join('; ');
-  const verdictEl = document.getElementById('readiness-verdict');
-  if (verdictEl) verdictEl.textContent = computeReadinessVerdict();
-  const timeEl = document.getElementById('roi-time-saved');
-  const roiMetricEl = document.getElementById('roi-metric-1');
-  if (timeEl) timeEl.textContent = roiMetricEl ? roiMetricEl.textContent : '0';
-  const scoreEl = document.getElementById('pilot-score');
-  if (scoreEl) scoreEl.textContent = computePilotExpansionScore();
-  const packetEl = document.getElementById('procurement-packet');
-  if (packetEl) packetEl.textContent = state.decisionRoomState.packet ? JSON.stringify(state.decisionRoomState.packet, null, 2) : '';
 }
 
 // ============ CLINICIAN PATIENT PROFILE ============
@@ -542,63 +454,6 @@ export function renderAdherenceTracker() {
   const riskEl = document.getElementById('adherence-at-risk-count');
   if (onEl) onEl.textContent = String(onTrack);
   if (riskEl) riskEl.textContent = String(atRisk);
-}
-
-// ============ GUIDED DEMO (F3) ============
-
-export function renderGuidedDemo() {
-  const stepsEl = document.getElementById('guided-demo-steps');
-  const progressEl = document.getElementById('guided-demo-progress');
-  const currentLabel = document.getElementById('guided-demo-current-label');
-  if (!stepsEl) return;
-
-  const gs = state.guidedDemoState;
-  const totalSteps = gs.steps.length;
-  const completedCount = gs.completedSteps.length;
-  const pct = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
-
-  if (progressEl) progressEl.style.width = `${pct}%`;
-  if (currentLabel) currentLabel.textContent = gs.active && gs.currentStep < totalSteps ? gs.steps[gs.currentStep].label : (completedCount === totalSteps ? 'Demo Complete' : 'Not Started');
-
-  stepsEl.innerHTML = gs.steps.map((step, i) => {
-    const isCompleted = gs.completedSteps.includes(i);
-    const isCurrent = gs.active && gs.currentStep === i;
-    const dotClass = isCompleted ? 'completed' : (isCurrent ? 'active' : '');
-    return `
-      <div class="script-step">
-        <div class="script-dot ${dotClass}">${isCompleted ? '✓' : i + 1}</div>
-        <div class="bg-white rounded-xl shadow-sm p-4 ${isCurrent ? 'ring-2 ring-emerald-500' : ''}">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold text-slate-800">${step.label}</h3>
-            <span class="text-sm text-slate-500">${step.duration}</span>
-          </div>
-          <p class="text-sm text-slate-600 mb-3">${step.description}</p>
-          ${isCurrent ? `<button data-nav="${step.screen}" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Go to Screen →</button>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ============ KPI PANEL (F4) ============
-
-export function renderKPIPanel() {
-  const container = document.getElementById('kpi-metrics-container');
-  if (!container) return;
-
-  container.innerHTML = state.kpiData.metrics.map(m => `
-    <div class="bg-white rounded-2xl shadow-sm p-6 border-l-4 ${m.confidence === 'High' ? 'border-green-500' : m.confidence.startsWith('Low') ? 'border-red-400' : 'border-amber-400'}">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="font-semibold text-slate-800 text-sm">${m.label}</h3>
-        <span class="px-2 py-1 rounded text-xs font-semibold ${m.confidence === 'High' ? 'bg-green-100 text-green-700' : m.confidence.startsWith('Low') ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">${m.confidence}</span>
-      </div>
-      <p class="text-2xl font-bold text-slate-900 mb-1">${m.value}</p>
-      <p class="text-sm text-slate-500 mb-3">Baseline: ${m.baseline}</p>
-      <div class="assumptions-drawer">
-        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Assumption</p>
-        <p class="text-sm text-slate-700">${m.assumption}</p>
-        <p class="text-xs text-slate-500 mt-2">Source: ${m.source}</p>
-      </div>
-    </div>`).join('');
 }
 
 // ============ ESCALATION PROTOCOLS (F5) ============
@@ -1037,47 +892,6 @@ export function renderPatientMemoryView() {
   });
 }
 
-// ============ EVIDENCE BASE (F-E1) ============
-
-export function renderEvidenceBase() {
-  const el = document.getElementById('evidence-base-content');
-  if (!el) return;
-  const filter = state.evidenceFilter;
-  const items = filter === 'All' ? baselineEvidenceItems : baselineEvidenceItems.filter(e => e.domain === filter);
-
-  el.innerHTML = items.map(e => {
-    const expanded = state.expandedEvidenceId === e.id;
-    return `
-      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <button data-evidence-expand="${e.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
-          <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-xl">📖</div>
-          <div class="flex-1">
-            <p class="font-semibold text-slate-800 text-sm">${e.title}</p>
-            <p class="text-xs text-slate-500">${e.domain}</p>
-          </div>
-          <svg class="w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        ${expanded ? `
-          <div class="px-4 pb-4 border-t">
-            <p class="text-sm text-slate-700 mt-2">${e.citation}</p>
-            ${e.doi ? `<p class="text-xs text-blue-600 mt-1">DOI: ${e.doi}</p>` : ''}
-            <div class="mt-2 flex gap-1 flex-wrap">${e.usedIn.map(u => `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">${u}</span>`).join('')}</div>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-
-  // update filter bar
-  document.querySelectorAll('[data-evidence-filter]').forEach(btn => {
-    if (btn.dataset.evidenceFilter === filter) {
-      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white';
-    } else {
-      btn.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700';
-    }
-  });
-}
-
 // ============ CLINICIAN ANALYTICS ============
 
 export function renderClinicianAnalytics() {
@@ -1239,75 +1053,6 @@ export function renderSessionNotes() {
   `;
 }
 
-// ============ INVESTOR FINANCIALS ============
-
-export function renderInvestorFinancials() {
-  const el = document.getElementById('investor-financials-content');
-  if (!el) return;
-  const f = state.investorFinancials;
-
-  el.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-      <h3 class="font-semibold text-slate-800 mb-4">Total Addressable Market</h3>
-      <div class="grid grid-cols-3 gap-4">
-        <div class="text-center p-4 bg-emerald-50 rounded-xl"><p class="text-3xl font-bold text-emerald-800">${f.tam.value}</p><p class="text-xs text-slate-600 mt-1">TAM</p><p class="text-xs text-slate-500">${f.tam.description}</p></div>
-        <div class="text-center p-4 bg-blue-50 rounded-xl"><p class="text-3xl font-bold text-blue-700">${f.sam.value}</p><p class="text-xs text-slate-600 mt-1">SAM</p><p class="text-xs text-slate-500">${f.sam.description}</p></div>
-        <div class="text-center p-4 bg-green-50 rounded-xl"><p class="text-3xl font-bold text-green-700">${f.som.value}</p><p class="text-xs text-slate-600 mt-1">SOM</p><p class="text-xs text-slate-500">${f.som.description}</p></div>
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-      <h3 class="font-semibold text-slate-800 mb-4">Unit Economics</h3>
-      <div class="grid grid-cols-4 gap-3">
-        ${Object.entries(f.unitEconomics).map(([key, val]) => {
-          const labels = { arpu: 'ARPU', cac: 'CAC', ltv: 'LTV', ltvCacRatio: 'LTV:CAC', grossMargin: 'Gross Margin', paybackMonths: 'Payback', churnRate: 'Monthly Churn' };
-          return `<div class="p-3 bg-slate-50 rounded-xl text-center"><p class="text-lg font-bold text-slate-800">${val}</p><p class="text-xs text-slate-500">${labels[key] || key}</p></div>`;
-        }).join('')}
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-      <h3 class="font-semibold text-slate-800 mb-4">Competitive Matrix</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead><tr class="border-b">
-            <th class="text-left p-2 text-slate-600">Platform</th>
-            <th class="p-2 text-slate-600">Clinician</th>
-            <th class="p-2 text-slate-600">MBC</th>
-            <th class="p-2 text-slate-600">Memory</th>
-            <th class="p-2 text-slate-600">Safety</th>
-            <th class="p-2 text-slate-600">Enterprise</th>
-            <th class="p-2 text-slate-600">FHIR</th>
-          </tr></thead>
-          <tbody>
-            ${f.competitiveMatrix.map(c => `
-              <tr class="border-b ${c.name === 'Peacefull.ai' ? 'bg-emerald-50 font-semibold' : ''}">
-                <td class="p-2 text-slate-800">${c.name}</td>
-                <td class="p-2 text-center">${c.clinician ? '✅' : '❌'}</td>
-                <td class="p-2 text-center">${c.mbc ? '✅' : '❌'}</td>
-                <td class="p-2 text-center">${c.memory ? '✅' : '❌'}</td>
-                <td class="p-2 text-center">${c.safety ? '✅' : '❌'}</td>
-                <td class="p-2 text-center">${c.enterprise ? '✅' : '❌'}</td>
-                <td class="p-2 text-center">${c.fhir ? '✅' : '❌'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-6">
-      <h3 class="font-semibold text-slate-800 mb-4">Pilot Funnel</h3>
-      <div class="space-y-2">
-        ${f.pilotFunnel.map((s, i) => `
-          <div class="flex items-center gap-3">
-            <span class="w-32 text-sm text-slate-700">${s.stage}</span>
-            <div class="flex-1 h-6 bg-slate-100 rounded-full"><div class="h-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full flex items-center justify-end pr-2" style="width:${Math.max(s.pct, 5)}%"><span class="text-xs font-bold text-white">${s.count}</span></div></div>
-            <span class="text-xs text-slate-500">${s.pct}%</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
-
 // ============ REGULATORY COMPLIANCE HUB ============
 
 export function renderRegulatoryHub() {
@@ -1372,7 +1117,7 @@ export function renderRegulatoryHub() {
       </div>
     </div>
     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-      <p class="text-sm text-emerald-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> for full citations.</p>
+      <p class="text-sm text-emerald-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57).</p>
     </div>
   `;
 }
@@ -1423,7 +1168,7 @@ export function renderSDOHAssessment() {
       ${sdoh.notes ? `<div class="mt-4 p-3 bg-amber-50 rounded-xl text-sm text-amber-900"><strong>Notes:</strong> ${sdoh.notes}</div>` : ''}
     </div>
     <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-      <p class="text-sm text-indigo-900"><strong>Evidence:</strong> Social determinants framework (Marmot & Wilkinson, 2006). See <button data-nav="evidence-base" class="underline font-semibold">Evidence Base</button> ev-52.</p>
+      <p class="text-sm text-indigo-900"><strong>Evidence:</strong> Social determinants framework (Marmot & Wilkinson, 2006), ev-52.</p>
     </div>
   `;
 }

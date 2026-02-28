@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Peacefull.ai - Behavioral Health AI Companion (VC Demo)</title>
+  <title>Peacefull.ai - Clinical Platform</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta name="theme-color" content="#2D6A4F">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -183,7 +183,7 @@
       scrollbar-width: thin; scrollbar-color: var(--color-neutral-300) transparent;
     }
     .demo-panel.collapsed { width: 52px; }
-    .demo-panel.collapsed .demo-content { display: none; }
+
 
     /* ═══════════ ALERTS ═══════════ */
     .t2-alert { background: linear-gradient(135deg, #FFF5F5, #FED7D7); border-left: 4px solid var(--color-danger); border-radius: var(--radius-md); }
@@ -240,8 +240,7 @@
     .memory-chip:hover { background: var(--color-sage-100); box-shadow: var(--shadow-xs); }
 
     /* ═══════════ ACCORDION ═══════════ */
-    .investor-accordion { max-height: 0; overflow: hidden; transition: max-height 0.5s var(--ease-out-expo), opacity 0.3s ease; opacity: 0; }
-    .investor-accordion.open { max-height: 700px; opacity: 1; }
+
 
     /* ═══════════ MISC COMPONENTS ═══════════ */
     .streak-ring { transform: rotate(-90deg); }
@@ -410,104 +409,6 @@
 </head>
 <body class="bg-slate-50" style="background:var(--surface-1)">
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <!-- Demo Control Panel -->
-  <div id="demo-panel" class="demo-panel">
-    <div class="glass rounded-xl shadow-2xl overflow-hidden">
-      <button data-action="toggle-demo-panel" class="w-full p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white flex items-center justify-between">
-        <span class="font-semibold text-sm demo-content" style="font-family:var(--font-display)">Demo Controls</span>
-        <svg id="demo-chevron" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-      </button>
-      <div class="demo-content p-4 space-y-4">
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">System State</div>
-        <select id="system-status" onchange="updateSystemStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="normal">NORMAL</option>
-          <option value="degraded">DEGRADED MODE</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Safety Tier</div>
-        <select id="safety-tier" onchange="updateSafetyTier()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="T0">T0 - Informational</option>
-          <option value="T1">T1 - Review Recommended</option>
-          <option value="T2" selected>T2 - Urgent Review</option>
-          <option value="T3">T3 - Critical</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Inbox Status</div>
-        <select id="inbox-status" onchange="updateInboxStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="OPEN">OPEN</option>
-          <option value="ACK">ACKNOWLEDGED</option>
-          <option value="IN_REVIEW">IN REVIEW</option>
-          <option value="RESOLVED">RESOLVED</option>
-          <option value="CLOSED">CLOSED</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Summary Status</div>
-        <select id="summary-status" onchange="updateSummaryStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="DRAFT" selected>DRAFT</option>
-          <option value="REVIEWED">REVIEWED</option>
-          <option value="ESCALATED">ESCALATED</option>
-          <option value="REJECTED">REJECTED</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recommendation</div>
-        <select id="rec-status" onchange="updateRecStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="GENERATED">GENERATED</option>
-          <option value="SUPPRESSED" selected>SUPPRESSED (Open T2)</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Export Status</div>
-        <select id="export-status" onchange="updateExportStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="READY">READY</option>
-          <option value="BLOCKED_POLICY" selected>BLOCKED_POLICY (428)</option>
-          <option value="EXPIRED">EXPIRED</option>
-          <option value="FAILED">FAILED</option>
-        </select>
-        
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Voice Status</div>
-        <select id="voice-status" onchange="updateVoiceStatus()" class="w-full p-2 bg-white border rounded-lg text-sm">
-          <option value="UPLOADING">UPLOADING</option>
-          <option value="PROCESSING" selected>PROCESSING</option>
-          <option value="COMPLETE">COMPLETE</option>
-          <option value="FAILED">FAILED</option>
-        </select>
-        
-        <div class="border-t pt-4 space-y-2">
-          <button data-nav="compliance-posture" class="w-full py-2 px-3 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Compliance Posture</button>
-          <button data-nav="demo-script" class="w-full py-2 px-3 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Demo Script</button>
-          <button data-nav="restricted-notes" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">Restricted Notes</button>
-          <button data-nav="exports-center" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Exports Center</button>
-          <button data-nav="suppression-ui" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Suppression UI</button>
-          <button data-nav="memory-review" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Memory Review (C-11)</button>
-          <button data-nav="treatment-plan-editor" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Treatment Plan (C-10)</button>
-          <button data-nav="enterprise-governance" class="w-full py-2 px-3 bg-sky-100 text-sky-700 rounded-lg text-sm font-medium hover:bg-sky-200">Enterprise Governance</button>
-          <button data-nav="ai-communication-compare" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">AI Communication Compare</button>
-          <button data-nav="ai-live-chat-demo" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Live AI Chat Demo</button>
-          <button data-nav="communication-triage-queue" class="w-full py-2 px-3 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Communication Triage Queue</button>
-          <button data-nav="security-command-center" class="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
-          <button data-nav="decision-room" class="w-full py-2 px-3 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
-          <button data-nav="mbc-dashboard" class="w-full py-2 px-3 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">MBC Dashboard (F1)</button>
-          <button data-nav="adherence-tracker" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Adherence Tracker (F2)</button>
-          <button data-nav="guided-demo" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Guided Demo Mode (F3)</button>
-          <button data-nav="kpi-panel" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">KPI Panel (F4)</button>
-          <button data-nav="escalation-protocols" class="w-full py-2 px-3 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Escalation Protocols (F5)</button>
-          <button data-nav="procurement-artifacts" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Procurement Artifacts (F8)</button>
-          <button data-nav="fhir-integration" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">FHIR Integration (F10)</button>
-          <button data-nav="workflow-simulation" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Workflow Overview</button>
-          <button data-nav="evidence-base" class="w-full py-2 px-3 bg-rose-100 text-rose-700 rounded-lg text-sm font-medium hover:bg-rose-200">Evidence Base</button>
-          <button data-nav="clinician-analytics" class="w-full py-2 px-3 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Clinician Analytics</button>
-          <button data-nav="population-health" class="w-full py-2 px-3 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Population Health</button>
-          <button data-nav="session-notes" class="w-full py-2 px-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">Session Notes</button>
-          <button data-nav="investor-financials" class="w-full py-2 px-3 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Investor Financials</button>
-          <button data-nav="regulatory-hub" class="w-full py-2 px-3 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Regulatory Hub</button>
-          <button data-nav="sdoh-assessment" class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200">SDOH Assessment</button>
-          <button data-nav="caregiver-view" class="w-full py-2 px-3 bg-pink-100 text-pink-700 rounded-lg text-sm font-medium hover:bg-pink-200">Caregiver View</button>
-          <button data-nav="breathing-exercise" class="w-full py-2 px-3 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Breathing Exercise</button>
-          <button data-nav="supervisor-cosign" class="w-full py-2 px-3 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Supervisor Co-Sign</button>
-          <button data-action="reset-demo" class="w-full py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Reset Demo</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div id="main-content"></div>
   <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -518,13 +419,10 @@
       <button type="button" data-nav="patient-home" data-quick-nav="patient-home" data-icon="👤" aria-label="Go to patient home">Patient</button>
       <button type="button" data-nav="clinician-caseload" data-quick-nav="clinician-caseload" data-icon="📋" aria-label="Go to clinician caseload">Caseload</button>
       <button type="button" data-nav="clinician-inbox" data-quick-nav="clinician-inbox" data-icon="📥" aria-label="Go to clinician inbox">Inbox</button>
-      <button type="button" data-nav="roi-dashboard" data-quick-nav="roi-dashboard" data-icon="📊" aria-label="Go to ROI dashboard">ROI</button>
       <button type="button" data-nav="mbc-dashboard" data-quick-nav="mbc-dashboard" data-icon="📈" aria-label="Go to MBC dashboard">MBC</button>
       <button type="button" data-nav="escalation-protocols" data-quick-nav="escalation-protocols" data-icon="🚨" aria-label="Go to escalation protocols">Escalation</button>
-      <button type="button" data-nav="evidence-base" data-quick-nav="evidence-base" data-icon="📚" aria-label="Go to evidence base">Evidence</button>
       <button type="button" data-nav="clinician-analytics" data-quick-nav="clinician-analytics" data-icon="🔬" aria-label="Go to clinician analytics">Analytics</button>
       <button type="button" data-nav="population-health" data-quick-nav="population-health" data-icon="🌍" aria-label="Go to population health">Population</button>
-      <button type="button" data-nav="investor-financials" data-quick-nav="investor-financials" data-icon="💰" aria-label="Go to financial model">Financials</button>
       <button type="button" data-nav="regulatory-hub" data-quick-nav="regulatory-hub" data-icon="🛡" aria-label="Go to regulatory hub">Regulatory</button>
     </div>
   </nav>
@@ -553,59 +451,6 @@
         <div class="flex flex-wrap gap-3 justify-center mb-4">
           <button data-nav="patient-welcome" class="px-8 py-4 bg-white text-emerald-800 rounded-2xl font-semibold hover:bg-emerald-50 transition-all shadow-lg" style="font-family:var(--font-display)">Patient Experience</button>
           <button data-nav="clinician-login" class="px-8 py-4 bg-emerald-900/80 text-white rounded-2xl font-semibold hover:bg-emerald-900 transition-all shadow-lg border border-white/10" style="font-family:var(--font-display)">Clinician Portal</button>
-          <button onclick="document.getElementById('investor-accordion').classList.toggle('open')" class="px-8 py-4 border-2 border-white/40 text-white rounded-2xl font-semibold hover:bg-white/10 transition-all backdrop-blur" style="font-family:var(--font-display)">Investor &amp; Enterprise ▾</button>
-        </div>
-
-        <!-- Investor Accordion -->
-        <div id="investor-accordion" class="investor-accordion mb-4">
-          <div class="bg-white/10 rounded-xl p-4 space-y-3">
-            <div>
-              <p class="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-2">Demo &amp; Walkthrough</p>
-              <div class="flex flex-wrap gap-2">
-                <button data-nav="guided-demo" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Guided Demo (8 min)</button>
-                <button data-nav="demo-script" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Demo Script</button>
-                <button data-nav="ai-live-chat-demo" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Live AI Chat</button>
-                <button data-nav="workflow-simulation" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Workflow Overview</button>
-              </div>
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-2">Clinical Intelligence</p>
-              <div class="flex flex-wrap gap-2">
-                <button data-nav="clinician-analytics" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Analytics Dashboard</button>
-                <button data-nav="population-health" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Population Health</button>
-                <button data-nav="session-notes" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Session Notes</button>
-                <button data-nav="sdoh-assessment" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">SDOH Assessment</button>
-                <button data-nav="caregiver-view" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Caregiver View</button>
-              </div>
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-2">Financial &amp; ROI</p>
-              <div class="flex flex-wrap gap-2">
-                <button data-nav="roi-dashboard" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">ROI Dashboard</button>
-                <button data-nav="kpi-panel" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">KPI Panel</button>
-                <button data-nav="investor-financials" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">TAM/SAM/SOM</button>
-              </div>
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-2">Safety &amp; Compliance</p>
-              <div class="flex flex-wrap gap-2">
-                <button data-nav="compliance-posture" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Compliance Posture</button>
-                <button data-nav="escalation-protocols" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Escalation Protocols</button>
-                <button data-nav="security-command-center" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Security Command</button>
-                <button data-nav="decision-room" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Decision Room</button>
-                <button data-nav="regulatory-hub" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Regulatory Hub</button>
-              </div>
-            </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-2">Enterprise &amp; Integration</p>
-              <div class="flex flex-wrap gap-2">
-                <button data-nav="enterprise-governance" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Enterprise Governance</button>
-                <button data-nav="procurement-artifacts" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Procurement Artifacts</button>
-                <button data-nav="fhir-integration" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">FHIR Integration</button>
-                <button data-nav="evidence-base" class="px-3 py-1.5 bg-white/20 text-white rounded-lg text-xs hover:bg-white/30">Evidence Base</button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- How It Works -->
@@ -626,404 +471,6 @@
             <p class="text-[11px] text-white/60">Full oversight, safety escalation, audit trail</p>
           </div>
         </div>
-
-        <div class="text-center mb-4">
-          <a href="#" data-nav="evidence-base" class="text-sm text-white/60 hover:text-white underline">New to Peacefull.ai? See our Evidence Base →</a>
-        </div>
-
-        <div class="hero-metrics">
-          <div class="hero-metric">
-            <strong>58+</strong>
-            <span>Interactive demo surfaces</span>
-          </div>
-          <div class="hero-metric">
-            <strong>65</strong>
-            <span>Published evidence citations</span>
-          </div>
-          <div class="hero-metric">
-            <strong>8 min</strong>
-            <span>Guided investor walkthrough</span>
-          </div>
-        </div>
-        <!-- Live API Status Badge -->
-        <div id="landing-live-badge" class="hidden mt-4 flex justify-center">
-          <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/15 border border-white/30 rounded-full text-sm text-white/90 font-medium backdrop-blur-sm">
-            <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-            Live API: Neon + Claude Sonnet 4
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECURITY COMMAND CENTER (DEMO SIMULATION) -->
-  <div id="security-command-center" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Security Command Center (Demo Simulation)</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-6xl mx-auto space-y-4">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-2">Authentication Controls</h3>
-          <div class="text-sm text-slate-600 mb-2">MFA Method (demo simulation)</div>
-          <select id="mfa-method" onchange="updateMfaMethod()" class="w-full p-2 border rounded-lg mb-3">
-            <option value="sms">SMS (simulated)</option>
-            <option value="totp">TOTP (simulated)</option>
-            <option value="hw">Hardware Key (simulated)</option>
-          </select>
-          <div class="text-sm text-slate-600 mb-2">Backup Code (enter for deterministic accept)</div>
-          <input id="backup-code" class="w-full p-2 border rounded-lg mb-2" placeholder="Enter demo backup code" />
-          <div class="flex gap-2">
-            <button data-action="validate-backup-code" class="px-3 py-2 bg-emerald-700 text-white rounded-lg text-sm">Validate Backup Code</button>
-            <button data-step-up="sensitive-action" class="px-3 py-2 bg-amber-600 text-white rounded-lg text-sm">Trigger Step-Up Auth</button>
-          </div>
-        </div>
-
-        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-2">Smart Contract Validation (simulated)</h3>
-          <div class="text-sm text-slate-600 mb-2">Contract Version</div>
-          <input id="contract-version" class="w-full p-2 border rounded-lg mb-2" placeholder="v1.2.3" />
-          <div class="text-sm text-slate-600 mb-2">Signature Hash</div>
-          <input id="signature-hash" class="w-full p-2 border rounded-lg mb-2" placeholder="deadbeef..." />
-          <button data-action="validate-contract" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">Validate Contract</button>
-          <div id="contract-result" class="mt-3 text-sm text-slate-700"></div>
-        </div>
-
-        <div class="col-span-1 bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-2">Merkle Root Verification (simulated)</h3>
-          <div class="text-sm text-slate-600 mb-2">Leaf Hash</div>
-          <input id="merkle-leaf" class="w-full p-2 border rounded-lg mb-2" placeholder="leaf hash" />
-          <div class="text-sm text-slate-600 mb-2">Root Hash</div>
-          <input id="merkle-root" class="w-full p-2 border rounded-lg mb-2" placeholder="root hash" />
-          <div class="text-sm text-slate-600 mb-2">Path Nodes (comma separated)</div>
-          <input id="merkle-path" class="w-full p-2 border rounded-lg mb-2" placeholder="node1,node2,..." />
-          <button data-action="verify-merkle" class="px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm">Verify Merkle Path</button>
-          <div id="merkle-result" class="mt-3 text-sm text-slate-700"></div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Security Event Timeline (simulated)</h3>
-        <div id="security-audit-log" class="text-sm text-slate-700 max-h-48 overflow-auto"></div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Risk Posture Scorecard</h3>
-        <div class="flex gap-3">
-          <div class="p-4 bg-slate-50 rounded-lg flex-1">
-            <p class="text-sm text-slate-500">Identity Risk</p>
-            <p id="posture-identity" class="text-2xl font-bold text-emerald-700">42</p>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-lg flex-1">
-            <p class="text-sm text-slate-500">Supply Chain / Contract Risk</p>
-            <p id="posture-contract" class="text-2xl font-bold text-amber-600">58</p>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-lg flex-1">
-            <p class="text-sm text-slate-500">Data Integrity</p>
-            <p id="posture-data" class="text-2xl font-bold text-emerald-600">72</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DECISION ROOM (PROOF-OF-SAFETY & ROI) -->
-  <div id="decision-room" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Proof-of-Safety & ROI Decision Room</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-6xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Safety Assurance Panel</h3>
-        <p class="text-sm text-slate-600">Risk posture: <span id="risk-posture" class="font-bold">Guarded</span></p>
-        <p class="text-sm text-slate-600">Patient-safe output: <span id="boundary-patient" class="font-bold">YES</span></p>
-        <p class="text-sm text-slate-600">Clinician evidence segregation: <span id="boundary-clinician" class="font-bold">YES</span></p>
-        <p class="text-sm text-slate-600">Live chat policy behavior: <span class="font-bold text-emerald-800">T1 support + T2 escalation locked</span></p>
-        <p class="text-sm text-red-600" id="suppression-reasons"></p>
-        <button data-nav="ai-live-chat-demo" class="mt-3 px-3 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Open Live Chat Evidence →</button>
-      </div>
-      <div class="bg-cyan-50 border border-cyan-200 rounded-2xl p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Doctor Sees This Now</h3>
-        <p class="text-sm text-slate-700">Triage tier, rationale, and draft evidence are visible immediately, while recommendations stay policy-gated until clinician review and action are recorded.</p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button data-nav="clinician-inbox" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Inbox Event</button>
-          <button data-nav="draft-review" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Draft + Evidence</button>
-          <button data-nav="suppression-ui" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200">Policy Gate</button>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Governance Chain-of-Custody Panel</h3>
-        <p class="text-sm text-slate-600">Approvals: C‑11, C‑10, Enterprise</p>
-        <p class="text-sm text-slate-600">Latest audits: <span id="governance-audits">none</span></p>
-        <p class="text-sm text-slate-600">Readiness Verdict: <span id="readiness-verdict" class="font-bold">REVIEW_REQUIRED</span></p>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">ROI + GTM Proof Panel</h3>
-        <p class="text-sm text-slate-600">Clinician time-saved signal: <span id="roi-time-saved">0</span> hrs</p>
-        <p class="text-sm text-slate-600">Pilot Expansion Score: <span id="pilot-score" class="font-bold">0</span></p>
-        <p class="text-xs text-slate-500">All numbers are simulated for demo purposes</p>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-2">Procurement Export Packet (Simulation)</h3>
-        <button data-action="generate-procurement-packet" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">Generate Procurement Packet</button>
-        <pre id="procurement-packet" class="mt-3 bg-gray-50 rounded-lg p-3 text-xs overflow-auto"></pre>
-      </div>
-    </div>
-  </div>
-
-  <!-- COMPLIANCE POSTURE SCREEN -->
-  <div id="compliance-posture" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Compliance Posture & Roadmap</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          </div>
-          <div>
-            <h2 class="font-semibold text-slate-800">Current Posture</h2>
-            <p class="text-sm text-slate-500">Implemented Controls</p>
-          </div>
-          <span class="ml-auto px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">Updated: 2026-02-26</span>
-        </div>
-        <div class="space-y-3">
-          <div class="posture-item posture-implemented">
-            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">BAA-Capable Cloud Posture</p>
-              <p class="text-sm text-slate-500">Single BAA-capable provider, US-only data residency</p>
-              <p class="text-xs text-slate-400 mt-1">Implemented: 2026-02-26</p>
-            </div>
-          </div>
-          <div class="posture-item posture-implemented">
-            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">Audit Logging</p>
-              <p class="text-sm text-slate-500">Append-only audit pipeline for high-risk actions</p>
-            </div>
-          </div>
-          <div class="posture-item posture-implemented">
-            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">Multi-Factor Authentication</p>
-              <p class="text-sm text-slate-500">Required for all clinician and admin accounts</p>
-            </div>
-          </div>
-          <div class="posture-item posture-implemented">
-            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">Data Minimization</p>
-              <p class="text-sm text-slate-500">PHI-minimized logs, notifications, and telemetry</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <div>
-            <h2 class="font-semibold text-slate-800">Roadmap</h2>
-            <p class="text-sm text-slate-500">Planned Certifications</p>
-          </div>
-          <span class="ml-auto px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded">Planned Window: 2026</span>
-        </div>
-        <div class="space-y-3">
-          <div class="posture-item posture-planned">
-            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">SOC 2 Type II (Planned)</p>
-              <p class="text-sm text-slate-500">Target: Q3 2026 (after pilot validation)</p>
-              <p class="text-xs text-slate-400 mt-1">Planned milestone: 2026-Q3</p>
-            </div>
-          </div>
-          <div class="posture-item posture-planned">
-            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="font-medium text-slate-800">HIPAA Security Rule Alignment</p>
-              <p class="text-sm text-slate-500">Ongoing: Security program aligned to HIPAA safeguards</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p class="text-sm text-amber-800"><strong>Important:</strong> This demo uses synthetic data only. No PHI is present. Compliance claims are based on planned/target posture, not verified certifications.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- DEMO SCRIPT SCREEN -->
-  <div id="demo-script" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Investor Demo Script</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto">
-      <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <p class="text-slate-600 mb-4">This 8-10 minute workflow simulation demonstrates the core value proposition: clinician-supervised AI that captures between-session signals, generates draft summaries, and provides transparent decision support.</p>
-        <div class="flex items-center gap-4 text-sm">
-          <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-medium">Total: ~10 min</span>
-          <span class="text-slate-500">Synthetic data only • Workflow simulation</span>
-        </div>
-      </div>
-      
-      <div class="space-y-0">
-        <div class="script-step">
-          <div class="script-dot active">1</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Patient Journaling & Voice</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Patient submits journal entry and async voice note. System processes with ASR and safety detection.</p>
-            <button data-nav="patient-journal" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Start →</button>
-          </div>
-        </div>
-
-        <div class="script-step">
-          <div class="script-dot">2A</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Live AI Chat (Two Patient Archetypes)</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Demonstrate patient-safe coaching for a guarded signal and deterministic escalation for elevated risk with privacy/RAG guardrails.</p>
-            <button data-nav="ai-live-chat-demo" class="px-4 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Open Live Chat →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">2</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Clinician Portal Inbox (T2 Alert)</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Safety signal detected → Portal inbox item created (authoritative) → Email/SMS nudges sent.</p>
-            <button data-nav="clinician-inbox" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">View Inbox →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">3</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Inbox Detail + Evidence Panel</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Clinician reviews alert with segment-level evidence references. Acknowledges or resolves in portal only.</p>
-            <button data-nav="inbox-detail" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">View Detail →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">4</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Draft Summary Review</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">AI-generated draft summary with evidence refs. Clinician reviews and marks as Reviewed/Retain Draft/Reject.</p>
-            <button data-nav="draft-review" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Review Draft →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">5</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Suppressed Recommendation</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Recommendation suppressed due to open T2 event. Reason codes and remediation steps displayed.</p>
-            <button data-nav="suppression-ui" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">View Suppression →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">6</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Exports Center + Manifest</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Export profile selection, segmentation confirmation, manifest with included/excluded items and checksums.</p>
-            <button data-nav="exports-center" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">View Exports →</button>
-          </div>
-        </div>
-        
-        <div class="script-step">
-          <div class="script-dot">7</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">ROI Assumptions Panel</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Pilot goals with assumptions drawer. Toggle between pilot targets and projections with formula transparency.</p>
-            <button data-nav="roi-dashboard" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">View ROI →</button>
-          </div>
-        </div>
-
-        <div class="script-step">
-          <div class="script-dot">8</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Workflow Overview</h3>
-              <span class="text-sm text-slate-500">~1 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">End-to-end 5-step workflow visualization from patient entry to clinician action.</p>
-            <button data-nav="workflow-simulation" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">View Workflow →</button>
-          </div>
-        </div>
-
-        <div class="script-step">
-          <div class="script-dot">9</div>
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-slate-800">Patient Experience Deep Dive</h3>
-              <span class="text-sm text-slate-500">~2 min</span>
-            </div>
-            <p class="text-sm text-slate-600 mb-3">Explore the expanded patient journey: AI chat companion, session prep, progress gamification, resource library, safety plan, history timeline, and memory transparency.</p>
-            <div class="flex flex-wrap gap-2">
-              <button data-nav="patient-chat" class="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-lg text-xs font-medium hover:bg-cyan-200">AI Chat →</button>
-              <button data-nav="patient-progress" class="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-200">Progress →</button>
-              <button data-nav="patient-resources" class="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200">Resources →</button>
-              <button data-nav="patient-safety-plan" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200">Safety Plan →</button>
-              <button data-nav="evidence-base" class="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200">Evidence Base →</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- PATIENT SCREENS -->
   <div id="patient-welcome" class="screen min-h-screen bg-white flex flex-col">
@@ -1372,8 +819,6 @@
     </div>
   </div>
 
-
-
   <div id="patient-submission-success" class="screen min-h-screen bg-white flex flex-col">
     <div class="p-4 border-b flex items-center">
       <button data-nav="patient-home" class="text-slate-600 mr-4">
@@ -1383,7 +828,7 @@
     </div>
     <div class="p-6 max-w-3xl mx-auto w-full space-y-4">
       <div class="bg-green-50 border border-green-200 rounded-xl p-4">
-        <p class="text-sm text-green-900"><strong id="submission-success-title">Journal entry submitted.</strong> Your clinician-supervised companion generated a supportive response for reflection. Synthetic demo only.</p>
+        <p class="text-sm text-green-900"><strong id="submission-success-title">Journal entry submitted.</strong> Your clinician-supervised companion generated a supportive response for reflection.</p>
       </div>
       <div class="bg-white rounded-2xl shadow-sm p-5">
         <h3 class="font-semibold text-slate-800 mb-3">Your AI Reflection (Patient View)</h3>
@@ -1395,7 +840,7 @@
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
         <h3 class="font-semibold text-slate-800 mb-2">What Happens Next</h3>
         <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-          <li>Your update is stored in your synthetic demo timeline.</li>
+          <li>Your update is stored in your timeline.</li>
           <li>Clinician-facing summaries remain draft until clinician review.</li>
           <li>If safety concerns escalate, urgent workflows are triggered in the clinician portal.</li>
         </ul>
@@ -1408,202 +853,6 @@
         <button data-nav="patient-history" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">View History</button>
         <button data-nav="patient-progress" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">My Progress</button>
         <button data-nav="patient-chat" class="px-4 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Chat with AI</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="ai-communication-compare" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="clinician-patient" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">AI Communication Compare</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-6xl mx-auto space-y-4">
-      <div class="bg-violet-50 border border-violet-200 rounded-xl p-4 text-sm text-violet-900"><strong>Clinician-only internal view.</strong> Left panel reflects patient-safe response; right panel shows internal clinician report with evidence and uncertainty.</div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Patient View</h3>
-          <p id="compare-patient-mode" class="text-xs text-slate-500 mb-2"></p>
-          <p id="compare-patient-summary" class="text-sm text-slate-700 mb-2"></p>
-          <p id="compare-patient-next" class="text-sm text-slate-700"></p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Clinician Internal Report</h3>
-          <p id="compare-clinician-signal" class="text-xs mb-2"></p>
-          <p id="compare-clinician-summary" class="text-sm text-slate-700 mb-2"></p>
-          <p id="compare-clinician-evidence" class="text-sm text-slate-700 mb-2"></p>
-          <p id="compare-clinician-unknowns" class="text-sm text-slate-700"></p>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-3">Submission Lifecycle</h3>
-        <p class="text-sm text-slate-700">Current status: <span id="submission-status-badge" class="font-semibold"></span> • Source: <span id="submission-source" class="font-semibold"></span></p>
-      </div>
-    </div>
-  </div>
-
-  <div id="ai-live-chat-demo" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white" aria-label="Back to landing">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Live AI Chat Session Demo</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-6xl mx-auto space-y-4">
-      <div class="bg-cyan-50 border border-cyan-200 rounded-xl p-4">
-        <p class="text-sm text-cyan-900"><strong>Simulation only:</strong> Examples below show patient-safe response behavior, clinician escalation pathways, and privacy-first retrieval controls.</p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-slate-800">Patient Type A: Anxiety + Workload Stress (T1)</h3>
-            <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">Signal: GUARDED</span>
-          </div>
-          <div class="space-y-2 text-sm">
-            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "I keep spiraling at night and can’t shut my mind off."</div>
-            <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200"><strong class="text-emerald-800">Peacefull.ai response:</strong> "Thanks for sharing this. Let’s do a short grounding step now: name 3 things you can see, 2 you can hear, and 1 you can feel. If helpful, we can draft a bedtime plan for tonight and send a concise summary for your clinician review."</div>
-            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "Okay, that helps a little. I still feel tense."</div>
-            <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200"><strong class="text-emerald-800">Peacefull.ai response:</strong> "You made progress by pausing and checking in. I can guide a 2-minute breathing cycle and store this as a draft note so your clinician sees what worked tonight."</div>
-          </div>
-          <p class="text-xs text-slate-500 mt-3">Capability shown: adaptive tone, stepwise coping guidance, and clinician-context drafting without autonomous diagnosis.</p>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-slate-800">Patient Type B: Acute Hopelessness Language (T2)</h3>
-            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Signal: ELEVATED</span>
-          </div>
-          <div class="space-y-2 text-sm">
-            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">Patient:</strong> "I don’t think I can keep doing this anymore."</div>
-            <div class="p-3 rounded-lg bg-red-50 border border-red-200"><strong class="text-red-800">Peacefull.ai response:</strong> "I’m really glad you reached out. You deserve immediate support. If you may be in danger, call emergency services now or 988. I’m escalating this to your clinician workflow right away."</div>
-            <div class="p-3 rounded-lg bg-slate-50"><strong class="text-slate-700">System action:</strong> Portal inbox event created, clinician nudge sent, recommendation generation suppressed pending review.</div>
-            <div class="p-3 rounded-lg bg-red-50 border border-red-200"><strong class="text-red-800">Peacefull.ai response:</strong> "While we wait, would you like to contact a trusted person from your safety plan? I can stay with you step-by-step."</div>
-          </div>
-          <p class="text-xs text-slate-500 mt-3">Capability shown: safety-tier detection, crisis-forward language, and strict handoff to human-supervised protocol.</p>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-3">Clinical Side View (What the Doctor Sees)</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 text-sm">
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p class="font-semibold text-slate-800 mb-1">1) Portal Inbox Event</p>
-            <p class="text-slate-700">Severity tier, timestamp, and concise rationale are posted to the authoritative clinician inbox.</p>
-            <button data-nav="clinician-inbox" class="mt-3 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Open Inbox</button>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p class="font-semibold text-slate-800 mb-1">2) Draft Summary + Evidence</p>
-            <p class="text-slate-700">Clinician receives draft with evidence references and known-unknowns for explicit review decisions.</p>
-            <button data-nav="draft-review" class="mt-3 px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-200">Open Draft Review</button>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p class="font-semibold text-slate-800 mb-1">3) Recommendation Control</p>
-            <p class="text-slate-700">Automated recommendations remain policy-gated and can be suppressed until clinician actions are complete.</p>
-            <button data-nav="suppression-ui" class="mt-3 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200">Open Suppression UI</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Value to Patient</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-            <li>Immediate supportive response between sessions.</li>
-            <li>Clear crisis-forward guidance when elevated language appears.</li>
-            <li>Continuity cues that help with adherence and follow-through.</li>
-            <li>Transparent boundary language about what AI can and cannot do.</li>
-          </ul>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Value to Doctor</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-            <li>Structured triage context rather than raw message streams.</li>
-            <li>Evidence-linked summaries with uncertainty made explicit.</li>
-            <li>Deterministic policy gates that reduce unsafe automation risk.</li>
-            <li>Faster pre-session insight with human authority preserved.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-        <p class="text-sm text-indigo-900"><strong>Companion Platform / Medical-Device Angle (Simulation):</strong> Peacefull.ai is positioned as assistive decision support with device-grade safety posture principles. The AI does not diagnose, prescribe, or close safety events; licensed clinicians remain accountable decision-makers at every critical step.</p>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-3">Human/Doctor-in-the-Loop Checkpoints</h3>
-        <div class="space-y-2 text-sm text-slate-700">
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 1:</strong> T2/T3 language detection requires clinician workflow escalation and cannot be auto-resolved by AI.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 2:</strong> Draft summaries remain draft until clinician review action is recorded.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 3:</strong> Recommendation generation is policy-gated and can be suppressed pending clinical protocol completion.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200"><strong>Checkpoint 4:</strong> Export and disclosure controls remain role-bound with explicit authorization requirements.</div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-3">Privacy, Training, and RAG Guardrails</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">No raw PHI is used to train foundation models; production data handling follows policy-gated workflows.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Tenant-scoped retrieval only: RAG context is constrained to authorized, role-appropriate records.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Evidence references are traceable; clinician-facing detail is segregated from patient-safe responses.</div>
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">Safety and policy filters run before response release and before recommendation generation.</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Red-Team Hardening Gates</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-            <li>Prompt-injection resistance: external instructions cannot override escalation policy.</li>
-            <li>Boundary lock: patient chat never reveals clinician-only suppression rationale.</li>
-            <li>Data exfiltration checks: model output filtered for restricted fields and identifiers.</li>
-            <li>Route integrity: escalation path always resolves to portal-authoritative workflow.</li>
-          </ul>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-3">Quality Check Gates</h3>
-          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700">
-            <li>Safety language QA: crisis wording remains direct, non-diagnostic, and action-oriented.</li>
-            <li>Behavioral consistency QA: same input class yields deterministic guardrail behavior.</li>
-            <li>Accessibility QA: chat demo remains keyboard-navigable and readable.</li>
-            <li>Regression QA: existing routing, state transitions, and controls remain unchanged.</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Live Claude Chat Panel -->
-      <div id="live-chat-panel" class="bg-white rounded-2xl shadow-sm p-5 border-2 border-cyan-200">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3">
-            <h3 class="font-semibold text-slate-800">Interactive Live Chat</h3>
-            <span id="live-chat-status" class="px-2 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold">Offline</span>
-          </div>
-          <button onclick="clearLiveChat()" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
-        </div>
-        
-        <div id="live-chat-messages" class="space-y-3 max-h-96 overflow-y-auto mb-4 p-3 bg-slate-50 rounded-xl min-h-[120px]">
-          <div class="text-center text-sm text-slate-400 py-8">
-            <p>Sign in via Clinician Portal to enable live Claude AI chat.</p>
-            <p class="text-xs mt-1">Messages are powered by Claude Sonnet 4 via the live API.</p>
-          </div>
-        </div>
-        
-        <div class="flex gap-2">
-          <input id="live-chat-input" type="text" placeholder="Type a message to Claude AI..." 
-            class="flex-1 p-3 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm"
-            onkeydown="if(event.key==='Enter')sendLiveMessage()">
-          <button onclick="sendLiveMessage()" class="px-4 py-3 bg-cyan-600 text-white rounded-xl font-semibold text-sm hover:bg-cyan-700 transition-all">
-            Send
-          </button>
-        </div>
-        <p class="text-xs text-slate-400 mt-2">Patient context: selected patient profile • Responses from Claude Sonnet 4 via Neon-backed API</p>
       </div>
     </div>
   </div>
@@ -1802,48 +1051,6 @@
     </div>
   </div>
 
-  <!-- ──────────── EVIDENCE BASE (F-E1) ──────────── -->
-  <div id="evidence-base" class="screen min-h-screen bg-slate-50">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Evidence Base</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto">
-      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm text-emerald-900">
-        <strong>65 published citations</strong> underpin every AI interaction, assessment tool, and therapeutic feature in Peacefull.ai.
-      </div>
-      <div id="evidence-filter-bar" class="flex gap-2 flex-wrap mb-4">
-        <button data-evidence-filter="All" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white">All</button>
-        <button data-evidence-filter="Assessment Tools" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Assessment</button>
-        <button data-evidence-filter="Therapeutic Modalities" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Therapeutic</button>
-        <button data-evidence-filter="Engagement & Adherence" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Engagement</button>
-        <button data-evidence-filter="Safety & Crisis" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Safety</button>
-        <button data-evidence-filter="Sleep & Wellness" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Sleep</button>
-        <button data-evidence-filter="Digital Health" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Digital</button>
-        <button data-evidence-filter="PTSD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">PTSD</button>
-        <button data-evidence-filter="Substance Use" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">SUD</button>
-        <button data-evidence-filter="ADHD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">ADHD</button>
-        <button data-evidence-filter="Bipolar Disorder" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Bipolar</button>
-        <button data-evidence-filter="OCD" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">OCD</button>
-        <button data-evidence-filter="Eating Disorders" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Eating</button>
-        <button data-evidence-filter="Clinical Frameworks" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Frameworks</button>
-        <button data-evidence-filter="SDOH" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">SDOH</button>
-        <button data-evidence-filter="Regulatory" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Regulatory</button>
-        <button data-evidence-filter="Pharmacotherapy" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Pharma</button>
-        <button data-evidence-filter="Family & Caregiver" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Family</button>
-        <button data-evidence-filter="Gratitude & Positive Psychology" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Positive Psych</button>
-      </div>
-      <div id="evidence-base-content" class="space-y-3">
-        <!-- rendered dynamically -->
-      </div>
-    </div>
-  </div>
-
   <!-- CLINICIAN LOGIN -->
   <div id="clinician-login" class="screen min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
     <div class="w-full max-w-sm">
@@ -1864,10 +1071,9 @@
       <div id="login-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
       
       <div class="space-y-4">
-        <input id="login-email" type="email" value="sarah.chen@peacefull.ai" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Email">
-        <input id="login-password" type="password" value="Demo2026!" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Password">
+        <input id="login-email" type="email" value="" aria-label="Clinician email" autocomplete="username" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Email">
+        <input id="login-password" type="password" value="" aria-label="Clinician password" autocomplete="current-password" class="w-full p-4 bg-white rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Password">
         <button id="login-btn" onclick="handleLogin()" class="w-full btn-coral text-white py-4 rounded-xl font-semibold">Sign In</button>
-        <p class="text-xs text-center text-slate-400">Demo: sarah.chen@peacefull.ai / Demo2026!</p>
       </div>
     </div>
   </div>
@@ -1941,7 +1147,6 @@
       <div class="flex gap-3 mb-6">
         <button data-nav="clinician-analytics" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-xl text-sm font-medium hover:bg-emerald-200">📊 My Analytics</button>
         <button data-nav="population-health" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-200">🏥 Population Health</button>
-        <button data-nav="evidence-base" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-medium hover:bg-indigo-200">📚 Evidence Base</button>
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -2551,7 +1756,6 @@
         </div>
         <div class="flex items-center gap-3">
           <button data-nav="draft-review" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium hover:bg-emerald-200">Review Draft Summary →</button>
-          <button data-nav="ai-communication-compare" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare →</button>
           <button data-nav="communication-triage-queue" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue →</button>
         </div>
       </div>
@@ -2579,8 +1783,6 @@
       </div>
     </div>
   </div>
-
-
 
   <!-- COMMUNICATION TRIAGE QUEUE -->
   <div id="communication-triage-queue" class="screen min-h-screen bg-slate-100">
@@ -2666,10 +1868,7 @@
         <h3 class="font-semibold text-slate-800">Approved Memory in Clinician Patient Profile</h3>
         <ul id="approved-memory-list" class="list-disc pl-5 mt-2 text-sm text-slate-700"></ul>
       </div>
-      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-        <p class="font-semibold text-indigo-900">Simulated Investor Callout</p>
-        <p class="text-sm text-indigo-800">Estimated prep-time reduction from approved memory reuse: <span id="memory-roi-link">12%</span> (simulated pilot metric).</p>
-      </div>
+
     </div>
   </div>
 
@@ -2713,266 +1912,6 @@
       <div class="bg-white rounded-2xl shadow-sm p-4">
         <h3 class="font-semibold text-slate-800">Care Plan Readiness (Simulated)</h3>
         <p class="text-sm text-slate-600">Reviewed plan items: <span id="plan-reviewed-count">0</span> • Follow-up readiness signal: <span id="plan-readiness-signal">28%</span> (simulated pilot metric).</p>
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- ENTERPRISE GOVERNANCE HUB -->
-  <div id="enterprise-governance" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-6xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Enterprise Governance Hub</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-6xl mx-auto space-y-4">
-      <div class="bg-sky-50 border border-sky-200 rounded-xl p-4">
-        <p class="text-sm text-sky-900"><strong>Enterprise differentiator:</strong> procurement-grade governance evidence across policy, identity, data, and safety operations in a clinician-supervised model.</p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-4 overflow-auto">
-          <h3 class="font-semibold text-slate-800 mb-3">Tenant Policy Package Status</h3>
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-slate-500 border-b">
-                <th class="py-2 pr-2">Tenant</th><th class="py-2 pr-2">SSO/SCIM</th><th class="py-2 pr-2">RBAC Bundle</th><th class="py-2 pr-2">Audit Pipeline</th><th class="py-2">Package Status</th>
-              </tr>
-            </thead>
-            <tbody id="enterprise-table-body"></tbody>
-          </table>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-3">Governance Detail</h3>
-          <div id="enterprise-detail" class="space-y-2 text-sm text-slate-700"></div>
-          <div class="flex flex-wrap gap-2 mt-4">
-            <button data-enterprise-status="APPROVED" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">Approve Package</button>
-            <button data-enterprise-status="CONDITIONAL" class="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">Conditional</button>
-            <button data-enterprise-status="REVIEW_REQUIRED" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Flag Review</button>
-            <button data-nav="security-command-center" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Security Command Center</button>
-            <button data-nav="decision-room" class="px-3 py-2 bg-lime-100 text-lime-700 rounded-lg text-sm font-medium hover:bg-lime-200">Decision Room</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800">Enterprise Readiness Signal (Simulated)</h3>
-        <p class="text-sm text-slate-600">Approved tenant packages: <span id="enterprise-approved-count">0</span> • Procurement readiness signal: <span id="enterprise-readiness-signal">35%</span> (simulated directional score).</p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-3">Policy, User, Group & Data Controls</h3>
-          <div class="space-y-3 text-sm">
-            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <p class="font-semibold text-slate-800">Policy Controls</p>
-              <p class="text-slate-700">Mandatory MFA, session timeout, step-up auth for high-risk actions, export policy gates, and suppression guardrails.</p>
-            </div>
-            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <p class="font-semibold text-slate-800">User & Group Controls</p>
-              <p class="text-slate-700">Role bundles for clinician, supervisor, compliance, and admin with least-privilege defaults and scoped access reviews.</p>
-            </div>
-            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <p class="font-semibold text-slate-800">Data Controls</p>
-              <p class="text-slate-700">Tenant-scoped retrieval, restricted-note segregation, role-bound disclosure, and deterministic audit events for sensitive actions.</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-4">
-          <h3 class="font-semibold text-slate-800 mb-3">Encryption, Privacy & Integrity Posture</h3>
-          <div class="space-y-3 text-sm text-slate-700">
-            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <p class="font-semibold text-emerald-800">Encryption</p>
-              <p>Data encrypted in transit and at rest with key-management controls and periodic rotation policy.</p>
-            </div>
-            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p class="font-semibold text-blue-800">Privacy</p>
-              <p>Context minimization, role-based visibility boundaries, and explicit separation of patient-safe vs clinician-only surfaces.</p>
-            </div>
-            <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <p class="font-semibold text-indigo-800">Data Integrity</p>
-              <p>Append-only logging, hash-linked export manifests, and verification workflows for critical artifacts and change traces.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm p-4">
-        <h3 class="font-semibold text-slate-800 mb-3">Practice Onboarding Audit Blueprint (Simulation)</h3>
-        <p class="text-sm text-slate-600 mb-3">Structured go-live assurance workflow used to verify effectiveness, privacy protections, and safety reliability before and after launch.</p>
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 text-sm">
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-            <p class="font-semibold text-slate-800">Phase 1: Access & Identity</p>
-            <p class="text-slate-700">Validate SSO/SCIM mapping, role-group integrity, MFA enforcement, and privileged-account controls.</p>
-          </div>
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-            <p class="font-semibold text-slate-800">Phase 2: Data Boundary</p>
-            <p class="text-slate-700">Confirm tenant isolation, restricted notes behavior, export policy routes, and retention configuration.</p>
-          </div>
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-            <p class="font-semibold text-slate-800">Phase 3: Safety Workflow</p>
-            <p class="text-slate-700">Run T1/T2/T3 simulation paths, verify escalation handoff, and ensure no autonomous closure behavior.</p>
-          </div>
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-            <p class="font-semibold text-slate-800">Phase 4: Continuous Assurance</p>
-            <p class="text-slate-700">Schedule recurring review cadence, exception tracking, and drift checks for policy/user-group changes.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <p class="font-semibold text-slate-800">Example Onboarding Audit Record (Synthetic)</p>
-          <span class="px-2 py-1 bg-slate-200 text-slate-700 rounded text-xs font-semibold">Audit ID: EG-AUD-2026-017</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
-          <div class="p-3 bg-white border border-slate-200 rounded-lg">
-            <p><strong>Practice:</strong> Northstar Behavioral Network</p>
-            <p><strong>Scope:</strong> Identity, data governance, safety routing, audit telemetry</p>
-            <p><strong>Outcome:</strong> Conditional approval pending SCIM role mapping remediation</p>
-          </div>
-          <div class="p-3 bg-white border border-slate-200 rounded-lg">
-            <p><strong>Reviewer Roles:</strong> Security Admin, Compliance Lead, Clinical Governance Reviewer</p>
-            <p><strong>Next Review:</strong> 30-day post-launch verification + quarterly control attestations</p>
-            <p><strong>Safety Note:</strong> Clinician remains required decision authority across escalation paths</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ROI DASHBOARD (ENHANCED) -->
-  <div id="roi-dashboard" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">ROI Dashboard</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto space-y-6">
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <div class="flex items-center gap-3 mb-2">
-          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="font-semibold text-amber-900">Simulated Demo Values</p>
-        </div>
-        <p class="text-sm text-amber-800">All metrics below are simulated for demonstration purposes. Toggle to view pilot targets vs. projections.</p>
-        <p class="text-xs text-amber-800 mt-2">Confidence band guidance (simulated): low/base/high scenarios are directional and not guaranteed outcomes.</p>
-        <div class="flex gap-3 mt-3">
-          <button id="roi-toggle-pilot" data-roi-mode="pilot" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Pilot Targets</button>
-          <button id="roi-toggle-proj" data-roi-mode="projection" class="px-4 py-2 bg-amber-200 text-amber-800 rounded-lg text-sm font-medium">Projections</button>
-        </div>
-      </div>
-      
-      <div class="grid grid-cols-3 gap-4">
-        <div class="bg-cyan-50 border border-cyan-200 rounded-xl p-4 col-span-3">
-          <p class="font-semibold text-cyan-900">Live Chat Trust Signal (Simulated)</p>
-          <p class="text-sm text-cyan-800">Two-patient archetype flows demonstrate patient-safe language, deterministic escalation, and policy-constrained retrieval boundaries.</p>
-          <button data-nav="ai-live-chat-demo" class="mt-3 px-3 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Review Live Chat Scenarios</button>
-        </div>
-        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 col-span-3">
-          <p class="font-semibold text-indigo-900">Memory Governance Moat (Simulated)</p>
-          <p class="text-sm text-indigo-800">Approved memory reuse currently indicates <span id="roi-memory-signal">12%</span> prep-time reduction potential in this synthetic cohort.</p>
-        </div>
-        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 col-span-3">
-          <p class="font-semibold text-emerald-900">Treatment Plan Operational Signal (Simulated)</p>
-          <p class="text-sm text-emerald-800">Clinician-reviewed plan readiness currently indicates <span id="roi-plan-signal">28%</span> follow-up coordination lift potential in this synthetic cohort.</p>
-        </div>
-        <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 col-span-3">
-          <p class="font-semibold text-sky-900">Enterprise Procurement Signal (Simulated)</p>
-          <p class="text-sm text-sky-800">Governance package approvals currently indicate <span id="roi-enterprise-signal">35%</span> enterprise procurement readiness.</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 text-center">
-          <p id="roi-metric-1" class="text-3xl font-bold text-emerald-700">5.2</p>
-          <p class="text-sm text-slate-500 mt-1">Hours Saved/Week</p>
-          <p class="text-xs text-slate-400 mt-2">Per clinician</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 text-center">
-          <p id="roi-metric-2" class="text-3xl font-bold text-amber-600">340%</p>
-          <p class="text-sm text-slate-500 mt-1">ROI</p>
-          <p class="text-xs text-slate-400 mt-2">Year 1</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 text-center">
-          <p id="roi-metric-3" class="text-3xl font-bold text-blue-600">$1.6M</p>
-          <p class="text-sm text-slate-500 mt-1">Annual Savings</p>
-          <p class="text-xs text-slate-400 mt-2">Per 100 clinicians</p>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="font-semibold text-slate-800 mb-4">Assumptions & Formulas</h2>
-        <div class="space-y-4">
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="flex items-center justify-between mb-2">
-              <p class="font-medium text-slate-700">Hours Saved/Week</p>
-              <button data-toggle-assumption="hours" class="text-emerald-700 text-sm">Show Formula</button>
-            </div>
-            <div id="assumption-hours" class="hidden mt-3 pt-3 border-t border-slate-200">
-              <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> (Avg entries/day × Review time/entry × Days/week) - (AI summary time × Sessions/week)</p>
-              <p class="text-sm text-slate-600"><strong>Variables:</strong> 12 entries/day × 3 min/entry × 5 days = 3 hrs saved</p>
-              <p class="text-xs text-slate-500 mt-2">Pilot target: 5.2 hrs | Conservative projection: 4.0 hrs</p>
-            </div>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="flex items-center justify-between mb-2">
-              <p class="font-medium text-slate-700">ROI Calculation</p>
-              <button data-toggle-assumption="roi" class="text-emerald-700 text-sm">Show Formula</button>
-            </div>
-            <div id="assumption-roi" class="hidden mt-3 pt-3 border-t border-slate-200">
-              <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> (Value of time saved + Outcome improvements - Platform cost) / Platform cost × 100</p>
-              <p class="text-sm text-slate-600"><strong>Variables:</strong> ($65/hr × 5.2 hrs × 48 wks + $50K outcomes - $48K cost) / $48K cost</p>
-              <p class="text-xs text-slate-500 mt-2">Pilot target: 340% | Conservative projection: 250%</p>
-            </div>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="flex items-center justify-between mb-2">
-              <p class="font-medium text-slate-700">Annual Savings</p>
-              <button data-toggle-assumption="savings" class="text-emerald-700 text-sm">Show Formula</button>
-            </div>
-            <div id="assumption-savings" class="hidden mt-3 pt-3 border-t border-slate-200">
-              <p class="text-sm text-slate-600 mb-2"><strong>Formula:</strong> Hours saved/week × Clinician hourly rate × 48 weeks × Number of clinicians</p>
-              <p class="text-sm text-slate-600"><strong>Variables:</strong> 5.2 hrs × $65/hr × 48 wks × 100 clinicians</p>
-              <p class="text-xs text-slate-500 mt-2">Pilot target: $1.6M | Conservative projection: $1.2M</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="font-semibold text-slate-800 mb-4">Pilot Goals</h2>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span class="text-slate-700">T2 Alert Detection Rate</span>
-            <div class="flex items-center gap-3">
-              <span class="signal-band signal-high">Target: HIGH</span>
-              <span class="text-sm text-slate-500">Signal band target</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span class="text-slate-700">Clinician Time Saved</span>
-            <div class="flex items-center gap-3">
-              <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium">Target: 5+ hrs/week</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span class="text-slate-700">False Positive Rate</span>
-            <div class="flex items-center gap-3">
-              <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium">Target: &lt;10%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="flex gap-3">
-        <button data-nav="investor-financials" class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-xl text-sm font-semibold hover:bg-emerald-200">📈 Full Financial Model & TAM/SAM/SOM</button>
-        <button data-nav="kpi-panel" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-xl text-sm font-semibold hover:bg-blue-200">📊 KPI Panel</button>
       </div>
     </div>
   </div>
@@ -3084,7 +2023,6 @@
           <button data-nav="memory-review" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200">Open Memory Review</button>
           <button data-nav="treatment-plan-editor" class="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200">Open Treatment Plan</button>
           <button data-nav="sdoh-assessment" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">SDOH Assessment</button>
-          <button data-nav="ai-communication-compare" class="px-4 py-2 bg-violet-100 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-200">Open AI Communication Compare</button>
           <button data-nav="communication-triage-queue" class="px-4 py-2 bg-fuchsia-100 text-fuchsia-700 rounded-lg text-sm font-medium hover:bg-fuchsia-200">Open Triage Queue</button>
         </div>
         <div id="clinician-patient-activity-list" class="space-y-3"></div>
@@ -3095,135 +2033,6 @@
         <p class="text-sm text-slate-600 mb-4">Clinician signal view for between-session change detection. Designed to support faster triage preparation while keeping final clinical judgment with the treating professional.</p>
         <div id="clinician-patient-trends-body"></div>
         <p class="text-xs text-slate-500 mt-3">Simulation boundary: trend outputs are decision-support signals for supervised review, not autonomous diagnosis or treatment decisions.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- WORKFLOW SIMULATION (Replaces Story Mode) -->
-  <div id="workflow-simulation" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Workflow Simulation</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto space-y-6">
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p class="text-sm text-amber-800"><strong>Workflow Simulation:</strong> This demonstrates the clinical workflow from patient input to clinician review. All data is synthetic.</p>
-        <button data-nav="ai-live-chat-demo" class="mt-3 px-3 py-2 bg-cyan-100 text-cyan-700 rounded-lg text-sm font-medium hover:bg-cyan-200">Open Live Chat Example Path</button>
-      </div>
-      
-      <div class="space-y-4">
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-emerald-700">1</span>
-            </div>
-            <div>
-              <h3 class="font-semibold text-slate-800">Patient Input</h3>
-              <p class="text-sm text-slate-500">Journal entry, voice note, or check-in</p>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 ml-16">
-            <p class="text-sm text-slate-600 mb-2"><strong>Sarah's Journal Entry:</strong></p>
-            <p class="text-slate-700 italic">"Today was really hard. I couldn't focus at work and kept thinking about what happened last week..."</p>
-          </div>
-        </div>
-        
-        <div class="flex justify-center">
-          <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-        </div>
-        
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-blue-600">2</span>
-            </div>
-            <div>
-              <h3 class="font-semibold text-slate-800">AI Detection</h3>
-              <p class="text-sm text-slate-500">Safety signals identified, draft summary generated</p>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 ml-16">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="signal-band signal-moderate">Signal: MODERATE</span>
-              <span class="text-sm text-slate-500">T1 - Review Recommended</span>
-            </div>
-            <p class="text-sm text-slate-600">Segment 0:12-0:18: "couldn't focus" • Segment 0:24-0:31: "what happened last week"</p>
-            <p class="text-sm text-slate-600 mt-2">In live chat mode, patient-safe coaching appears first while clinician-only evidence remains on supervised surfaces.</p>
-          </div>
-        </div>
-        
-        <div class="flex justify-center">
-          <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-        </div>
-        
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-amber-600">3</span>
-            </div>
-            <div>
-              <h3 class="font-semibold text-slate-800">Portal Inbox</h3>
-              <p class="text-sm text-slate-500">Clinician receives alert in portal (authoritative)</p>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 ml-16">
-            <div class="t1-alert rounded-xl p-3">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-1 bg-amber-500 text-white rounded text-xs font-bold">T1</span>
-                <span class="text-sm text-slate-500">Today, 9:15 AM</span>
-              </div>
-              <p class="font-medium text-slate-800">Safety Signal: Declining Mood</p>
-              <p class="text-sm text-slate-600">Sarah Johnson • Journal entry flagged for review</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="flex justify-center">
-          <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-        </div>
-        
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-purple-600">4</span>
-            </div>
-            <div>
-              <h3 class="font-semibold text-slate-800">Clinician Protocol</h3>
-              <p class="text-sm text-slate-500">Review, acknowledge, and document</p>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 ml-16">
-            <div class="flex gap-3">
-              <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-sm">Acknowledged</span>
-              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm">Session Scheduled</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="flex justify-center">
-          <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-        </div>
-        
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <span class="font-bold text-green-600">5</span>
-            </div>
-            <div>
-              <h3 class="font-semibold text-slate-800">Documentation Outcome</h3>
-              <p class="text-sm text-slate-500">Alert resolved, patient record updated</p>
-            </div>
-          </div>
-          <div class="bg-slate-50 rounded-xl p-4 ml-16">
-            <p class="text-sm text-slate-600"><strong>Status:</strong> RESOLVED</p>
-            <p class="text-sm text-slate-600"><strong>Action:</strong> Session scheduled for tomorrow. Patient safety plan reviewed.</p>
-          </div>
         </div>
       </div>
     </div>
@@ -3343,64 +2152,6 @@
     </div>
   </div>
 
-  <!-- F3: GUIDED DEMO MODE -->
-  <div id="guided-demo" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="landing" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Guided Demo Mode</h1>
-        <button data-action="reset-guided-demo" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-slate-600 rounded">Reset</button>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">8-Minute Investor Walkthrough</h2>
-            <p class="text-sm text-slate-500">Follow the guided path through key demo surfaces</p>
-          </div>
-          <p id="guided-demo-current-label" class="text-sm font-semibold text-emerald-700">Not Started</p>
-        </div>
-        <div class="w-full bg-slate-200 rounded-full h-3 mb-6">
-          <div id="guided-demo-progress" class="bg-emerald-600 h-3 rounded-full transition-all" style="width: 0%"></div>
-        </div>
-        <div class="flex gap-3 mb-6">
-          <button data-action="start-guided-demo" class="px-6 py-3 bg-emerald-700 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all">Start Demo</button>
-          <button data-action="advance-guided-demo" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-all">Next Step →</button>
-        </div>
-      </div>
-      <div id="guided-demo-steps" class="space-y-0"></div>
-      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-        <p class="text-sm text-emerald-900"><strong>Tip:</strong> Use "Start Demo" to begin, then click "Next Step" after visiting each screen. The guided path covers all key investor-facing surfaces in approximately 8 minutes.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- F4: KPI PANEL -->
-  <div id="kpi-panel" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-5xl mx-auto">
-        <button data-nav="roi-dashboard" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">KPI Panel — Transparent Assumptions</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-5xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-lg font-bold text-slate-800 mb-2">Key Performance Indicators</h2>
-        <p class="text-sm text-slate-500 mb-6">Each metric includes its underlying assumption, data source, and confidence level. Click to expand.</p>
-      </div>
-      <div id="kpi-metrics-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p class="text-sm text-amber-900"><strong>Transparency Notice:</strong> All KPIs are based on synthetic pilot data or published benchmarks. Confidence levels indicate the maturity and sample size of each data source. Projected values use clearly labeled financial models with stated assumptions.</p>
-      </div>
-    </div>
-  </div>
-
   <!-- F5: ESCALATION PROTOCOLS -->
   <div id="escalation-protocols" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
@@ -3471,147 +2222,6 @@
     </div>
   </div>
 
-  <!-- F8: PROCUREMENT ARTIFACTS -->
-  <div id="procurement-artifacts" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-4xl mx-auto">
-        <button data-nav="decision-room" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Procurement Artifacts</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-4xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-lg font-bold text-slate-800 mb-4">Enterprise Procurement Package</h2>
-        <p class="text-sm text-slate-500 mb-6">Downloadable artifacts for procurement committee review. All items are pre-formatted for standard health-system vendor questionnaires.</p>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">Security & Compliance Questionnaire (HECVAT Lite)</p>
-              <p class="text-sm text-slate-500">Pre-filled responses covering HIPAA, SOC 2, encryption, access controls</p>
-            </div>
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">BAA (Business Associate Agreement) Template</p>
-              <p class="text-sm text-slate-500">Standard BAA template with Peacefull.ai-specific addenda</p>
-            </div>
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">SOC 2 Type I Report (Summary)</p>
-              <p class="text-sm text-slate-500">Trust service criteria coverage including security, availability, confidentiality</p>
-            </div>
-            <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">In Progress</span>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">Clinical Safety Case Study (Pilot Outcomes)</p>
-              <p class="text-sm text-slate-500">De-identified pilot outcomes, engagement data, clinician satisfaction scores</p>
-            </div>
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">Integration Architecture Diagram</p>
-              <p class="text-sm text-slate-500">EHR integration topology, data flow, FHIR R4 resource mapping</p>
-            </div>
-            <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold">Draft</span>
-          </div>
-          <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <div>
-              <p class="font-semibold text-slate-800">Pricing & Licensing Summary</p>
-              <p class="text-sm text-slate-500">Per-seat pricing, volume tiers, pilot-to-enterprise conversion terms</p>
-            </div>
-            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">Ready</span>
-          </div>
-        </div>
-      </div>
-      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-        <p class="text-sm text-emerald-900"><strong>Note:</strong> All procurement artifacts shown are synthetic demo representations. Actual documents are available under NDA through the sales engineering team.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- F10: FHIR/EHR INTEGRATION STORY -->
-  <div id="fhir-integration" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-5xl mx-auto">
-        <button data-nav="enterprise-governance" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">FHIR / EHR Integration</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-5xl mx-auto space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-lg font-bold text-slate-800 mb-2">Integration Architecture — Phase 2 Roadmap</h2>
-        <p class="text-sm text-slate-500 mb-6">Peacefull.ai is designed for standards-based interoperability. The following FHIR R4 resources and integration patterns are planned for Phase 2 deployment.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p class="font-semibold text-blue-900 mb-2">FHIR R4 Resources Supported</p>
-            <ul class="list-disc pl-5 text-sm text-blue-800 space-y-1">
-              <li><strong>Patient</strong> — Demographics sync</li>
-              <li><strong>Observation</strong> — PHQ-9, GAD-7 scores</li>
-              <li><strong>QuestionnaireResponse</strong> — Check-in data</li>
-              <li><strong>CarePlan</strong> — Treatment plan sync</li>
-              <li><strong>CommunicationRequest</strong> — Clinician alerts</li>
-              <li><strong>DocumentReference</strong> — Session summaries</li>
-            </ul>
-          </div>
-          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-            <p class="font-semibold text-indigo-900 mb-2">EHR Integration Targets</p>
-            <ul class="list-disc pl-5 text-sm text-indigo-800 space-y-1">
-              <li><strong>Epic</strong> — SMART on FHIR launch context</li>
-              <li><strong>Cerner (Oracle Health)</strong> — CDS Hooks integration</li>
-              <li><strong>Athenahealth</strong> — API-first marketplace app</li>
-              <li><strong>Generic FHIR</strong> — Any R4-compliant endpoint</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-lg font-bold text-slate-800 mb-4">Data Flow Architecture</h2>
-        <div class="bg-slate-50 rounded-xl p-6 border border-slate-200">
-          <div class="flex flex-col md:flex-row items-center gap-4 text-center text-sm">
-            <div class="bg-emerald-100 text-emerald-800 rounded-xl p-4 font-semibold flex-1">Patient App<br><span class="text-xs font-normal">Check-in, Journal, Voice</span></div>
-            <span class="text-slate-400 text-lg">→</span>
-            <div class="bg-blue-100 text-blue-800 rounded-xl p-4 font-semibold flex-1">Peacefull.ai Platform<br><span class="text-xs font-normal">Processing + Memory</span></div>
-            <span class="text-slate-400 text-lg">→</span>
-            <div class="bg-indigo-100 text-indigo-800 rounded-xl p-4 font-semibold flex-1">FHIR R4 Interface<br><span class="text-xs font-normal">Observation, CarePlan</span></div>
-            <span class="text-slate-400 text-lg">→</span>
-            <div class="bg-purple-100 text-purple-800 rounded-xl p-4 font-semibold flex-1">EHR System<br><span class="text-xs font-normal">Epic / Cerner / Athena</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <p class="text-sm font-semibold text-slate-800 mb-2">Authentication</p>
-          <p class="text-sm text-slate-600">OAuth 2.0 + SMART on FHIR launch context. Token-based access with scope-limited permissions.</p>
-          <span class="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Designed</span>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <p class="text-sm font-semibold text-slate-800 mb-2">Data Mapping</p>
-          <p class="text-sm text-slate-600">Automated mapping from internal schema to FHIR R4 resources. Bi-directional sync for CarePlan and Observation.</p>
-          <span class="mt-2 inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">In Design</span>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <p class="text-sm font-semibold text-slate-800 mb-2">Compliance</p>
-          <p class="text-sm text-slate-600">HIPAA-compliant data exchange with BAA coverage. Audit logging for all cross-system transfers.</p>
-          <span class="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Planned</span>
-        </div>
-      </div>
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p class="text-sm text-amber-900"><strong>Phase 2 Roadmap:</strong> FHIR integration is planned for Phase 2. Current demo shows the integration architecture and resource mapping design. Production deployment requires EHR partnership agreements and certification.</p>
-      </div>
-    </div>
-  </div>
-
   <!-- CLINICIAN ANALYTICS DASHBOARD -->
   <div id="clinician-analytics" class="screen min-h-screen bg-slate-100">
     <div class="glass-dark p-4 sticky top-0 z-10">
@@ -3662,24 +2272,6 @@
     <div class="p-6 max-w-5xl mx-auto space-y-6">
       <div id="session-notes-content">
         <div class="text-center py-12 text-slate-400">Loading session notes...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INVESTOR FINANCIAL MODEL -->
-  <div id="investor-financials" class="screen min-h-screen bg-slate-100">
-    <div class="glass-dark p-4 sticky top-0 z-10">
-      <div class="flex items-center justify-between max-w-5xl mx-auto">
-        <button data-nav="roi-dashboard" class="text-slate-400 hover:text-white">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h1 class="text-xl font-bold text-white">Financial Model & Market Analysis</h1>
-        <div class="w-6"></div>
-      </div>
-    </div>
-    <div class="p-6 max-w-5xl mx-auto space-y-6">
-      <div id="investor-financials-content">
-        <div class="text-center py-12 text-slate-400">Loading financial model...</div>
       </div>
     </div>
   </div>
@@ -3818,11 +2410,7 @@
       <span>·</span>
       <button data-toast="Terms of Service: This is a demonstration prototype. No real patient data is processed. All interactions use synthetic data only." class="hover:text-white underline">Terms</button>
       <span>·</span>
-      <button data-nav="security-command-center" class="hover:text-white underline">Security</button>
       <span>·</span>
-      <button data-nav="compliance-posture" class="hover:text-white underline">Compliance</button>
-      <span>·</span>
-      <span class="text-slate-500">Synthetic Demo Data Only</span>
     </div>
   </footer>
 

@@ -1,6 +1,6 @@
 /**
  * Events Module - Centralized event delegation
- * Part of Peacefull.ai Demo technical debt cleanup - Step 2
+ * Centralized event delegation for clinical platform
  */
 
 import { showScreen, showToast } from './helpers.js';
@@ -11,8 +11,6 @@ import * as actions from './actions.js';
  * Add entries here to support new delegated actions.
  */
 const actionRegistry = {
-  // Demo panel
-  'toggle-demo-panel': actions.toggleDemoPanel,
   
   // Consent/journal
   'save-journal': actions.saveJournal,
@@ -40,8 +38,6 @@ const actionRegistry = {
   // Treatment plan
   'reset-treatment-plan': actions.resetTreatmentPlanAction,
   
-  // Enterprise
-  'reset-enterprise-governance': actions.resetEnterpriseGovernanceAction,
   
   // Inbox/draft actions
   'acknowledge-alert': actions.acknowledgeAlert,
@@ -65,9 +61,6 @@ const actionRegistry = {
   'verify-merkle': actions.verifyMerkleRootPath,
   'reset-security-state': actions.resetSecurityStateAction,
   
-  // Decision room
-  'generate-procurement-packet': actions.generateProcurementPacket,
-  'reset-decision-room': actions.resetDecisionRoomStateAction,
   
   // MBC Dashboard (F1)
   'add-mbc-note': actions.addMBCNote,
@@ -77,10 +70,6 @@ const actionRegistry = {
   'log-adherence-completion': actions.logAdherenceCompletion,
   'reset-adherence': actions.resetAdherenceAction,
   
-  // Guided Demo (F3)
-  'start-guided-demo': actions.startGuidedDemo,
-  'advance-guided-demo': actions.advanceGuidedDemo,
-  'reset-guided-demo': actions.resetGuidedDemoAction,
   
   // Escalation Protocols (F5)
   'acknowledge-escalation': actions.acknowledgeEscalation,
@@ -105,8 +94,6 @@ const actionRegistry = {
   'start-breathing': actions.startBreathing,
   'stop-breathing': actions.stopBreathing,
   
-  // Full reset
-  'reset-demo': actions.resetDemo,
 };
 
 /**
@@ -115,7 +102,7 @@ const actionRegistry = {
  */
 export function initEventDelegation() {
   document.body.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-nav], [data-action], [data-journal-prompt], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-enterprise-status], [data-roi-mode], [data-step-up], [data-toggle-assumption], [data-toast], [data-resource-filter], [data-resource-expand], [data-history-filter], [data-history-expand], [data-safety-step], [data-pmem-filter], [data-pmem-expand], [data-evidence-filter], [data-evidence-expand], [data-topic-id], [data-journal-filter]');
+    const target = event.target.closest('[data-nav], [data-action], [data-journal-prompt], [data-patient-profile], [data-triage-status], [data-memory-status], [data-plan-status], [data-toast], [data-resource-filter], [data-resource-expand], [data-history-filter], [data-history-expand], [data-safety-step], [data-pmem-filter], [data-pmem-expand], [data-topic-id], [data-journal-filter]');
     if (!target) return;
 
     const journalPrompt = target.dataset.journalPrompt;
@@ -168,38 +155,6 @@ export function initEventDelegation() {
     if (planStatus) {
       event.preventDefault();
       actions.updatePlanStatus(planStatus);
-      return;
-    }
-    
-    // Enterprise status: data-enterprise-status="STATUS"
-    const enterpriseStatus = target.dataset.enterpriseStatus;
-    if (enterpriseStatus) {
-      event.preventDefault();
-      actions.updateEnterpriseStatus(enterpriseStatus);
-      return;
-    }
-    
-    // ROI mode: data-roi-mode="pilot|projection"
-    const roiMode = target.dataset.roiMode;
-    if (roiMode) {
-      event.preventDefault();
-      actions.setROIMode(roiMode);
-      return;
-    }
-    
-    // Step-up auth: data-step-up="reason"
-    const stepUp = target.dataset.stepUp;
-    if (stepUp) {
-      event.preventDefault();
-      actions.triggerStepUpAuth(stepUp);
-      return;
-    }
-    
-    // Toggle assumption: data-toggle-assumption="id"
-    const toggleAssumption = target.dataset.toggleAssumption;
-    if (toggleAssumption) {
-      event.preventDefault();
-      actions.toggleAssumption(toggleAssumption);
       return;
     }
     
@@ -264,22 +219,6 @@ export function initEventDelegation() {
     if (pmemExpand) {
       event.preventDefault();
       actions.togglePatientMemoryExpand(pmemExpand);
-      return;
-    }
-
-    // Evidence filter
-    const evidenceFilter = target.dataset.evidenceFilter;
-    if (evidenceFilter) {
-      event.preventDefault();
-      actions.setEvidenceFilter(evidenceFilter);
-      return;
-    }
-
-    // Evidence expand
-    const evidenceExpand = target.dataset.evidenceExpand;
-    if (evidenceExpand) {
-      event.preventDefault();
-      actions.toggleEvidenceExpand(evidenceExpand);
       return;
     }
 
