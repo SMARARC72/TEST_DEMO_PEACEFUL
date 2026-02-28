@@ -79,5 +79,79 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-  # Future: API build, test, and deploy jobs will be added here
-  # when packages/api is ready for CI integration
+  build-api:
+    name: Build & Test API
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    env:
+      DATABASE_URL: postgresql://peacefull:peacefull@localhost:5432/peacefull_test
+      REDIS_URL: redis://localhost:6379
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      JWT_SECRET: ci-test-jwt-secret-minimum-thirty-two-characters-long
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-minimum-thirty-two-characters
+      NODE_ENV: development
+      PORT: 3001
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: peacefull_test
+          POSTGRES_USER: peacefull
+          POSTGRES_PASSWORD: peacefull
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install shared dependencies
+        run: cd packages/shared && npm ci
+      - name: Install API dependencies
+        run: cd packages/api && npm ci
+      - name: Generate Prisma client
+        run: cd packages/api && npx prisma generate
+      - name: Push schema to test DB
+        run: cd packages/api && npx prisma db push --skip-generate
+      - name: Seed test database
+        run: cd packages/api && npx tsx prisma/seed.ts
+      - name: Type check API
+        run: cd packages/api && npx tsc --noEmit
+      - name: Start API server
+        run: cd packages/api && npx tsx src/server.ts &
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3001/health && break
+            sleep 1
+          done
+      - name: Verify health endpoint
+        run: curl -f http://localhost:3001/health
+
+  build-ml-pipeline:
+    name: Build ML Pipeline
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install ML pipeline dependencies
+        run: cd packages/ml-pipeline && npm ci
+      - name: Type check ML pipeline
+        run: cd packages/ml-pipeline && npx tsc --noEmit
