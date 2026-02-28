@@ -542,11 +542,6 @@ export function resetPatientMemoryView() {
   state.expandedPatientMemoryId = null;
 }
 
-export function resetEvidence() {
-  state.evidenceFilter = 'All';
-  state.expandedEvidenceId = null;
-}
-
 export function resetClinicianProfile() {
   state.clinicianProfile = JSON.parse(JSON.stringify(baselineClinicianProfile));
 }

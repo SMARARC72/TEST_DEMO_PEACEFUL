@@ -54,14 +54,6 @@ const actionRegistry = {
   'hide-export-confirmation': actions.hideExportConfirmation,
   'generate-export': actions.generateExport,
   
-  // Security
-  'update-mfa-method': actions.updateMfaMethod,
-  'validate-backup-code': actions.validateBackupCode,
-  'validate-contract': actions.validateSmartContractArtifact,
-  'verify-merkle': actions.verifyMerkleRootPath,
-  'reset-security-state': actions.resetSecurityStateAction,
-  
-  
   // MBC Dashboard (F1)
   'add-mbc-note': actions.addMBCNote,
   'reset-mbc-dashboard': actions.resetMBCDashboardAction,

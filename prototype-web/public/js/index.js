@@ -399,6 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSafetyPlan();
   renderOnboarding();
   renderPatientMemoryView();
+  renderChat();
 
   // Phase 6+ renders
   renderClinicianAnalytics();
