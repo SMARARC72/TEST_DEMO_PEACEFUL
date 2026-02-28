@@ -406,14 +406,48 @@ export function selectPatientProfile(profileId) {
 
 // ============ INBOX / DRAFT ACTIONS ============
 
-export function acknowledgeAlert() { showToast('Alert acknowledged'); }
-export function resolveAlert() { showToast('Alert resolved'); }
-export function escalateAlert() { showToast('Alert escalated to supervisor'); }
-export function markReviewed() { showToast('Summary marked as reviewed'); }
-export function useWithCaution() { showToast('Summary flagged: Use with caution'); }
-export function retainDraft() { showToast('Summary retained as draft'); }
-export function rejectSummary() { showToast('Summary rejected'); }
-export function escalateSummary() { showToast('Summary escalated for review'); }
+export function acknowledgeAlert() {
+  const badge = document.getElementById('inbox-detail-status-badge');
+  if (badge) { badge.textContent = 'ACKNOWLEDGED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-blue-100 text-blue-700'; }
+  showToast('Alert acknowledged — status updated');
+}
+export function resolveAlert() {
+  const badge = document.getElementById('inbox-detail-status-badge');
+  if (badge) { badge.textContent = 'RESOLVED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-green-100 text-green-700'; }
+  showToast('Alert resolved');
+}
+export function escalateAlert() {
+  const badge = document.getElementById('inbox-detail-status-badge');
+  if (badge) { badge.textContent = 'ESCALATED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-red-100 text-red-700'; }
+  showToast('Alert escalated to supervisor');
+}
+export function markReviewed() {
+  const badge = document.getElementById('draft-review-status-badge');
+  if (badge) { badge.textContent = 'REVIEWED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-green-100 text-green-700'; }
+  const banner = document.getElementById('draft-review-banner');
+  if (banner) { banner.textContent = '✓ REVIEWED — Clinician approved'; banner.className = 'bg-green-100 border-l-4 border-green-600 p-3 rounded-lg text-sm font-semibold text-green-800'; }
+  showToast('Summary marked as reviewed');
+}
+export function useWithCaution() {
+  const badge = document.getElementById('draft-review-status-badge');
+  if (badge) { badge.textContent = 'USE WITH CAUTION'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-amber-100 text-amber-700'; }
+  showToast('Summary flagged: Use with caution');
+}
+export function retainDraft() {
+  showToast('Summary retained as draft');
+}
+export function rejectSummary() {
+  const badge = document.getElementById('draft-review-status-badge');
+  if (badge) { badge.textContent = 'REJECTED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-red-100 text-red-700'; }
+  const banner = document.getElementById('draft-review-banner');
+  if (banner) { banner.textContent = '✘ REJECTED — Clinician rejected this summary'; banner.className = 'bg-red-100 border-l-4 border-red-600 p-3 rounded-lg text-sm font-semibold text-red-800'; }
+  showToast('Summary rejected');
+}
+export function escalateSummary() {
+  const badge = document.getElementById('draft-review-status-badge');
+  if (badge) { badge.textContent = 'ESCALATED'; badge.className = 'px-3 py-1 rounded-lg text-sm font-semibold bg-purple-100 text-purple-700'; }
+  showToast('Summary escalated for review');
+}
 
 // ============ EXPORT ============
 
@@ -765,6 +799,15 @@ export function resetDemo() {
   state.breathingActive = false;
   state.breathingPhase = 'idle';
   
+  // Re-render new screens after state reset
+  renderClinicianAnalytics();
+  renderPopulationHealth();
+  renderSessionNotes();
+  renderInvestorFinancials();
+  renderRegulatoryHub();
+  renderSDOHAssessment();
+  renderCaregiverView();
+
   showToast('Demo reset to defaults');
 }
 

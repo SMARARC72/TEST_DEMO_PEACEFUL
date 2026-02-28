@@ -1149,22 +1149,12 @@ export function renderPopulationHealth() {
     </div>
     <div class="grid grid-cols-2 gap-6 mb-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h3 class="font-semibold text-slate-800 mb-4">Outcome Trends</h3>
-        <div class="space-y-3">
-          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-green-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Improving</span><span class="font-semibold text-green-700">${ph.improvingPct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-green-500 rounded-full" style="width:${ph.improvingPct}%"></div></div></div></div>
-          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-blue-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Stable</span><span class="font-semibold text-blue-700">${ph.stablePct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-blue-500 rounded-full" style="width:${ph.stablePct}%"></div></div></div></div>
-          <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="flex-1"><div class="flex justify-between text-sm"><span class="text-slate-700">Worsening</span><span class="font-semibold text-red-700">${ph.worseningPct}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 bg-red-500 rounded-full" style="width:${ph.worseningPct}%"></div></div></div></div>
-        </div>
+        <h3 class="font-semibold text-slate-800 mb-4">Outcome Distribution</h3>
+        <div style="position:relative;height:240px"><canvas id="chart-outcomes"></canvas></div>
       </div>
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <h3 class="font-semibold text-slate-800 mb-4">Risk Distribution</h3>
-        <div class="space-y-3">
-          ${Object.entries(ph.riskDistribution).map(([level, count]) => {
-            const colors = { low: 'green', moderate: 'blue', high: 'amber', critical: 'red' };
-            const c = colors[level] || 'slate';
-            return `<div class="flex items-center justify-between p-2 bg-${c}-50 rounded-lg"><span class="text-sm font-medium text-${c}-700 capitalize">${level}</span><span class="text-lg font-bold text-${c}-700">${count}</span></div>`;
-          }).join('')}
-        </div>
+        <div style="position:relative;height:240px"><canvas id="chart-risk"></canvas></div>
       </div>
     </div>
     <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -1180,6 +1170,34 @@ export function renderPopulationHealth() {
       </div>
     </div>
   `;
+
+  // Render Chart.js charts if available
+  if (typeof Chart !== 'undefined') {
+    const outcomesCtx = document.getElementById('chart-outcomes');
+    if (outcomesCtx) {
+      new Chart(outcomesCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Improving', 'Stable', 'Worsening'],
+          datasets: [{ data: [ph.improvingPct, ph.stablePct, ph.worseningPct], backgroundColor: ['#10b981', '#3b82f6', '#ef4444'], borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } } }
+      });
+    }
+    const riskCtx = document.getElementById('chart-risk');
+    if (riskCtx) {
+      const riskLabels = Object.keys(ph.riskDistribution).map(l => l.charAt(0).toUpperCase() + l.slice(1));
+      const riskValues = Object.values(ph.riskDistribution);
+      new Chart(riskCtx, {
+        type: 'bar',
+        data: {
+          labels: riskLabels,
+          datasets: [{ data: riskValues, backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderRadius: 6, barPercentage: 0.6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 2 } }, x: { grid: { display: false } } } }
+      });
+    }
+  }
 }
 
 // ============ SESSION NOTES ============
@@ -1441,14 +1459,7 @@ export function renderCaregiverView() {
     </div>
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <h4 class="font-semibold text-slate-800 mb-3">Weekly Mood Trend</h4>
-      <div class="flex gap-2 items-end h-24">
-        ${prog.weeklyMood.map((m, i) => {
-          const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-          const h = m ? m * 20 : 0;
-          const c = m >= 4 ? 'bg-green-400' : m >= 3 ? 'bg-blue-400' : m >= 2 ? 'bg-amber-400' : 'bg-red-400';
-          return `<div class="flex-1 flex flex-col items-center"><div class="${m ? c : 'bg-slate-200'} rounded-t" style="height:${h || 4}px;width:100%"></div><span class="text-[10px] text-slate-400 mt-1">${dayNames[i]}</span></div>`;
-        }).join('')}
-      </div>
+      <div style="position:relative;height:160px"><canvas id="chart-caregiver-mood"></canvas></div>
     </div>
     <div class="bg-white rounded-2xl shadow-sm p-6">
       <h4 class="font-semibold text-slate-800 mb-3">How You Can Help</h4>
@@ -1460,4 +1471,29 @@ export function renderCaregiverView() {
       </div>
     </div>
   `;
+
+  // Chart.js mood trend line chart
+  if (typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('chart-caregiver-mood');
+    if (ctx) {
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dayNames,
+          datasets: [{
+            label: 'Mood (1-5)',
+            data: prog.weeklyMood,
+            borderColor: '#0d9488',
+            backgroundColor: 'rgba(13, 148, 136, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: '#0d9488'
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+      });
+    }
+  }
 }
