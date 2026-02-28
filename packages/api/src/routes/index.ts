@@ -8,6 +8,7 @@ import { clinicianRouter } from './clinician.js';
 import { aiRouter } from './ai.js';
 import { analyticsRouter } from './analytics.js';
 import { complianceRouter } from './compliance.js';
+import { uploadRouter } from './uploads.js';
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use('/clinician', clinicianRouter);
 router.use('/ai', aiRouter);
 router.use('/analytics', analyticsRouter);
 router.use('/compliance', complianceRouter);
+router.use('/uploads', uploadRouter);
 
 export default router;

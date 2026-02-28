@@ -30,6 +30,9 @@ const envSchema = z.object({
   /** Auth0 client secret (optional). */
   AUTH0_CLIENT_SECRET: z.string().optional(),
 
+  /** Auth0 API audience identifier (optional). */
+  AUTH0_AUDIENCE: z.string().optional(),
+
   /** AWS region for S3 and other services. */
   AWS_REGION: z.string().default('us-east-1'),
 
@@ -77,6 +80,14 @@ function validateEnv() {
   if (data.NODE_ENV === 'production' && !data.ENCRYPTION_KEY) {
     console.error(
       '\n❌  ENCRYPTION_KEY is required in production.\n',
+    );
+    process.exit(1);
+  }
+
+  // Enforce Auth0 in production
+  if (data.NODE_ENV === 'production' && !data.AUTH0_DOMAIN) {
+    console.error(
+      '\n❌  AUTH0_DOMAIN is required in production.\n',
     );
     process.exit(1);
   }
