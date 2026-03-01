@@ -1,3 +1,199 @@
+# 🔴 MANDATORY: READ BEFORE ANY WORK
+
+> **ALL SUBAGENTS, DEVELOPERS, AND AUTOMATION MUST READ AND FULLY COMPLY WITH THE FOLLOWING PRD BEFORE PERFORMING ANY WORK ON THIS CODEBASE.**
+> **FAILURE TO COMPLY WITH ANY ITEM IS A BLOCKING VIOLATION. NO EXCEPTIONS. NO WORKAROUNDS. NO PARTIAL DELIVERY.**
+
+---
+
+## ⚠️ ACTIVE PRD: Phase 2 — Security Hardening, Patient Safety, Provider Experience & Code Quality
+
+**Document:** [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md)
+
+**Status:** `IMMEDIATE — Execute upon finalization of current implementation block`
+
+**Priority:** `P0 — Platform CANNOT serve real patient data until Phase 1 + 2 are complete`
+
+**Total Scope:** 41 work items across 5 sequentially-gated phases | 200+ acceptance criteria | 10 weeks estimated
+
+---
+
+## 🛑 EXECUTION RULES — NON-NEGOTIABLE
+
+These rules apply to EVERY subagent, developer, copilot, automation, or human operator touching this codebase from this point forward:
+
+### Rule 1: Read First, Act Second
+Before writing a single line of code, read the ENTIRE PRD end-to-end. Read this README section. Read `PRD_REACT_MIGRATION.md` for context on what was built. Understand the full picture before touching anything.
+
+### Rule 2: Sequential Phase Execution
+```
+Phase 1 (Security) → Phase 2 (Patient Safety) → Phase 3 (Code Quality) → Phase 4 (Provider) → Phase 5 (Compliance)
+```
+**Each phase is gated.** Phase N+1 CANNOT begin until ALL items in Phase N are complete AND the Phase N gate review passes. No parallelization across phases. No "starting Phase 3 while finishing Phase 2." Hard stops.
+
+### Rule 3: Every Item, Every Criterion
+Every numbered item (3.1 through 7.8) must be completed. Every acceptance criterion checkbox under every item must pass. There are no optional items. There are no "nice to haves." Everything in the PRD is required.
+
+### Rule 4: No Placeholder Code
+Zero tolerance for:
+- `// TODO` comments
+- `// FIXME` comments
+- `any` types in TypeScript
+- `@ts-ignore` directives
+- `eslint-disable` without documented justification
+- `console.log` in production code
+- Hardcoded credentials, API keys, or account IDs
+- Commented-out code blocks
+
+### Rule 5: No Scope Creep
+Do NOT add features, refactors, "improvements," or "nice to haves" not explicitly listed in the PRD. If you identify something missing, document it as a finding and flag it. Do NOT implement it. The PRD scope is frozen.
+
+### Rule 6: Verify After Every Item
+After completing each numbered item:
+1. Run `cd prototype-web && npm run build` — must succeed
+2. Run `npm test` — must pass
+3. Run `npm run lint` — must pass with zero errors
+4. Verify all PREVIOUS items still work (no regressions)
+5. If any check fails, fix it before moving to the next item
+
+### Rule 7: Commit Discipline
+One commit per numbered item. No multi-item commits. No "batch" commits.
+```
+Format: [PRD-PH2] <Phase#>.<Item#> — <short description>
+Example: [PRD-PH2] 1.3 — Add Zod input validation layer for all Lambda functions
+```
+
+### Rule 8: Phase Gates Are Hard Stops
+At the end of each phase, execute the gate review checklist defined in the PRD. Every checkbox must pass. Create a git tag:
+```
+phase1-security-foundation-complete
+phase2-patient-safety-complete
+phase3-code-quality-complete
+phase4-provider-experience-complete
+phase5-launch-ready
+```
+
+### Rule 9: Document All Blockers
+If a blocker is encountered:
+1. **STOP** — do not skip the item
+2. Document: WHAT failed, WHY it failed, WHAT is needed to unblock, IMPACT on downstream items
+3. Escalate — do not silently move on
+
+### Rule 10: Patient Safety Is Paramount
+This is a **mental health platform**. A bug in the crisis escalation flow could cost a human life. A data leak exposes the most sensitive information a person can have. Every line of code, every configuration, every decision must be made with that gravity. If in doubt, choose the safer option. Always.
+
+---
+
+## 📋 PHASE SUMMARY — QUICK REFERENCE
+
+| Phase | Focus | Items | Key Deliverables | Gate Tag |
+|-------|-------|-------|-----------------|----------|
+| **1** | Security Foundation | 3.1–3.11 (11 items) | WAF, rate limiting, input validation, CORS lockdown, CSP headers, JWT validation, audit trail, VPC, dependency scanning, PITR, S3 hardening | `phase1-security-foundation-complete` |
+| **2** | Patient Safety | 4.1–4.6 (6 items) | Crisis escalation E2E, session timeout + auto-save, offline fallback, WCAG 2.1 AA accessibility, error boundaries, patient data export | `phase2-patient-safety-complete` |
+| **3** | Code Quality & Testing | 5.1–5.10 (10 items) | Archive legacy JS, TypeScript strict mode, ESLint config, structured logging, API response envelope, typed API client, Lambda unit tests (80%+), React unit tests (80%+), E2E tests (Playwright), CI pipeline gates | `phase3-code-quality-complete` |
+| **4** | Provider Experience | 6.1–6.6 (6 items) | RBAC (patient/provider/admin), provider dashboard, clinical notes CRUD, secure messaging, alert severity + config, risk stratification views | `phase4-provider-experience-complete` |
+| **5** | Compliance & Launch | 7.1–7.8 (8 items) | HIPAA risk assessment doc, data retention policy, incident response runbook, monitoring + alerting, staging environment, i18n framework, Lighthouse >=90, pentest preparation | `phase5-launch-ready` |
+
+---
+
+## 🔒 GUARDRAILS IN EFFECT
+
+### Security Guardrails
+| ID | Rule |
+|----|------|
+| SEC-01 | No AWS credentials in code, commits, or logs |
+| SEC-02 | No `*` in any IAM policy |
+| SEC-03 | No public S3 buckets |
+| SEC-04 | KMS encryption on all data stores |
+| SEC-05 | TLS 1.2+ everywhere — no HTTP |
+| SEC-06 | No `Access-Control-Allow-Origin: *` |
+| SEC-07 | No raw PHI in logs — structured logger with field redaction |
+| SEC-08 | No Lambda function URLs — all access through API Gateway |
+| SEC-09 | All dependencies audited — `npm audit --audit-level=high` must pass |
+| SEC-10 | No inline scripts — CSP enforced via CloudFront |
+
+### Code Quality Guardrails
+| ID | Rule |
+|----|------|
+| CQ-01 | TypeScript `strict: true` — no exceptions |
+| CQ-02 | No `any` type anywhere |
+| CQ-03 | All functions have explicit return types |
+| CQ-04 | No `console.log` in production code |
+| CQ-05 | Minimum 80% unit test coverage |
+| CQ-06 | 100% coverage on crisis, risk-scoring, and auth paths |
+| CQ-07 | No files > 300 lines |
+| CQ-08 | All API responses use standard envelope format |
+| CQ-09 | All PRs require passing CI |
+| CQ-10 | No dead code |
+
+### Infrastructure Guardrails
+| ID | Rule |
+|----|------|
+| INF-01 | All infra changes via Terraform — no console clicks |
+| INF-02 | Terraform plan on every PR |
+| INF-03 | Remote state encrypted with versioning |
+| INF-04 | State lock via DynamoDB |
+| INF-05 | No hardcoded AWS account IDs |
+| INF-06 | All resources tagged: Project, Environment, ManagedBy, PHI |
+| INF-07 | Staging mirrors production |
+
+---
+
+## ✅ PRE-FLIGHT CHECKLIST — BEFORE STARTING PHASE 1
+
+Complete these checks before beginning any Phase 2 PRD work. These confirm the current implementation block is finalized:
+
+- [ ] React/Vite frontend builds successfully: `cd prototype-web && npm ci && npm run build`
+- [ ] Frontend deploys to S3 via `cd-frontend.yml` workflow
+- [ ] All current React components render correctly in browser
+- [ ] Cognito authentication flow works (signup, login, token refresh)
+- [ ] API Gateway endpoints responding with expected data
+- [ ] Terraform state is clean: `terraform plan` shows no unexpected changes
+- [ ] Current git state committed and tagged: `pre-phase2-baseline`
+- [ ] Legacy monolithic JS files identified (still in `public/js/` — will be archived in Phase 3)
+
+**Once ALL boxes above are checked, begin Phase 1, Item 3.1 (WAF deployment) immediately.**
+
+---
+
+## 📁 KEY FILE REFERENCES
+
+| File | Purpose |
+|------|---------|
+| [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md) | **THE PRD** — 41 items, full acceptance criteria, phase gates, verification protocol |
+| [`PRD_REACT_MIGRATION.md`](./PRD_REACT_MIGRATION.md) | Previous migration PRD (context for what was built) |
+| [`prototype-web/`](./prototype-web/) | React/Vite frontend source |
+| [`packages/infra/terraform/`](./packages/infra/terraform/) | Infrastructure as Code |
+| [`packages/shared/`](./packages/shared/) | Shared packages (validation, logging, etc. — created in Phase 3) |
+| [`.github/workflows/`](./.github/workflows/) | CI/CD pipelines |
+| [`_archive/`](./_archive/) | Archived legacy files (populated in Phase 3) |
+
+---
+
+## 🚨 DEFINITION OF DONE — ALL 15 MUST PASS
+
+This PRD is **COMPLETE** when and ONLY when:
+
+1. All 41 items across 5 phases are complete
+2. All acceptance criteria for all items verified
+3. All 5 phase gate reviews pass
+4. Final verification protocol complete
+5. All 5 git tags created
+6. Zero ESLint errors
+7. Zero TypeScript errors
+8. Unit test coverage >= 80% (100% on critical paths)
+9. E2E tests pass
+10. Lighthouse scores >= 90 in all categories
+11. Security audit clean (`npm audit` zero high/critical)
+12. HIPAA documentation complete
+13. Staging environment operational
+14. Monitoring and alerting active
+15. Code reviewed by someone other than the implementer
+
+**ANYTHING LESS THAN ALL 15 = NOT DONE. NO EXCEPTIONS. NO NEGOTIATION.**
+
+---
+---
+
 # Peacefull.ai — Behavioral Health AI Companion
 
 **Version:** 3.0  
@@ -597,3 +793,204 @@ Requires JavaScript enabled.
 
 For questions about this prototype, refer to the KRLZ
 .
+
+---
+
+# 🔴 MANDATORY: READ BEFORE ANY WORK
+
+> **ALL SUBAGENTS, DEVELOPERS, AND AUTOMATION MUST READ AND FULLY COMPLY WITH THE FOLLOWING PRD BEFORE PERFORMING ANY WORK ON THIS CODEBASE.**
+> **FAILURE TO COMPLY WITH ANY ITEM IS A BLOCKING VIOLATION. NO EXCEPTIONS. NO WORKAROUNDS. NO PARTIAL DELIVERY.**
+
+---
+
+## ⚠️ ACTIVE PRD: Phase 2 — Security Hardening, Patient Safety, Provider Experience & Code Quality
+
+**Document:** [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md)
+
+**Status:** `IMMEDIATE — Execute upon finalization of current implementation block`
+
+**Priority:** `P0 — Platform CANNOT serve real patient data until Phase 1 + 2 are complete`
+
+**Total Scope:** 41 work items across 5 sequentially-gated phases | 200+ acceptance criteria | 10 weeks estimated
+
+---
+
+## 🛑 EXECUTION RULES — NON-NEGOTIABLE
+
+These rules apply to EVERY subagent, developer, copilot, automation, or human operator touching this codebase from this point forward:
+
+### Rule 1: Read First, Act Second
+Before writing a single line of code, read the ENTIRE PRD end-to-end. Read this README section. Read `PRD_REACT_MIGRATION.md` for context on what was built. Understand the full picture before touching anything.
+
+### Rule 2: Sequential Phase Execution
+```
+Phase 1 (Security) → Phase 2 (Patient Safety) → Phase 3 (Code Quality) → Phase 4 (Provider) → Phase 5 (Compliance)
+```
+**Each phase is gated.** Phase N+1 CANNOT begin until ALL items in Phase N are complete AND the Phase N gate review passes. No parallelization across phases. No "starting Phase 3 while finishing Phase 2." Hard stops.
+
+### Rule 3: Every Item, Every Criterion
+Every numbered item (3.1 through 7.8) must be completed. Every acceptance criterion checkbox under every item must pass. There are no optional items. There are no "nice to haves." Everything in the PRD is required.
+
+### Rule 4: No Placeholder Code
+Zero tolerance for:
+- `// TODO` comments
+- `// FIXME` comments
+- `any` types in TypeScript
+- `@ts-ignore` directives
+- `eslint-disable` without documented justification
+- `console.log` in production code
+- Hardcoded credentials, API keys, or account IDs
+- Commented-out code blocks
+
+### Rule 5: No Scope Creep
+Do NOT add features, refactors, "improvements," or "nice to haves" not explicitly listed in the PRD. If you identify something missing, document it as a finding and flag it. Do NOT implement it. The PRD scope is frozen.
+
+### Rule 6: Verify After Every Item
+After completing each numbered item:
+1. Run `cd prototype-web && npm run build` — must succeed
+2. Run `npm test` — must pass
+3. Run `npm run lint` — must pass with zero errors
+4. Verify all PREVIOUS items still work (no regressions)
+5. If any check fails, fix it before moving to the next item
+
+### Rule 7: Commit Discipline
+One commit per numbered item. No multi-item commits. No "batch" commits.
+```
+Format: [PRD-PH2] <Phase#>.<Item#> — <short description>
+Example: [PRD-PH2] 1.3 — Add Zod input validation layer for all Lambda functions
+```
+
+### Rule 8: Phase Gates Are Hard Stops
+At the end of each phase, execute the gate review checklist defined in the PRD. Every checkbox must pass. Create a git tag:
+```
+phase1-security-foundation-complete
+phase2-patient-safety-complete
+phase3-code-quality-complete
+phase4-provider-experience-complete
+phase5-launch-ready
+```
+
+### Rule 9: Document All Blockers
+If a blocker is encountered:
+1. **STOP** — do not skip the item
+2. Document: WHAT failed, WHY it failed, WHAT is needed to unblock, IMPACT on downstream items
+3. Escalate — do not silently move on
+
+### Rule 10: Patient Safety Is Paramount
+This is a **mental health platform**. A bug in the crisis escalation flow could cost a human life. A data leak exposes the most sensitive information a person can have. Every line of code, every configuration, every decision must be made with that gravity. If in doubt, choose the safer option. Always.
+
+---
+
+## 📋 PHASE SUMMARY — QUICK REFERENCE
+
+| Phase | Focus | Items | Key Deliverables | Gate Tag |
+|-------|-------|-------|-----------------|----------|
+| **1** | Security Foundation | 3.1–3.11 (11 items) | WAF, rate limiting, input validation, CORS lockdown, CSP headers, JWT validation, audit trail, VPC, dependency scanning, PITR, S3 hardening | `phase1-security-foundation-complete` |
+| **2** | Patient Safety | 4.1–4.6 (6 items) | Crisis escalation E2E, session timeout + auto-save, offline fallback, WCAG 2.1 AA accessibility, error boundaries, patient data export | `phase2-patient-safety-complete` |
+| **3** | Code Quality & Testing | 5.1–5.10 (10 items) | Archive legacy JS, TypeScript strict mode, ESLint config, structured logging, API response envelope, typed API client, Lambda unit tests (80%+), React unit tests (80%+), E2E tests (Playwright), CI pipeline gates | `phase3-code-quality-complete` |
+| **4** | Provider Experience | 6.1–6.6 (6 items) | RBAC (patient/provider/admin), provider dashboard, clinical notes CRUD, secure messaging, alert severity + config, risk stratification views | `phase4-provider-experience-complete` |
+| **5** | Compliance & Launch | 7.1–7.8 (8 items) | HIPAA risk assessment doc, data retention policy, incident response runbook, monitoring + alerting, staging environment, i18n framework, Lighthouse ≥90, pentest preparation | `phase5-launch-ready` |
+
+---
+
+## 🔒 GUARDRAILS IN EFFECT
+
+### Security Guardrails
+| ID | Rule |
+|----|------|
+| SEC-01 | No AWS credentials in code, commits, or logs |
+| SEC-02 | No `*` in any IAM policy |
+| SEC-03 | No public S3 buckets |
+| SEC-04 | KMS encryption on all data stores |
+| SEC-05 | TLS 1.2+ everywhere — no HTTP |
+| SEC-06 | No `Access-Control-Allow-Origin: *` |
+| SEC-07 | No raw PHI in logs — structured logger with field redaction |
+| SEC-08 | No Lambda function URLs — all access through API Gateway |
+| SEC-09 | All dependencies audited — `npm audit --audit-level=high` must pass |
+| SEC-10 | No inline scripts — CSP enforced via CloudFront |
+
+### Code Quality Guardrails
+| ID | Rule |
+|----|------|
+| CQ-01 | TypeScript `strict: true` — no exceptions |
+| CQ-02 | No `any` type anywhere |
+| CQ-03 | All functions have explicit return types |
+| CQ-04 | No `console.log` in production code |
+| CQ-05 | Minimum 80% unit test coverage |
+| CQ-06 | 100% coverage on crisis, risk-scoring, and auth paths |
+| CQ-07 | No files > 300 lines |
+| CQ-08 | All API responses use standard envelope format |
+| CQ-09 | All PRs require passing CI |
+| CQ-10 | No dead code |
+
+### Infrastructure Guardrails
+| ID | Rule |
+|----|------|
+| INF-01 | All infra changes via Terraform — no console clicks |
+| INF-02 | Terraform plan on every PR |
+| INF-03 | Remote state encrypted with versioning |
+| INF-04 | State lock via DynamoDB |
+| INF-05 | No hardcoded AWS account IDs |
+| INF-06 | All resources tagged: Project, Environment, ManagedBy, PHI |
+| INF-07 | Staging mirrors production |
+
+---
+
+## ✅ PRE-FLIGHT CHECKLIST — BEFORE STARTING PHASE 1
+
+Complete these checks before beginning any Phase 2 PRD work. These confirm the current implementation block is finalized:
+
+- [ ] React/Vite frontend builds successfully: `cd prototype-web && npm ci && npm run build`
+- [ ] Frontend deploys to S3 via `cd-frontend.yml` workflow
+- [ ] All current React components render correctly in browser
+- [ ] Cognito authentication flow works (signup, login, token refresh)
+- [ ] API Gateway endpoints responding with expected data
+- [ ] Terraform state is clean: `terraform plan` shows no unexpected changes
+- [ ] Current git state committed and tagged: `pre-phase2-baseline`
+- [ ] Legacy monolithic JS files identified (still in `public/js/` — will be archived in Phase 3)
+
+**⚡ Once ALL boxes above are checked, begin Phase 1, Item 3.1 (WAF deployment) immediately.**
+
+---
+
+## 📁 KEY FILE REFERENCES
+
+| File | Purpose |
+|------|---------|
+| [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md) | **THE PRD** — 41 items, full acceptance criteria, phase gates, verification protocol |
+| [`PRD_REACT_MIGRATION.md`](./PRD_REACT_MIGRATION.md) | Previous migration PRD (context for what was built) |
+| [`prototype-web/`](./prototype-web/) | React/Vite frontend source |
+| [`packages/infra/terraform/`](./packages/infra/terraform/) | Infrastructure as Code |
+| [`packages/lambdas/`](./packages/lambdas/) | Backend Lambda functions |
+| [`packages/shared/`](./packages/shared/) | Shared packages (validation, logging, etc. — created in Phase 3) |
+| [`.github/workflows/`](./.github/workflows/) | CI/CD pipelines |
+| [`_archive/`](./_archive/) | Archived legacy files (populated in Phase 3) |
+| [`docs/compliance/`](./docs/compliance/) | HIPAA documentation (created in Phase 5) |
+
+---
+
+## 🚨 DEFINITION OF DONE — ALL 15 MUST PASS
+
+This PRD is **COMPLETE** when and ONLY when:
+
+1. ✅ All 41 items across 5 phases are complete
+2. ✅ All acceptance criteria for all items verified
+3. ✅ All 5 phase gate reviews pass
+4. ✅ Final verification protocol complete
+5. ✅ All 5 git tags created
+6. ✅ Zero ESLint errors
+7. ✅ Zero TypeScript errors
+8. ✅ Unit test coverage ≥ 80% (100% on critical paths)
+9. ✅ E2E tests pass
+10. ✅ Lighthouse scores ≥ 90 in all categories
+11. ✅ Security audit clean (`npm audit` zero high/critical)
+12. ✅ HIPAA documentation complete
+13. ✅ Staging environment operational
+14. ✅ Monitoring and alerting active
+15. ✅ Code reviewed by someone other than the implementer
+
+**ANYTHING LESS THAN ALL 15 = NOT DONE. NO EXCEPTIONS. NO NEGOTIATION.**
+
+---
+
+// ...existing code...

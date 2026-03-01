@@ -4,8 +4,8 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rate-limit.js';
 import { AppError } from '../middleware/error.js';
 import {
   generateTokens,
@@ -57,22 +57,9 @@ const pendingMFA: Record<string, string> = {};
 /** Revoked refresh tokens (move to Redis / DB for multi-instance). */
 const invalidatedTokens = new Set<string>();
 
-// SEC-004: Per-email rate limiting for login and MFA
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per IP per 15 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: { message: 'Too many login attempts. Please try again later.' } },
-});
-
-const mfaLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 5, // 5 MFA attempts per IP per 5 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: { message: 'Too many MFA attempts. Please try again later.' } },
-});
+// SEC-004: Per-route rate limiting for auth endpoints (from shared module)
+const loginLimiter = authLimiter;
+const mfaLimiter = authLimiter;
 
 // ─── POST /register ──────────────────────────────────────────────────
 
@@ -319,11 +306,15 @@ authRouter.post('/refresh', async (req, res, next) => {
 
 // ─── POST /logout ────────────────────────────────────────────────────
 
+const logoutBodySchema = z.object({
+  refreshToken: z.string().min(1).optional(),
+}).strict();
+
 authRouter.post('/logout', authenticate, (req, res, next) => {
   try {
-    const refreshToken = req.body?.refreshToken;
-    if (refreshToken) {
-      invalidatedTokens.add(refreshToken);
+    const body = logoutBodySchema.parse(req.body);
+    if (body.refreshToken) {
+      invalidatedTokens.add(body.refreshToken);
     }
     authLogger.info({ userId: req.user!.sub }, 'User logged out');
     res.json({ message: 'Logged out successfully' });

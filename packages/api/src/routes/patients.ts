@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { crisisLimiter, exportLimiter } from '../middleware/rate-limit.js';
+import { hashChain } from '../middleware/audit.js';
 import { prisma } from '../models/index.js';
 import { processSubmission } from '../services/submission-pipeline.js';
 import type {
@@ -427,10 +429,17 @@ patientRouter.get('/:id/session-prep', async (req, res, next) => {
 });
 
 // ─── PUT /:id/session-prep ──────────────────────────────────────────
-// Session-prep is constructed on-the-fly; PUT is a no-op passthrough.
+// Session-prep is constructed on-the-fly; PUT acknowledges receipt.
+
+const sessionPrepSchema = z.object({
+  goals: z.array(z.string().max(500)).optional(),
+  topics: z.array(z.string().max(500)).optional(),
+  notes: z.string().max(5000).optional(),
+}).strict();
 
 patientRouter.put('/:id/session-prep', (req, res) => {
-  res.json(req.body);
+  const data = sessionPrepSchema.parse(req.body);
+  res.json(data);
 });
 
 // ─── GET /:id/progress ──────────────────────────────────────────────
@@ -464,14 +473,15 @@ patientRouter.get('/:id/progress', async (req, res, next) => {
 
 // ─── GET /:id/safety-plan ───────────────────────────────────────────
 
-patientRouter.get('/:id/safety-plan', async (req, res, next) => {
+patientRouter.get('/:id/safety-plan', crisisLimiter, async (req, res, next) => {
   try {
+    const patientId = req.params.id as string;
     // SEC-003: Tenant isolation
-    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
     if (!patient) throw new AppError('Patient not found', 404);
     if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const row = await prisma.safetyPlan.findUnique({
-      where: { patientId: req.params.id },
+      where: { patientId },
     });
     if (!row) throw new AppError('Safety plan not found', 404);
 
@@ -499,23 +509,24 @@ const updateSafetyPlanSchema = z.object({
   reviewedDate: z.string().datetime().optional(),
 }).strict();
 
-patientRouter.put('/:id/safety-plan', async (req, res, next) => {
+patientRouter.put('/:id/safety-plan', crisisLimiter, async (req, res, next) => {
   try {
+    const patientId = req.params.id as string;
     // SEC-003: Tenant isolation
-    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
     if (!patient) throw new AppError('Patient not found', 404);
     if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
 
     const data = updateSafetyPlanSchema.parse(req.body);
     const row = await prisma.safetyPlan.upsert({
-      where: { patientId: req.params.id },
+      where: { patientId },
       update: {
         ...(data.steps !== undefined && { steps: data.steps }),
         ...(data.reviewedDate !== undefined && { reviewedDate: new Date(data.reviewedDate) }),
         version: { increment: 1 },
       },
       create: {
-        patientId: req.params.id,
+        patientId,
         steps: data.steps ?? [],
         reviewedDate: data.reviewedDate ? new Date(data.reviewedDate) : new Date(),
       },
@@ -731,8 +742,14 @@ patientRouter.post('/:id/journal', async (req, res, next) => {
 
 // ─── POST /:id/voice ────────────────────────────────────────────────
 
+const voiceMemoSchema = z.object({
+  duration: z.number().int().min(0).max(600).optional(),
+  mimeType: z.string().max(100).optional(),
+}).strict();
+
 patientRouter.post('/:id/voice', async (req, res, next) => {
   try {
+    const body = voiceMemoSchema.parse(req.body);
     // SEC-003: Tenant isolation
     const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
     if (!patient) throw new AppError('Patient not found', 404);
@@ -1046,6 +1063,184 @@ patientRouter.get('/:id/consent', async (req, res, next) => {
       revokedAt: r.revokedAt?.toISOString() ?? null,
       createdAt: r.createdAt.toISOString(),
     })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/data-export ───────────────────────────────────────────
+// HIPAA Right of Access — allows patients to download all their data.
+// Rate-limited to 1 export per hour (uses exportLimiter: 3/hour).
+
+patientRouter.get('/:id/data-export', exportLimiter, async (req, res, next) => {
+  try {
+    const patientId = req.params.id as string;
+
+    // SEC-003: Tenant isolation + self-access only
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+      include: {
+        user: { select: { email: true, firstName: true, lastName: true, createdAt: true } },
+      },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+    if (patient.userId !== req.user!.sub) throw new AppError('You can only export your own data', 403);
+
+    // Gather all patient data in parallel
+    const [
+      submissions,
+      checkins,
+      journals,
+      safetyPlan,
+      progressData,
+      escalations,
+      consent,
+      auditLogs,
+    ] = await Promise.all([
+      prisma.submission.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, source: true, status: true, rawContent: true,
+          patientTone: true, patientSummary: true, patientNextStep: true,
+          clinicianSignalBand: true, clinicianSummary: true,
+          createdAt: true, updatedAt: true,
+        },
+      }),
+      prisma.submission.findMany({
+        where: { patientId, source: 'CHECKIN' },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, rawContent: true, createdAt: true },
+      }),
+      prisma.submission.findMany({
+        where: { patientId, source: 'JOURNAL' },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, rawContent: true, createdAt: true },
+      }),
+      prisma.safetyPlan.findUnique({
+        where: { patientId },
+        select: { id: true, steps: true, reviewedDate: true, version: true },
+      }),
+      prisma.progressData.findUnique({
+        where: { patientId },
+        select: { streak: true, xp: true, level: true, levelName: true, badges: true, weeklyMood: true, milestones: true },
+      }),
+      prisma.escalationItem.findMany({
+        where: { patientId },
+        orderBy: { detectedAt: 'desc' },
+        select: { id: true, tier: true, trigger: true, status: true, detectedAt: true, resolvedAt: true },
+      }),
+      prisma.consentRecord.findMany({
+        where: { patientId },
+        select: { id: true, type: true, version: true, granted: true, grantedAt: true, revokedAt: true },
+      }),
+      prisma.auditLog.findMany({
+        where: { resourceId: patientId },
+        orderBy: { timestamp: 'desc' },
+        take: 100,
+        select: { action: true, resource: true, details: true, timestamp: true },
+      }),
+    ]);
+
+    // Audit the export itself with hash chain
+    const auditDetails = { reason: 'HIPAA Right of Access data export' };
+    const entryForHash = {
+      id: '',
+      tenantId: patient.tenantId,
+      userId: req.user!.sub,
+      action: 'DATA_EXPORT',
+      resource: 'Patient',
+      resourceId: patientId,
+      details: auditDetails,
+      ipAddress: req.ip ?? 'unknown',
+      userAgent: req.get('user-agent') ?? 'unknown',
+      timestamp: new Date().toISOString(),
+      previousHash: '0'.repeat(64),
+    };
+    const hash = hashChain(entryForHash);
+
+    await prisma.auditLog.create({
+      data: {
+        id: uuidv4(),
+        tenantId: patient.tenantId,
+        userId: req.user!.sub,
+        action: 'DATA_EXPORT',
+        resource: 'Patient',
+        resourceId: patientId,
+        details: auditDetails,
+        ipAddress: req.ip ?? 'unknown',
+        userAgent: req.get('user-agent') ?? 'unknown',
+        previousHash: entryForHash.previousHash,
+        hash,
+      },
+    });
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      exportVersion: '1.0',
+      patient: {
+        id: patient.id,
+        email: patient.user.email,
+        firstName: patient.user.firstName,
+        lastName: patient.user.lastName,
+        accountCreated: patient.user.createdAt.toISOString(),
+      },
+      moodEntries: checkins.map((c: { id: string; rawContent: string; createdAt: Date }) => ({
+        id: c.id,
+        content: c.rawContent,
+        createdAt: c.createdAt.toISOString(),
+      })),
+      journalEntries: journals.map((j: { id: string; rawContent: string; createdAt: Date }) => ({
+        id: j.id,
+        content: j.rawContent,
+        createdAt: j.createdAt.toISOString(),
+      })),
+      submissions: submissions.map((s: { id: string; source: string; status: string; rawContent: string; patientTone: string | null; patientSummary: string | null; patientNextStep: string | null; clinicianSignalBand: string | null; clinicianSummary: string | null; createdAt: Date; updatedAt: Date }) => ({
+        id: s.id,
+        source: s.source,
+        status: s.status,
+        rawContent: s.rawContent,
+        patientTone: s.patientTone,
+        patientSummary: s.patientSummary,
+        patientNextStep: s.patientNextStep,
+        clinicianSignalBand: s.clinicianSignalBand,
+        clinicianSummary: s.clinicianSummary,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+      })),
+      safetyPlan: safetyPlan ? {
+        ...safetyPlan,
+        reviewedDate: safetyPlan.reviewedDate.toISOString(),
+      } : null,
+      progress: progressData,
+      crisisHistory: escalations.map((e: { id: string; tier: string; trigger: string; status: string; detectedAt: Date; resolvedAt: Date | null }) => ({
+        id: e.id,
+        tier: e.tier,
+        trigger: e.trigger,
+        status: e.status,
+        detectedAt: e.detectedAt.toISOString(),
+        resolvedAt: e.resolvedAt?.toISOString() ?? null,
+      })),
+      consentRecords: consent.map((c: { id: string; type: string; version: number; granted: boolean; grantedAt: Date; revokedAt: Date | null }) => ({
+        id: c.id,
+        type: c.type,
+        version: c.version,
+        granted: c.granted,
+        grantedAt: c.grantedAt.toISOString(),
+        revokedAt: c.revokedAt?.toISOString() ?? null,
+      })),
+      accessLog: auditLogs.map((a: { action: string; resource: string; details: unknown; timestamp: Date }) => ({
+        action: a.action,
+        resource: a.resource,
+        details: a.details,
+        timestamp: a.timestamp.toISOString(),
+      })),
+    };
+
+    res.setHeader('Content-Disposition', `attachment; filename="peacefull-data-export-${patientId}.json"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.json(exportData);
   } catch (err) {
     next(err);
   }

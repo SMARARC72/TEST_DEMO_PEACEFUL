@@ -100,7 +100,32 @@ resource "aws_wafv2_web_acl" "main" {
   }
 
   # --------------------------------------------------------------------------
-  # Rule 4: Rate Limiting – 2000 requests / 5 minutes per IP
+  # Rule 4: AWS Managed – IP Reputation List
+  # --------------------------------------------------------------------------
+  rule {
+    name     = "AWSManagedRulesAmazonIpReputationList"
+    priority = 35
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesAmazonIpReputationList"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.app_name}-${var.environment}-ip-reputation"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # --------------------------------------------------------------------------
+  # Rule 5: Rate Limiting – 2000 requests / 5 minutes per IP
   # --------------------------------------------------------------------------
   rule {
     name     = "RateLimitPerIP"
@@ -130,7 +155,7 @@ resource "aws_wafv2_web_acl" "main" {
   }
 
   # --------------------------------------------------------------------------
-  # Rule 5: Geo-Restriction – US only (HIPAA data residency)
+  # Rule 6: Geo-Restriction – US only (HIPAA data residency)
   # --------------------------------------------------------------------------
   dynamic "rule" {
     for_each = var.geo_restrict ? [1] : []
@@ -166,7 +191,7 @@ resource "aws_wafv2_web_acl" "main" {
   }
 
   # --------------------------------------------------------------------------
-  # Rule 6: Request Body Size Limit (16 KB for API, except file uploads)
+  # Rule 7: Request Body Size Limit (16 KB for API, except file uploads)
   # --------------------------------------------------------------------------
   rule {
     name     = "RequestBodySizeLimit"

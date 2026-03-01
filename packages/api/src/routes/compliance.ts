@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole, stepUpAuth } from '../middleware/auth.js';
+import { exportLimiter } from '../middleware/rate-limit.js';
 import { prisma } from '../models/index.js';
 import { UserRole } from '@peacefull/shared';
 import type { CompliancePosture, RegulatoryStatus } from '@peacefull/shared';
@@ -219,11 +220,20 @@ complianceRouter.get('/regulatory', (_req, res) => {
  * Exports audit log data. Requires step-up authentication for
  * data sensitivity compliance.
  */
-complianceRouter.post('/audit-log/export', stepUpAuth, async (req, res, next) => {
+const auditExportSchema = z.object({
+  format: z.enum(['json', 'csv']).default('json'),
+  dateRange: z.object({
+    start: z.string().datetime().nullable().optional(),
+    end: z.string().datetime().nullable().optional(),
+  }).optional(),
+}).strict();
+
+complianceRouter.post('/audit-log/export', exportLimiter, stepUpAuth, async (req, res, next) => {
   try {
+    const body = auditExportSchema.parse(req.body);
     const tenantId = req.user!.tid;
-    const format = req.body?.format ?? 'json';
-    const dateRange = req.body?.dateRange ?? { start: null, end: null };
+    const format = body.format;
+    const dateRange = body.dateRange ?? { start: null, end: null };
 
     // Compute approximate export size from entry count
     const count = await prisma.auditLog.count({ where: { tenantId } });

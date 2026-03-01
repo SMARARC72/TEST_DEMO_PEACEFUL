@@ -85,7 +85,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Run npm audit (prototype)
-        run: cd prototype-web && npm ci && npm audit --audit-level=high || true
+        run: cd prototype-web && npm ci && npm audit --audit-level=high
+      - name: Run npm audit (API)
+        run: cd packages/api && npm ci && npm audit --audit-level=high
+      - name: Run npm audit (shared)
+        run: cd packages/shared && npm ci && npm audit --audit-level=high
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -99,7 +103,7 @@ jobs:
       - name: License compliance check
         run: |
           cd prototype-web
-          npx license-checker --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0' --production --summary || true
+          npx license-checker --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0' --production --summary
 
   build-api:
     name: Build & Test API

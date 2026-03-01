@@ -63,6 +63,58 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
   );
 }
 
+// ─── Data Export Card ────────────────────────────────────────────────
+function DataExportCard({ patientId }: { patientId: string }) {
+  const addToast = useUIStore((s) => s.addToast);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (): Promise<void> => {
+    setExporting(true);
+    try {
+      const { apiGet } = await import('@/api/client');
+      const [data, err] = await apiGet<Record<string, unknown>>(`patients/${patientId}/data-export`);
+      if (err) {
+        addToast({ type: 'error', message: err.message || 'Export failed' });
+        return;
+      }
+      // Download as JSON file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `peacefull-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast({ type: 'success', message: 'Your data has been exported.' });
+    } catch {
+      addToast({ type: 'error', message: 'Export failed. Please try again later.' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Your Data</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <p className="text-sm text-slate-600">
+          Under HIPAA Right of Access, you can download all of your data at any time.
+          This includes check-ins, journal entries, safety plans, and audit logs.
+        </p>
+        <Button onClick={handleExport} disabled={exporting}>
+          {exporting ? 'Preparing Export...' : 'Download My Data (JSON)'}
+        </Button>
+        <p className="text-xs text-slate-400">
+          Exports are limited to once per 24 hours for security.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -261,6 +313,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Data Export (HIPAA Right of Access) */}
+      <DataExportCard patientId={patientId} />
 
       {/* Sign Out */}
       <Card className="border-red-200">

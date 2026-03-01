@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { crisisLimiter } from '../middleware/rate-limit.js';
 import { prisma } from '../models/index.js';
 import { claudeService } from '../services/claude.js';
 import { aiLogger } from '../utils/logger.js';
@@ -258,7 +259,7 @@ const riskAssessSchema = z.object({
  * Requests AI risk assessment classifying the patient's signal band
  * with explainable reasoning. Optionally fetches patient history from DB.
  */
-aiRouter.post('/risk-assess', async (req, res, next) => {
+aiRouter.post('/risk-assess', crisisLimiter, async (req, res, next) => {
   try {
     const body = riskAssessSchema.parse(req.body);
 

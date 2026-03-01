@@ -3,12 +3,15 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { router } from './router';
 import './styles/globals.css';
+import './styles/accessibility.css';
 
 // Import auth store to wire token accessors on app start
 import './stores/auth';
 
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
+import { SessionTimeoutWarning } from './components/SessionTimeoutWarning';
+import { CrisisButton } from './components/domain/CrisisButton';
 import { initWebVitals } from './hooks/useWebVitals';
 import { useWsStore } from './stores/ws';
 import { useAuthStore } from './stores/auth';
@@ -38,6 +41,13 @@ enableMocking().then(() => {
   // Initialize Core Web Vitals monitoring
   initWebVitals();
 
+  // Register service worker for offline fallback
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Service worker registration is best-effort
+    });
+  }
+
   // Load remote feature flags (non-blocking)
   useFeatureFlagStore.getState().loadRemoteFlags();
 
@@ -60,6 +70,8 @@ enableMocking().then(() => {
     <StrictMode>
       <ErrorBoundary>
         <RouterProvider router={router} />
+        <SessionTimeoutWarning />
+        <CrisisButton />
         <ToastContainer />
       </ErrorBoundary>
     </StrictMode>,

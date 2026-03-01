@@ -77,6 +77,57 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
   }
 }
 
+# S3 access logging for HIPAA audit trail (SEC-11)
+resource "aws_s3_bucket" "uploads_logs" {
+  bucket = "${var.app_name}-${var.environment}-uploads-logs-${data.aws_caller_identity.current.account_id}"
+
+  tags = {
+    Name  = "${var.app_name}-${var.environment}-uploads-logs"
+    HIPAA = "true"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "uploads_logs" {
+  bucket = aws_s3_bucket.uploads_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "uploads_logs" {
+  bucket = aws_s3_bucket.uploads_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "uploads_logs" {
+  bucket = aws_s3_bucket.uploads_logs.id
+
+  rule {
+    id     = "retain-7-years"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 2555
+    }
+  }
+}
+
+resource "aws_s3_bucket_logging" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  target_bucket = aws_s3_bucket.uploads_logs.id
+  target_prefix = "access-logs/"
+}
+
 # ------------------------------------------------------------------------------
 # S3 Bucket – Static Web Assets (CloudFront origin)
 # ------------------------------------------------------------------------------

@@ -104,6 +104,8 @@ export function errorHandler(
         message: 'Request validation failed',
         details,
       },
+      requestId: _req.requestId,
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -125,6 +127,8 @@ export function errorHandler(
       code: statusCode >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_ERROR',
       message: isProduction ? (maskPHIInObject(message) as string) : message,
     },
+    requestId: _req.requestId,
+    timestamp: new Date().toISOString(),
   };
 
   res.status(statusCode).json(body);

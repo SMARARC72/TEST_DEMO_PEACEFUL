@@ -112,13 +112,26 @@ export class ErrorBoundary extends Component<Props, State> {
               Something went wrong
             </h1>
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-              An unexpected error occurred. Please reload the page or contact support if the problem persists.
+              An unexpected error occurred. Your data is safe. Please reload the page or contact support if the problem persists.
             </p>
             {this.state.error && (
               <p className="mt-2 rounded bg-neutral-100 p-2 text-xs text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500">
                 {this.state.error.message}
               </p>
             )}
+
+            {/* Crisis information — always visible in error states */}
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-left dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-xs font-semibold text-red-800 dark:text-red-300">
+                If you are in crisis, please reach out:
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-red-700 dark:text-red-400">
+                <li>988 Suicide &amp; Crisis Lifeline: <strong>988</strong></li>
+                <li>Crisis Text Line: Text <strong>HOME</strong> to <strong>741741</strong></li>
+                <li>Emergency Services: <strong>911</strong></li>
+              </ul>
+            </div>
+
             <div className="mt-6 flex justify-center gap-3">
               <button
                 onClick={() => window.location.reload()}

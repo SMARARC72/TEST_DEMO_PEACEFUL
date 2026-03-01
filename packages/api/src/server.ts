@@ -7,9 +7,10 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import morgan from 'morgan';
-import { rateLimit } from 'express-rate-limit';
 
-import { env, API_VERSION, RATE_LIMIT_WINDOW, RATE_LIMIT_MAX } from './config/index.js';
+import { env, API_VERSION } from './config/index.js';
+import { requestId } from './middleware/request-id.js';
+import { globalLimiter } from './middleware/rate-limit.js';
 import routes from './routes/index.js';
 import { auditLog } from './middleware/audit.js';
 import { notFound, errorHandler } from './middleware/error.js';
@@ -20,25 +21,55 @@ import { prisma } from './models/index.js';
 
 const app = express();
 
+// ─── Request ID (must be first for correlation) ─────────────────────
+
+app.use(requestId);
+
 // ─── Security & Compression ─────────────────────────────────────────
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", env.CORS_ORIGIN],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    hsts: {
+      maxAge: 63_072_000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  }),
+);
 
-// Parse comma-separated CORS origins (supports Netlify + localhost)
-const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+// Parse comma-separated CORS origins — SEC-06: No wildcard `*` allowed.
+const allowedOrigins = env.CORS_ORIGIN
+  .split(',')
+  .map((o) => o.trim())
+  .filter((o) => o !== '*'); // Strip wildcard — CORS must be explicit per PRD §3.4
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, health checks)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Tenant-ID'],
+    maxAge: 7200,
   }),
 );
 app.use(compression());
@@ -60,20 +91,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Rate Limiting ───────────────────────────────────────────────────
 
-const limiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW,
-  max: RATE_LIMIT_MAX,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests — please try again later',
-    },
-  },
-});
-
-app.use(limiter);
+app.use(globalLimiter);
 
 // ─── Audit Logging ───────────────────────────────────────────────────
 

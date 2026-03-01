@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole, stepUpAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { crisisLimiter, exportLimiter } from '../middleware/rate-limit.js';
 import { UserRole } from '@peacefull/shared';
 import { prisma } from '../models/index.js';
 
@@ -628,8 +629,11 @@ clinicianRouter.get('/patients/:id/adherence', async (req, res, next) => {
 
 // ─── PATCH /patients/:id/adherence/:itemId ───────────────────────────
 
+const adherencePatchSchema = z.object({}).strict();
+
 clinicianRouter.patch('/patients/:id/adherence/:itemId', async (req, res, next) => {
   try {
+    adherencePatchSchema.parse(req.body);
     await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const item = await prisma.adherenceItem.findFirst({
       where: { id: req.params.itemId, patientId: req.params.id },
@@ -653,12 +657,13 @@ clinicianRouter.patch('/patients/:id/adherence/:itemId', async (req, res, next) 
 
 // ─── GET /patients/:id/escalations ───────────────────────────────────
 
-clinicianRouter.get('/patients/:id/escalations', async (req, res, next) => {
+clinicianRouter.get('/patients/:id/escalations', crisisLimiter, async (req, res, next) => {
   try {
+    const patientId = req.params.id as string;
     // SEC-009: Verify caseload/tenant access
-    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
     const items = await prisma.escalationItem.findMany({
-      where: { patientId: req.params.id },
+      where: { patientId },
       orderBy: { detectedAt: 'desc' },
     });
     res.json(items);
@@ -669,7 +674,7 @@ clinicianRouter.get('/patients/:id/escalations', async (req, res, next) => {
 
 // ─── GET /escalations ────────────────────────────────────────────────
 
-clinicianRouter.get('/escalations', async (req, res, next) => {
+clinicianRouter.get('/escalations', crisisLimiter, async (req, res, next) => {
   try {
     const clinician = await getClinicianProfile(req.user!.sub);
     const patientIds = await getClinicianPatientIds(clinician.id);
@@ -706,13 +711,15 @@ const escalationPatchSchema = z.object({
   clinicianAction: z.string().max(2000).optional(),
 });
 
-clinicianRouter.patch('/patients/:id/escalations/:escId', async (req, res, next) => {
+clinicianRouter.patch('/patients/:id/escalations/:escId', crisisLimiter, async (req, res, next) => {
   try {
-    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+    const patientId = req.params.id as string;
+    const escId = req.params.escId as string;
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
     const body = escalationPatchSchema.parse(req.body);
 
     const item = await prisma.escalationItem.findUnique({
-      where: { id: req.params.escId },
+      where: { id: escId },
     });
     if (!item) throw new AppError('Escalation not found', 404);
 
@@ -720,7 +727,7 @@ clinicianRouter.patch('/patients/:id/escalations/:escId', async (req, res, next)
     const existingAudit = (item.auditTrail as any[]) ?? [];
 
     const updated = await prisma.escalationItem.update({
-      where: { id: req.params.escId },
+      where: { id: escId },
       data: {
         status: body.status as 'ACK' | 'RESOLVED',
         acknowledgedAt: body.status === 'ACK' ? now : item.acknowledgedAt,
@@ -746,12 +753,13 @@ clinicianRouter.patch('/patients/:id/escalations/:escId', async (req, res, next)
 
 // ─── PATCH /escalations/:id (top-level) ─────────────────────────────
 
-clinicianRouter.patch('/escalations/:id', async (req, res, next) => {
+clinicianRouter.patch('/escalations/:id', crisisLimiter, async (req, res, next) => {
   try {
+    const escalationId = req.params.id as string;
     const body = escalationPatchSchema.parse(req.body);
 
     const item = await prisma.escalationItem.findUnique({
-      where: { id: req.params.id },
+      where: { id: escalationId },
     });
     if (!item) throw new AppError('Escalation not found', 404);
 
@@ -762,7 +770,7 @@ clinicianRouter.patch('/escalations/:id', async (req, res, next) => {
     const existingAudit = (item.auditTrail as any[]) ?? [];
 
     const updated = await prisma.escalationItem.update({
-      where: { id: req.params.id },
+      where: { id: escalationId },
       data: {
         status: body.status as 'ACK' | 'RESOLVED',
         acknowledgedAt: body.status === 'ACK' ? now : item.acknowledgedAt,
@@ -788,18 +796,24 @@ clinicianRouter.patch('/escalations/:id', async (req, res, next) => {
 
 // ─── POST /patients/:id/export ───────────────────────────────────────
 
+const exportBodySchema = z.object({
+  format: z.enum(['pdf', 'json', 'csv']).default('pdf'),
+}).strict();
+
 clinicianRouter.post(
   '/patients/:id/export',
+  exportLimiter,
   stepUpAuth,
   async (req, res, next) => {
     try {
-      // SEC-009: Verify caseload access
-      await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id as string);
+      const body = exportBodySchema.parse(req.body);
+      const patientId = req.params.id as string;
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
 
       res.json({
         exportId: uuidv4(),
-        patientId: req.params.id,
-        format: req.body?.format ?? 'pdf',
+        patientId,
+        format: body.format,
         status: 'GENERATING',
         requestedBy: req.user!.sub,
         requestedAt: new Date().toISOString(),
@@ -933,7 +947,7 @@ clinicianRouter.get('/patients/:id/recommendations', async (req, res, next) => {
 // ─── PATCH /patients/:id/recommendations/:recId ─────────────────────
 
 const recPatchSchema = z.object({
-  status: z.string().max(50),
+  status: z.enum(['active', 'pending', 'deferred', 'reviewed']),
 });
 
 clinicianRouter.patch('/patients/:id/recommendations/:recId', async (req, res, next) => {
@@ -1011,9 +1025,10 @@ clinicianRouter.get('/patients/:id/restricted-notes', async (req, res, next) => 
 
 // ─── GET /patients/:id/exports ───────────────────────────────────────
 
-clinicianRouter.get('/patients/:id/exports', async (req, res, next) => {
+clinicianRouter.get('/patients/:id/exports', exportLimiter, async (req, res, next) => {
   try {
-    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+    const patientId = req.params.id as string;
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
     // Export records are not persisted (stub) — return empty list
     res.json([]);
   } catch (err) {
