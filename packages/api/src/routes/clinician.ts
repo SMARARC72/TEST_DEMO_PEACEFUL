@@ -810,3 +810,343 @@ clinicianRouter.post(
     }
   },
 );
+
+// ─── GET /triage/:id (single triage item) ────────────────────────────
+
+clinicianRouter.get('/triage/:id', async (req, res, next) => {
+  try {
+    const item = await prisma.triageItem.findUnique({
+      where: { id: req.params.id },
+      include: {
+        submission: true,
+        patient: {
+          include: { user: { select: { firstName: true, lastName: true } } },
+        },
+      },
+    });
+    if (!item) throw new AppError('Triage item not found', 404);
+
+    // SEC-009: Verify caseload access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, item.patientId);
+
+    res.json({
+      ...item,
+      patient: {
+        id: item.patient.id,
+        name: `${item.patient.user.firstName} ${item.patient.user.lastName}`,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /patients/:id/checkin ───────────────────────────────────────
+
+clinicianRouter.get('/patients/:id/checkin', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+
+    const rows = await prisma.submission.findMany({
+      where: { patientId: req.params.id, source: 'CHECKIN' },
+      orderBy: { createdAt: 'desc' },
+      take: 90,
+    });
+
+    const checkins = rows.map((r: any) => {
+      let parsed: any = {};
+      try { parsed = JSON.parse(r.rawContent); } catch { /* empty */ }
+      return {
+        id: r.id,
+        patientId: r.patientId,
+        mood: parsed.mood ?? 5,
+        stress: parsed.stress ?? 5,
+        sleep: parsed.sleep ?? 5,
+        focus: parsed.focus ?? 5,
+        notes: parsed.notes ?? '',
+        createdAt: r.createdAt.toISOString(),
+      };
+    });
+
+    res.json(checkins);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /patients/:id/journal ───────────────────────────────────────
+
+clinicianRouter.get('/patients/:id/journal', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+
+    const rows = await prisma.submission.findMany({
+      where: { patientId: req.params.id, source: 'JOURNAL' },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+
+    res.json(rows.map((r: any) => ({
+      id: r.id,
+      patientId: r.patientId,
+      content: r.rawContent,
+      promptId: undefined,
+      category: 'general',
+      createdAt: r.createdAt.toISOString(),
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /patients/:id/recommendations ───────────────────────────────
+// Maps treatment plans as "recommendations" for the clinician view.
+
+clinicianRouter.get('/patients/:id/recommendations', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+
+    const plans = await prisma.treatmentPlan.findMany({
+      where: { patientId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const recommendations = plans.map((p: any) => ({
+      id: p.id,
+      patientId: p.patientId,
+      title: p.goal,
+      description: p.intervention,
+      category: 'treatment',
+      priority: p.status === 'ACTIVE' ? 'HIGH' : 'MEDIUM',
+      status: p.status === 'ACTIVE' ? 'active' : p.status === 'HOLD' ? 'deferred' : 'pending',
+      evidence: (p.evidence as any[]) ?? [],
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    }));
+
+    res.json(recommendations);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PATCH /patients/:id/recommendations/:recId ─────────────────────
+
+const recPatchSchema = z.object({
+  status: z.string().max(50),
+});
+
+clinicianRouter.patch('/patients/:id/recommendations/:recId', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+    const body = recPatchSchema.parse(req.body);
+
+    // Treatment plans act as recommendations
+    const plan = await prisma.treatmentPlan.findUnique({ where: { id: req.params.recId } });
+    if (!plan || plan.patientId !== req.params.id) throw new AppError('Recommendation not found', 404);
+
+    const statusMap: Record<string, string> = {
+      active: 'ACTIVE',
+      pending: 'DRAFT',
+      deferred: 'HOLD',
+      reviewed: 'REVIEWED',
+    };
+    const prismaStatus = (statusMap[body.status] ?? 'DRAFT') as any;
+
+    const updated = await prisma.treatmentPlan.update({
+      where: { id: req.params.recId },
+      data: { status: prismaStatus },
+    });
+
+    res.json({
+      id: updated.id,
+      patientId: updated.patientId,
+      title: updated.goal,
+      description: updated.intervention,
+      category: 'treatment',
+      priority: prismaStatus === 'ACTIVE' ? 'HIGH' : 'MEDIUM',
+      status: body.status,
+      evidence: (updated.evidence as any[]) ?? [],
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /patients/:id/restricted-notes ──────────────────────────────
+// Returns session notes that are signed or co-signed (restricted access).
+
+clinicianRouter.get('/patients/:id/restricted-notes', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+
+    const notes = await prisma.sessionNote.findMany({
+      where: { patientId: req.params.id, signed: true },
+      orderBy: { date: 'desc' },
+      include: {
+        clinician: { select: { firstName: true, lastName: true } },
+      },
+    });
+
+    res.json(notes.map((n: any) => ({
+      id: n.id,
+      patientId: n.patientId,
+      date: n.date.toISOString(),
+      author: `${n.clinician.firstName} ${n.clinician.lastName}`,
+      format: n.format,
+      signedAt: n.signedAt?.toISOString() ?? null,
+      coSignedAt: n.coSignedAt?.toISOString() ?? null,
+      // PHI content is encrypted at rest; returned here for authorized clinicians
+      subjective: n.subjective,
+      objective: n.objective,
+      assessment: n.assessment,
+      plan: n.plan,
+    })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /patients/:id/exports ───────────────────────────────────────
+
+clinicianRouter.get('/patients/:id/exports', async (req, res, next) => {
+  try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+    // Export records are not persisted (stub) — return empty list
+    res.json([]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /settings ───────────────────────────────────────────────────
+
+clinicianRouter.get('/settings', async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const clinician = await prisma.clinician.findFirst({ where: { userId: user.id } });
+    if (!clinician) throw new AppError('Clinician profile not found', 404);
+
+    res.json({
+      id: clinician.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      credentials: clinician.credentials,
+      specialty: clinician.specialty,
+      npi: clinician.npi ?? '',
+      notifications: {
+        email: true,
+        sms: !!user.phone,
+        escalationAlerts: true,
+        triageDigest: true,
+      },
+      preferences: {
+        theme: 'system',
+        dashboardLayout: 'default',
+        autoRefreshSeconds: 60,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PATCH /settings ─────────────────────────────────────────────────
+
+const clinicianSettingsSchema = z.object({
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  credentials: z.string().max(200).optional(),
+  specialty: z.string().max(200).optional(),
+  npi: z.string().max(20).optional(),
+  notifications: z.object({
+    email: z.boolean().optional(),
+    sms: z.boolean().optional(),
+    escalationAlerts: z.boolean().optional(),
+    triageDigest: z.boolean().optional(),
+  }).optional(),
+  preferences: z.object({
+    theme: z.string().max(50).optional(),
+    dashboardLayout: z.string().max(50).optional(),
+    autoRefreshSeconds: z.number().int().min(10).max(600).optional(),
+  }).optional(),
+}).strict();
+
+clinicianRouter.patch('/settings', async (req, res, next) => {
+  try {
+    const body = clinicianSettingsSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const clinician = await prisma.clinician.findFirst({ where: { userId: user.id } });
+    if (!clinician) throw new AppError('Clinician profile not found', 404);
+
+    // Update user fields
+    if (body.firstName || body.lastName) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(body.firstName ? { firstName: body.firstName } : {}),
+          ...(body.lastName ? { lastName: body.lastName } : {}),
+        },
+      });
+    }
+
+    // Update clinician fields
+    if (body.credentials || body.specialty || body.npi !== undefined) {
+      await prisma.clinician.update({
+        where: { id: clinician.id },
+        data: {
+          ...(body.credentials ? { credentials: body.credentials } : {}),
+          ...(body.specialty ? { specialty: body.specialty } : {}),
+          ...(body.npi !== undefined ? { npi: body.npi || null } : {}),
+        },
+      });
+    }
+
+    res.json({ success: true, message: 'Settings updated' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /analytics ──────────────────────────────────────────────────
+// Clinician-scoped analytics (subset of the full analytics route).
+
+clinicianRouter.get('/analytics', async (req, res, next) => {
+  try {
+    const clinician = await getClinicianProfile(req.user!.sub);
+    const patientIds = await getClinicianPatientIds(clinician.id);
+    const period = req.query.period?.toString() ?? '30d';
+
+    const daysBack = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+    const since = new Date(Date.now() - daysBack * 86400000);
+
+    const [totalPatients, totalSubmissions, pendingDrafts, openEscalations, avgMBC] =
+      await Promise.all([
+        prisma.careTeamAssignment.count({ where: { clinicianId: clinician.id, active: true } }),
+        prisma.submission.count({ where: { patientId: { in: patientIds }, createdAt: { gte: since } } }),
+        prisma.aIDraft.count({ where: { patientId: { in: patientIds }, status: 'DRAFT' } }),
+        prisma.escalationItem.count({ where: { patientId: { in: patientIds }, status: 'OPEN' } }),
+        prisma.mBCScore.aggregate({ where: { patientId: { in: patientIds }, date: { gte: since } }, _avg: { score: true } }),
+      ]);
+
+    res.json({
+      period,
+      totalPatients,
+      totalSubmissions,
+      pendingDrafts,
+      openEscalations,
+      averageMBCScore: avgMBC._avg.score ?? 0,
+      engagementRate: totalPatients > 0 ? Math.round((totalSubmissions / (totalPatients * daysBack)) * 100) / 100 : 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+});

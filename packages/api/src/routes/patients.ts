@@ -771,3 +771,282 @@ patientRouter.post('/:id/voice', async (req, res, next) => {
     next(err);
   }
 });
+
+// ─── GET /:id/checkin/history ────────────────────────────────────────
+
+patientRouter.get('/:id/checkin/history', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const rows = await prisma.submission.findMany({
+      where: { patientId: req.params.id, source: 'CHECKIN' },
+      orderBy: { createdAt: 'desc' },
+      take: 90,
+    });
+
+    const history: CheckinData[] = rows.map((r: any) => {
+      let parsed: any = {};
+      try { parsed = JSON.parse(r.rawContent); } catch { /* empty */ }
+      return {
+        id: r.id,
+        patientId: r.patientId,
+        mood: parsed.mood ?? 5,
+        stress: parsed.stress ?? 5,
+        sleep: parsed.sleep ?? 5,
+        focus: parsed.focus ?? 5,
+        notes: parsed.notes ?? '',
+        createdAt: r.createdAt.toISOString(),
+      };
+    });
+
+    res.json(history);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/journal (list) ─────────────────────────────────────────
+
+patientRouter.get('/:id/journal', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const rows = await prisma.submission.findMany({
+      where: { patientId: req.params.id, source: 'JOURNAL' },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+
+    const journals: JournalEntry[] = rows.map((r: any) => ({
+      id: r.id,
+      patientId: r.patientId,
+      content: r.rawContent,
+      promptId: undefined,
+      category: 'general',
+      createdAt: r.createdAt.toISOString(),
+    }));
+
+    res.json(journals);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/submissions/:subId/reflection ──────────────────────────
+
+patientRouter.get('/:id/submissions/:subId/reflection', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: req.params.subId },
+    });
+    if (!submission || submission.patientId !== req.params.id) {
+      throw new AppError('Submission not found', 404);
+    }
+
+    res.json({
+      id: submission.id,
+      submissionId: submission.id,
+      patientTone: submission.patientTone ?? 'neutral',
+      summary: submission.patientSummary ?? 'No reflection available yet.',
+      nextStep: submission.patientNextStep ?? 'Check back later for your personalized reflection.',
+      signalBand: submission.clinicianSignalBand ?? 'LOW',
+      createdAt: submission.processedAt?.toISOString() ?? submission.createdAt.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/voice (list) ───────────────────────────────────────────
+
+patientRouter.get('/:id/voice', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const rows = await prisma.submission.findMany({
+      where: { patientId: req.params.id, source: 'VOICE_MEMO' },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const memos: VoiceMemo[] = rows.map((r: any) => ({
+      id: r.id,
+      patientId: r.patientId,
+      audioUrl: r.audioUrl ?? '',
+      transcription: r.rawContent,
+      duration: r.audioDuration ?? 0,
+      createdAt: r.createdAt.toISOString(),
+    }));
+
+    res.json(memos);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/voice/:memoId ─────────────────────────────────────────
+
+patientRouter.get('/:id/voice/:memoId', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const row = await prisma.submission.findUnique({
+      where: { id: req.params.memoId },
+    });
+    if (!row || row.patientId !== req.params.id || row.source !== 'VOICE_MEMO') {
+      throw new AppError('Voice memo not found', 404);
+    }
+
+    const memo: VoiceMemo = {
+      id: row.id,
+      patientId: row.patientId,
+      audioUrl: row.audioUrl ?? '',
+      transcription: row.rawContent,
+      duration: row.audioDuration ?? 0,
+      createdAt: row.createdAt.toISOString(),
+    };
+
+    res.json(memo);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/settings ──────────────────────────────────────────────
+
+patientRouter.get('/:id/settings', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { preferences: true, tenantId: true, language: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const prefs = (patient.preferences as any) ?? {};
+    res.json({
+      notifications: prefs.notifications ?? true,
+      language: patient.language ?? 'en',
+      theme: prefs.theme ?? 'calm-blue',
+      fontSize: prefs.fontSize ?? 'medium',
+      reminderTime: prefs.reminderTime ?? '09:00',
+      dataSharing: prefs.dataSharing ?? { clinician: true, research: false },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── PATCH /:id/settings ────────────────────────────────────────────
+
+const patientSettingsSchema = z.object({
+  notifications: z.boolean().optional(),
+  language: z.string().max(10).optional(),
+  theme: z.string().max(50).optional(),
+  fontSize: z.enum(['small', 'medium', 'large']).optional(),
+  reminderTime: z.string().max(10).optional(),
+  dataSharing: z.object({
+    clinician: z.boolean().optional(),
+    research: z.boolean().optional(),
+  }).optional(),
+}).strict();
+
+patientRouter.patch('/:id/settings', async (req, res, next) => {
+  try {
+    const body = patientSettingsSchema.parse(req.body);
+
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { preferences: true, tenantId: true, language: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const currentPrefs = (patient.preferences as any) ?? {};
+    const updatedPrefs = { ...currentPrefs };
+
+    if (body.notifications !== undefined) updatedPrefs.notifications = body.notifications;
+    if (body.theme !== undefined) updatedPrefs.theme = body.theme;
+    if (body.fontSize !== undefined) updatedPrefs.fontSize = body.fontSize;
+    if (body.reminderTime !== undefined) updatedPrefs.reminderTime = body.reminderTime;
+    if (body.dataSharing !== undefined) {
+      updatedPrefs.dataSharing = { ...(currentPrefs.dataSharing ?? {}), ...body.dataSharing };
+    }
+
+    await prisma.patient.update({
+      where: { id: req.params.id },
+      data: {
+        preferences: updatedPrefs,
+        ...(body.language !== undefined ? { language: body.language } : {}),
+      },
+    });
+
+    res.json({
+      notifications: updatedPrefs.notifications ?? true,
+      language: body.language ?? patient.language ?? 'en',
+      theme: updatedPrefs.theme ?? 'calm-blue',
+      fontSize: updatedPrefs.fontSize ?? 'medium',
+      reminderTime: updatedPrefs.reminderTime ?? '09:00',
+      dataSharing: updatedPrefs.dataSharing ?? { clinician: true, research: false },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/consent ───────────────────────────────────────────────
+
+patientRouter.get('/:id/consent', async (req, res, next) => {
+  try {
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
+    const records = await prisma.consentRecord.findMany({
+      where: { patientId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(records.map((r: any) => ({
+      id: r.id,
+      type: r.type,
+      version: r.version,
+      granted: r.granted,
+      grantedAt: r.grantedAt.toISOString(),
+      revokedAt: r.revokedAt?.toISOString() ?? null,
+      createdAt: r.createdAt.toISOString(),
+    })));
+  } catch (err) {
+    next(err);
+  }
+});

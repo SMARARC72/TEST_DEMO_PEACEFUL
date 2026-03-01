@@ -40,10 +40,10 @@ jobs:
       - name: Build for production
         env:
           VITE_ENABLE_MOCKS: "false"
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_ENV: production
+          VITE_AUTH_MODE: bearer
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-          VITE_ANALYTICS_URL: ${{ vars.VITE_ANALYTICS_URL }}
         run: cd prototype-web && npm run build
 
       - name: Verify bundle budgets
@@ -76,38 +76,33 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync to S3 (immutable assets)
         run: |
-          aws s3 sync dist/assets/ s3://${{ vars.S3_WEB_BUCKET }}/assets/ \
+          aws s3 sync dist/assets/ s3://${{ secrets.S3_BUCKET_NAME }}/assets/ \
             --cache-control "public, max-age=31536000, immutable" \
             --content-encoding "" \
             --delete
 
       - name: Sync to S3 (HTML + root files)
         run: |
-          aws s3 sync dist/ s3://${{ vars.S3_WEB_BUCKET }}/ \
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
             --exclude "assets/*" \
             --cache-control "public, max-age=0, must-revalidate" \
             --delete
 
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/index.html" "/assets/*"
-
       - name: Verify deployment
         run: |
-          CF_URL="${{ vars.CLOUDFRONT_URL }}"
-          echo "Checking $CF_URL ..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CF_URL" || echo "000")
+          S3_URL="http://${{ secrets.S3_BUCKET_NAME }}.s3-website-us-east-1.amazonaws.com"
+          echo "Checking $S3_URL ..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$S3_URL" || echo "000")
           if [ "$STATUS" = "200" ]; then
-            echo "✓ Frontend is live at $CF_URL (HTTP $STATUS)"
+            echo "✓ Frontend is live at $S3_URL (HTTP $STATUS)"
           else
-            echo "⚠ Unexpected status: HTTP $STATUS — may need cache propagation time"
+            echo "⚠ Unexpected status: HTTP $STATUS — may need propagation time"
           fi
 
   # ── Deploy to Netlify (Staging/Demo) ───────────────────────────────

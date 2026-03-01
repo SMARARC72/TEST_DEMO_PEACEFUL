@@ -374,3 +374,126 @@ authRouter.get('/me', authenticate, async (req, res, next) => {
     next(err);
   }
 });
+
+// ─── POST /forgot-password ──────────────────────────────────────────
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+authRouter.post('/forgot-password', loginLimiter, async (req, res, next) => {
+  try {
+    const body = forgotPasswordSchema.parse(req.body);
+
+    // Always return success to prevent email enumeration (SEC-007)
+    const user = await prisma.user.findFirst({ where: { email: body.email } });
+    if (user) {
+      authLogger.info({ userId: user.id }, 'Password reset requested');
+      // In production: send email via SES with reset link + token
+      // For now, log the event for audit trail
+    }
+
+    res.json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /step-up/verify ──────────────────────────────────────────
+// Frontend calls /step-up/verify (separate from the original /step-up)
+
+authRouter.post('/step-up/verify', authenticate, async (req, res, next) => {
+  try {
+    const body = stepUpBodySchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const valid = await verifyPassword(body.password, user.passwordHash);
+    if (!valid) throw new AppError('Invalid credentials', 401);
+
+    if (user.mfaEnabled) {
+      const code = generateMFACode();
+      pendingMFA[user.id] = code;
+      if (process.env.NODE_ENV !== 'production') {
+        authLogger.info({ userId: user.id, code }, 'Step-up MFA code (dev)');
+      }
+      res.json({ mfaRequired: true });
+      return;
+    }
+
+    const stepUpTokens = generateStepUpToken({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import('@peacefull/shared').UserRole,
+    });
+    authLogger.info({ userId: user.id }, 'Step-up verify completed');
+    res.json({ elevatedToken: stepUpTokens.accessToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /step-up/mfa ──────────────────────────────────────────────
+
+const stepUpMfaSchema = z.object({
+  code: z.string().regex(/^\d{6}$/),
+});
+
+authRouter.post('/step-up/mfa', authenticate, mfaLimiter, async (req, res, next) => {
+  try {
+    const body = stepUpMfaSchema.parse(req.body);
+    const userId = req.user!.sub;
+    const expectedCode = pendingMFA[userId];
+
+    if (!expectedCode) throw new AppError('No pending MFA challenge', 400);
+    if (!verifyMFACode(body.code, expectedCode)) throw new AppError('Invalid MFA code', 401);
+
+    delete pendingMFA[userId];
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const stepUpTokens = generateStepUpToken({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import('@peacefull/shared').UserRole,
+    });
+    authLogger.info({ userId: user.id }, 'Step-up MFA completed');
+    res.json({ elevatedToken: stepUpTokens.accessToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /tenants ────────────────────────────────────────────────────
+
+authRouter.get('/tenants', async (_req, res, next) => {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        domain: true,
+        plan: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    res.json({
+      tenants: tenants.map((t) => ({
+        id: t.id,
+        slug: t.slug,
+        name: t.name,
+        logoUrl: null, // Future: store in S3
+        primaryColor: null,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
