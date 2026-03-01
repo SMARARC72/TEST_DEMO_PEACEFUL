@@ -64,7 +64,7 @@ export default function EscalationPage() {
     setLoading(true);
     const [data, err] = await clinicianApi.getEscalations();
     if (err) {
-      addToast('Failed to load escalations', 'error');
+      addToast({ title: 'Failed to load escalations', variant: 'error' });
     } else if (data) {
       setEscalations(data);
     }
@@ -74,16 +74,16 @@ export default function EscalationPage() {
   async function acknowledge(id: string) {
     const [, err] = await clinicianApi.patchEscalation(id, { status: 'ACKNOWLEDGED' });
     if (err) {
-      addToast('Failed to acknowledge', 'error');
+      addToast({ title: 'Failed to acknowledge', variant: 'error' });
     } else {
-      addToast('Escalation acknowledged', 'success');
+      addToast({ title: 'Escalation acknowledged', variant: 'success' });
       loadEscalations();
     }
   }
 
   async function resolve(id: string) {
     if (!resolution.trim()) {
-      addToast('Resolution notes are required', 'error');
+      addToast({ title: 'Resolution notes are required', variant: 'error' });
       return;
     }
     const [, err] = await clinicianApi.patchEscalation(id, {
@@ -91,9 +91,9 @@ export default function EscalationPage() {
       resolution: resolution.trim(),
     });
     if (err) {
-      addToast('Failed to resolve', 'error');
+      addToast({ title: 'Failed to resolve', variant: 'error' });
     } else {
-      addToast('Escalation resolved', 'success');
+      addToast({ title: 'Escalation resolved', variant: 'success' });
       setSelectedId(null);
       setResolution('');
       loadEscalations();

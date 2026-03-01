@@ -140,7 +140,7 @@ export default function ChatPage() {
             m.id === assistantId ? { ...m, content: fallback } : m,
           ),
         );
-        addToast('Using offline mode — responses are pre-generated', 'info');
+        addToast({ title: 'Using offline mode — responses are pre-generated', variant: 'info' });
       }
     } finally {
       setIsStreaming(false);

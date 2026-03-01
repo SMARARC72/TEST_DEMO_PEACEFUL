@@ -98,7 +98,7 @@ export default function SessionPrepPage() {
       if (next.has(id)) next.delete(id);
       else if (next.size < 3) next.add(id);
       else {
-        addToast('You can select up to 3 topics', 'info');
+        addToast({ title: 'You can select up to 3 topics', variant: 'info' });
       }
       return next;
     });
@@ -106,13 +106,13 @@ export default function SessionPrepPage() {
 
   async function handleSubmit() {
     if (selected.size === 0) {
-      addToast('Please select at least one topic', 'error');
+      addToast({ title: 'Please select at least one topic', variant: 'error' });
       return;
     }
 
     // In production, this would POST to /patients/:id/session-prep
     setSubmitted(true);
-    addToast('Session prep saved! Your clinician will see your topics.', 'success');
+    addToast({ title: 'Session prep saved! Your clinician will see your topics.', variant: 'success' });
   }
 
   if (submitted) {

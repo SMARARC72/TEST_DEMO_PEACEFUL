@@ -61,7 +61,7 @@ export default function AdherenceTrackerPage() {
     setLoading(true);
     const [data, err] = await clinicianApi.getAdherence(patientId!);
     if (err) {
-      addToast('Failed to load adherence data', 'error');
+      addToast({ title: 'Failed to load adherence data', variant: 'error' });
     } else if (data) {
       setItems(data);
     }
@@ -74,9 +74,9 @@ export default function AdherenceTrackerPage() {
       notes: logNotes || undefined,
     });
     if (err) {
-      addToast('Failed to log adherence', 'error');
+      addToast({ title: 'Failed to log adherence', variant: 'error' });
     } else {
-      addToast('Adherence logged', 'success');
+      addToast({ title: 'Adherence logged', variant: 'success' });
       setShowLogForm(null);
       setLogNotes('');
       setLogStatus('COMPLIANT');

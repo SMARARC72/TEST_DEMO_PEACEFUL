@@ -64,7 +64,7 @@ export default function HistoryPage() {
       timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setItems(timeline);
     } catch {
-      addToast('Failed to load history', 'error');
+      addToast({ title: 'Failed to load history', variant: 'error' });
     } finally {
       setLoading(false);
     }

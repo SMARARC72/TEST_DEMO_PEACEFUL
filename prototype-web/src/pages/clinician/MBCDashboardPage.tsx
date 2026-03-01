@@ -88,7 +88,7 @@ export default function MBCDashboardPage() {
     setLoading(true);
     const [data, err] = await clinicianApi.getMBCScores(patientId!);
     if (err) {
-      addToast('Failed to load MBC scores', 'error');
+      addToast({ title: 'Failed to load MBC scores', variant: 'error' });
     } else if (data) {
       setScores(data);
     }
@@ -126,9 +126,9 @@ export default function MBCDashboardPage() {
       items: formValues,
     });
     if (err) {
-      addToast('Failed to save score', 'error');
+      addToast({ title: 'Failed to save score', variant: 'error' });
     } else {
-      addToast(`${showForm === 'PHQ9' ? 'PHQ-9' : 'GAD-7'} score saved: ${score}`, 'success');
+      addToast({ title: `${showForm === 'PHQ9' ? 'PHQ-9' : 'GAD-7'} score saved: ${score}`, variant: 'success' });
       setShowForm(null);
       loadScores();
     }

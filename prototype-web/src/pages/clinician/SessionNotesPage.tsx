@@ -42,7 +42,7 @@ const noteSchema = z.object({
   assessment: z.string().min(10, 'Assessment section must be at least 10 characters'),
   plan: z.string().min(10, 'Plan section must be at least 10 characters'),
   cptCode: z.string().optional(),
-  duration: z.coerce.number().min(1).max(480),
+  duration: z.number().min(1).max(480),
 });
 
 type NoteFormData = z.infer<typeof noteSchema>;
@@ -87,7 +87,7 @@ export default function SessionNotesPage() {
     setLoading(true);
     const [data, err] = await clinicianApi.getSessionNotes(patientId!);
     if (err) {
-      addToast('Failed to load session notes', 'error');
+      addToast({ title: 'Failed to load session notes', variant: 'error' });
     } else if (data) {
       setNotes(data);
     }
@@ -97,9 +97,9 @@ export default function SessionNotesPage() {
   async function onSubmit(data: NoteFormData) {
     const [result, err] = await clinicianApi.createSessionNote(patientId!, data);
     if (err) {
-      addToast('Failed to save note', 'error');
+      addToast({ title: 'Failed to save note', variant: 'error' });
     } else if (result) {
-      addToast('Session note saved as draft', 'success');
+      addToast({ title: 'Session note saved as draft', variant: 'success' });
       setShowForm(false);
       reset();
       loadNotes();
@@ -109,9 +109,9 @@ export default function SessionNotesPage() {
   async function signNote(noteId: string) {
     const [, err] = await clinicianApi.signSessionNote(patientId!, noteId);
     if (err) {
-      addToast('Failed to sign note', 'error');
+      addToast({ title: 'Failed to sign note', variant: 'error' });
     } else {
-      addToast('Note signed successfully', 'success');
+      addToast({ title: 'Note signed successfully', variant: 'success' });
       loadNotes();
       setSelectedNote(null);
     }
@@ -202,7 +202,7 @@ export default function SessionNotesPage() {
         <div className="lg:col-span-2">
           {showForm ? (
             <form
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={handleSubmit(onSubmit as any)}
               className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
@@ -227,7 +227,7 @@ export default function SessionNotesPage() {
                   </label>
                   <input
                     type="number"
-                    {...register('duration')}
+                    {...register('duration', { valueAsNumber: true })}
                     className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700 dark:text-white"
                   />
                   {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration.message}</p>}

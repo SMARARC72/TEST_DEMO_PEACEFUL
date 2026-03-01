@@ -57,7 +57,7 @@ export default function AnalyticsDashboard() {
     setLoading(true);
     const [result, err] = await clinicianApi.getAnalytics(period);
     if (err) {
-      addToast('Failed to load analytics', 'error');
+      addToast({ title: 'Failed to load analytics', variant: 'error' });
     } else if (result) {
       setData(result);
     }
@@ -127,7 +127,7 @@ export default function AnalyticsDashboard() {
                 outerRadius={100}
                 dataKey="count"
                 nameKey="band"
-                label={({ band, count }) => `${band}: ${count}`}
+                label={({ name, value }) => `${name}: ${value}`}
               >
                 {data.signalDistribution.map((entry) => (
                   <Cell key={entry.band} fill={SIGNAL_COLORS[entry.band] || '#94a3b8'} />
@@ -192,7 +192,7 @@ export default function AnalyticsDashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="category" width={100} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value: number) => [`${value}%`, 'Rate']} />
+              <Tooltip formatter={(value) => [`${value}%`, 'Rate']} />
               <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
                 {data.adherenceByCategory.map((entry, idx) => (
                   <Cell key={idx} fill={entry.rate >= 80 ? '#22c55e' : entry.rate >= 60 ? '#eab308' : '#ef4444'} />
