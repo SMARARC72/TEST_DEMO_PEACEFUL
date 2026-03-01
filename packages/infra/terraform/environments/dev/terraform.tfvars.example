@@ -1,0 +1,7 @@
+# ─── Dev Environment Variables ───────────────────────────────────────
+# Copy to terraform.tfvars and fill in real values before running terraform.
+# NEVER commit terraform.tfvars to version control.
+
+db_password     = "CHANGE_ME_use_a_strong_password_32chars"
+container_image = ""  # Leave empty on first deploy — ECS module creates ECR repo
+alert_email     = "devops@peacefull.ai"

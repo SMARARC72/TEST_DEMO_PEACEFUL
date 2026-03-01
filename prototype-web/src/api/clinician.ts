@@ -1,11 +1,22 @@
 // ─── Clinician API ───────────────────────────────────────────────────
-import { apiGet, apiPatch } from './client';
+import { apiGet, apiPatch, apiPost } from './client';
 import type {
   CaseloadResponse,
   DashboardResponse,
   TriageListResponse,
   TriageItem,
   AIDraft,
+  PatientProfile,
+  Recommendation,
+  Memory,
+  MemoryStatus,
+  TreatmentPlanItem,
+  PlanStatus,
+  RestrictedNote,
+  ExportJob,
+  ClinicianSettings,
+  CheckinData,
+  JournalEntry,
 } from './types';
 
 export const clinicianApi = {
@@ -34,6 +45,11 @@ export const clinicianApi = {
     return apiPatch<TriageItem>(`clinician/triage/${id}`, data);
   },
 
+  /** GET /clinician/triage/:id */
+  getTriageItem(id: string) {
+    return apiGet<TriageItem>(`clinician/triage/${id}`);
+  },
+
   // ── AI Drafts ─────────────────────────────
   /** GET /clinician/patients/:patientId/drafts */
   getDrafts(patientId: string) {
@@ -54,5 +70,82 @@ export const clinicianApi = {
       `clinician/patients/${patientId}/drafts/${draftId}`,
       data,
     );
+  },
+
+  // ── Patient Profile ───────────────────────
+  /** GET /clinician/patients/:patientId */
+  getPatientProfile(patientId: string) {
+    return apiGet<PatientProfile>(`clinician/patients/${patientId}`);
+  },
+
+  /** GET /clinician/patients/:patientId/checkins */
+  getPatientCheckins(patientId: string) {
+    return apiGet<CheckinData[]>(`clinician/patients/${patientId}/checkin`);
+  },
+
+  /** GET /clinician/patients/:patientId/journals */
+  getPatientJournals(patientId: string) {
+    return apiGet<JournalEntry[]>(`clinician/patients/${patientId}/journal`);
+  },
+
+  // ── Recommendations ───────────────────────
+  /** GET /clinician/patients/:patientId/recommendations */
+  getRecommendations(patientId: string) {
+    return apiGet<Recommendation[]>(`clinician/patients/${patientId}/recommendations`);
+  },
+
+  /** PATCH /clinician/patients/:patientId/recommendations/:id */
+  patchRecommendation(patientId: string, id: string, data: { status: string }) {
+    return apiPatch<Recommendation>(`clinician/patients/${patientId}/recommendations/${id}`, data);
+  },
+
+  // ── Memories ──────────────────────────────
+  /** GET /clinician/patients/:patientId/memories */
+  getMemories(patientId: string) {
+    return apiGet<Memory[]>(`clinician/patients/${patientId}/memories`);
+  },
+
+  /** PATCH /clinician/patients/:patientId/memories/:id */
+  patchMemory(patientId: string, id: string, data: { status: MemoryStatus }) {
+    return apiPatch<Memory>(`clinician/patients/${patientId}/memories/${id}`, data);
+  },
+
+  // ── Treatment Plans ───────────────────────
+  /** GET /clinician/patients/:patientId/plans */
+  getPlans(patientId: string) {
+    return apiGet<TreatmentPlanItem[]>(`clinician/patients/${patientId}/plans`);
+  },
+
+  /** PATCH /clinician/patients/:patientId/plans/:id */
+  patchPlan(patientId: string, id: string, data: { status: PlanStatus }) {
+    return apiPatch<TreatmentPlanItem>(`clinician/patients/${patientId}/plans/${id}`, data);
+  },
+
+  // ── Restricted Notes ──────────────────────
+  /** GET /clinician/patients/:patientId/restricted-notes */
+  getRestrictedNotes(patientId: string) {
+    return apiGet<RestrictedNote[]>(`clinician/patients/${patientId}/restricted-notes`);
+  },
+
+  // ── Exports ───────────────────────────────
+  /** GET /clinician/patients/:patientId/exports */
+  getExports(patientId: string) {
+    return apiGet<ExportJob[]>(`clinician/patients/${patientId}/exports`);
+  },
+
+  /** POST /clinician/patients/:patientId/exports */
+  createExport(patientId: string, data: { profile: string; format?: string }) {
+    return apiPost<ExportJob>(`clinician/patients/${patientId}/export`, data);
+  },
+
+  // ── Settings ──────────────────────────────
+  /** GET /clinician/settings */
+  getSettings() {
+    return apiGet<ClinicianSettings>('clinician/settings');
+  },
+
+  /** PATCH /clinician/settings */
+  patchSettings(data: Partial<ClinicianSettings>) {
+    return apiPatch<ClinicianSettings>('clinician/settings', data);
   },
 } as const;

@@ -114,6 +114,38 @@ export const router = createBrowserRouter([
             path: '/clinician/patients/:patientId/drafts',
             element: lazyPage(() => import('@/pages/clinician/DraftReviewPage')),
           },
+          {
+            path: '/clinician/triage/:triageId',
+            element: lazyPage(() => import('@/pages/clinician/InboxDetailPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId',
+            element: lazyPage(() => import('@/pages/clinician/PatientProfilePage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/recommendations',
+            element: lazyPage(() => import('@/pages/clinician/RecommendationsPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/plans',
+            element: lazyPage(() => import('@/pages/clinician/TreatmentPlanPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/memories',
+            element: lazyPage(() => import('@/pages/clinician/MemoryReviewPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/restricted-notes',
+            element: lazyPage(() => import('@/pages/clinician/RestrictedNotesPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/exports',
+            element: lazyPage(() => import('@/pages/clinician/ExportsCenterPage')),
+          },
+          {
+            path: '/clinician/settings',
+            element: lazyPage(() => import('@/pages/clinician/ClinicianSettingsPage')),
+          },
         ],
       },
     ],

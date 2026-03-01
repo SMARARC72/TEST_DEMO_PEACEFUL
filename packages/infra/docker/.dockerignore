@@ -1,0 +1,66 @@
+# ─── .dockerignore ────────────────────────────────────────────────────
+# Keep Docker context small and exclude secrets/dev artifacts.
+
+# Version control
+.git
+.gitignore
+
+# Node
+**/node_modules
+**/npm-debug.log*
+
+# Build outputs (rebuilt in container)
+**/dist
+**/build
+**/.next
+
+# Tests & dev tooling
+**/test-results
+**/coverage
+**/.nyc_output
+**/playwright-report
+**/*.test.ts
+**/*.spec.ts
+**/vitest.config.*
+**/playwright.config.*
+**/eslint.config.*
+
+# IDE
+.vscode
+.idea
+**/*.swp
+**/*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs & markdown (not needed at runtime)
+*.md
+*.html
+*.pptx.html
+docs/
+
+# Infrastructure (not needed in app image)
+packages/infra/
+packages/ml-pipeline/
+
+# Frontend (separate build)
+prototype-web/
+peacefull-demo-github/
+
+# Scripts not needed in container
+scripts/
+build-single-file.mjs
+
+# Terraform state & secrets
+*.tfstate*
+*.tfvars
+.terraform/
+
+# Env files
+.env*
+!.env.example
+
+# Archives
+_archive/

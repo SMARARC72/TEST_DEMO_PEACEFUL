@@ -68,7 +68,7 @@ module "vpc" {
   source      = "../../modules/vpc"
   app_name    = local.app_name
   environment = local.environment
-  vpc_cidr    = "10.0.0.0/16"
+  vpc_cidr    = "10.2.0.0/16"
 }
 
 module "secrets" {

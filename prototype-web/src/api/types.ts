@@ -245,3 +245,130 @@ export interface ConsentRecord {
   acceptedAt?: string;
   version: string;
 }
+
+// ─── Recommendations ─────────────────────────────
+
+export type RecommendationStatus = 'GENERATED' | 'SUPPRESSED' | 'ACCEPTED' | 'DISMISSED';
+
+export interface Recommendation {
+  id: string;
+  patientId: string;
+  draftId?: string;
+  type: string;
+  title: string;
+  description: string;
+  status: RecommendationStatus;
+  suppressionReason?: string;
+  suppressionCode?: string;
+  remediationSteps?: string[];
+  evidence: string[];
+  signalBand: SignalBand;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+// ─── Memories ─────────────────────────────────────
+
+export type MemoryStatus = 'PROPOSED' | 'APPROVED' | 'REJECTED' | 'CONFLICT_FLAGGED';
+
+export interface Memory {
+  id: string;
+  patientId: string;
+  category: string;
+  statement: string;
+  confidence: string;
+  conflictFlag: boolean;
+  conflictContext?: string;
+  status: MemoryStatus;
+  evidence: string[];
+  unknowns: string[];
+  auditTrail: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+// ─── Treatment Plans ─────────────────────────────
+
+export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'REVIEWED' | 'HOLD';
+
+export interface TreatmentPlanItem {
+  id: string;
+  patientId: string;
+  goal: string;
+  intervention: string;
+  owner: string;
+  targetDate: string;
+  status: PlanStatus;
+  evidence: string[];
+  unknowns: string[];
+  auditTrail: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+// ─── Restricted Notes ─────────────────────────────
+
+export type RestrictedNoteType = 'SAFETY' | 'LEGAL' | 'SUBSTANCE' | 'OTHER';
+
+export interface RestrictedNote {
+  id: string;
+  patientId: string;
+  type: RestrictedNoteType;
+  title: string;
+  content: string;
+  createdBy: string;
+  excludedFromExports: boolean;
+  auditTrail: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ─── Exports ──────────────────────────────────────
+
+export type ExportStatus = 'QUEUED' | 'GENERATING' | 'READY' | 'BLOCKED_POLICY' | 'EXPIRED' | 'FAILED';
+export type ExportProfile = 'STANDARD' | 'SEGMENTED_SUD' | 'RESTRICTED';
+
+export interface ExportJob {
+  id: string;
+  patientId: string;
+  profile: ExportProfile;
+  status: ExportStatus;
+  format: string;
+  fileSize?: string;
+  checksum?: string;
+  policyBlockReason?: string;
+  requestedBy: string;
+  createdAt: string;
+  completedAt?: string;
+  expiresAt?: string;
+}
+
+// ─── Clinician Settings ───────────────────────────
+
+export interface ClinicianSettings {
+  notifications: {
+    newTriageAlerts: boolean;
+    draftReadyAlerts: boolean;
+    escalationAlerts: boolean;
+    weeklyDigest: boolean;
+  };
+  display: {
+    darkMode: boolean;
+    compactView: boolean;
+  };
+  security: {
+    mfaEnabled: boolean;
+    sessionTimeout: number;
+  };
+}
+
+// ─── Patient Profile (Clinician View) ─────────────
+
+export interface PatientProfile {
+  patient: Patient;
+  recentCheckins: CheckinData[];
+  recentJournals: JournalEntry[];
+  triageItems: TriageItem[];
+  drafts: AIDraft[];
+  signalHistory: { band: SignalBand; date: string }[];
+}

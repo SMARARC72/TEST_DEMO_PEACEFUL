@@ -243,12 +243,16 @@ resource "aws_ecs_task_definition" "api" {
         {
           name      = "AUTH0_CLIENT_SECRET"
           valueFrom = var.auth0_client_secret_secret_arn
+        },
+        {
+          name      = "DIRECT_DATABASE_URL"
+          valueFrom = var.database_url_secret_arn
         }
       ]
 
       environment = [
         { name = "REDIS_URL", value = var.redis_url },
-        { name = "NODE_ENV", value = var.environment },
+        { name = "NODE_ENV", value = var.environment == "dev" ? "development" : var.environment == "prod" ? "production" : var.environment },
         { name = "PORT", value = "3001" },
         { name = "CORS_ORIGIN", value = var.cors_origin },
         { name = "AUTH0_AUDIENCE", value = var.auth0_audience },

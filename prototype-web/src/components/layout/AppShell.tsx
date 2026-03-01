@@ -126,4 +126,5 @@ const clinicianNav = [
   { to: '/clinician', label: 'Dashboard', icon: '📊' },
   { to: '/clinician/caseload', label: 'Caseload', icon: '👥' },
   { to: '/clinician/triage', label: 'Triage Inbox', icon: '🔔' },
+  { to: '/clinician/settings', label: 'Settings', icon: '⚙️' },
 ];

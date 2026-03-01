@@ -1,0 +1,5 @@
+# ─── Prod Environment Variables ──────────────────────────────────────
+
+db_password     = "CHANGE_ME_use_a_strong_password_32chars"
+container_image = ""
+alert_email     = "ops@peacefull.ai"
