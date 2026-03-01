@@ -25,7 +25,7 @@
 | Bundle budget | All within limits (401.9 KB gzip total) |
 | Circular deps | 0 (84 files scanned) |
 | Synthetic data | 0 violations (84 files scanned) |
-| Latest commit | Phase 5 — Quality Gates |
+| Latest commit | `f7d48ff` — Phase 5 Quality Gates |
 
 The frontend is a **static React SPA** that builds to `dist/`. It runs in **full mock mode** via MSW (Mock Service Worker) — every API call is intercepted and returns realistic fake data. No backend is required to demo or pilot-test the UI.
 
