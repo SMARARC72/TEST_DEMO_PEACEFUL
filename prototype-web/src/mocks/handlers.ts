@@ -181,6 +181,15 @@ export const handlers = [
     return HttpResponse.json(mockUser);
   }),
 
+  http.post(`${BASE}/auth/mfa-verify`, async ({ request }) => {
+    const body = await request.json() as { userId: string; code: string };
+    return HttpResponse.json({
+      accessToken: 'mock-mfa-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      user: body.userId.includes('clinician') ? mockClinician : mockUser,
+    });
+  }),
+
   // Patient - Progress
   http.get(`${BASE}/patients/:id/progress`, () => {
     return HttpResponse.json({
@@ -236,6 +245,15 @@ export const handlers = [
   // Patient - Voice Memos
   http.get(`${BASE}/patients/:id/voice`, () => {
     return HttpResponse.json([]);
+  }),
+
+  http.post(`${BASE}/patients/:id/voice`, () => {
+    return HttpResponse.json({
+      id: `voice-${Date.now()}`,
+      status: 'processing',
+      duration: 45,
+      createdAt: new Date().toISOString(),
+    });
   }),
 
   // Patient - Resources
@@ -822,6 +840,35 @@ export const handlers = [
         { label: 'Engagement', value: '78%', change: 8, unit: '%' },
         { label: 'Retention', value: '92%', change: 3, unit: '%' },
       ],
+    });
+  }),
+
+  // AI Chat — SSE streaming mock
+  http.post(`${BASE}/ai/chat`, async ({ request }) => {
+    const body = await request.json() as { message: string };
+    const replies = [
+      "I hear you, and I appreciate you sharing that with me. Let's take a moment to reflect on what you're feeling. What do you think is the strongest emotion right now?",
+      "Thank you for opening up. It takes courage to express your thoughts. Can you tell me more about what's been on your mind?",
+      "That's a really thoughtful observation. Between sessions, it can help to notice patterns in how we're feeling. Would you like to explore that further?",
+      "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
+      `I understand. You mentioned: "${body.message.slice(0, 50)}" — let's unpack that together. What feels most important about this right now?`,
+    ];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const words = reply.split(' ');
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        for (let i = 0; i < words.length; i++) {
+          const chunk = JSON.stringify({ content: words[i] + (i < words.length - 1 ? ' ' : '') });
+          controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      },
+    });
+    return new HttpResponse(stream, {
+      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
     });
   }),
 ];
