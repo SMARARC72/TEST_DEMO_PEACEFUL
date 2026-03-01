@@ -53,9 +53,9 @@ export const baselineTriageQueue = [
 ];
 
 export const baselineMemoryItems = [
-  { id: 'mem-1', patient: 'Maria Rodriguez', category: 'Trigger', statement: 'Crowded commute increases evening anxiety.', confidence: 'Moderate', conflict: false, status: 'PROPOSED', timestamp: '2026-02-24 09:14', evidence: ['Journal #J-114', 'Voice #V-23'], existing: '', uncertainty: 'May vary by sleep quality.', audit: ['Proposed by synthetic memory extraction model.'] },
-  { id: 'mem-2', patient: 'Emma Wilson', category: 'Coping', statement: '4-6 breathing reduces panic escalation.', confidence: 'High', conflict: true, status: 'CONFLICT_FLAGGED', timestamp: '2026-02-24 10:02', evidence: ['Check-in #C-87', 'Draft summary #D-44'], existing: 'Prior memory suggested object-grounding was preferred.', uncertainty: 'Both strategies may be useful in different contexts.', audit: ['Conflict detected with existing clinician-approved memory.'] },
-  { id: 'mem-3', patient: 'Alex Kim', category: 'Engagement', statement: 'Morning check-ins are often missed on school commute days.', confidence: 'Moderate', conflict: false, status: 'PROPOSED', timestamp: '2026-02-23 18:20', evidence: ['Check-in trend #T-08', 'Portal inbox #I-12'], existing: '', uncertainty: 'Could include intermittent connectivity issues.', audit: ['Proposed by continuity signal monitor.'] }
+  { id: 'mem-1', patient: 'Maria Rodriguez', category: 'Trigger', statement: 'Crowded commute increases evening anxiety.', signalBand: 'MODERATE', conflict: false, status: 'PROPOSED', timestamp: '2026-02-24 09:14', evidence: ['Journal #J-114', 'Voice #V-23'], existing: '', uncertainty: 'May vary by sleep quality.', audit: ['Proposed by synthetic memory extraction model.'] },
+  { id: 'mem-2', patient: 'Emma Wilson', category: 'Coping', statement: '4-6 breathing reduces panic escalation.', signalBand: 'HIGH', conflict: true, status: 'CONFLICT_FLAGGED', timestamp: '2026-02-24 10:02', evidence: ['Check-in #C-87', 'Draft summary #D-44'], existing: 'Prior memory suggested object-grounding was preferred.', uncertainty: 'Both strategies may be useful in different contexts.', audit: ['Conflict detected with existing clinician-approved memory.'] },
+  { id: 'mem-3', patient: 'Alex Kim', category: 'Engagement', statement: 'Morning check-ins are often missed on school commute days.', signalBand: 'MODERATE', conflict: false, status: 'PROPOSED', timestamp: '2026-02-23 18:20', evidence: ['Check-in trend #T-08', 'Portal inbox #I-12'], existing: '', uncertainty: 'Could include intermittent connectivity issues.', audit: ['Proposed by continuity signal monitor.'] }
 ];
 
 export const baselinePlanItems = [
@@ -363,7 +363,7 @@ export const baselinePopulationHealth = {
 // ──── Regulatory Compliance Hub ────
 export const baselineRegulatoryStatus = {
   fdaSamd: { classification: 'Class II (510(k) pathway)', status: 'Pre-Submission Planning', riskLevel: 'Non-significant risk', clinicalUse: 'Clinical Decision Support', timeline: 'Q3 2026 Pre-Sub Meeting' },
-  hipaa: { status: 'Compliant', lastAudit: '2026-01-15', controls: 12, implemented: 10, planned: 2, baaCount: 4 },
+  hipaa: { status: 'BAA-Capable Posture', lastAudit: '2026-01-15', controls: 12, implemented: 10, planned: 2, baaCount: 4 },
   cfr42: { status: 'Designed', substanceDataIsolation: true, consentTracking: true, breachProtocol: 'Defined' },
   soc2: { status: 'In Progress', type: 'Type II', auditor: 'Pending Selection', targetDate: 'Q4 2026' },
   accessibility: { wcag: 'AA', status: 'Partial', automated: 85, manual: 72 }

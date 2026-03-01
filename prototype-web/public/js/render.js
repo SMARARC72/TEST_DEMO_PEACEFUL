@@ -129,7 +129,7 @@ export function renderMemoryReview() {
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.category}</td>
       <td class="py-2 pr-2">${item.statement}</td>
-      <td class="py-2 pr-2">${item.confidence}</td>
+      <td class="py-2 pr-2"><span class="signal-band signal-${(item.signalBand || 'GUARDED').toLowerCase()}">${item.signalBand || 'GUARDED'}</span></td>
       <td class="py-2 pr-2">${item.conflict ? 'Flagged' : 'None'}</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${memoryBadgeClass(item.status)}">${item.status}</span></td>
     </tr>`).join(''));
@@ -139,6 +139,7 @@ export function renderMemoryReview() {
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Proposed Memory:</strong> ${selected.statement}</p>
     ${selected.existing ? `<p><strong>Conflicting Existing Memory:</strong> ${selected.existing}</p>` : ''}
+    <p><strong>Signal Band:</strong> ${selected.signalBand || 'GUARDED'}</p>
     <p><strong>Evidence:</strong> ${selected.evidence.join(', ')}</p>
     <p><strong>Known Unknowns:</strong> ${selected.uncertainty}</p>
     <p><strong>Status:</strong> ${selected.status}</p>
