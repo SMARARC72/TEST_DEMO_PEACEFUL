@@ -6,6 +6,8 @@ const variants = {
     'bg-brand-500 text-white hover:bg-brand-600 focus-visible:ring-brand-400 disabled:bg-brand-300',
   secondary:
     'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 focus-visible:ring-neutral-400 dark:bg-neutral-700 dark:text-neutral-100',
+  outline:
+    'border border-neutral-300 bg-transparent text-neutral-700 hover:bg-neutral-50 focus-visible:ring-neutral-400 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800',
   ghost:
     'bg-transparent text-neutral-700 hover:bg-neutral-100 focus-visible:ring-neutral-400 dark:text-neutral-200 dark:hover:bg-neutral-800',
   danger:

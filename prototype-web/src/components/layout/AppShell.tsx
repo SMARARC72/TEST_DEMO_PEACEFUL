@@ -116,6 +116,10 @@ const patientNav = [
   { to: '/patient', label: 'Home', icon: '🏠' },
   { to: '/patient/checkin', label: 'Check-in', icon: '✅' },
   { to: '/patient/journal', label: 'Journal', icon: '📝' },
+  { to: '/patient/voice', label: 'Voice Memo', icon: '🎙️' },
+  { to: '/patient/safety-plan', label: 'Safety Plan', icon: '🛡️' },
+  { to: '/patient/resources', label: 'Resources', icon: '📚' },
+  { to: '/patient/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 const clinicianNav = [

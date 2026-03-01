@@ -32,6 +32,21 @@ export const router = createBrowserRouter([
     element: lazyPage(() => import('@/pages/auth/RegisterPage')),
   },
 
+  // ── Patient onboarding (public-ish, no AppShell) ───
+  {
+    element: <AuthGuard allowedRoles={['PATIENT']} />,
+    children: [
+      {
+        path: '/patient/welcome',
+        element: lazyPage(() => import('@/pages/patient/WelcomePage')),
+      },
+      {
+        path: '/patient/consent',
+        element: lazyPage(() => import('@/pages/patient/ConsentPage')),
+      },
+    ],
+  },
+
   // ── Patient routes ─────────────────────────
   {
     element: <AuthGuard allowedRoles={['PATIENT']} />,
@@ -50,6 +65,22 @@ export const router = createBrowserRouter([
           {
             path: '/patient/journal',
             element: lazyPage(() => import('@/pages/patient/JournalPage')),
+          },
+          {
+            path: '/patient/voice',
+            element: lazyPage(() => import('@/pages/patient/VoiceMemoPage')),
+          },
+          {
+            path: '/patient/safety-plan',
+            element: lazyPage(() => import('@/pages/patient/SafetyPlanPage')),
+          },
+          {
+            path: '/patient/resources',
+            element: lazyPage(() => import('@/pages/patient/ResourcesPage')),
+          },
+          {
+            path: '/patient/settings',
+            element: lazyPage(() => import('@/pages/patient/SettingsPage')),
           },
           {
             path: '/patient/submission/:submissionId',

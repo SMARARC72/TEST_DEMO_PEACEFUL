@@ -174,3 +174,74 @@ export interface ApiError {
   message: string;
   details?: unknown;
 }
+
+// ─── Voice Memo ───────────────────────────────
+
+export type VoiceMemoStatus = 'UPLOADING' | 'PROCESSING' | 'COMPLETE' | 'FAILED';
+
+export interface VoiceMemo {
+  id: string;
+  patientId: string;
+  audioUrl?: string;
+  transcription?: string;
+  duration: number;
+  status: VoiceMemoStatus;
+  createdAt: string;
+}
+
+// ─── Safety Plan (Stanley-Brown) ──────────────
+
+export interface SafetyPlan {
+  id: string;
+  patientId: string;
+  version: number;
+  reviewedDate?: string;
+  steps: SafetyPlanStep[];
+}
+
+export interface SafetyPlanStep {
+  title: string;
+  description: string;
+  items: string[];
+}
+
+// ─── Resources ────────────────────────────────
+
+export interface CrisisResource {
+  id: string;
+  name: string;
+  description: string;
+  phone?: string;
+  url?: string;
+  category: 'crisis' | 'support' | 'coping' | 'education';
+}
+
+// ─── Patient Settings ─────────────────────────
+
+export interface PatientSettings {
+  notifications: {
+    checkinReminders: boolean;
+    journalPrompts: boolean;
+    appointmentReminders: boolean;
+    crisisAlerts: boolean;
+  };
+  privacy: {
+    shareProgressWithClinician: boolean;
+    allowVoiceMemos: boolean;
+  };
+  display: {
+    darkMode: boolean;
+    fontSize: 'small' | 'medium' | 'large';
+  };
+}
+
+// ─── Consent ──────────────────────────────────
+
+export interface ConsentRecord {
+  id: string;
+  patientId: string;
+  consentType: string;
+  accepted: boolean;
+  acceptedAt?: string;
+  version: string;
+}

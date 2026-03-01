@@ -1,11 +1,16 @@
 // ─── Patient API ─────────────────────────────────────────────────────
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, apiPatch } from './client';
 import type {
   Patient,
   CheckinData,
   JournalEntry,
   PatientSubmission,
   SubmissionReflection,
+  VoiceMemo,
+  SafetyPlan,
+  CrisisResource,
+  PatientSettings,
+  ConsentRecord,
 } from './types';
 
 export const patientApi = {
@@ -69,8 +74,52 @@ export const patientApi = {
   // ── Safety plan ───────────────────────────
   /** GET /patients/:id/safety-plan */
   getSafetyPlan(patientId: string) {
-    return apiGet<{ id: string; planData: Record<string, unknown> }>(
+    return apiGet<SafetyPlan>(
       `patients/${patientId}/safety-plan`,
     );
+  },
+
+  // ── Voice memos ───────────────────────────
+  /** POST /patients/:id/voice — upload voice memo */
+  uploadVoiceMemo(patientId: string, formData: FormData) {
+    return apiPost<VoiceMemo>(`patients/${patientId}/voice`, formData);
+  },
+
+  /** GET /patients/:id/voice — list voice memos */
+  getVoiceMemos(patientId: string) {
+    return apiGet<VoiceMemo[]>(`patients/${patientId}/voice`);
+  },
+
+  /** GET /patients/:id/voice/:memoId — single voice memo */
+  getVoiceMemo(patientId: string, memoId: string) {
+    return apiGet<VoiceMemo>(`patients/${patientId}/voice/${memoId}`);
+  },
+
+  // ── Resources ─────────────────────────────
+  /** GET /patients/:id/resources */
+  getResources(patientId: string) {
+    return apiGet<CrisisResource[]>(`patients/${patientId}/resources`);
+  },
+
+  // ── Settings ──────────────────────────────
+  /** GET /patients/:id/settings */
+  getSettings(patientId: string) {
+    return apiGet<PatientSettings>(`patients/${patientId}/settings`);
+  },
+
+  /** PATCH /patients/:id/settings */
+  updateSettings(patientId: string, data: Partial<PatientSettings>) {
+    return apiPatch<PatientSettings>(`patients/${patientId}/settings`, data);
+  },
+
+  // ── Consent ───────────────────────────────
+  /** GET /patients/:id/consent */
+  getConsents(patientId: string) {
+    return apiGet<ConsentRecord[]>(`patients/${patientId}/consent`);
+  },
+
+  /** POST /patients/:id/consent */
+  submitConsent(patientId: string, data: { consentType: string; accepted: boolean; version: string }) {
+    return apiPost<ConsentRecord>(`patients/${patientId}/consent`, data);
   },
 } as const;
