@@ -1,0 +1,12 @@
+{
+  "prototype-web/src/**/*.{ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "packages/api/src/**/*.ts": [
+    "prettier --write"
+  ],
+  "packages/shared/src/**/*.ts": [
+    "prettier --write"
+  ]
+}
