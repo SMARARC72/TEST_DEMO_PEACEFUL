@@ -117,6 +117,9 @@ const patientNav = [
   { to: '/patient/checkin', label: 'Check-in', icon: '✅' },
   { to: '/patient/journal', label: 'Journal', icon: '📝' },
   { to: '/patient/voice', label: 'Voice Memo', icon: '🎙️' },
+  { to: '/patient/chat', label: 'AI Companion', icon: '💬' },
+  { to: '/patient/history', label: 'History', icon: '📅' },
+  { to: '/patient/session-prep', label: 'Session Prep', icon: '🎯' },
   { to: '/patient/safety-plan', label: 'Safety Plan', icon: '🛡️' },
   { to: '/patient/resources', label: 'Resources', icon: '📚' },
   { to: '/patient/settings', label: 'Settings', icon: '⚙️' },
@@ -126,5 +129,7 @@ const clinicianNav = [
   { to: '/clinician', label: 'Dashboard', icon: '📊' },
   { to: '/clinician/caseload', label: 'Caseload', icon: '👥' },
   { to: '/clinician/triage', label: 'Triage Inbox', icon: '🔔' },
+  { to: '/clinician/escalations', label: 'Escalations', icon: '🚨' },
+  { to: '/clinician/analytics', label: 'Analytics', icon: '📈' },
   { to: '/clinician/settings', label: 'Settings', icon: '⚙️' },
 ];

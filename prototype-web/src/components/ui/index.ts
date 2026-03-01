@@ -6,4 +6,5 @@ export { Textarea, type TextareaProps } from './Textarea';
 export { Slider, type SliderProps } from './Slider';
 export { Spinner, type SpinnerProps } from './Spinner';
 export { Modal, type ModalProps } from './Modal';
+export { Pagination } from './Pagination';
 export { ToastContainer } from './Toast';

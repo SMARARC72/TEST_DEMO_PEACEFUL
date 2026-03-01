@@ -42,4 +42,8 @@ export const authApi = {
   getMe() {
     return apiGet<User>('auth/me');
   },
+
+  requestPasswordReset(email: string) {
+    return apiPost<{ success: boolean }>('auth/forgot-password', { email });
+  },
 } as const;

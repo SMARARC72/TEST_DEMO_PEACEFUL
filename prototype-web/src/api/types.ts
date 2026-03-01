@@ -372,3 +372,102 @@ export interface PatientProfile {
   drafts: AIDraft[];
   signalHistory: { band: SignalBand; date: string }[];
 }
+
+// ─── MBC (Measurement-Based Care) ─────────────
+
+export interface MBCScore {
+  id: string;
+  patientId: string;
+  instrument: 'PHQ9' | 'GAD7';
+  score: number;
+  items: number[];
+  administeredAt: string;
+  administeredBy: string;
+}
+
+// ─── Session Notes ────────────────────────────────
+
+export type NoteStatus = 'DRAFT' | 'SIGNED' | 'CO_SIGNED' | 'ADDENDUM';
+
+export interface SessionNote {
+  id: string;
+  patientId: string;
+  sessionDate: string;
+  status: NoteStatus;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  cptCode?: string;
+  duration: number;
+  signedBy?: string;
+  signedAt?: string;
+  coSignedBy?: string;
+  coSignedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ─── Adherence ────────────────────────────────────
+
+export type AdherenceCategory = 'MEDICATION' | 'EXERCISE' | 'HOMEWORK' | 'APPOINTMENT' | 'OTHER';
+export type AdherenceStatus = 'COMPLIANT' | 'PARTIAL' | 'NON_COMPLIANT' | 'NOT_ASSESSED';
+
+export interface AdherenceItem {
+  id: string;
+  patientId: string;
+  category: AdherenceCategory;
+  title: string;
+  description: string;
+  status: AdherenceStatus;
+  frequency: string;
+  lastLoggedAt?: string;
+  adherenceRate: number;
+  notes?: string;
+  createdAt: string;
+}
+
+// ─── Escalations ──────────────────────────────────
+
+export type EscalationPriority = 'P0' | 'P1' | 'P2' | 'P3';
+export type EscalationStatus = 'OPEN' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'EXPIRED';
+
+export interface Escalation {
+  id: string;
+  patientId: string;
+  patientName: string;
+  priority: EscalationPriority;
+  signalBand: SignalBand;
+  status: EscalationStatus;
+  reason: string;
+  description: string;
+  slaDeadline: string;
+  assignedTo?: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+  resolution?: string;
+  createdAt: string;
+}
+
+// ─── Analytics ────────────────────────────────────
+
+export interface AnalyticsData {
+  overview: {
+    totalPatients: number;
+    activePatients: number;
+    avgEngagementRate: number;
+    avgSignalImprovement: number;
+    pendingEscalations: number;
+    avgResponseTime: string;
+  };
+  signalDistribution: { band: string; count: number }[];
+  engagementTrend: { week: string; checkins: number; journals: number; voice: number }[];
+  outcomesTrend: { month: string; phq9Avg: number; gad7Avg: number }[];
+  adherenceByCategory: { category: string; rate: number }[];
+  topMetrics: {
+    label: string;
+    value: string;
+    change: number;
+    unit: string;
+  }[];
+}

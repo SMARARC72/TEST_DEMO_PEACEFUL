@@ -41,7 +41,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: prototype-web/package-lock.json
       - run: cd prototype-web && npm ci
-      - run: cd prototype-web && npx vitest run
+      - run: cd prototype-web && npx vitest run --coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: prototype-web/coverage/
       - run: cd prototype-web && node scripts/verify-demo-stability.mjs
 
   build-prototype:

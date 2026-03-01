@@ -17,6 +17,11 @@ import type {
   ClinicianSettings,
   CheckinData,
   JournalEntry,
+  MBCScore,
+  SessionNote,
+  AdherenceItem,
+  Escalation,
+  AnalyticsData,
 } from './types';
 
 export const clinicianApi = {
@@ -147,5 +152,90 @@ export const clinicianApi = {
   /** PATCH /clinician/settings */
   patchSettings(data: Partial<ClinicianSettings>) {
     return apiPatch<ClinicianSettings>('clinician/settings', data);
+  },
+
+  // ── MBC (Measurement-Based Care) ──────
+  /** GET /clinician/patients/:patientId/mbc */
+  getMBCScores(patientId: string) {
+    return apiGet<MBCScore[]>(`clinician/patients/${patientId}/mbc`);
+  },
+
+  /** POST /clinician/patients/:patientId/mbc */
+  submitMBCScore(
+    patientId: string,
+    data: { instrument: 'PHQ9' | 'GAD7'; score: number; items: number[] },
+  ) {
+    return apiPost<MBCScore>(`clinician/patients/${patientId}/mbc`, data);
+  },
+
+  // ── Session Notes ─────────────────────
+  /** GET /clinician/patients/:patientId/session-notes */
+  getSessionNotes(patientId: string) {
+    return apiGet<SessionNote[]>(`clinician/patients/${patientId}/session-notes`);
+  },
+
+  /** POST /clinician/patients/:patientId/session-notes */
+  createSessionNote(
+    patientId: string,
+    data: {
+      sessionDate: string;
+      subjective: string;
+      objective: string;
+      assessment: string;
+      plan: string;
+      cptCode?: string;
+      duration: number;
+    },
+  ) {
+    return apiPost<SessionNote>(
+      `clinician/patients/${patientId}/session-notes`,
+      data,
+    );
+  },
+
+  /** POST /clinician/patients/:patientId/session-notes/:noteId/sign */
+  signSessionNote(patientId: string, noteId: string) {
+    return apiPost<SessionNote>(
+      `clinician/patients/${patientId}/session-notes/${noteId}/sign`,
+      {},
+    );
+  },
+
+  // ── Adherence ─────────────────────────
+  /** GET /clinician/patients/:patientId/adherence */
+  getAdherence(patientId: string) {
+    return apiGet<AdherenceItem[]>(`clinician/patients/${patientId}/adherence`);
+  },
+
+  /** PATCH /clinician/patients/:patientId/adherence/:itemId */
+  logAdherence(
+    patientId: string,
+    itemId: string,
+    data: { status: string; notes?: string },
+  ) {
+    return apiPatch<AdherenceItem>(
+      `clinician/patients/${patientId}/adherence/${itemId}`,
+      data,
+    );
+  },
+
+  // ── Escalations ───────────────────────
+  /** GET /clinician/escalations */
+  getEscalations() {
+    return apiGet<Escalation[]>('clinician/escalations');
+  },
+
+  /** PATCH /clinician/escalations/:id */
+  patchEscalation(
+    id: string,
+    data: { status: string; resolution?: string },
+  ) {
+    return apiPatch<Escalation>(`clinician/escalations/${id}`, data);
+  },
+
+  // ── Analytics ─────────────────────────
+  /** GET /clinician/analytics?period=30d */
+  getAnalytics(period: string) {
+    return apiGet<AnalyticsData>(`clinician/analytics?period=${period}`);
   },
 } as const;

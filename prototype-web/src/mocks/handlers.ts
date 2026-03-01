@@ -618,4 +618,210 @@ export const handlers = [
     const body = await request.json() as { status: string };
     return HttpResponse.json({ id: params.planId, status: body.status });
   }),
+
+  // ── Password Reset ──────────────────────────
+  http.post(`${BASE}/auth/forgot-password`, async () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  // ── MBC Scores ──────────────────────────────
+  http.get(`${BASE}/clinician/patients/:id/mbc`, () => {
+    const scores = [
+      { id: 'mbc-001', patientId: 'patient-001', instrument: 'PHQ9', score: 14, items: [2, 2, 1, 2, 1, 2, 2, 1, 1], administeredAt: new Date(Date.now() - 90 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+      { id: 'mbc-002', patientId: 'patient-001', instrument: 'GAD7', score: 12, items: [2, 2, 1, 2, 2, 1, 2], administeredAt: new Date(Date.now() - 90 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+      { id: 'mbc-003', patientId: 'patient-001', instrument: 'PHQ9', score: 11, items: [1, 2, 1, 1, 1, 2, 1, 1, 1], administeredAt: new Date(Date.now() - 60 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+      { id: 'mbc-004', patientId: 'patient-001', instrument: 'GAD7', score: 9, items: [2, 1, 1, 1, 2, 1, 1], administeredAt: new Date(Date.now() - 60 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+      { id: 'mbc-005', patientId: 'patient-001', instrument: 'PHQ9', score: 8, items: [1, 1, 1, 1, 1, 1, 1, 0, 1], administeredAt: new Date(Date.now() - 30 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+      { id: 'mbc-006', patientId: 'patient-001', instrument: 'GAD7', score: 6, items: [1, 1, 1, 1, 1, 0, 1], administeredAt: new Date(Date.now() - 30 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
+    ];
+    return HttpResponse.json(scores);
+  }),
+
+  http.post(`${BASE}/clinician/patients/:id/mbc`, async ({ params, request }) => {
+    const body = await request.json() as { instrument: string; score: number; items: number[] };
+    return HttpResponse.json({
+      id: `mbc-${Date.now()}`,
+      patientId: params.id,
+      ...body,
+      administeredAt: new Date().toISOString(),
+      administeredBy: 'Dr. Sarah Chen',
+    }, { status: 201 });
+  }),
+
+  // ── Session Notes ───────────────────────────
+  http.get(`${BASE}/clinician/patients/:id/session-notes`, () => {
+    return HttpResponse.json([
+      {
+        id: 'note-001',
+        patientId: 'patient-001',
+        sessionDate: new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0],
+        status: 'SIGNED',
+        subjective: 'Patient reports improved mood over the past week. Sleep quality has improved with new sleep hygiene routine.',
+        objective: 'PHQ-9 score decreased from 11 to 8. Patient appears well-groomed, cooperative, and engaged.',
+        assessment: 'Generalized Anxiety Disorder (F41.1) showing improvement. Treatment plan is effective.',
+        plan: 'Continue current medication. Increase CBT frequency to bi-weekly. Follow up in 2 weeks.',
+        cptCode: '90837',
+        duration: 55,
+        signedBy: 'Dr. Sarah Chen',
+        signedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+        createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
+      },
+      {
+        id: 'note-002',
+        patientId: 'patient-001',
+        sessionDate: new Date().toISOString().split('T')[0],
+        status: 'DRAFT',
+        subjective: 'Patient reports moderate anxiety related to upcoming work deadline.',
+        objective: 'GAD-7 score: 6 (mild). Patient is oriented x4, cooperative.',
+        assessment: 'Anxiety symptoms manageable. Coping strategies effective.',
+        plan: 'Review coping techniques. Schedule follow-up next week.',
+        cptCode: '90834',
+        duration: 45,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+  }),
+
+  http.post(`${BASE}/clinician/patients/:id/session-notes`, async ({ params, request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({
+      id: `note-${Date.now()}`,
+      patientId: params.id,
+      ...body,
+      status: 'DRAFT',
+      createdAt: new Date().toISOString(),
+    }, { status: 201 });
+  }),
+
+  http.post(`${BASE}/clinician/patients/:id/session-notes/:noteId/sign`, ({ params }) => {
+    return HttpResponse.json({
+      id: params.noteId,
+      patientId: params.id,
+      status: 'SIGNED',
+      signedBy: 'Dr. Sarah Chen',
+      signedAt: new Date().toISOString(),
+    });
+  }),
+
+  // ── Adherence ───────────────────────────────
+  http.get(`${BASE}/clinician/patients/:id/adherence`, () => {
+    return HttpResponse.json([
+      { id: 'adh-001', patientId: 'patient-001', category: 'MEDICATION', title: 'Sertraline 50mg', description: 'Daily SSRI', status: 'COMPLIANT', frequency: 'Daily', lastLoggedAt: new Date().toISOString(), adherenceRate: 92, createdAt: new Date(Date.now() - 60 * 86400000).toISOString() },
+      { id: 'adh-002', patientId: 'patient-001', category: 'EXERCISE', title: 'Morning Walk', description: '30min walk', status: 'PARTIAL', frequency: '5x/week', lastLoggedAt: new Date(Date.now() - 86400000).toISOString(), adherenceRate: 68, createdAt: new Date(Date.now() - 30 * 86400000).toISOString() },
+      { id: 'adh-003', patientId: 'patient-001', category: 'HOMEWORK', title: 'CBT Thought Record', description: 'Complete thought record when anxious', status: 'COMPLIANT', frequency: '3x/week', lastLoggedAt: new Date(Date.now() - 2 * 86400000).toISOString(), adherenceRate: 85, createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
+      { id: 'adh-004', patientId: 'patient-001', category: 'APPOINTMENT', title: 'Therapy Sessions', description: 'Weekly therapy', status: 'COMPLIANT', frequency: 'Weekly', lastLoggedAt: new Date(Date.now() - 5 * 86400000).toISOString(), adherenceRate: 100, createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
+      { id: 'adh-005', patientId: 'patient-001', category: 'OTHER', title: 'Sleep Hygiene', description: 'No screens 1hr before bed', status: 'NON_COMPLIANT', frequency: 'Daily', adherenceRate: 35, createdAt: new Date(Date.now() - 20 * 86400000).toISOString() },
+    ]);
+  }),
+
+  http.patch(`${BASE}/clinician/patients/:id/adherence/:itemId`, async ({ params, request }) => {
+    const body = await request.json() as { status: string; notes?: string };
+    return HttpResponse.json({
+      id: params.itemId,
+      patientId: params.id,
+      status: body.status,
+      notes: body.notes,
+      lastLoggedAt: new Date().toISOString(),
+    });
+  }),
+
+  // ── Escalations ─────────────────────────────
+  http.get(`${BASE}/clinician/escalations`, () => {
+    return HttpResponse.json([
+      {
+        id: 'esc-001',
+        patientId: 'patient-003',
+        patientName: 'Sam Patel',
+        priority: 'P1',
+        signalBand: 'ELEVATED',
+        status: 'OPEN',
+        reason: 'Crisis language detected',
+        description: 'Journal entry from 2 hours ago contains phrases matching crisis language patterns. Patient mentions feeling hopeless.',
+        slaDeadline: new Date(Date.now() + 45 * 60000).toISOString(),
+        createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
+      },
+      {
+        id: 'esc-002',
+        patientId: 'patient-002',
+        patientName: 'Jordan Lee',
+        priority: 'P2',
+        signalBand: 'MODERATE',
+        status: 'ACKNOWLEDGED',
+        reason: 'Missed 3 consecutive check-ins',
+        description: 'Patient has not completed a check-in in 5 days. Previous pattern was daily.',
+        slaDeadline: new Date(Date.now() + 3 * 3600000).toISOString(),
+        acknowledgedAt: new Date(Date.now() - 30 * 60000).toISOString(),
+        createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+      },
+      {
+        id: 'esc-003',
+        patientId: 'patient-004',
+        patientName: 'Taylor Kim',
+        priority: 'P3',
+        signalBand: 'GUARDED',
+        status: 'RESOLVED',
+        reason: 'Medication non-adherence',
+        description: 'Patient self-reported missing medication for 4 consecutive days.',
+        slaDeadline: new Date(Date.now() - 12 * 3600000).toISOString(),
+        acknowledgedAt: new Date(Date.now() - 20 * 3600000).toISOString(),
+        resolvedAt: new Date(Date.now() - 10 * 3600000).toISOString(),
+        resolution: 'Contacted patient. Refill issue resolved with pharmacy. Patient resumed medication.',
+        createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
+      },
+    ]);
+  }),
+
+  http.patch(`${BASE}/clinician/escalations/:id`, async ({ params, request }) => {
+    const body = await request.json() as { status: string; resolution?: string };
+    return HttpResponse.json({
+      id: params.id,
+      status: body.status,
+      ...(body.status === 'ACKNOWLEDGED' ? { acknowledgedAt: new Date().toISOString() } : {}),
+      ...(body.status === 'RESOLVED' ? { resolvedAt: new Date().toISOString(), resolution: body.resolution } : {}),
+    });
+  }),
+
+  // ── Analytics ───────────────────────────────
+  http.get(`${BASE}/clinician/analytics`, () => {
+    return HttpResponse.json({
+      overview: {
+        totalPatients: 24,
+        activePatients: 18,
+        avgEngagementRate: 78,
+        avgSignalImprovement: 12.5,
+        pendingEscalations: 2,
+        avgResponseTime: '23 min',
+      },
+      signalDistribution: [
+        { band: 'LOW', count: 10 },
+        { band: 'GUARDED', count: 6 },
+        { band: 'MODERATE', count: 3 },
+        { band: 'ELEVATED', count: 1 },
+      ],
+      engagementTrend: [
+        { week: 'W1', checkins: 45, journals: 22, voice: 8 },
+        { week: 'W2', checkins: 52, journals: 28, voice: 10 },
+        { week: 'W3', checkins: 48, journals: 25, voice: 12 },
+        { week: 'W4', checkins: 58, journals: 32, voice: 15 },
+      ],
+      outcomesTrend: [
+        { month: 'Oct', phq9Avg: 12.4, gad7Avg: 10.8 },
+        { month: 'Nov', phq9Avg: 11.1, gad7Avg: 9.5 },
+        { month: 'Dec', phq9Avg: 9.8, gad7Avg: 8.2 },
+        { month: 'Jan', phq9Avg: 8.5, gad7Avg: 7.1 },
+      ],
+      adherenceByCategory: [
+        { category: 'Medication', rate: 88 },
+        { category: 'Exercise', rate: 62 },
+        { category: 'Homework', rate: 75 },
+        { category: 'Appointments', rate: 95 },
+      ],
+      topMetrics: [
+        { label: 'Avg PHQ-9', value: '8.5', change: -3.9, unit: 'pts' },
+        { label: 'Avg GAD-7', value: '7.1', change: -3.7, unit: 'pts' },
+        { label: 'Engagement', value: '78%', change: 8, unit: '%' },
+        { label: 'Retention', value: '92%', change: 3, unit: '%' },
+      ],
+    });
+  }),
 ];

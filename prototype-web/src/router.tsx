@@ -31,6 +31,10 @@ export const router = createBrowserRouter([
     path: '/register',
     element: lazyPage(() => import('@/pages/auth/RegisterPage')),
   },
+  {
+    path: '/forgot-password',
+    element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
+  },
 
   // ── Patient onboarding (public-ish, no AppShell) ───
   {
@@ -85,6 +89,19 @@ export const router = createBrowserRouter([
           {
             path: '/patient/submission/:submissionId',
             element: lazyPage(() => import('@/pages/patient/SubmissionSuccessPage')),
+          },
+          // Phase 2 patient routes
+          {
+            path: '/patient/chat',
+            element: lazyPage(() => import('@/pages/patient/ChatPage')),
+          },
+          {
+            path: '/patient/history',
+            element: lazyPage(() => import('@/pages/patient/HistoryPage')),
+          },
+          {
+            path: '/patient/session-prep',
+            element: lazyPage(() => import('@/pages/patient/SessionPrepPage')),
           },
         ],
       },
@@ -145,6 +162,27 @@ export const router = createBrowserRouter([
           {
             path: '/clinician/settings',
             element: lazyPage(() => import('@/pages/clinician/ClinicianSettingsPage')),
+          },
+          // Phase 3 clinician routes
+          {
+            path: '/clinician/patients/:patientId/mbc',
+            element: lazyPage(() => import('@/pages/clinician/MBCDashboardPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/session-notes',
+            element: lazyPage(() => import('@/pages/clinician/SessionNotesPage')),
+          },
+          {
+            path: '/clinician/patients/:patientId/adherence',
+            element: lazyPage(() => import('@/pages/clinician/AdherenceTrackerPage')),
+          },
+          {
+            path: '/clinician/escalations',
+            element: lazyPage(() => import('@/pages/clinician/EscalationPage')),
+          },
+          {
+            path: '/clinician/analytics',
+            element: lazyPage(() => import('@/pages/clinician/AnalyticsDashboard')),
           },
         ],
       },
