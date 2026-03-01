@@ -10,11 +10,19 @@ import './stores/auth';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-      <ToastContainer />
-    </ErrorBoundary>
-  </StrictMode>,
-);
+async function enableMocking() {
+  if (import.meta.env.VITE_ENABLE_MOCKS !== 'true') return;
+  const { worker } = await import('./mocks/browser');
+  return worker.start({ onUnhandledRequest: 'bypass' });
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+        <ToastContainer />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+});
