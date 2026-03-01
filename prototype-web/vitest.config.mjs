@@ -15,5 +15,20 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     globals: true,
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+    pool: 'forks',
+    singleFork: true,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/mocks/**', 'src/**/*.d.ts'],
+      thresholds: {
+        'src/api/**': { lines: 80, branches: 70 },
+        'src/stores/**': { lines: 80, branches: 70 },
+        'src/hooks/**': { lines: 80, branches: 70 },
+        'src/pages/**': { lines: 60, branches: 50 },
+      },
+    },
   },
 });

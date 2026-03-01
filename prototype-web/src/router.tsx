@@ -22,6 +22,12 @@ function lazyPage(factory: () => Promise<{ default: ComponentType }>) {
 }
 
 export const router = createBrowserRouter([
+  // ── Tenant selector (multi-tenant login) ───
+  {
+    path: '/select-tenant',
+    element: lazyPage(() => import('@/pages/auth/TenantSelectPage')),
+  },
+
   // ── Public routes ──────────────────────────
   {
     path: '/login',

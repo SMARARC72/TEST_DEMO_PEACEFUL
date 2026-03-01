@@ -5,6 +5,11 @@ import { Outlet, Link, useLocation } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useSystemThemeSync } from '@/hooks/useTheme';
+import { NotificationBell } from '@/components/domain/NotificationBell';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { SkipLink } from './SkipLink';
+import { LiveAnnouncer } from './LiveAnnouncer';
 
 export function AppShell() {
   const user = useAuthStore((s) => s.user);
@@ -16,12 +21,17 @@ export function AppShell() {
   // HIPAA: auto-logout after 15 min idle
   useIdleTimeout();
 
+  // Sync system theme preference
+  useSystemThemeSync();
+
   const role = user?.role ?? 'PATIENT';
   const isPatient = role === 'PATIENT';
   const navItems = isPatient ? patientNav : clinicianNav;
 
   return (
     <div className="flex h-screen bg-neutral-50 dark:bg-neutral-900">
+      <SkipLink />
+      <LiveAnnouncer />
       {/* Sidebar */}
       <aside
         className={`
@@ -88,10 +98,12 @@ export function AppShell() {
             </svg>
           </button>
 
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-neutral-600 dark:text-neutral-300">
               {user?.profile.firstName} {user?.profile.lastName}
             </span>
+            <NotificationBell />
+            <ThemeToggle />
             <button
               onClick={() => logout()}
               className="rounded-md px-3 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-700"
@@ -102,7 +114,7 @@ export function AppShell() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main id="main-content" className="flex-1 overflow-y-auto p-4 md:p-6" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

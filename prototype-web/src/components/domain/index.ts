@@ -3,3 +3,6 @@ export { PatientCard } from './PatientCard';
 export { TriageCard, type TriageCardProps } from './TriageCard';
 export { DraftViewer, type DraftViewerProps } from './DraftViewer';
 export { SubmissionReflection } from './SubmissionReflection';
+export { NotificationBell } from './NotificationBell';
+export { TenantSelector } from './TenantSelector';
+export { StepUpAuth, useStepUpAuth } from './StepUpAuth';

@@ -871,4 +871,37 @@ export const handlers = [
       headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
     });
   }),
+
+  // ── Step-Up Auth ──────────────────────────
+  http.post(`${BASE}/auth/step-up/verify`, async ({ request }) => {
+    const body = await request.json() as { password: string };
+    if (!body.password || body.password.length < 3) {
+      return HttpResponse.json({ message: 'Invalid password' }, { status: 401 });
+    }
+    // Mock: accept any password, return elevated token
+    return HttpResponse.json({
+      elevatedToken: `elevated-${crypto.randomUUID()}`,
+    });
+  }),
+
+  http.post(`${BASE}/auth/step-up/mfa`, async ({ request }) => {
+    const body = await request.json() as { code: string };
+    if (body.code !== '123456') {
+      return HttpResponse.json({ message: 'Invalid MFA code' }, { status: 401 });
+    }
+    return HttpResponse.json({
+      elevatedToken: `elevated-mfa-${crypto.randomUUID()}`,
+    });
+  }),
+
+  // ── Tenants ───────────────────────────────
+  http.get(`${BASE}/auth/tenants`, () => {
+    return HttpResponse.json({
+      tenants: [
+        { id: 'tenant-001', slug: 'demo-clinic', name: 'Demo Clinic', primaryColor: '#6C5CE7' },
+        { id: 'tenant-002', slug: 'wellness-center', name: 'Wellness Center', primaryColor: '#00B4D8' },
+        { id: 'tenant-003', slug: 'behavioral-health', name: 'Behavioral Health Associates', primaryColor: '#10B981' },
+      ],
+    });
+  }),
 ];

@@ -46,4 +46,22 @@ export const authApi = {
   requestPasswordReset(email: string) {
     return apiPost<{ success: boolean }>('auth/forgot-password', { email });
   },
+
+  /** Step-up auth: re-verify password before sensitive actions */
+  stepUpVerify(password: string) {
+    return apiPost<{ elevatedToken?: string; mfaRequired?: boolean }>(
+      'auth/step-up/verify',
+      { password },
+    );
+  },
+
+  /** Step-up auth: MFA verification for elevated access */
+  stepUpMfa(code: string) {
+    return apiPost<{ elevatedToken: string }>('auth/step-up/mfa', { code });
+  },
+
+  /** Fetch available tenants for the tenant selector */
+  getTenants() {
+    return apiGet<{ tenants: Array<{ id: string; slug: string; name: string; logoUrl?: string; primaryColor?: string }> }>('auth/tenants');
+  },
 } as const;
