@@ -27,7 +27,7 @@
 | Synthetic data | 0 violations (84 files scanned) |
 | Feature flags | 22 (env var + remote config) |
 | PRD phases | 6/6 complete |
-| Latest commit | Phase 6 — Deployment & Go-Live |
+| Latest commit | `217586a` — Phase 6 Deployment & Go-Live |
 
 The frontend is a **static React SPA** that builds to `dist/`. It runs in **full mock mode** via MSW (Mock Service Worker) — every API call is intercepted and returns realistic fake data. No backend is required to demo or pilot-test the UI.
 

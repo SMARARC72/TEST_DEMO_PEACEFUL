@@ -2,7 +2,7 @@
 
 **Stack:** React 19.2 · TypeScript 5.9 · Vite 7.3 · Tailwind CSS 4.2 · Zustand 5 · Recharts 3  
 **Live Demo:** [peacefullai.netlify.app](https://peacefullai.netlify.app) (mock mode)  
-**Latest Commit:** Phase 6 Deployment & Go-Live  
+**Latest Commit:** `217586a` — Phase 6 Deployment & Go-Live  
 **Last Updated:** 2026-03-02
 
 ---
@@ -262,6 +262,7 @@ src/pages/**   → 60% lines, 50% branches
 
 | Commit | Description |
 |--------|-------------|
+| `217586a` | Phase 6: Deployment & Go-Live (S3+CF CD, feature flags, Lighthouse CI, rollback plan) |
 | `f7d48ff` | Phase 5: Quality Gates (bundle/circular/synthetic CI guards, jsx-a11y, 14 snapshots) |
 | `54ce9d7` | Phase 4: Production Hardening (cookie auth, WS, WCAG, dark mode, CSP, tenants, E2E) |
 | `84ef86e` | Pin Node 22 via .nvmrc + engines field |
