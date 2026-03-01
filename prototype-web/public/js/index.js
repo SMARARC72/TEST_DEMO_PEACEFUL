@@ -37,7 +37,7 @@ import { initEventDelegation } from './events.js';
 // ─── API Integration ──────────────────────────────────────────────
 import {
   checkApiAvailability, isApiAvailable, isAuthenticated,
-  login, verifyMfa, logout, clearAuth, getAccessToken,
+  login, verifyMfa, logout, clearAuth, getAccessToken, register,
   API_BASE,
 } from './api.js';
 import {
@@ -133,6 +133,97 @@ window.stopBreathing = actions.stopBreathing;
 
 // MFA challenge state (stored between login and MFA verify screens)
 let mfaChallengeState = null;
+
+/**
+ * Handle sign-out — clears auth state and navigates to landing.
+ */
+window.handleSignOut = async function handleSignOut() {
+  try {
+    if (isApiAvailable() && isAuthenticated()) {
+      await logout();
+    } else {
+      clearAuth();
+    }
+  } catch {
+    clearAuth();
+  }
+  showScreen('landing');
+  showToast('Signed out successfully');
+};
+
+/**
+ * Handle self-service registration.
+ */
+window.handleRegister = async function handleRegister() {
+  const firstName = document.getElementById('register-first-name')?.value?.trim();
+  const lastName = document.getElementById('register-last-name')?.value?.trim();
+  const email = document.getElementById('register-email')?.value?.trim();
+  const password = document.getElementById('register-password')?.value;
+  const confirmPassword = document.getElementById('register-confirm-password')?.value;
+  const role = document.getElementById('register-role')?.value || 'PATIENT';
+  const errorEl = document.getElementById('register-error');
+  const btn = document.getElementById('register-btn');
+
+  // Validation
+  if (!firstName || !lastName || !email || !password) {
+    if (errorEl) { errorEl.textContent = 'All fields are required.'; errorEl.classList.remove('hidden'); }
+    return;
+  }
+  if (password !== confirmPassword) {
+    if (errorEl) { errorEl.textContent = 'Passwords do not match.'; errorEl.classList.remove('hidden'); }
+    return;
+  }
+  if (password.length < 12) {
+    if (errorEl) { errorEl.textContent = 'Password must be at least 12 characters.'; errorEl.classList.remove('hidden'); }
+    return;
+  }
+  const complexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
+  if (!complexityRegex.test(password)) {
+    if (errorEl) {
+      errorEl.textContent = 'Password must contain uppercase, lowercase, digit, and special character.';
+      errorEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (errorEl) errorEl.classList.add('hidden');
+  if (btn) { btn.textContent = 'Creating account...'; btn.disabled = true; }
+
+  try {
+    if (!isApiAvailable()) {
+      // Demo fallback
+      showToast('Registration requires a live API connection. Running in demo mode.');
+      showScreen('clinician-login');
+      return;
+    }
+
+    const result = await register({ email, password, firstName, lastName, role });
+
+    if (result.status === 'PENDING_APPROVAL') {
+      showToast('Registration submitted! Awaiting admin approval.');
+      showScreen('clinician-login');
+      return;
+    }
+
+    // Auto-logged-in (patient)
+    if (result.accessToken) {
+      showToast(`Welcome, ${firstName}! Account created successfully.`);
+      if (role === 'PATIENT') {
+        showScreen('patient-welcome');
+      } else {
+        await loadLiveDataAndNavigate();
+      }
+    }
+  } catch (err) {
+    console.error('[register] Error:', err);
+    if (errorEl) {
+      errorEl.textContent = err.message || 'Registration failed. Please try again.';
+      errorEl.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) { btn.textContent = 'Create Account'; btn.disabled = false; }
+  }
+};
 
 /**
  * Handle clinician login — calls live API if available, falls back to offline flow.

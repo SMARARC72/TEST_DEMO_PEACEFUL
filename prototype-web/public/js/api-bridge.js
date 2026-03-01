@@ -10,7 +10,8 @@ import {
   getAuditLog,
   getAnalyticsMBC, getAnalyticsAdherence,
   aiChat as apiAiChat, aiSummarize as apiAiSummarize,
-  apiFetch,
+  apiFetch, getPatientSafetyPlan, getPatientProgress, getPatientSDOH,
+  getSessionNotes,
 } from './api.js';
 
 import { state } from './state.js';
@@ -102,6 +103,9 @@ export async function initializeLiveData() {
 
     // Fetch MBC scores for each patient
     await loadMBCScores();
+
+    // Load per-patient data: adherence, safety plans, progress, memories, session notes
+    await loadPerPatientData();
 
     liveMode = true;
     showLiveToast('Connected to live Neon database');
@@ -336,6 +340,137 @@ function formatTimestamp(iso) {
     });
   } catch {
     return iso;
+  }
+}
+
+// ─── Per-Patient Data Loaders ───────────────────────────────────────
+
+async function loadPerPatientData() {
+  for (const [name, id] of Object.entries(patientIdMap)) {
+    const profileKey = guessProfileKey(name);
+    if (!profileKey) continue;
+
+    // Load adherence, safety plan, progress, memories, session notes, history in parallel
+    const [adherenceResp, safetyResp, progressResp, memoriesResp, notesResp, historyResp] =
+      await Promise.allSettled([
+        apiFetch(`/clinician/patients/${id}/adherence`),
+        apiFetch(`/patients/${id}/safety-plan`),
+        apiFetch(`/patients/${id}/progress`),
+        apiFetch(`/patients/${id}/memories`),
+        apiFetch(`/clinician/patients/${id}/session-notes`),
+        apiFetch(`/patients/${id}/history`),
+      ]);
+
+    // ── Adherence ──
+    if (adherenceResp.status === 'fulfilled') {
+      const items = Array.isArray(adherenceResp.value) ? adherenceResp.value : adherenceResp.value.data || [];
+      if (items.length > 0) {
+        const mapped = items.map(a => ({
+          id: a.id,
+          patient: name,
+          task: a.task,
+          frequency: a.frequency,
+          completed: a.completed,
+          target: a.target,
+          streak: a.streak || 0,
+          lastLogged: a.lastLogged ? formatTimestamp(a.lastLogged) : '',
+          status: a.status || 'ON_TRACK',
+        }));
+        // Merge into state — replace existing items for this patient
+        state.adherenceItems = [
+          ...state.adherenceItems.filter(a => !a.patient?.toLowerCase().includes(profileKey)),
+          ...mapped,
+        ];
+      }
+    }
+
+    // ── Safety Plan ──
+    if (safetyResp.status === 'fulfilled' && safetyResp.value) {
+      const sp = safetyResp.value;
+      if (state.patientProfiles?.[profileKey]) {
+        const steps = typeof sp.steps === 'string' ? JSON.parse(sp.steps) : sp.steps;
+        state.patientProfiles[profileKey].safetyPlan = {
+          steps: Array.isArray(steps) ? steps : [],
+          reviewedDate: sp.reviewedDate ? sp.reviewedDate.split('T')[0] : '',
+          version: sp.version || 1,
+        };
+      }
+    }
+
+    // ── Progress ──
+    if (progressResp.status === 'fulfilled' && progressResp.value) {
+      const prog = progressResp.value;
+      if (state.patientProfiles?.[profileKey]) {
+        state.patientProfiles[profileKey].progress = {
+          streak: prog.streak || 0,
+          xp: prog.xp || 0,
+          level: prog.level || 1,
+          levelName: prog.levelName || 'Seedling',
+          badges: typeof prog.badges === 'string' ? JSON.parse(prog.badges) : prog.badges || [],
+          weeklyMood: typeof prog.weeklyMood === 'string' ? JSON.parse(prog.weeklyMood) : prog.weeklyMood || [],
+          milestones: typeof prog.milestones === 'string' ? JSON.parse(prog.milestones) : prog.milestones || [],
+        };
+      }
+    }
+
+    // ── Memories ──
+    if (memoriesResp.status === 'fulfilled') {
+      const mems = Array.isArray(memoriesResp.value) ? memoriesResp.value : memoriesResp.value.data || [];
+      if (mems.length > 0 && state.patientProfiles?.[profileKey]) {
+        state.patientProfiles[profileKey].memories = mems.map(m => ({
+          id: m.id,
+          category: m.category,
+          statement: m.statement,
+          confidence: m.confidence,
+          conflict: m.conflict || false,
+          status: m.status || 'PROPOSED',
+          evidence: typeof m.evidence === 'string' ? JSON.parse(m.evidence) : m.evidence || [],
+        }));
+      }
+    }
+
+    // ── Session Notes ──
+    if (notesResp.status === 'fulfilled') {
+      const notes = Array.isArray(notesResp.value) ? notesResp.value : notesResp.value.data || [];
+      if (notes.length > 0) {
+        const mapped = notes.map(n => ({
+          id: n.id,
+          patient: name,
+          date: n.date ? n.date.split('T')[0] : '',
+          format: n.format || 'SOAP',
+          subjective: n.subjective || '',
+          objective: n.objective || '',
+          assessment: n.assessment || '',
+          plan: n.plan || '',
+          signed: n.signed || false,
+          signedAt: n.signedAt ? formatTimestamp(n.signedAt) : '',
+          coSignedBy: n.coSignedBy || null,
+        }));
+        // Merge — state may have a sessionNotes array
+        if (!state.sessionNotes) state.sessionNotes = [];
+        state.sessionNotes = [
+          ...state.sessionNotes.filter(sn => !sn.patient?.toLowerCase().includes(profileKey)),
+          ...mapped,
+        ];
+      }
+    }
+
+    // ── History (submissions) ──
+    if (historyResp.status === 'fulfilled') {
+      const history = Array.isArray(historyResp.value) ? historyResp.value : historyResp.value.data || [];
+      if (history.length > 0 && state.patientProfiles?.[profileKey]) {
+        state.patientProfiles[profileKey].history = history.map(h => ({
+          id: h.id,
+          date: h.date || h.createdAt?.split('T')[0] || '',
+          type: h.source || h.type || 'journal',
+          mood: h.mood ?? null,
+          stress: h.stress ?? null,
+          sleep: h.sleep ?? null,
+          summary: h.patientSummary || h.summary || '',
+          content: h.content || h.rawContent || '',
+        }));
+      }
+    }
   }
 }
 

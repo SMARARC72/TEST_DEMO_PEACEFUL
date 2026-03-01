@@ -5,18 +5,12 @@
 
 // ─── Configuration ──────────────────────────────────────────────────
 
-/** API base URL — configurable via query param or localStorage */
+/** API base URL — configurable via localStorage only */
 const DEFAULT_API_URL = 'http://localhost:3001/api/v1';
 
 function getApiBaseUrl() {
-  // Check query param first: ?api=https://my-api.render.com/api/v1
-  const params = new URLSearchParams(window.location.search);
-  const fromQuery = params.get('api');
-  if (fromQuery) {
-    localStorage.setItem('peacefull_api_url', fromQuery);
-    return fromQuery;
-  }
-  // Then localStorage (persists across reloads)
+  // SEC-011: Removed ?api= query parameter override to prevent credential theft.
+  // Only allow localStorage override for development convenience.
   const stored = localStorage.getItem('peacefull_api_url');
   if (stored) return stored;
   return DEFAULT_API_URL;
@@ -155,6 +149,26 @@ export async function apiFetch(path, options = {}) {
 }
 
 // ─── Auth Endpoints ─────────────────────────────────────────────────
+
+/**
+ * Register a new user account.
+ * @param {{ email: string, password: string, firstName: string, lastName: string, role?: string }} data
+ * @returns {{ accessToken?, refreshToken?, user?, userId?, status? }}
+ */
+export async function register({ email, password, firstName, lastName, role = 'PATIENT' }) {
+  const data = await apiFetch('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, firstName, lastName, role }),
+  });
+
+  // If auto-login (patient), store tokens
+  if (data.accessToken) {
+    setTokens(data.accessToken, data.refreshToken);
+    if (data.user) setCurrentUser(data.user);
+  }
+
+  return data;
+}
 
 /**
  * Login with email/password.

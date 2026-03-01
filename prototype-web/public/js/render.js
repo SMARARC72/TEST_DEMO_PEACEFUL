@@ -22,6 +22,31 @@ import {
   computeReadinessVerdict
 } from './helpers.js';
 
+// ─── XSS Protection (SEC-001) ────────────────────────────────────────
+// Sanitize all HTML injected via innerHTML to prevent stored/reflected XSS.
+
+const PURIFY_CONFIG = {
+  ADD_ATTR: ['onclick', 'data-nav', 'data-action', 'data-topic-id',
+    'data-resource-expand', 'data-resource-filter',
+    'data-history-expand', 'data-history-filter',
+    'data-safety-step', 'data-pmem-expand', 'data-pmem-filter',
+    'data-patient-profile'],
+  ADD_TAGS: ['canvas'],
+  ALLOW_ARIA_ATTR: true,
+  ALLOW_DATA_ATTR: true,
+};
+
+/**
+ * Sanitize HTML string before assigning to innerHTML.
+ * Falls back to passthrough if DOMPurify is not loaded.
+ */
+function sanitize(html) {
+  if (typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(html, PURIFY_CONFIG);
+  }
+  return html;
+}
+
 // ============ SUBMISSION SURFACES ============
 
 export function renderSubmissionSurfaces() {
@@ -67,24 +92,24 @@ export function renderTriageQueue() {
   const closedCount = document.getElementById('triage-closed-count');
   if (!tbody || !detail || !openCount || !closedCount) return;
 
-  tbody.innerHTML = state.triageQueue.map(item => `
+  tbody.innerHTML = sanitize(state.triageQueue.map(item => `
     <tr onclick="selectTriageItem('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedTriageId ? 'bg-fuchsia-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.source}</td>
       <td class="py-2 pr-2">${item.signalBand}</td>
       <td class="py-2 pr-2">${item.summary}</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${triageBadgeClass(item.status)}">${item.status}</span></td>
-    </tr>`).join('');
+    </tr>`).join(''));
 
   const selected = getSelectedTriageItem();
-  detail.innerHTML = selected ? `
+  detail.innerHTML = sanitize(selected ? `
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Submission Source:</strong> ${selected.source}</p>
     <p><strong>Signal Band:</strong> ${selected.signalBand}</p>
     <p><strong>Summary:</strong> ${selected.summary}</p>
     <p><strong>Status:</strong> ${selected.status}</p>
     <p><strong>Last Updated:</strong> ${selected.updatedAt}</p>
-  ` : '<p>No triage items available.</p>';
+  ` : '<p>No triage items available.</p>');
 
   const open = state.triageQueue.filter(item => item.status !== 'RESOLVED').length;
   openCount.textContent = String(open);
@@ -99,7 +124,7 @@ export function renderMemoryReview() {
   const approvedList = document.getElementById('approved-memory-list');
   if (!tbody || !detail || !approvedList) return;
 
-  tbody.innerHTML = state.memoryItems.map(item => `
+  tbody.innerHTML = sanitize(state.memoryItems.map(item => `
     <tr onclick="selectMemory('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedMemoryId ? 'bg-indigo-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.category}</td>
@@ -107,10 +132,10 @@ export function renderMemoryReview() {
       <td class="py-2 pr-2">${item.confidence}</td>
       <td class="py-2 pr-2">${item.conflict ? 'Flagged' : 'None'}</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${memoryBadgeClass(item.status)}">${item.status}</span></td>
-    </tr>`).join('');
+    </tr>`).join(''));
 
   const selected = getSelectedMemory();
-  detail.innerHTML = `
+  detail.innerHTML = sanitize(`
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Proposed Memory:</strong> ${selected.statement}</p>
     ${selected.existing ? `<p><strong>Conflicting Existing Memory:</strong> ${selected.existing}</p>` : ''}
@@ -118,21 +143,21 @@ export function renderMemoryReview() {
     <p><strong>Known Unknowns:</strong> ${selected.uncertainty}</p>
     <p><strong>Status:</strong> ${selected.status}</p>
     <p><strong>Last Audit Entry:</strong> ${selected.audit[selected.audit.length - 1]}</p>
-  `;
+  `);
 
   const approved = state.memoryItems.filter(item => item.status === 'APPROVED');
-  approvedList.innerHTML = approved.length
+  approvedList.innerHTML = sanitize(approved.length
     ? approved.map(item => `<li>${item.patient}: ${item.statement}</li>`).join('')
-    : '<li>No approved memory yet.</li>';
+    : '<li>No approved memory yet.</li>');
 
   const prepReduction = `${Math.min(12 + approved.length * 3, 24)}%`;
   const linkEl = document.getElementById('memory-roi-link');
   const profileList = document.getElementById('clinician-profile-memory');
   if (linkEl) linkEl.textContent = prepReduction;
   if (profileList) {
-    profileList.innerHTML = approved.length
+    profileList.innerHTML = sanitize(approved.length
       ? approved.map(item => `<li>${item.patient}: ${item.statement}</li>`).join('')
-      : '<li>No approved memory yet.</li>';
+      : '<li>No approved memory yet.</li>');
   }
 }
 
@@ -143,7 +168,7 @@ export function renderTreatmentPlan() {
   const detail = document.getElementById('treatment-plan-detail');
   if (!tbody || !detail) return;
 
-  tbody.innerHTML = state.planItems.map(item => `
+  tbody.innerHTML = sanitize(state.planItems.map(item => `
     <tr onclick="selectPlan('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedPlanId ? 'bg-emerald-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.goal}</td>
@@ -151,10 +176,10 @@ export function renderTreatmentPlan() {
       <td class="py-2 pr-2">${item.owner}</td>
       <td class="py-2 pr-2">${item.target}</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${planBadgeClass(item.status)}">${item.status}</span></td>
-    </tr>`).join('');
+    </tr>`).join(''));
 
   const selected = getSelectedPlan();
-  detail.innerHTML = `
+  detail.innerHTML = sanitize(`
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Goal:</strong> ${selected.goal}</p>
     <p><strong>Intervention:</strong> ${selected.intervention}</p>
@@ -162,7 +187,7 @@ export function renderTreatmentPlan() {
     <p><strong>Known Unknowns:</strong> ${selected.uncertainty}</p>
     <p><strong>Status:</strong> ${selected.status}</p>
     <p><strong>Last Audit Entry:</strong> ${selected.audit[selected.audit.length - 1]}</p>
-  `;
+  `);
 
   const reviewedCount = state.planItems.filter(item => item.status === 'REVIEWED').length;
   const readiness = `${Math.min(28 + reviewedCount * 8, 52)}%`;
@@ -175,9 +200,9 @@ export function renderTreatmentPlan() {
   if (roiPlanEl) roiPlanEl.textContent = readiness;
   if (profilePlan) {
     const reviewed = state.planItems.filter(item => item.status === 'REVIEWED');
-    profilePlan.innerHTML = reviewed.length
+    profilePlan.innerHTML = sanitize(reviewed.length
       ? reviewed.map(item => `<li>${item.patient}: ${item.goal}</li>`).join('')
-      : '<li>No reviewed treatment plan items yet.</li>';
+      : '<li>No reviewed treatment plan items yet.</li>');
   }
 }
 
@@ -365,12 +390,12 @@ export function renderClinicianPatientProfile() {
   if (initialsEl) initialsEl.textContent = profile.initials;
   if (nameEl) nameEl.textContent = profile.name;
   if (metaEl) metaEl.textContent = profile.meta;
-  if (badgesEl) badgesEl.innerHTML = profile.badges.join('');
+  if (badgesEl) badgesEl.innerHTML = sanitize(profile.badges.join(''));
   if (totalEl) totalEl.textContent = profile.stats.total;
   if (weeklyEl) weeklyEl.textContent = profile.stats.weekly;
   if (alertsEl) alertsEl.textContent = profile.stats.alerts;
-  if (activityEl) activityEl.innerHTML = profile.activity;
-  if (trendsEl) trendsEl.innerHTML = profile.trends;
+  if (activityEl) activityEl.innerHTML = sanitize(profile.activity);
+  if (trendsEl) trendsEl.innerHTML = sanitize(profile.trends);
 
   const base = 'px-3 py-1.5 rounded-full text-xs font-semibold';
   if (chipMaria) chipMaria.className = `${base} ${state.selectedPatientProfile === 'maria' ? 'bg-white/20 text-white' : 'bg-white/10 text-slate-200 hover:bg-white/20'}`;
@@ -385,7 +410,7 @@ export function renderMBCDashboard() {
   const detail = document.getElementById('mbc-detail');
   if (!tbody || !detail) return;
 
-  tbody.innerHTML = state.mbcScores.map(item => `
+  tbody.innerHTML = sanitize(state.mbcScores.map(item => `
     <tr onclick="selectMBC('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedMBCId ? 'bg-emerald-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2">${item.instrument}</td>
@@ -393,11 +418,11 @@ export function renderMBCDashboard() {
       <td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-semibold ${mbcSeverityClass(item.severity)}">${item.severity}</span></td>
       <td class="py-2 pr-2 text-sm">${mbcTrendIcon(item.trend)}</td>
       <td class="py-2 text-sm text-slate-500">${item.date}</td>
-    </tr>`).join('');
+    </tr>`).join(''));
 
   const selected = getSelectedMBC();
   const sparkline = selected.priorScores.map((s, i) => `T${i + 1}: ${s}`).join(' → ');
-  detail.innerHTML = `
+  detail.innerHTML = sanitize(`
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Instrument:</strong> ${selected.instrument}</p>
     <p><strong>Current Score:</strong> ${selected.score} (${selected.severity})</p>
@@ -405,7 +430,7 @@ export function renderMBCDashboard() {
     <p><strong>Score History:</strong> ${sparkline} → <strong>${selected.score}</strong></p>
     <p><strong>Date:</strong> ${selected.date}</p>
     ${selected.clinicianNote ? `<p><strong>Clinician Note:</strong> ${selected.clinicianNote}</p>` : '<p class="text-sm text-slate-500 italic">No clinician note yet.</p>'}
-  `;
+  `);
 
   // Update summary counts
   const worsening = state.mbcScores.filter(i => i.trend === 'worsening').length;
@@ -423,8 +448,8 @@ export function renderAdherenceTracker() {
   const detail = document.getElementById('adherence-detail');
   if (!tbody || !detail) return;
 
-  tbody.innerHTML = state.adherenceItems.map(item => {
-    const pct = Math.round((item.completed / item.target) * 100);
+  tbody.innerHTML = sanitize(state.adherenceItems.map(item => {
+    const pct = Math.round((item.completed / item.target) * 100));
     return `
     <tr onclick="selectAdherence('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedAdherenceId ? 'bg-emerald-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
@@ -437,7 +462,7 @@ export function renderAdherenceTracker() {
 
   const selected = getSelectedAdherence();
   const pct = Math.round((selected.completed / selected.target) * 100);
-  detail.innerHTML = `
+  detail.innerHTML = sanitize(`
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Task:</strong> ${selected.task}</p>
     <p><strong>Frequency:</strong> ${selected.frequency}</p>
@@ -446,7 +471,7 @@ export function renderAdherenceTracker() {
     <p><strong>Current Streak:</strong> ${selected.streak} days</p>
     <p><strong>Last Logged:</strong> ${selected.lastLogged}</p>
     <p><strong>Status:</strong> ${selected.status}</p>
-  `;
+  `);
 
   const onTrack = state.adherenceItems.filter(i => i.status === 'ON_TRACK').length;
   const atRisk = state.adherenceItems.filter(i => i.status === 'AT_RISK').length;
@@ -464,17 +489,17 @@ export function renderEscalationProtocols() {
   const auditEl = document.getElementById('escalation-audit-trail');
   if (!tbody || !detail) return;
 
-  tbody.innerHTML = state.escalationItems.map(item => `
+  tbody.innerHTML = sanitize(state.escalationItems.map(item => `
     <tr onclick="selectEscalation('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedEscalationId ? 'bg-amber-50' : ''}">
       <td class="py-2 pr-2"><span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(item.tier)}">${item.tier}</span></td>
       <td class="py-2 pr-2">${item.patient}</td>
       <td class="py-2 pr-2 text-sm">${item.trigger}</td>
       <td class="py-2 pr-2 text-sm">${item.detectedAt}</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${escalationBadgeClass(item.status)}">${item.status}</span></td>
-    </tr>`).join('');
+    </tr>`).join(''));
 
   const selected = getSelectedEscalation();
-  detail.innerHTML = `
+  detail.innerHTML = sanitize(`
     <p><strong>Patient:</strong> ${selected.patient}</p>
     <p><strong>Tier:</strong> <span class="px-2 py-1 rounded text-xs font-bold ${escalationTierClass(selected.tier)}">${selected.tier}</span></p>
     <p><strong>Trigger:</strong> ${selected.trigger}</p>
@@ -483,10 +508,10 @@ export function renderEscalationProtocols() {
     ${selected.resolvedAt ? `<p><strong>Resolved:</strong> ${selected.resolvedAt}</p>` : ''}
     ${selected.clinicianAction ? `<p><strong>Clinician Action:</strong> ${selected.clinicianAction}</p>` : ''}
     <p><strong>Status:</strong> ${selected.status}</p>
-  `;
+  `);
 
   if (auditEl) {
-    auditEl.innerHTML = selected.auditTrail.map(e => `<div class="py-2 border-b text-sm text-slate-700">${e}</div>`).join('');
+    auditEl.innerHTML = sanitize(selected.auditTrail.map(e => `<div class="py-2 border-b text-sm text-slate-700">${e}</div>`).join(''));
   }
 
   const openCount = state.escalationItems.filter(i => i.status === 'OPEN').length;
@@ -524,7 +549,7 @@ export function renderPatientProfile() {
   const el = document.getElementById('patient-profile-content');
   if (!el) return;
   const p = baselinePatientProfiles[state.selectedPatientProfile] || baselinePatientProfiles.maria;
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-5">
       <div class="flex items-center gap-4 mb-4">
         <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-2xl font-bold text-emerald-800">${p.name.charAt(0)}</div>
@@ -560,7 +585,7 @@ export function renderPatientProfile() {
         <div><p class="text-xs text-slate-500">Session alert</p><p class="font-semibold text-slate-800">${p.preferences.sessionAlert}</p></div>
       </div>
     </div>
-  `;
+  `);
 }
 
 // ============ SESSION PREP (F-P2) ============
@@ -569,7 +594,7 @@ export function renderSessionPrep() {
   const el = document.getElementById('patient-session-prep-content');
   if (!el) return;
   const s = state.sessionTopics[state.selectedPatientProfile] || state.sessionTopics.maria;
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-5">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-xl">📅</div>
@@ -601,7 +626,7 @@ export function renderSessionPrep() {
       <h3 class="font-semibold text-slate-800 mb-2">Previous Session Summary</h3>
       <p class="text-sm text-slate-700">${s.previousSummary}</p>
     </div>
-  `;
+  `);
 }
 
 // ============ PROGRESS & GAMIFICATION (F-P3) ============
@@ -615,7 +640,7 @@ export function renderProgress() {
   const pct = Math.round((p.xp / p.xpToNext) * 100);
   const streakPct = Math.round((p.streak / p.streakTarget) * 100);
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-5">
       <div class="flex items-center justify-between mb-3">
         <div>
@@ -681,7 +706,7 @@ export function renderProgress() {
         `).join('')}
       </div>
     </div>
-  `;
+  `);
 }
 
 // ============ RESOURCES (F-P4) ============
@@ -692,7 +717,7 @@ export function renderResources() {
   const filter = state.resourceFilter;
   const items = filter === 'All' ? baselineResources : baselineResources.filter(r => r.category === filter);
   
-  el.innerHTML = items.map(r => `
+  el.innerHTML = sanitize(items.map(r => `
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
       <button data-resource-expand="${r.id}" class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50">
         <div class="text-2xl">${r.icon}</div>
@@ -705,7 +730,7 @@ export function renderResources() {
       </button>
       ${state.expandedResourceId === r.id ? `<div class="px-4 pb-4 pt-0 border-t"><p class="text-sm text-slate-700 mt-3">${r.expandedContent}</p></div>` : ''}
     </div>
-  `).join('');
+  `).join(''));
 
   // update filter bar active state
   document.querySelectorAll('[data-resource-filter]').forEach(btn => {
@@ -722,9 +747,9 @@ export function renderResources() {
 export function renderChat() {
   const el = document.getElementById('patient-chat-messages');
   if (!el) return;
-  el.innerHTML = state.chatMessages.map(m => {
+  el.innerHTML = sanitize(state.chatMessages.map(m => {
     if (m.sender === 'system') {
-      return `<div class="chat-bubble chat-bubble-system text-center"><p class="text-xs text-slate-500 italic">${m.text}</p></div>`;
+      return `<div class="chat-bubble chat-bubble-system text-center"><p class="text-xs text-slate-500 italic">${m.text}</p></div>`);
     }
     const isAI = m.sender === 'ai';
     const bubbleClass = isAI ? 'chat-bubble chat-bubble-ai' : 'chat-bubble chat-bubble-patient';
@@ -733,7 +758,7 @@ export function renderChat() {
   }).join('');
 
   if (state.chatTyping) {
-    el.innerHTML += `<div class="chat-bubble chat-bubble-ai flex items-center gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    el.innerHTML += sanitize(`<div class="chat-bubble chat-bubble-ai flex items-center gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`);
   }
 
   el.scrollTop = el.scrollHeight;
@@ -751,8 +776,8 @@ export function renderHistory() {
   const typeIcons = { CHECKIN: '📋', JOURNAL: '✍️', VOICE: '🎤' };
   const typeColors = { CHECKIN: 'emerald', JOURNAL: 'blue', VOICE: 'purple' };
 
-  el.innerHTML = filtered.map(e => {
-    const color = typeColors[e.type] || 'slate';
+  el.innerHTML = sanitize(filtered.map(e => {
+    const color = typeColors[e.type] || 'slate');
     const date = new Date(e.date);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -808,8 +833,8 @@ export function renderSafetyPlan() {
   const plan = baselineSafetyPlan[state.selectedPatientProfile] || baselineSafetyPlan.maria;
   const stepIcons = ['⚠️', '🧘', '🏖️', '👥', '📞', '🔒'];
 
-  el.innerHTML = plan.steps.map((step, i) => {
-    const expanded = state.expandedSafetySteps.includes(i);
+  el.innerHTML = sanitize(plan.steps.map((step, i) => {
+    const expanded = state.expandedSafetySteps.includes(i));
     return `
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <button data-safety-step="${i}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
@@ -840,14 +865,14 @@ export function renderOnboarding() {
   if (!contentEl) return;
 
   const step = baselineOnboardingSteps[state.onboardingStep] || baselineOnboardingSteps[0];
-  contentEl.innerHTML = `
+  contentEl.innerHTML = sanitize(`
     <div class="text-5xl mb-4">${step.icon}</div>
     <h2 class="text-xl font-bold text-slate-800 mb-3">${step.title}</h2>
     <p class="text-sm text-slate-600">${step.description}</p>
-  `;
+  `);
 
   if (progressEl) {
-    progressEl.innerHTML = baselineOnboardingSteps.map((_, i) => `<div class="w-8 h-1 rounded ${i <= state.onboardingStep ? 'bg-emerald-700' : 'bg-slate-200'}"></div>`).join('');
+    progressEl.innerHTML = sanitize(baselineOnboardingSteps.map((_, i) => `<div class="w-8 h-1 rounded ${i <= state.onboardingStep ? 'bg-emerald-700' : 'bg-slate-200'}"></div>`).join(''));
   }
 
   if (backBtn) backBtn.classList.toggle('hidden', state.onboardingStep === 0);
@@ -865,8 +890,8 @@ export function renderPatientMemoryView() {
   const filter = state.patientMemoryFilter;
   const filtered = filter === 'All' ? memories : memories.filter(m => m.category === filter);
 
-  el.innerHTML = filtered.map(m => {
-    const expanded = state.expandedPatientMemoryId === m.id;
+  el.innerHTML = sanitize(filtered.map(m => {
+    const expanded = state.expandedPatientMemoryId === m.id);
     return `
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <button data-pmem-expand="${m.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
@@ -900,7 +925,7 @@ export function renderClinicianAnalytics() {
   const p = state.clinicianProfile;
   const ph = state.populationHealth;
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <div class="flex items-center gap-4 mb-4">
         <div class="w-16 h-16 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-white">SC</div>
@@ -944,7 +969,7 @@ export function renderClinicianAnalytics() {
         <button data-nav="escalation-protocols" class="p-3 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100">Escalation Protocols</button>
       </div>
     </div>
-  `;
+  `);
 }
 
 // ============ POPULATION HEALTH DASHBOARD ============
@@ -954,7 +979,7 @@ export function renderPopulationHealth() {
   if (!el) return;
   const ph = state.populationHealth;
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="grid grid-cols-4 gap-4 mb-6">
       <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-slate-800">${ph.totalPatients}</p><p class="text-sm text-slate-500">Total Patients</p></div>
       <div class="bg-white rounded-xl p-4 text-center"><p class="text-3xl font-bold text-emerald-700">${ph.engagementRate}%</p><p class="text-sm text-slate-500">Engagement</p></div>
@@ -983,7 +1008,7 @@ export function renderPopulationHealth() {
         `).join('')}
       </div>
     </div>
-  `;
+  `);
 
   // Render Chart.js charts if available
   if (typeof Chart !== 'undefined') {
@@ -1024,7 +1049,7 @@ export function renderSessionNotes() {
   if (!note) return;
   const patientName = baselinePatientProfiles[profile]?.name || profile;
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="flex gap-2 mb-4">
       ${['maria', 'james', 'emma'].map(p => `
         <button data-action="select-session-note-${p}" class="px-3 py-1.5 rounded-lg text-sm font-medium ${state.currentSessionNoteProfile === p ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}">${baselinePatientProfiles[p]?.name?.split(' ')[0] || p}</button>
@@ -1050,7 +1075,7 @@ export function renderSessionNotes() {
         <button data-nav="sdoh-assessment" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-semibold">SDOH Assessment</button>
       </div>
     </div>
-  `;
+  `);
 }
 
 // ============ REGULATORY COMPLIANCE HUB ============
@@ -1060,7 +1085,7 @@ export function renderRegulatoryHub() {
   if (!el) return;
   const r = state.regulatoryStatus;
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="grid grid-cols-2 gap-6 mb-6">
       <div class="bg-white rounded-2xl shadow-sm p-6">
         <div class="flex items-center gap-3 mb-3">
@@ -1119,7 +1144,7 @@ export function renderRegulatoryHub() {
     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
       <p class="text-sm text-emerald-900"><strong>Evidence:</strong> FDA SaMD framework (ev-55), HIPAA Security Rule (ev-56), 42 CFR Part 2 (ev-57).</p>
     </div>
-  `;
+  `);
 }
 
 // ============ SDOH ASSESSMENT ============
@@ -1129,8 +1154,8 @@ export function renderSDOHAssessment() {
   if (!el) return;
   const profile = state.selectedPatientProfile;
   const sdoh = state.sdohData[profile];
-  if (!sdoh) { el.innerHTML = '<p class="text-slate-500 text-center py-8">No SDOH data for this patient.</p>'; return; }
-  const patientName = baselinePatientProfiles[profile]?.name || profile;
+  if (!sdoh) { el.innerHTML = sanitize('<p class="text-slate-500 text-center py-8">No SDOH data for this patient.</p>'; return; }
+  const patientName = baselinePatientProfiles[profile]?.name || profile);
 
   const riskColor = (r) => r === 'Low' ? 'green' : r === 'Moderate' ? 'amber' : 'red';
   const domains = [
@@ -1142,7 +1167,7 @@ export function renderSDOHAssessment() {
     { label: 'Education', data: sdoh.education, icon: '📚' }
   ];
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
         <div>
@@ -1170,7 +1195,7 @@ export function renderSDOHAssessment() {
     <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
       <p class="text-sm text-indigo-900"><strong>Evidence:</strong> Social determinants framework (Marmot & Wilkinson, 2006), ev-52.</p>
     </div>
-  `;
+  `);
 }
 
 // ============ CAREGIVER VIEW ============
@@ -1183,7 +1208,7 @@ export function renderCaregiverView() {
   const prog = baselineProgressData[profile];
   if (!p || !prog) return;
 
-  el.innerHTML = `
+  el.innerHTML = sanitize(`
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
       <h3 class="text-lg font-semibold text-slate-800 mb-2">${p.name}'s Wellness Summary</h3>
       <p class="text-sm text-slate-500 mb-4">This view is shared with your consent. Your clinician controls what is visible.</p>
@@ -1215,7 +1240,7 @@ export function renderCaregiverView() {
         <p>• <strong>Crisis Line:</strong> 988 Suicide & Crisis Lifeline (available 24/7)</p>
       </div>
     </div>
-  `;
+  `);
 
   // Chart.js mood trend line chart
   if (typeof Chart !== 'undefined') {

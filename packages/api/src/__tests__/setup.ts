@@ -42,6 +42,7 @@ vi.mock('../models/index.js', () => {
     },
     clinician: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
     treatmentPlan: {
@@ -52,21 +53,26 @@ vi.mock('../models/index.js', () => {
     },
     tenant: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
     triageItem: {
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      findUnique: vi.fn(),
+      count: vi.fn(),
     },
     aIDraft: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       count: vi.fn(),
     },
     chatSession: {
@@ -75,6 +81,47 @@ vi.mock('../models/index.js', () => {
       create: vi.fn(),
     },
     chatMessage: {
+      create: vi.fn(),
+    },
+    careTeamAssignment: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    sessionNote: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    memoryProposal: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    mBCScore: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
+    progressData: {
+      findUnique: vi.fn(),
+    },
+    safetyPlan: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    adherenceItem: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    escalationItem: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    consentRecord: {
+      findMany: vi.fn(),
       create: vi.fn(),
     },
     $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockPrisma)),

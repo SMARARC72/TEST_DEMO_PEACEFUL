@@ -174,6 +174,7 @@ patientRouter.get('/:id', async (req, res, next) => {
       include: patientInclude,
     });
     if (!row) throw new AppError('Patient not found', 404);
+    if (row.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     res.json(toPatientResponse(row));
   } catch (err) {
     next(err);
@@ -202,6 +203,10 @@ const updatePatientSchema = z.object({
 patientRouter.patch('/:id', async (req, res, next) => {
   try {
     const data = updatePatientSchema.parse(req.body);
+    // Tenant isolation check (SEC-003)
+    const existing = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!existing) throw new AppError('Patient not found', 404);
+    if (existing.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const row = await prisma.patient.update({
       where: { id: req.params.id },
       data,
@@ -222,9 +227,15 @@ patientRouter.patch('/:id', async (req, res, next) => {
 
 patientRouter.put('/:id', async (req, res, next) => {
   try {
+    // SEC-005: Validate PUT body with same schema as PATCH
+    const data = updatePatientSchema.parse(req.body);
+    // SEC-003: Tenant isolation check
+    const existing = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!existing) throw new AppError('Patient not found', 404);
+    if (existing.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const row = await prisma.patient.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
       include: patientInclude,
     });
     res.json(toPatientResponse(row));
@@ -246,6 +257,10 @@ const createSubmissionSchema = z.object({
 
 patientRouter.post('/:id/submissions', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const body = createSubmissionSchema.parse(req.body);
     const row = await prisma.submission.create({
       data: {
@@ -281,6 +296,10 @@ patientRouter.post('/:id/submissions', async (req, res, next) => {
 
 patientRouter.get('/:id/submissions', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
@@ -316,6 +335,7 @@ patientRouter.get('/:id/submissions/:subId', async (req, res, next) => {
       include: submissionInclude,
     });
     if (!row) throw new AppError('Submission not found', 404);
+    if (row.patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     res.json(toSubmissionResponse(row));
   } catch (err) {
     next(err);
@@ -340,6 +360,7 @@ patientRouter.get('/:id/session-prep', async (req, res, next) => {
       },
     });
     if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
 
     const recentSubmissions = await prisma.submission.findMany({
       where: { patientId },
@@ -416,6 +437,10 @@ patientRouter.put('/:id/session-prep', (req, res) => {
 
 patientRouter.get('/:id/progress', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const row = await prisma.progressData.findUnique({
       where: { patientId: req.params.id },
     });
@@ -441,6 +466,10 @@ patientRouter.get('/:id/progress', async (req, res, next) => {
 
 patientRouter.get('/:id/safety-plan', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const row = await prisma.safetyPlan.findUnique({
       where: { patientId: req.params.id },
     });
@@ -505,6 +534,10 @@ patientRouter.put('/:id/safety-plan', async (req, res, next) => {
 
 patientRouter.get('/:id/memories', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const rows = await prisma.memoryProposal.findMany({
       where: { patientId: req.params.id, status: 'APPROVED' },
       orderBy: { createdAt: 'desc' },
@@ -537,6 +570,10 @@ patientRouter.get('/:id/memories', async (req, res, next) => {
 patientRouter.get('/:id/history', async (req, res, next) => {
   try {
     const patientId = req.params.id;
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
 
     const submissions = await prisma.submission.findMany({
       where: { patientId },
@@ -606,6 +643,10 @@ const checkinSchema = z.object({
 
 patientRouter.post('/:id/checkin', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const body = checkinSchema.parse(req.body);
     const rawContent = JSON.stringify(body);
 
@@ -647,6 +688,10 @@ const journalSchema = z.object({
 
 patientRouter.post('/:id/journal', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const body = journalSchema.parse(req.body);
 
     const row = await prisma.submission.create({
@@ -683,6 +728,10 @@ patientRouter.post('/:id/journal', async (req, res, next) => {
 
 patientRouter.post('/:id/voice', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
     const audioKey = uuidv4();
     const audioUrl = `https://s3.amazonaws.com/peacefull-uploads/voice/${audioKey}.webm`;
 

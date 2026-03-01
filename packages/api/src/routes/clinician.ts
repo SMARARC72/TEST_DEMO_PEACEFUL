@@ -35,6 +35,19 @@ async function getClinicianPatientIds(clinicianId: string): Promise<string[]> {
   return assignments.map((a: { patientId: string }) => a.patientId);
 }
 
+/** SEC-009: Verify the patient belongs to clinician's caseload and tenant. */
+async function requireCaseloadAccess(userId: string, tid: string, patientId: string) {
+  const clinician = await getClinicianProfile(userId);
+  const patientIds = await getClinicianPatientIds(clinician.id);
+  if (!patientIds.includes(patientId)) {
+    // Fallback: at least verify tenant isolation even if not in caseload
+    const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== tid) throw new AppError('Access denied', 403);
+  }
+  return clinician;
+}
+
 // ─── GET /dashboard ──────────────────────────────────────────────────
 
 clinicianRouter.get('/dashboard', async (req, res, next) => {
@@ -211,6 +224,8 @@ clinicianRouter.patch('/triage/:id', async (req, res, next) => {
 
 clinicianRouter.get('/patients/:id', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const patient = await prisma.patient.findUnique({
       where: { id: req.params.id },
       include: {
@@ -259,6 +274,8 @@ clinicianRouter.get('/patients/:id', async (req, res, next) => {
 
 clinicianRouter.get('/patients/:id/drafts', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const drafts = await prisma.aIDraft.findMany({
       where: { patientId: req.params.id },
       orderBy: { createdAt: 'desc' },
@@ -279,6 +296,8 @@ const draftPatchSchema = z.object({
 
 clinicianRouter.patch('/patients/:id/drafts/:draftId', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = draftPatchSchema.parse(req.body);
 
     const draft = await prisma.aIDraft.findFirst({
@@ -307,6 +326,8 @@ clinicianRouter.patch('/patients/:id/drafts/:draftId', async (req, res, next) =>
 
 clinicianRouter.get('/patients/:id/memories', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const proposals = await prisma.memoryProposal.findMany({
       where: { patientId: req.params.id },
       orderBy: { createdAt: 'desc' },
@@ -352,6 +373,8 @@ clinicianRouter.patch('/patients/:id/memories/:memId', async (req, res, next) =>
 
 clinicianRouter.get('/patients/:id/plans', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const plans = await prisma.treatmentPlan.findMany({
       where: { patientId: req.params.id },
       orderBy: { createdAt: 'desc' },
@@ -376,6 +399,8 @@ const planCreateSchema = z.object({
 
 clinicianRouter.post('/patients/:id/plans', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = planCreateSchema.parse(req.body);
 
     // Verify patient exists
@@ -501,6 +526,8 @@ clinicianRouter.post('/patients/:id/mbc', async (req, res, next) => {
 
 clinicianRouter.get('/patients/:id/session-notes', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const notes = await prisma.sessionNote.findMany({
       where: { patientId: req.params.id },
       orderBy: { date: 'desc' },
@@ -522,6 +549,8 @@ const sessionNoteSchema = z.object({
 
 clinicianRouter.post('/patients/:id/session-notes', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = sessionNoteSchema.parse(req.body);
 
     const note = await prisma.sessionNote.create({
@@ -552,6 +581,11 @@ clinicianRouter.patch('/patients/:id/session-notes/:noteId/sign', async (req, re
     });
     if (!note) throw new AppError('Session note not found', 404);
 
+    // CLIN-003: Only the note author or a SUPERVISOR can sign
+    if (note.clinicianId !== req.user!.sub && req.user!.role !== 'SUPERVISOR') {
+      throw new AppError('Only the note author or a supervisor may sign this note', 403);
+    }
+
     const updated = await prisma.sessionNote.update({
       where: { id: req.params.noteId },
       data: {
@@ -570,6 +604,8 @@ clinicianRouter.patch('/patients/:id/session-notes/:noteId/sign', async (req, re
 
 clinicianRouter.get('/patients/:id/adherence', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const items = await prisma.adherenceItem.findMany({
       where: { patientId: req.params.id },
       orderBy: { createdAt: 'desc' },
@@ -608,6 +644,8 @@ clinicianRouter.patch('/patients/:id/adherence/:itemId', async (req, res, next) 
 
 clinicianRouter.get('/patients/:id/escalations', async (req, res, next) => {
   try {
+    // SEC-009: Verify caseload/tenant access
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const items = await prisma.escalationItem.findMany({
       where: { patientId: req.params.id },
       orderBy: { detectedAt: 'desc' },

@@ -3,7 +3,7 @@
 
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { randomInt } from 'node:crypto';
+import { randomInt, timingSafeEqual } from 'node:crypto';
 import { env } from '../config/index.js';
 import { authLogger } from '../utils/logger.js';
 import {
@@ -130,8 +130,9 @@ export function generateMFACode(): string {
  * @param secret - The expected code or TOTP secret (stub: direct compare).
  */
 export function verifyMFACode(code: string, secret: string): boolean {
-  // Stub: direct comparison. Replace with TOTP validation (e.g., otplib).
-  return code === secret;
+  // SEC-012: Constant-time comparison to prevent timing attacks
+  if (code.length !== secret.length) return false;
+  return timingSafeEqual(Buffer.from(code), Buffer.from(secret));
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────

@@ -155,6 +155,23 @@ module "monitoring" {
   redis_cluster_id = "${local.app_name}-${local.environment}-redis"
 }
 
+module "waf" {
+  source      = "../../modules/waf"
+  app_name    = local.app_name
+  environment = local.environment
+  alb_arn     = module.ecs.alb_arn
+
+  # HIPAA: US-only geo-restriction for production
+  geo_restrict          = true
+  allowed_country_codes = ["US"]
+
+  # Allow larger bodies for clinical note submissions
+  max_body_size_bytes = 32768  # 32 KB
+
+  # 90-day WAF log retention for compliance
+  log_retention_days = 90
+}
+
 # ------------------------------------------------------------------------------
 # Outputs
 # ------------------------------------------------------------------------------
@@ -178,4 +195,12 @@ output "cloudfront_distribution_id" {
 output "rds_endpoint" {
   value     = module.database.db_endpoint
   sensitive = true
+}
+
+output "waf_web_acl_arn" {
+  value = module.waf.web_acl_arn
+}
+
+output "waf_log_group" {
+  value = module.waf.waf_log_group_name
 }

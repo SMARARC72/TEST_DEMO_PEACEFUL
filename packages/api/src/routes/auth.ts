@@ -4,6 +4,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { authenticate } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
 import {
@@ -11,6 +12,7 @@ import {
   generateStepUpToken,
   verifyRefreshToken,
   verifyPassword,
+  hashPassword,
   generateMFACode,
   verifyMFACode,
 } from '../services/auth.js';
@@ -55,6 +57,120 @@ const pendingMFA: Record<string, string> = {};
 /** Revoked refresh tokens (move to Redis / DB for multi-instance). */
 const invalidatedTokens = new Set<string>();
 
+// SEC-004: Per-email rate limiting for login and MFA
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per IP per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: 'Too many login attempts. Please try again later.' } },
+});
+
+const mfaLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // 5 MFA attempts per IP per 5 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: 'Too many MFA attempts. Please try again later.' } },
+});
+
+// ─── POST /register ──────────────────────────────────────────────────
+
+const registerBodySchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(12, 'Password must be at least 12 characters').max(128),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  role: z.enum(['PATIENT', 'CLINICIAN']).default('PATIENT'),
+  tenantSlug: z.string().min(1).max(100).optional(),
+});
+
+authRouter.post('/register', async (req, res, next) => {
+  try {
+    const body = registerBodySchema.parse(req.body);
+
+    // Validate password complexity first (before any DB queries)
+    const complexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
+    if (!complexityRegex.test(body.password)) {
+      throw new AppError(
+        'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character',
+        400,
+      );
+    }
+
+    // Find or use default tenant
+    let tenant;
+    if (body.tenantSlug) {
+      tenant = await prisma.tenant.findUnique({ where: { slug: body.tenantSlug } });
+      if (!tenant) throw new AppError('Organization not found', 404);
+    } else {
+      // Use first available tenant (pilot default)
+      tenant = await prisma.tenant.findFirst({ orderBy: { createdAt: 'asc' } });
+      if (!tenant) throw new AppError('No organization configured. Contact admin.', 500);
+    }
+
+    // Check for existing user
+    const existing = await prisma.user.findFirst({
+      where: { tenantId: tenant.id, email: body.email },
+    });
+    if (existing) throw new AppError('An account with this email already exists', 409);
+
+    // Hash password
+    const passwordHash = await hashPassword(body.password);
+
+    // Clinicians require admin approval (created as SUSPENDED)
+    const status = body.role === 'CLINICIAN' ? 'SUSPENDED' : 'ACTIVE';
+
+    const user = await prisma.user.create({
+      data: {
+        tenantId: tenant.id,
+        email: body.email,
+        passwordHash,
+        role: body.role,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        status,
+      },
+    });
+
+    // If patient, also create a Patient record
+    if (body.role === 'PATIENT') {
+      await prisma.patient.create({
+        data: {
+          tenantId: tenant.id,
+          userId: user.id,
+          age: 0,  // will be updated in onboarding
+        },
+      });
+    }
+
+    authLogger.info({ userId: user.id, role: body.role, status }, 'User registered');
+
+    if (status === 'SUSPENDED') {
+      res.status(201).json({
+        message: 'Registration successful. Your clinician account is pending admin approval.',
+        userId: user.id,
+        status: 'PENDING_APPROVAL',
+      });
+      return;
+    }
+
+    // Auto-login for patients
+    const tokens = generateTokens({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import('@peacefull/shared').UserRole,
+    });
+
+    res.status(201).json({
+      ...tokens,
+      user: toUserResponse(user),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── POST /login ─────────────────────────────────────────────────────
 
 const loginBodySchema = z.object({
@@ -62,7 +178,7 @@ const loginBodySchema = z.object({
   password: z.string().min(8).max(128),
 });
 
-authRouter.post('/login', async (req, res, next) => {
+authRouter.post('/login', loginLimiter, async (req, res, next) => {
   try {
     const body = loginBodySchema.parse(req.body);
 
@@ -88,7 +204,12 @@ authRouter.post('/login', async (req, res, next) => {
     if (user.mfaEnabled) {
       const code = generateMFACode();
       pendingMFA[user.id] = code;
-      authLogger.info({ userId: user.id, code }, 'MFA code generated (dev log)');
+      // SEC-006: Only log MFA code in non-production environments
+      if (process.env.NODE_ENV !== 'production') {
+        authLogger.info({ userId: user.id, code }, 'MFA code generated (dev log)');
+      } else {
+        authLogger.info({ userId: user.id }, 'MFA code generated');
+      }
       res.json({
         mfaRequired: true,
         userId: user.id,
@@ -124,7 +245,7 @@ const mfaBodySchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post('/mfa-verify', async (req, res, next) => {
+authRouter.post('/mfa-verify', mfaLimiter, async (req, res, next) => {
   try {
     const body = mfaBodySchema.parse(req.body);
     const expectedCode = pendingMFA[body.userId];
