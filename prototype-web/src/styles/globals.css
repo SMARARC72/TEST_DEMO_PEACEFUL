@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@theme {
+  /* Brand colors (primary palette for all brand-* utilities) */
+  --color-brand-50: #F5F3FF;
+  --color-brand-100: #EDE8FF;
+  --color-brand-200: #DDD9FF;
+  --color-brand-300: #CEC9FF;
+  --color-brand-400: #B8B3FF;
+  --color-brand-500: #A29BFE;
+  --color-brand-600: #8A7DF5;
+  --color-brand-700: #7B6CEF;
+  --color-brand-800: #6C5CE7;
+  --color-brand-900: #3B2D9E;
+
+  /* Sage alias (same values, kept for semantic reference) */
+  --color-sage-50: #F5F3FF;
+  --color-sage-100: #EDE8FF;
+  --color-sage-200: #DDD9FF;
+  --color-sage-300: #CEC9FF;
+  --color-sage-400: #B8B3FF;
+  --color-sage-500: #A29BFE;
+  --color-sage-600: #8A7DF5;
+  --color-sage-700: #7B6CEF;
+  --color-sage-800: #6C5CE7;
+  --color-sage-900: #3B2D9E;
+
+  --color-gold-50: #F0FBFF;
+  --color-gold-100: #E0F7FA;
+  --color-gold-200: #CAF0F8;
+  --color-gold-300: #ADE8F4;
+  --color-gold-400: #90E0EF;
+  --color-gold-500: #48CAE4;
+  --color-gold-600: #00B4D8;
+  --color-gold-700: #0090B0;
+
+  --color-success: #00C9A7;
+  --color-warning: #FFB347;
+  --color-danger: #FF6B6B;
+
+  --font-display: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+  --font-body: 'DM Sans', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ═══ Base ═══ */
+@layer base {
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--surface-1, #FAFBFF);
+    color: var(--color-neutral-900, #1A1B2E);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sage-500, #A29BFE);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+/* ═══ Gradient hero ═══ */
+.gradient-hero {
+  background: linear-gradient(135deg, #3B2D9E 0%, #6C5CE7 30%, #00B4D8 70%, #48CAE4 100%);
+}
+
+/* ═══ Glass effects ═══ */
+.glass {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* ═══ Signal bands ═══ */
+.signal-low       { background: #FFF5F5; color: #C53030; border: 1px solid #FED7D7; }
+.signal-guarded   { background: #F0FBFF; color: #0090B0; border: 1px solid #CAF0F8; }
+.signal-moderate  { background: #EBF8FF; color: #2B6CB0; border: 1px solid #BEE3F8; }
+.signal-elevated  { background: #F5F3FF; color: #6C5CE7; border: 1px solid #DDD9FF; }
+
+/* ═══ Animations ═══ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══ Reduced motion ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
