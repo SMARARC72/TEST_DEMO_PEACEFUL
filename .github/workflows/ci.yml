@@ -26,8 +26,14 @@ jobs:
         run: cd prototype-web && npm ci
       - name: Type check prototype
         run: cd prototype-web && npx tsc -b
-      - name: Check artifacts
+      - name: Lint (ESLint + jsx-a11y + complexity)
+        run: cd prototype-web && npm run lint
+      - name: Check merge artifacts
         run: cd prototype-web && npm run check:artifacts
+      - name: Check circular dependencies
+        run: cd prototype-web && npm run check:circular
+      - name: Check synthetic data leaks
+        run: cd prototype-web && npm run check:synthetic
 
   test-prototype:
     name: Test Prototype
@@ -63,6 +69,8 @@ jobs:
           cache-dependency-path: prototype-web/package-lock.json
       - run: cd prototype-web && npm ci
       - run: cd prototype-web && npm run build
+      - name: Check bundle size budget
+        run: cd prototype-web && npm run check:bundle
       - uses: actions/upload-artifact@v4
         with:
           name: prototype-dist

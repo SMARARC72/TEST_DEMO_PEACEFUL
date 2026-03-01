@@ -30,6 +30,7 @@ export default function TriageInboxPage() {
   }, [statusFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch sets state on completion, not synchronously
     fetchTriage();
   }, [fetchTriage]);
 

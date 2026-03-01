@@ -14,11 +14,18 @@
 
 | Metric | Value |
 |--------|-------|
-| Total pages | 34 (23 Phase 1 + 9 Phase 2-3 + 2 auth) |
+| Total pages | 33 (4 auth + 14 patient + 15 clinician) |
+| Components | 24 (13 UI + 8 domain + 3 layout) |
 | TypeScript errors | 0 |
-| Build modules | 1,046 (clean) |
-| Unit tests | 60 pass, 11 skip |
-| Latest commit | `6ecca2c` on `main` |
+| ESLint errors | 0 (12 warnings) |
+| Build modules | 1,056 (clean) |
+| Unit tests | 74 pass, 11 skip (6 test files) |
+| E2E tests | 8 (Playwright: smoke + patient + clinician) |
+| Snapshot tests | 14 (Badge, Card, Button, Spinner, SignalBadge) |
+| Bundle budget | All within limits (401.9 KB gzip total) |
+| Circular deps | 0 (84 files scanned) |
+| Synthetic data | 0 violations (84 files scanned) |
+| Latest commit | Phase 5 — Quality Gates |
 
 The frontend is a **static React SPA** that builds to `dist/`. It runs in **full mock mode** via MSW (Mock Service Worker) — every API call is intercepted and returns realistic fake data. No backend is required to demo or pilot-test the UI.
 
@@ -28,8 +35,8 @@ The frontend is a **static React SPA** that builds to `dist/`. It runs in **full
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Deploy frontend to Netlify | 🔲 In progress | `netlify.toml` pre-configured; set `VITE_ENABLE_MOCKS=true` |
-| 2 | Create `.env` with `VITE_ENABLE_MOCKS=true` | 🔲 | Needed for local dev; Netlify uses env var dashboard |
+| 1 | Deploy frontend to Netlify | ✅ Done | `peacefullai.netlify.app` — auto-deploys from `main` |
+| 2 | Create `.env` with `VITE_ENABLE_MOCKS=true` | ✅ Done | Netlify env var set; local dev auto-detects |
 | 3 | Auth0 login in mock mode | ✅ Done | MSW handler returns fake tokens — login works for demos |
 
 ### Tier 2 — Functional Pilot (Real Backend) — Scheduled for 2026-03-02
@@ -47,10 +54,10 @@ The frontend is a **static React SPA** that builds to `dist/`. It runs in **full
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 9 | Host on S3 + CloudFront | 🔲 | Free HTTPS via ACM cert, global CDN, fine-grained cache control |
-| 10 | Error monitoring (Sentry) | 🔲 | ~1 hr setup |
+| 10 | Error monitoring (Sentry) | ✅ Done | ErrorBoundary + Sentry beacon integration (set `VITE_SENTRY_DSN`) |
 | 11 | Usage analytics (PostHog/Mixpanel) | 🔲 | ~1 hr setup |
-| 12 | WCAG accessibility audit | 🔲 | 2-4 hrs |
-| 13 | E2E tests (Playwright) | 🔲 | 4-8 hrs; 1 smoke test exists |
+| 12 | WCAG accessibility audit | ✅ Done | SkipLink, LiveAnnouncer, ARIA roles, ESLint jsx-a11y |
+| 13 | E2E tests (Playwright) | ✅ Done | 3 smoke + 2 patient + 3 clinician = 8 E2E tests |
 | 14 | Token refresh flow testing | 🔲 | Auth client has refresh logic — needs real Auth0 validation |
 | 15 | Mobile responsiveness QA | 🔲 | 2-4 hrs |
 
@@ -92,10 +99,16 @@ VITE_API_URL=https://peacefull-dev-alb-1054524413.us-east-1.elb.amazonaws.com/ap
 ### Build & Test
 
 ```bash
-npm run build        # TypeScript check + Vite production build (1,046 modules)
-npm run test         # Vitest — 60 pass, 11 skip
+npm run build        # TypeScript check + Vite production build (1,056 modules)
+npm run test         # Vitest — 60+ pass, 11 skip
 npm run test:smoke   # Playwright smoke tests
+npm run test:e2e     # Playwright E2E (patient + clinician flows)
 npm run preview      # Preview production build locally
+npm run lint         # ESLint (react-hooks, jsx-a11y, complexity)
+npm run quality      # Full quality pipeline (lint + circular + synthetic + test + build)
+npm run check:bundle    # Bundle size budget verification
+npm run check:circular  # Circular dependency detection
+npm run check:synthetic # Synthetic data leak detection
 ```
 
 ---

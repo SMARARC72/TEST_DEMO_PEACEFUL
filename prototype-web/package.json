@@ -9,13 +9,19 @@
   "scripts": {
     "dev": "vite",
     "check:artifacts": "node scripts/check-merge-artifacts.mjs",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "check:circular": "node scripts/check-circular-deps.mjs",
+    "check:synthetic": "node scripts/check-synthetic-data.mjs",
     "verify:no-conflicts": "node scripts/verify-demo-stability.mjs",
     "build": "npm run check:artifacts && tsc -b && vite build",
+    "postbuild": "npm run check:bundle",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:smoke": "playwright test tests/smoke.spec.mjs"
+    "test:smoke": "playwright test tests/smoke.spec.mjs",
+    "test:e2e": "playwright test tests/e2e-*.spec.mjs",
+    "quality": "npm run lint && npm run check:circular && npm run check:synthetic && npm test && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -40,6 +46,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",

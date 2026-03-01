@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Snapshot: Badge > danger variant 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Critical</span>"
+`;
+
+exports[`Snapshot: Badge > default variant 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200">Default</span>"
+`;
+
+exports[`Snapshot: Badge > success variant 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">Active</span>"
+`;
+
+exports[`Snapshot: Button > danger button 1`] = `
+"<button class="inline-flex items-center justify-center rounded-lg font-medium
+        transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+        disabled:pointer-events-none disabled:opacity-60
+        bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-400 disabled:bg-red-300 h-10 px-4 text-sm gap-2">Delete</button>"
+`;
+
+exports[`Snapshot: Button > disabled button 1`] = `
+"<button disabled="" class="inline-flex items-center justify-center rounded-lg font-medium
+        transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+        disabled:pointer-events-none disabled:opacity-60
+        bg-brand-500 text-white hover:bg-brand-600 focus-visible:ring-brand-400 disabled:bg-brand-300 h-10 px-4 text-sm gap-2">Disabled</button>"
+`;
+
+exports[`Snapshot: Button > outline button 1`] = `
+"<button class="inline-flex items-center justify-center rounded-lg font-medium
+        transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+        disabled:pointer-events-none disabled:opacity-60
+        border border-neutral-300 bg-transparent text-neutral-700 hover:bg-neutral-50 focus-visible:ring-neutral-400 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800 h-10 px-4 text-sm gap-2">Cancel</button>"
+`;
+
+exports[`Snapshot: Button > primary button 1`] = `
+"<button class="inline-flex items-center justify-center rounded-lg font-medium
+        transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+        disabled:pointer-events-none disabled:opacity-60
+        bg-brand-500 text-white hover:bg-brand-600 focus-visible:ring-brand-400 disabled:bg-brand-300 h-10 px-4 text-sm gap-2">Save</button>"
+`;
+
+exports[`Snapshot: Card > basic card with header 1`] = `
+"<div class="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm
+        dark:border-neutral-700 dark:bg-neutral-800"><div class="mb-3 flex items-center justify-between "><h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50 ">Test Card</h3></div><div class=""><p>Card body content</p></div></div>"
+`;
+
+exports[`Snapshot: SignalBadge > ELEVATED band 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"><span class="mr-1 inline-block h-2 w-2 rounded-full bg-red-500"></span>Elevated</span>"
+`;
+
+exports[`Snapshot: SignalBadge > GUARDED band 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"><span class="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>Guarded</span>"
+`;
+
+exports[`Snapshot: SignalBadge > LOW band 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"><span class="mr-1 inline-block h-2 w-2 rounded-full bg-green-500"></span>Low</span>"
+`;
+
+exports[`Snapshot: SignalBadge > MODERATE band 1`] = `
+"<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"><span class="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500"></span>Moderate</span>"
+`;
+
+exports[`Snapshot: Spinner > default spinner 1`] = `"<svg class="animate-spin text-brand-500 h-8 w-8 " viewBox="0 0 24 24" fill="none" role="status" aria-label="Loading"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>"`;
+
+exports[`Snapshot: Spinner > large spinner 1`] = `"<svg class="animate-spin text-brand-500 h-12 w-12 " viewBox="0 0 24 24" fill="none" role="status" aria-label="Loading"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>"`;

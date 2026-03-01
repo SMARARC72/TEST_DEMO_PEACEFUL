@@ -12,9 +12,12 @@ export function useMediaQuery(query: string): boolean {
   useEffect(() => {
     const mq = window.matchMedia(query);
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    // Sync initial value after mount (safe — aligns state with DOM)
+    const current = mq.matches;
+    if (current !== matches) setMatches(current);
     mq.addEventListener('change', handler);
-    setMatches(mq.matches);
     return () => mq.removeEventListener('change', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   return matches;

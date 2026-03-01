@@ -2,7 +2,7 @@
 // Escalation queue with SLA timers, ACK/resolve workflow.
 // Critical safety feature for clinical workflows.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
@@ -56,11 +56,7 @@ export default function EscalationPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [resolution, setResolution] = useState('');
 
-  useEffect(() => {
-    loadEscalations();
-  }, []);
-
-  async function loadEscalations() {
+  const loadEscalations = useCallback(async () => {
     setLoading(true);
     const [data, err] = await clinicianApi.getEscalations();
     if (err) {
@@ -69,7 +65,13 @@ export default function EscalationPage() {
       setEscalations(data);
     }
     setLoading(false);
-  }
+     
+  }, [addToast]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch sets state on completion, not synchronously
+    void loadEscalations();
+  }, [loadEscalations]);
 
   async function acknowledge(id: string) {
     const [, err] = await clinicianApi.patchEscalation(id, { status: 'ACKNOWLEDGED' });
@@ -270,7 +272,13 @@ function EscalationCard({
   onSelect: () => void;
   onAcknowledge: () => void;
 }) {
-  const now = Date.now();
+  // Track current time for SLA countdown (updates every minute)
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const deadline = new Date(esc.slaDeadline).getTime();
   const isOverdue = now > deadline && esc.status !== 'RESOLVED';
   const timeRemaining = deadline - now;

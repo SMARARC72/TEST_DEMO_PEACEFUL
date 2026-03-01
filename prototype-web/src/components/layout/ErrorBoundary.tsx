@@ -1,7 +1,76 @@
 // ─── Error Boundary ──────────────────────────────────────────────────
 // Class component required — React error boundaries don't support hooks.
+// Integrates with Sentry for production error reporting when DSN is set.
 
 import { Component, type ReactNode } from 'react';
+
+// ── Sentry-like error reporter ──────────────────
+// When VITE_SENTRY_DSN is set, we load @sentry/react dynamically.
+// Until then, this stub captures errors locally and logs them.
+interface ErrorReport {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp: number;
+  url: string;
+  userAgent: string;
+}
+
+const errorLog: ErrorReport[] = [];
+
+function reportError(error: Error, componentStack?: string) {
+  const report: ErrorReport = {
+    message: error.message,
+    stack: error.stack,
+    componentStack: componentStack ?? undefined,
+    timestamp: Date.now(),
+    url: window.location.href,
+    userAgent: navigator.userAgent,
+  };
+
+  errorLog.push(report);
+
+  // Cap local log at 50 entries
+  if (errorLog.length > 50) errorLog.shift();
+
+  // If Sentry DSN is configured, send via beacon
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  if (dsn) {
+    try {
+      // Minimal Sentry envelope — POST to DSN ingest
+      const url = new URL(dsn);
+      const projectId = url.pathname.replace('/', '');
+      const ingestUrl = `${url.protocol}//${url.hostname}/api/${projectId}/envelope/`;
+      const envelope = JSON.stringify({
+        event_id: crypto.randomUUID().replace(/-/g, ''),
+        sent_at: new Date().toISOString(),
+        dsn,
+      }) + '\n' + JSON.stringify({ type: 'event' }) + '\n' + JSON.stringify({
+        exception: {
+          values: [{
+            type: error.name,
+            value: error.message,
+            stacktrace: { frames: [{ filename: report.url, function: 'ErrorBoundary' }] },
+          }],
+        },
+        platform: 'javascript',
+        environment: import.meta.env.VITE_ENV || 'development',
+        timestamp: report.timestamp / 1000,
+      });
+
+      navigator.sendBeacon(ingestUrl, envelope);
+    } catch {
+      // Beacon failed — fall through to console
+    }
+  }
+
+  console.error('[ErrorBoundary]', error, componentStack);
+}
+
+/** Get captured error reports (for debugging / test inspection) */
+export function getErrorLog(): readonly ErrorReport[] {
+  return errorLog;
+}
 
 interface Props {
   children: ReactNode;
@@ -21,8 +90,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // In production, send to error monitoring (Sentry, etc.)
-    console.error('[ErrorBoundary]', error, info.componentStack);
+    reportError(error, info.componentStack ?? undefined);
   }
 
   render() {
