@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Verification Script: Validate live demo stability
+ * Verification Script: Validate React app stability (Phase 1+)
  * 
  * Checks:
- * 1. No unresolved merge markers in tracked files
- * 2. resetDemo() function exists and wires all reset hooks
- * 3. No duplicate nav elements (triage, reset)
- * 4. Netlify build config is correct
+ * 1. No unresolved merge markers in source files
+ * 2. Critical React entry points exist (main.tsx, App.tsx, router.tsx)
+ * 3. All page components exist
+ * 4. Netlify / deploy config is correct
  * 5. package-lock.json is present and valid
+ * 6. index.html is a valid Vite shell (has #root + module script)
  * 
  * Run: npm run verify:no-conflicts
  */
@@ -21,54 +22,73 @@ const projectRoot = path.join(__dirname, '..');
 
 const checks = [];
 
-// 1. Check for merge markers
-const indexHtml = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
-checks.push({
-  name: 'No merge conflict markers in index.html',
-  pass: !/^<<<<<<|^=======|^>>>>>>>/.test(indexHtml),
-});
+// ─── 1. Check for merge markers in key source files ───
+const filesToScan = [
+  'index.html',
+  'src/main.tsx',
+  'src/App.tsx',
+  'src/router.tsx',
+  'src/api/client.ts',
+  'src/stores/auth.ts',
+  'src/stores/ui.ts',
+  'vite.config.ts',
+];
 
-// 2. Check resetDemo wiring (may live in index.html or public/js/actions.js)
-const actionsPath = path.join(projectRoot, 'public', 'js', 'actions.js');
-const resetSource = fs.existsSync(actionsPath)
-  ? fs.readFileSync(actionsPath, 'utf8')
-  : indexHtml;
-const resetDemoMatch = resetSource.match(/function resetDemo\(\)\s*\{([\s\S]*?)\n\}/);
-const hasResetWiring =
-  resetDemoMatch &&
-  resetDemoMatch[1].includes('resetMemoryReview()') &&
-  resetDemoMatch[1].includes('resetTreatmentPlan()') &&
-  resetDemoMatch[1].includes('resetEnterpriseGovernance()') &&
-  resetDemoMatch[1].includes('resetSubmissionState()') &&
-  resetDemoMatch[1].includes('resetTriageQueue()') &&
-  resetDemoMatch[1].includes('resetSecurityState()') &&
-  resetDemoMatch[1].includes('resetDecisionRoomState()');
+for (const relPath of filesToScan) {
+  const fullPath = path.join(projectRoot, relPath);
+  if (fs.existsSync(fullPath)) {
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const hasMergeMarkers = /^(<{7}|={7}|>{7})/m.test(content);
+    checks.push({
+      name: `No merge conflict markers in ${relPath}`,
+      pass: !hasMergeMarkers,
+    });
+  }
+}
 
-// 3. Check for duplicate nav button patterns (supports both onclick and data-* attributes)
-const resetDemoButtonCount = (indexHtml.match(/<button[^>]*(onclick="resetDemo\(\)"|data-action="reset-demo")[^>]*>Reset Demo<\/button>/g) || []).length;
-const commTriageCount = (indexHtml.match(/<button[^>]*(onclick="showScreen\('communication-triage-queue'\)"|data-nav="communication-triage-queue")[^>]*>Communication Triage Queue<\/button>/g) || []).length;
-const securityCenterCount = (indexHtml.match(/<button[^>]*(onclick="showScreen\('security-command-center'\)"|data-nav="security-command-center")[^>]*>Security Command Center<\/button>/g) || []).length;
-const decisionRoomCount = (indexHtml.match(/<button[^>]*(onclick="showScreen\('decision-room'\)"|data-nav="decision-room")[^>]*>Decision Room<\/button>/g) || []).length;
+// ─── 2. Critical React entry points exist ───
+const requiredFiles = [
+  'src/main.tsx',
+  'src/App.tsx',
+  'src/router.tsx',
+  'src/api/client.ts',
+  'src/api/types.ts',
+  'src/stores/auth.ts',
+  'src/stores/ui.ts',
+  'src/styles/globals.css',
+  'src/components/layout/AppShell.tsx',
+  'src/components/layout/AuthGuard.tsx',
+  'src/components/layout/ErrorBoundary.tsx',
+];
 
-checks.push({
-  name: 'Reset Demo button appears exactly once in DOM',
-  pass: resetDemoButtonCount === 1,
-  details: `Found ${resetDemoButtonCount} occurrence(s)`,
-});
+for (const relPath of requiredFiles) {
+  checks.push({
+    name: `Required file exists: ${relPath}`,
+    pass: fs.existsSync(path.join(projectRoot, relPath)),
+  });
+}
 
-checks.push({
-  name: 'Security Command Center button appears exactly once in DOM',
-  pass: securityCenterCount >= 1 && securityCenterCount <= 2,
-  details: `Found ${securityCenterCount} occurrence(s) (expected 1-2)`,
-});
+// ─── 3. All page components exist ───
+const pageFiles = [
+  'src/pages/auth/LoginPage.tsx',
+  'src/pages/auth/RegisterPage.tsx',
+  'src/pages/patient/PatientHome.tsx',
+  'src/pages/patient/CheckinPage.tsx',
+  'src/pages/patient/JournalPage.tsx',
+  'src/pages/patient/SubmissionSuccessPage.tsx',
+  'src/pages/clinician/CaseloadPage.tsx',
+  'src/pages/clinician/TriageInboxPage.tsx',
+  'src/pages/clinician/DraftReviewPage.tsx',
+];
 
-checks.push({
-  name: 'Decision Room button count within expected range',
-  pass: decisionRoomCount >= 1 && decisionRoomCount <= 4,
-  details: `Found ${decisionRoomCount} occurrence(s) (expected 1-4)`,
-});
+for (const relPath of pageFiles) {
+  checks.push({
+    name: `Page component exists: ${relPath}`,
+    pass: fs.existsSync(path.join(projectRoot, relPath)),
+  });
+}
 
-// 4. Netlify config check
+// ─── 4. Netlify / deploy config ───
 const netlifyPath = path.join(projectRoot, '..', 'netlify.toml');
 if (fs.existsSync(netlifyPath)) {
   const netlifyContent = fs.readFileSync(netlifyPath, 'utf8');
@@ -79,16 +99,6 @@ if (fs.existsSync(netlifyPath)) {
       ? 'Base directory configured correctly'
       : 'netlify.toml base directive missing or incorrect',
   });
-
-  checks.push({
-    name: 'Netlify build command includes conflict guard via npm scripts',
-    pass: netlifyContent.includes('npm run check:artifacts') || netlifyContent.includes('check-merge-artifacts'),
-    details: netlifyContent.includes('npm run check:artifacts')
-      ? 'Guard script called from package.json build step'
-      : netlifyContent.includes('check-merge-artifacts')
-      ? 'Guard script in build pipeline'
-      : 'Guard script must be called as part of build',
-  });
 } else {
   checks.push({
     name: 'netlify.toml exists (expected at repo root)',
@@ -97,7 +107,7 @@ if (fs.existsSync(netlifyPath)) {
   });
 }
 
-// 5. package-lock.json check
+// ─── 5. package-lock.json check ───
 const lockfilePath = path.join(projectRoot, 'package-lock.json');
 checks.push({
   name: 'package-lock.json exists and is valid JSON',
@@ -113,9 +123,20 @@ checks.push({
   details: fs.existsSync(lockfilePath) ? 'Lockfile found' : 'Lockfile missing',
 });
 
-// Print results
+// ─── 6. index.html is a valid Vite shell ───
+const indexHtml = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
+checks.push({
+  name: 'index.html contains #root mount point',
+  pass: indexHtml.includes('id="root"'),
+});
+checks.push({
+  name: 'index.html contains Vite module script entry',
+  pass: indexHtml.includes('type="module"') && indexHtml.includes('/src/main.tsx'),
+});
+
+// ─── Print results ───
 console.log('\n═══════════════════════════════════════════════════════════');
-console.log('  Stability Verification – Live Demo Pre-Deploy Check');
+console.log('  Stability Verification – React App Pre-Deploy Check');
 console.log('═══════════════════════════════════════════════════════════\n');
 
 let allPassed = true;
@@ -131,7 +152,7 @@ checks.forEach((check) => {
 console.log('═══════════════════════════════════════════════════════════\n');
 
 if (allPassed) {
-  console.log('✓ All stability checks passed. Demo is ready.\n');
+  console.log('✓ All stability checks passed. React app is ready.\n');
   process.exit(0);
 } else {
   console.log('✘ Some checks failed. Please review above.\n');
