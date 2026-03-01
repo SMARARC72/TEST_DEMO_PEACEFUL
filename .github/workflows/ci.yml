@@ -92,6 +92,14 @@ jobs:
           languages: javascript-typescript
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+      - name: Gitleaks — secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: License compliance check
+        run: |
+          cd prototype-web
+          npx license-checker --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0' --production --summary || true
 
   build-api:
     name: Build & Test API

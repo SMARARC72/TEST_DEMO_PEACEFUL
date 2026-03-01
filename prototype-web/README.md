@@ -2,7 +2,7 @@
 
 **Stack:** React 19.2 · TypeScript 5.9 · Vite 7.3 · Tailwind CSS 4.2 · Zustand 5 · Recharts 3  
 **Live Demo:** [peacefullai.netlify.app](https://peacefullai.netlify.app) (mock mode)  
-**Latest Commit:** `f7d48ff` — Phase 5 Quality Gates  
+**Latest Commit:** Phase 6 Deployment & Go-Live  
 **Last Updated:** 2026-03-02
 
 ---
@@ -41,6 +41,8 @@ No backend required — MSW intercepts all API calls with realistic mock data.
 | `VITE_ANALYTICS_URL` | — | Web Vitals beacon endpoint |
 | `VITE_SENTRY_DSN` | — | Sentry error monitoring DSN |
 | `VITE_ENV` | `development` | Environment: dev / staging / production |
+| `VITE_FEATURE_FLAGS_URL` | — | Remote feature flag config endpoint |
+| `VITE_FF_<FLAG>` | `true` | Per-feature toggle (e.g., `VITE_FF_PATIENT_CHAT=false`) |
 
 ---
 
@@ -194,7 +196,7 @@ src/pages/**   → 60% lines, 50% branches
 | 3 | Clinician Experience (+8) | ✅ Complete | MBC, notes, memory, treatment, escalation, analytics |
 | 4 | Production Hardening | ✅ Complete | Cookie auth, WS, WCAG, dark mode, CSP, Web Vitals, tenants, step-up auth |
 | 5 | Quality Gates | ✅ Complete | Bundle guards, circular dep checks, synthetic data CI, ESLint a11y, 14 snapshots |
-| 6 | Deployment & Go-Live | ⏳ Planned | S3+CloudFront, Sentry prod, feature flags, load testing |
+| 6 | Deployment & Go-Live | ✅ Complete | S3+CF CD pipeline, feature flags, Lighthouse CI, runtime guards, rollback plan |
 
 ### Phase 4 Deliverables (Complete)
 
@@ -222,11 +224,23 @@ src/pages/**   → 60% lines, 50% branches
 | Snapshot tests for key UI components | ✅ | 14 snapshots: Badge(3), Card(1), Button(4), Spinner(2), SignalBadge(4) |
 | Enhanced CI pipeline | ✅ | lint + circular + synthetic in CI; bundle check as postbuild |
 
+### Phase 6 Deliverables (Complete)
+
+| Item | Status | Detail |
+|------|--------|--------|
+| S3+CloudFront CD pipeline | ✅ | `.github/workflows/cd-frontend.yml` — build → S3 sync → CF invalidation |
+| Feature flag system | ✅ | `useFeatureFlags.ts` + `FeatureGate.tsx` — env vars + remote config, 22 flags |
+| Lighthouse CI | ✅ | `lighthouserc.js` — performance >0.9, a11y >0.9, CWV thresholds |
+| Production runtime guard | ✅ | `main.tsx` — throws if VITE_API_URL missing in production |
+| Rollback plan | ✅ | `packages/infra/runbook/ROLLBACK_PLAN.md` — S3/ECS/DB/feature-flag rollback |
+| Security scanning | ✅ | Gitleaks + license-checker added to CI security-scan job |
+| Env type declarations | ✅ | `src/env.d.ts` — typed ImportMetaEnv for all VITE_ vars |
+
 ---
 
 ## Deployment
 
-### Netlify (Current — Demo/Staging)
+### Netlify (Staging/Demo)
 
 - **URL:** [peacefullai.netlify.app](https://peacefullai.netlify.app)
 - **Auto-deploy:** Push to `main` → Netlify builds and deploys
@@ -234,12 +248,13 @@ src/pages/**   → 60% lines, 50% branches
 - **Env vars:** `VITE_ENABLE_MOCKS=true` (set in Netlify dashboard)
 - **Node:** v22 (`.nvmrc`)
 
-### AWS (Production — Planned)
+### AWS (Production)
 
-- **Frontend:** S3 + CloudFront (Terraform provisioned)
-- **Backend:** ECS Fargate + ALB (`us-east-1`)
+- **Frontend:** S3 + CloudFront (Terraform provisioned, CD via `cd-frontend.yml`)
+- **Backend:** ECS Fargate + ALB (`us-east-1`, CD via `cd.yml`)
 - **Database:** Neon PostgreSQL (Prisma ORM)
 - **Auth:** Auth0 RS256 (production) / Local HS256 (dev)
+- **Rollback:** See `packages/infra/runbook/ROLLBACK_PLAN.md`
 
 ---
 

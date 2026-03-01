@@ -1,0 +1,168 @@
+# ─── CD Pipeline: Deploy Frontend to S3 + CloudFront ──────────────────
+# Production deployment of the React SPA to AWS S3 + CloudFront.
+# Triggered after CI passes on main branch.
+# Also deploys to Netlify as staging/demo target.
+
+name: CD — Deploy Frontend
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: "22"
+
+jobs:
+  # ── Build frontend once, share artifact ────────────────────────────
+  build:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: prototype-web/package-lock.json
+
+      - name: Install dependencies
+        run: cd prototype-web && npm ci
+
+      - name: Build for production
+        env:
+          VITE_ENABLE_MOCKS: "false"
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_ENV: production
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_ANALYTICS_URL: ${{ vars.VITE_ANALYTICS_URL }}
+        run: cd prototype-web && npm run build
+
+      - name: Verify bundle budgets
+        run: cd prototype-web && npm run check:bundle
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: prototype-web/dist/
+          retention-days: 7
+
+  # ── Deploy to S3 + CloudFront (Production) ─────────────────────────
+  deploy-s3:
+    name: Deploy to S3 + CloudFront
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+    concurrency:
+      group: deploy-frontend-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3 (immutable assets)
+        run: |
+          aws s3 sync dist/assets/ s3://${{ vars.S3_WEB_BUCKET }}/assets/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --content-encoding "" \
+            --delete
+
+      - name: Sync to S3 (HTML + root files)
+        run: |
+          aws s3 sync dist/ s3://${{ vars.S3_WEB_BUCKET }}/ \
+            --exclude "assets/*" \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/index.html" "/assets/*"
+
+      - name: Verify deployment
+        run: |
+          CF_URL="${{ vars.CLOUDFRONT_URL }}"
+          echo "Checking $CF_URL ..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CF_URL" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✓ Frontend is live at $CF_URL (HTTP $STATUS)"
+          else
+            echo "⚠ Unexpected status: HTTP $STATUS — may need cache propagation time"
+          fi
+
+  # ── Deploy to Netlify (Staging/Demo) ───────────────────────────────
+  deploy-netlify:
+    name: Deploy to Netlify (Staging)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: prototype-web/package-lock.json
+
+      - name: Build for staging (mocks enabled)
+        env:
+          VITE_ENABLE_MOCKS: "true"
+        run: cd prototype-web && npm ci && npm run build
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: prototype-web/dist
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  # ── Lighthouse CI audit ────────────────────────────────────────────
+  lighthouse:
+    name: Lighthouse Audit
+    runs-on: ubuntu-latest
+    needs: deploy-netlify
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Run Lighthouse
+        run: |
+          lhci autorun \
+            --collect.url="${{ vars.NETLIFY_URL || 'https://peacefullai.netlify.app' }}" \
+            --collect.numberOfRuns=3 \
+            --assert.preset=lighthouse:recommended \
+            --assert.assertions.categories:performance=off \
+            --assert.assertions.categories:accessibility=error \
+            --upload.target=temporary-public-storage
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}

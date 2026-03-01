@@ -15,17 +15,19 @@
 | Metric | Value |
 |--------|-------|
 | Total pages | 33 (4 auth + 14 patient + 15 clinician) |
-| Components | 24 (13 UI + 8 domain + 3 layout) |
+| Components | 25 (13 UI + 8 domain + 4 layout) |
 | TypeScript errors | 0 |
 | ESLint errors | 0 (12 warnings) |
-| Build modules | 1,056 (clean) |
+| Build modules | 1,057 (clean) |
 | Unit tests | 74 pass, 11 skip (6 test files) |
 | E2E tests | 8 (Playwright: smoke + patient + clinician) |
 | Snapshot tests | 14 (Badge, Card, Button, Spinner, SignalBadge) |
 | Bundle budget | All within limits (401.9 KB gzip total) |
 | Circular deps | 0 (84 files scanned) |
 | Synthetic data | 0 violations (84 files scanned) |
-| Latest commit | `f7d48ff` — Phase 5 Quality Gates |
+| Feature flags | 22 (env var + remote config) |
+| PRD phases | 6/6 complete |
+| Latest commit | Phase 6 — Deployment & Go-Live |
 
 The frontend is a **static React SPA** that builds to `dist/`. It runs in **full mock mode** via MSW (Mock Service Worker) — every API call is intercepted and returns realistic fake data. No backend is required to demo or pilot-test the UI.
 

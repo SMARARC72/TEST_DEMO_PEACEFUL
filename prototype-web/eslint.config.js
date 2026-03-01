@@ -50,7 +50,7 @@ export default defineConfig([
       'max-lines-per-function': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
 
       // ── React refresh — allow hooks alongside components ──
-      'react-refresh/only-export-components': ['warn', { allowExportNames: ['useStepUpAuth', 'useAnnounce', 'useAnnouncerStore', 'getErrorLog'] }],
+      'react-refresh/only-export-components': ['warn', { allowExportNames: ['useStepUpAuth', 'useAnnounce', 'useAnnouncerStore', 'getErrorLog', 'useFeatureFlag', 'useFeatureFlags', 'useFeatureFlagStore', 'isFeatureEnabled'] }],
 
       // ── React hooks compiler rules — warn-only for now ──
       'react-hooks/rules-of-hooks': 'error',

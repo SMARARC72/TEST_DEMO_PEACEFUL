@@ -12,6 +12,21 @@ import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { initWebVitals } from './hooks/useWebVitals';
 import { useWsStore } from './stores/ws';
 import { useAuthStore } from './stores/auth';
+import { useFeatureFlagStore } from './hooks/useFeatureFlags';
+
+// ─── Production runtime guard ────────────────────────────────────────
+// PRD: API client MUST fail loudly if VITE_API_URL is not set in production
+// (no silent fallback to localhost or demo).
+if (
+  import.meta.env.VITE_ENV === 'production' &&
+  !import.meta.env.VITE_ENABLE_MOCKS &&
+  !import.meta.env.VITE_API_URL
+) {
+  throw new Error(
+    'VITE_API_URL is required in production — demo mode is not supported. ' +
+    'Set VITE_API_URL to the backend API base URL (e.g., https://api.peacefull.ai/api/v1).',
+  );
+}
 
 async function enableMocking() {
   if (import.meta.env.VITE_ENABLE_MOCKS !== 'true') return;
@@ -22,6 +37,9 @@ async function enableMocking() {
 enableMocking().then(() => {
   // Initialize Core Web Vitals monitoring
   initWebVitals();
+
+  // Load remote feature flags (non-blocking)
+  useFeatureFlagStore.getState().loadRemoteFlags();
 
   // Connect WebSocket if user is already authenticated (session restore)
   const { isAuthenticated, accessToken } = useAuthStore.getState();
