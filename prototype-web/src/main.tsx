@@ -5,6 +5,9 @@ import { router } from './router';
 import './styles/globals.css';
 import './styles/accessibility.css';
 
+// i18n must be imported before components that use translations
+import './i18n';
+
 // Import auth store to wire token accessors on app start
 import './stores/auth';
 

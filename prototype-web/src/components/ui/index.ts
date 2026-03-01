@@ -12,3 +12,4 @@ export { ThemeToggle } from './ThemeToggle';
 export { SkeletonLoader } from './SkeletonLoader';
 export { EmptyState } from './EmptyState';
 export { SkipNavigation } from './SkipNavigation';
+export { LanguageSwitcher } from './LanguageSwitcher';

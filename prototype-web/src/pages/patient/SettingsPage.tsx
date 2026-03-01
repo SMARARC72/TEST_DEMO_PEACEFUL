@@ -8,6 +8,7 @@ import { patientApi } from '@/api/patients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useUIStore } from '@/stores/ui';
 import type { PatientSettings as SettingsType } from '@/api/types';
 
@@ -310,6 +311,9 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="py-3">
+            <LanguageSwitcher />
           </div>
         </CardContent>
       </Card>
