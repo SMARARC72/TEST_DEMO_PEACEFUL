@@ -88,7 +88,37 @@ export function getSelectedPlan() {
   return state.planItems.find(item => item.id === state.selectedPlanId) || state.planItems[0];
 }
 
+export function enterpriseBadgeClass(status) {
+  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'CONDITIONAL') return 'bg-amber-100 text-amber-700';
+  if (status === 'REVIEW_REQUIRED') return 'bg-red-100 text-red-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
 // ============ COMPUTATION HELPERS ============
+
+export function computeRiskPosture() {
+  const tierEl = document.getElementById('safety-tier');
+  const tier = tierEl ? tierEl.value : 'T0';
+  if (tier === 'T3') return 'Elevated';
+  const hasEscalation = state.triageQueue.some(
+    item => item.status === 'ESCALATED' || item.signalBand === 'ELEVATED'
+  );
+  if (hasEscalation) return 'Elevated';
+  if (tier === 'T2') return 'Moderate';
+  return 'Guarded';
+}
+
+export function computePilotExpansionScore() {
+  const timeEl = document.getElementById('roi-metric-1');
+  const readinessEl = document.getElementById('enterprise-readiness-signal');
+  const timeSaved = timeEl ? parseFloat(timeEl.textContent) || 0 : 0;
+  const readiness = readinessEl ? parseInt(readinessEl.textContent) || 0 : 0;
+  const unresolvedElevated = state.triageQueue.filter(
+    item => item.signalBand === 'ELEVATED' && item.status !== 'RESOLVED'
+  ).length;
+  return timeSaved + readiness * 0.2 + unresolvedElevated * 5;
+}
 
 export function computeReadinessVerdict() {
   const signalEl = document.getElementById('enterprise-readiness-signal');
