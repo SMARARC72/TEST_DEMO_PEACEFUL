@@ -1,70 +1,124 @@
-# Behavioral Health AI Companion - Prototype
+# Peacefull.ai — Behavioral Health AI Companion
 
-**Version:** 2.0  
-**Date:** 2026-02-28  
-**Built from:** Master Artifact Packet v1.5
+**Version:** 3.0  
+**Date:** 2026-03-01  
+**Stack:** React 19 · TypeScript · Vite 7 · Tailwind CSS 4 · Zustand · Recharts  
+**Live Demo:** *(Netlify URL — see Deployment section)*  
+**Backend API:** ECS Fargate on AWS (`us-east-1`)
+
+---
+
+## Pilot Readiness Plan
+
+### Current State (as of 2026-03-01)
+
+| Metric | Value |
+|--------|-------|
+| Total pages | 34 (23 Phase 1 + 9 Phase 2-3 + 2 auth) |
+| TypeScript errors | 0 |
+| Build modules | 1,046 (clean) |
+| Unit tests | 60 pass, 11 skip |
+| Latest commit | `6ecca2c` on `main` |
+
+The frontend is a **static React SPA** that builds to `dist/`. It runs in **full mock mode** via MSW (Mock Service Worker) — every API call is intercepted and returns realistic fake data. No backend is required to demo or pilot-test the UI.
+
+---
+
+### Tier 1 — Demo-Ready Pilot (Mock Mode, No Backend)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | Deploy frontend to Netlify | 🔲 In progress | `netlify.toml` pre-configured; set `VITE_ENABLE_MOCKS=true` |
+| 2 | Create `.env` with `VITE_ENABLE_MOCKS=true` | 🔲 | Needed for local dev; Netlify uses env var dashboard |
+| 3 | Auth0 login in mock mode | ✅ Done | MSW handler returns fake tokens — login works for demos |
+
+### Tier 2 — Functional Pilot (Real Backend) — Scheduled for 2026-03-02
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 4 | Point frontend at live API | 🔲 | Set `VITE_API_URL=https://<ALB-DNS>` and `VITE_ENABLE_MOCKS=false` |
+| 5 | Configure CORS on ECS backend | 🔲 | Allow frontend origin in API's CORS policy |
+| 6 | Update Auth0 redirect URIs | 🔲 | Add deployed frontend URL to Auth0 callback/logout URLs |
+| 7 | Seed database with pilot data | 🔲 | Patients, clinicians, sessions, MBC scores |
+| 8 | Implement SSE streaming endpoint | 🔲 | Backend `/api/v1/ai/chat` for ChatPage real-time streaming |
+
+### Tier 3 — Production-Grade Pilot (S3 + CloudFront)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 9 | Host on S3 + CloudFront | 🔲 | Free HTTPS via ACM cert, global CDN, fine-grained cache control |
+| 10 | Error monitoring (Sentry) | 🔲 | ~1 hr setup |
+| 11 | Usage analytics (PostHog/Mixpanel) | 🔲 | ~1 hr setup |
+| 12 | WCAG accessibility audit | 🔲 | 2-4 hrs |
+| 13 | E2E tests (Playwright) | 🔲 | 4-8 hrs; 1 smoke test exists |
+| 14 | Token refresh flow testing | 🔲 | Auth client has refresh logic — needs real Auth0 validation |
+| 15 | Mobile responsiveness QA | 🔲 | 2-4 hrs |
+
+### S3 + CloudFront vs. Netlify for Production Pilot
+
+| Criteria | Netlify | S3 + CloudFront |
+|----------|---------|-----------------|
+| Setup time | ~15 min (git integration) | ~1 hr (Terraform/CLI) |
+| HTTPS | Automatic | ACM cert (free, auto-renew) |
+| CDN | Netlify Edge | CloudFront 450+ edge locations |
+| Custom headers | `netlify.toml` | CloudFront Functions / Lambda@Edge |
+| Cost at scale | Free tier → $19/mo | Pay-per-request (pennies for pilot) |
+| AWS integration | None | IAM, WAF, Shield, CloudWatch, same VPC as backend |
+| CI/CD | Netlify Build (auto) | CodePipeline / GitHub Actions → `aws s3 sync` |
+| **Recommendation** | **Use for Tier 1 demo** | **Use for Tier 3 production pilot** — better security, observability, and backend proximity |
+
+**Plan:** Netlify now (fast demo) → S3 + CloudFront for production pilot (Tier 3).
 
 ---
 
 ## Quick Start
 
-### Option 1: Open Directly (Recommended for Demo)
-
-Simply open `prototype-web/index.html` in any modern web browser:
-
-```bash
-# On macOS
-open prototype-web/index.html
-
-# On Linux
-xdg-open prototype-web/index.html
-
-# On Windows
-start prototype-web/index.html
-```
-
-Or drag and drop `index.html` into your browser window.
-
-### Option 2: Serve with Local Server
-
-For the best experience (especially with React Router), serve via a local HTTP server:
-
 ```bash
 cd prototype-web
-
-# Using Python 3
-python -m http.server 8080
-
-# Using Node.js (if installed)
-npx serve .
-
-# Using PHP
-php -S localhost:8080
+npm ci
+npm run dev          # → http://localhost:5173 (mock mode)
 ```
 
-Then open: http://localhost:8080
+The app starts in **full mock mode** (MSW intercepts all API calls). No backend needed.
 
----
+To run against the real backend:
 
-## File Structure
-
+```bash
+# .env
+VITE_ENABLE_MOCKS=false
+VITE_API_URL=https://peacefull-dev-alb-1054524413.us-east-1.elb.amazonaws.com/api/v1
 ```
-/output/
-├── prototype-web/
-│   └── index.html          # Complete prototype (single file)
-├── DELIVERABLES.md         # Complete deliverables documentation
-├── VC_DEMO_SCRIPT.md       # 10-12 minute demo script
-├── RED_TEAM_HARDENING.md   # Security hardening analysis
-├── ROUNDTABLE_REVIEW.md    # Expert review + improvements
-├── QA_CHECKLIST.md         # Spec-lock verification
-└── README.md               # This file
+
+### Build & Test
+
+```bash
+npm run build        # TypeScript check + Vite production build (1,046 modules)
+npm run test         # Vitest — 60 pass, 11 skip
+npm run test:smoke   # Playwright smoke tests
+npm run preview      # Preview production build locally
 ```
 
 ---
 
-## Screens Implemented
+## Architecture
 
-### Patient Routes (`/patient/*`)
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Frontend (Static SPA)                                       │
+│  React 19 · Vite 7 · Tailwind 4 · Zustand · MSW             │
+│  Hosted: Netlify (demo) / S3+CloudFront (production)         │
+├──────────────────────────────────────────────────────────────┤
+│  Backend API (Node.js + Express + Prisma)                    │
+│  Hosted: AWS ECS Fargate · ALB · RDS PostgreSQL · Redis      │
+│  Auth: Auth0 RS256 (prod) / Local HS256 (dev)                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Screens Implemented (34 Total)
+
+### Patient Routes (`/patient/*`) — 15 screens
 
 | Route | Screen | Description |
 |-------|--------|-------------|
@@ -72,15 +126,18 @@ Then open: http://localhost:8080
 | `/patient/consent` | M-02 | Consent acknowledgments |
 | `/patient/home` | M-03 | Home dashboard |
 | `/patient/journal` | M-04 | Journal composer |
-| `/patient/history` | M-05 | Journal history |
+| `/patient/history` | M-05 | Journal + check-in + voice unified timeline |
 | `/patient/checkin` | M-06 | Daily check-in |
+| `/patient/chat` | M-07 | AI companion chat (SSE streaming) |
 | `/patient/voice` | M-08 | Voice recorder |
 | `/patient/voice/progress` | M-09 | Upload progress |
 | `/patient/careplan` | M-10 | Care plan activities |
 | `/patient/resources` | M-11 | Safety resources |
 | `/patient/settings` | M-12 | Settings |
+| `/patient/session-prep` | NEW | Session prep (topic selection) |
+| `/forgot-password` | NEW | Password reset request |
 
-### Clinician Routes (`/clinician/*`)
+### Clinician Routes (`/clinician/*`) — 19 screens
 
 | Route | Screen | Description |
 |-------|--------|-------------|
@@ -92,8 +149,13 @@ Then open: http://localhost:8080
 | `/clinician/summaries` | C-06 | Summaries list |
 | `/clinician/summary/:id` | C-07 | Summary detail |
 | `/clinician/recommendations` | C-08 | Recommendations panel |
+| `/clinician/mbc-dashboard` | C-09 | MBC scores (PHQ-9/GAD-7 charts) |
+| `/clinician/session-notes` | C-10 | SOAP notes + sign/co-sign |
+| `/clinician/adherence` | C-11 | Adherence tracker |
 | `/clinician/restricted-notes` | C-12 | Restricted notes |
 | `/clinician/exports` | C-13 | Exports center |
+| `/clinician/escalations` | NEW | Escalation protocols (P0–P3, SLA) |
+| `/clinician/analytics` | NEW | Analytics dashboard (charts) |
 
 ---
 
