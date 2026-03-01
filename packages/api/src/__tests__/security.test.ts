@@ -321,6 +321,7 @@ describe('Session note signing (CLIN-003)', () => {
   it('rejects signing by non-author clinician', async () => {
     // Mock caseload access
     (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: 'clin-b', userId: 'clinician-b' });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_A, tenantId: TENANT_A });
     (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([
       { patientId: PATIENT_A },
     ]);
@@ -342,6 +343,7 @@ describe('Session note signing (CLIN-003)', () => {
 
   it('allows supervisor to sign any note', async () => {
     (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: 'sup-1', userId: 'supervisor-1' });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_A, tenantId: TENANT_A });
     (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([
       { patientId: PATIENT_A },
     ]);
@@ -375,11 +377,11 @@ describe('Clinician caseload isolation (SEC-009)', () => {
   it('GET /clinician/patients/:id checks caseload access', async () => {
     // Patient exists but not in clinician's caseload AND different tenant
     (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
-    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]); // empty caseload
     (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
       id: PATIENT_B,
       tenantId: TENANT_B, // different tenant
     });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]); // empty caseload
 
     const res = await request(app)
       .get(`/api/v1/clinician/patients/${PATIENT_B}`)
@@ -390,11 +392,11 @@ describe('Clinician caseload isolation (SEC-009)', () => {
 
   it('GET /clinician/patients/:id/drafts checks caseload access', async () => {
     (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
-    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
     (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
       id: PATIENT_B,
       tenantId: TENANT_B,
     });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
 
     const res = await request(app)
       .get(`/api/v1/clinician/patients/${PATIENT_B}/drafts`)
@@ -405,15 +407,98 @@ describe('Clinician caseload isolation (SEC-009)', () => {
 
   it('GET /clinician/patients/:id/session-notes checks caseload access', async () => {
     (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
-    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
     (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
       id: PATIENT_B,
       tenantId: TENANT_B,
     });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
 
     const res = await request(app)
       .get(`/api/v1/clinician/patients/${PATIENT_B}/session-notes`)
       .set('Authorization', `Bearer ${clinToken()}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('same-tenant clinician denied access to patient NOT in caseload', async () => {
+    // Clinician in TENANT_A, patient in TENANT_A but NOT in clinician's caseload
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
+      id: 'patient-other',
+      tenantId: TENANT_A, // same tenant
+    });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]); // empty caseload
+
+    const res = await request(app)
+      .get('/api/v1/clinician/patients/patient-other')
+      .set('Authorization', `Bearer ${clinToken()}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('PATCH /clinician/patients/:id/memories/:memId checks caseload access', async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_B, tenantId: TENANT_B });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .patch(`/api/v1/clinician/patients/${PATIENT_B}/memories/mem-1`)
+      .set('Authorization', `Bearer ${clinToken()}`)
+      .send({ status: 'APPROVED' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('GET /clinician/patients/:id/mbc checks caseload access', async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_B, tenantId: TENANT_B });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .get(`/api/v1/clinician/patients/${PATIENT_B}/mbc`)
+      .set('Authorization', `Bearer ${clinToken()}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('PATCH /clinician/patients/:id/adherence/:itemId checks caseload access', async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_B, tenantId: TENANT_B });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .patch(`/api/v1/clinician/patients/${PATIENT_B}/adherence/adh-1`)
+      .set('Authorization', `Bearer ${clinToken()}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('PATCH /clinician/patients/:id/escalations/:escId checks caseload access', async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({ id: CLINICIAN_ID, userId: USER_A });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({ id: PATIENT_B, tenantId: TENANT_B });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .patch(`/api/v1/clinician/patients/${PATIENT_B}/escalations/esc-1`)
+      .set('Authorization', `Bearer ${clinToken()}`)
+      .send({ status: 'ACK' });
+
+    expect(res.status).toBe(403);
+  });
+});
+
+// ─── PUT /patients/:id/safety-plan Tenant Isolation ──────────────────
+
+describe('PUT /patients/:id/safety-plan tenant isolation', () => {
+  it('returns 403 for cross-tenant safety-plan update', async () => {
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
+      id: PATIENT_A,
+      tenantId: TENANT_A,
+    });
+
+    const res = await request(app)
+      .put(`/api/v1/patients/${PATIENT_A}/safety-plan`)
+      .set('Authorization', `Bearer ${makeToken('CLINICIAN', { sub: USER_B, tid: TENANT_B })}`)      .send({ steps: [{ title: 'Step 1', items: ['Call therapist'] }] });
 
     expect(res.status).toBe(403);
   });

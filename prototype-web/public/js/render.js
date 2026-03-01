@@ -26,7 +26,7 @@ import {
 // Sanitize all HTML injected via innerHTML to prevent stored/reflected XSS.
 
 const PURIFY_CONFIG = {
-  ADD_ATTR: ['onclick', 'data-nav', 'data-action', 'data-topic-id',
+  ADD_ATTR: ['data-nav', 'data-action', 'data-topic-id',
     'data-resource-expand', 'data-resource-filter',
     'data-history-expand', 'data-history-filter',
     'data-safety-step', 'data-pmem-expand', 'data-pmem-filter',
@@ -38,13 +38,17 @@ const PURIFY_CONFIG = {
 
 /**
  * Sanitize HTML string before assigning to innerHTML.
- * Falls back to passthrough if DOMPurify is not loaded.
+ * If DOMPurify is not loaded, escapes HTML to prevent XSS.
  */
 function sanitize(html) {
   if (typeof DOMPurify !== 'undefined') {
     return DOMPurify.sanitize(html, PURIFY_CONFIG);
   }
-  return html;
+  // Fallback: escape HTML entities instead of raw passthrough
+  console.warn('DOMPurify not loaded — falling back to HTML escaping');
+  const div = document.createElement('div');
+  div.textContent = String(html);
+  return div.innerHTML;
 }
 
 // ============ SUBMISSION SURFACES ============
@@ -449,7 +453,7 @@ export function renderAdherenceTracker() {
   if (!tbody || !detail) return;
 
   tbody.innerHTML = sanitize(state.adherenceItems.map(item => {
-    const pct = Math.round((item.completed / item.target) * 100));
+    const pct = Math.round((item.completed / item.target) * 100);
     return `
     <tr onclick="selectAdherence('${item.id}')" class="border-b cursor-pointer ${item.id === state.selectedAdherenceId ? 'bg-emerald-50' : ''}">
       <td class="py-2 pr-2">${item.patient}</td>
@@ -458,7 +462,7 @@ export function renderAdherenceTracker() {
       <td class="py-2 pr-2">${item.streak}d</td>
       <td class="py-2"><span class="px-2 py-1 rounded text-xs font-semibold ${adherenceBadgeClass(item.status)}">${item.status}</span></td>
     </tr>`;
-  }).join('');
+  }).join(''));
 
   const selected = getSelectedAdherence();
   const pct = Math.round((selected.completed / selected.target) * 100);
@@ -749,13 +753,13 @@ export function renderChat() {
   if (!el) return;
   el.innerHTML = sanitize(state.chatMessages.map(m => {
     if (m.sender === 'system') {
-      return `<div class="chat-bubble chat-bubble-system text-center"><p class="text-xs text-slate-500 italic">${m.text}</p></div>`);
+      return `<div class="chat-bubble chat-bubble-system text-center"><p class="text-xs text-slate-500 italic">${m.text}</p></div>`;
     }
     const isAI = m.sender === 'ai';
     const bubbleClass = isAI ? 'chat-bubble chat-bubble-ai' : 'chat-bubble chat-bubble-patient';
     const memoryChipHTML = m.memoryRef ? `<div class="memory-chip mt-2 inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs"><span>🧠</span><span>${m.memoryRef.strategy}</span><span class="text-indigo-400">· Approved by ${m.memoryRef.approvedBy}</span></div>` : '';
     return `<div class="${bubbleClass}"><p class="text-sm">${m.text}</p>${memoryChipHTML}</div>`;
-  }).join('');
+  }).join(''));
 
   if (state.chatTyping) {
     el.innerHTML += sanitize(`<div class="chat-bubble chat-bubble-ai flex items-center gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`);
@@ -777,7 +781,7 @@ export function renderHistory() {
   const typeColors = { CHECKIN: 'emerald', JOURNAL: 'blue', VOICE: 'purple' };
 
   el.innerHTML = sanitize(filtered.map(e => {
-    const color = typeColors[e.type] || 'slate');
+    const color = typeColors[e.type] || 'slate';
     const date = new Date(e.date);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -813,7 +817,7 @@ export function renderHistory() {
         ` : ''}
       </div>
     `;
-  }).join('');
+  }).join(''));
 
   // update filter bar
   document.querySelectorAll('[data-history-filter]').forEach(btn => {
@@ -834,7 +838,7 @@ export function renderSafetyPlan() {
   const stepIcons = ['⚠️', '🧘', '🏖️', '👥', '📞', '🔒'];
 
   el.innerHTML = sanitize(plan.steps.map((step, i) => {
-    const expanded = state.expandedSafetySteps.includes(i));
+    const expanded = state.expandedSafetySteps.includes(i);
     return `
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <button data-safety-step="${i}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
@@ -852,7 +856,7 @@ export function renderSafetyPlan() {
         ` : ''}
       </div>
     `;
-  }).join('');
+  }).join(''));
 }
 
 // ============ ONBOARDING (F-P8) ============
@@ -891,7 +895,7 @@ export function renderPatientMemoryView() {
   const filtered = filter === 'All' ? memories : memories.filter(m => m.category === filter);
 
   el.innerHTML = sanitize(filtered.map(m => {
-    const expanded = state.expandedPatientMemoryId === m.id);
+    const expanded = state.expandedPatientMemoryId === m.id;
     return `
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <button data-pmem-expand="${m.id}" class="w-full p-4 flex items-center gap-3 text-left hover:bg-slate-50">
@@ -905,7 +909,7 @@ export function renderPatientMemoryView() {
         ${expanded ? `<div class="px-4 pb-4 border-t"><p class="text-sm text-slate-700 mt-2">${m.description}</p><div class="mt-2 inline-block px-2 py-1 bg-green-50 text-green-700 rounded text-xs">${m.status}</div></div>` : ''}
       </div>
     `;
-  }).join('');
+  }).join(''));
 
   // update filter bar
   document.querySelectorAll('[data-pmem-filter]').forEach(btn => {
@@ -1154,8 +1158,8 @@ export function renderSDOHAssessment() {
   if (!el) return;
   const profile = state.selectedPatientProfile;
   const sdoh = state.sdohData[profile];
-  if (!sdoh) { el.innerHTML = sanitize('<p class="text-slate-500 text-center py-8">No SDOH data for this patient.</p>'; return; }
-  const patientName = baselinePatientProfiles[profile]?.name || profile);
+  if (!sdoh) { el.innerHTML = sanitize('<p class="text-slate-500 text-center py-8">No SDOH data for this patient.</p>'); return; }
+  const patientName = baselinePatientProfiles[profile]?.name || profile;
 
   const riskColor = (r) => r === 'Low' ? 'green' : r === 'Moderate' ? 'amber' : 'red';
   const domains = [

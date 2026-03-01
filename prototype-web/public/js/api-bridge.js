@@ -16,6 +16,19 @@ import {
 
 import { state } from './state.js';
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
+/** Safely parse a JSON string, returning fallback on failure. */
+function safeJsonParse(value, fallback = []) {
+  if (typeof value !== 'string') return value ?? fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    console.warn('Failed to parse JSON field:', value.slice(0, 80));
+    return fallback;
+  }
+}
+
 // ─── Status ─────────────────────────────────────────────────────────
 
 let liveMode = false;
@@ -388,7 +401,7 @@ async function loadPerPatientData() {
     if (safetyResp.status === 'fulfilled' && safetyResp.value) {
       const sp = safetyResp.value;
       if (state.patientProfiles?.[profileKey]) {
-        const steps = typeof sp.steps === 'string' ? JSON.parse(sp.steps) : sp.steps;
+        const steps = typeof sp.steps === 'string' ? safeJsonParse(sp.steps, []) : sp.steps;
         state.patientProfiles[profileKey].safetyPlan = {
           steps: Array.isArray(steps) ? steps : [],
           reviewedDate: sp.reviewedDate ? sp.reviewedDate.split('T')[0] : '',
@@ -406,9 +419,9 @@ async function loadPerPatientData() {
           xp: prog.xp || 0,
           level: prog.level || 1,
           levelName: prog.levelName || 'Seedling',
-          badges: typeof prog.badges === 'string' ? JSON.parse(prog.badges) : prog.badges || [],
-          weeklyMood: typeof prog.weeklyMood === 'string' ? JSON.parse(prog.weeklyMood) : prog.weeklyMood || [],
-          milestones: typeof prog.milestones === 'string' ? JSON.parse(prog.milestones) : prog.milestones || [],
+          badges: typeof prog.badges === 'string' ? safeJsonParse(prog.badges, []) : prog.badges || [],
+          weeklyMood: typeof prog.weeklyMood === 'string' ? safeJsonParse(prog.weeklyMood, []) : prog.weeklyMood || [],
+          milestones: typeof prog.milestones === 'string' ? safeJsonParse(prog.milestones, []) : prog.milestones || [],
         };
       }
     }
@@ -424,7 +437,7 @@ async function loadPerPatientData() {
           confidence: m.confidence,
           conflict: m.conflict || false,
           status: m.status || 'PROPOSED',
-          evidence: typeof m.evidence === 'string' ? JSON.parse(m.evidence) : m.evidence || [],
+          evidence: typeof m.evidence === 'string' ? safeJsonParse(m.evidence, []) : m.evidence || [],
         }));
       }
     }

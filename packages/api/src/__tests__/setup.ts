@@ -68,6 +68,7 @@ vi.mock('../models/index.js', () => {
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -119,6 +120,7 @@ vi.mock('../models/index.js', () => {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     consentRecord: {
       findMany: vi.fn(),

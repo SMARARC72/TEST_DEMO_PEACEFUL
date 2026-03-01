@@ -38,12 +38,14 @@ async function getClinicianPatientIds(clinicianId: string): Promise<string[]> {
 /** SEC-009: Verify the patient belongs to clinician's caseload and tenant. */
 async function requireCaseloadAccess(userId: string, tid: string, patientId: string) {
   const clinician = await getClinicianProfile(userId);
+  // First verify tenant isolation
+  const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
+  if (!patient) throw new AppError('Patient not found', 404);
+  if (patient.tenantId !== tid) throw new AppError('Access denied', 403);
+  // Then verify caseload assignment
   const patientIds = await getClinicianPatientIds(clinician.id);
   if (!patientIds.includes(patientId)) {
-    // Fallback: at least verify tenant isolation even if not in caseload
-    const patient = await prisma.patient.findUnique({ where: { id: patientId }, select: { tenantId: true } });
-    if (!patient) throw new AppError('Patient not found', 404);
-    if (patient.tenantId !== tid) throw new AppError('Access denied', 403);
+    throw new AppError('Access denied', 403);
   }
   return clinician;
 }
@@ -206,6 +208,9 @@ clinicianRouter.patch('/triage/:id', async (req, res, next) => {
     });
     if (!existing) throw new AppError('Triage item not found', 404);
 
+    // SEC-009: Verify caseload access via the triage item's patient
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, existing.patientId);
+
     const updated = await prisma.triageItem.update({
       where: { id: req.params.id },
       data: {
@@ -347,6 +352,7 @@ const memoryPatchSchema = z.object({
 
 clinicianRouter.patch('/patients/:id/memories/:memId', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = memoryPatchSchema.parse(req.body);
 
     const proposal = await prisma.memoryProposal.findFirst({
@@ -437,6 +443,7 @@ const planPatchSchema = z.object({
 
 clinicianRouter.patch('/patients/:id/plans/:planId', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = planPatchSchema.parse(req.body);
 
     const plan = await prisma.treatmentPlan.findFirst({
@@ -461,6 +468,7 @@ clinicianRouter.patch('/patients/:id/plans/:planId', async (req, res, next) => {
 
 clinicianRouter.get('/patients/:id/mbc', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const scores = await prisma.mBCScore.findMany({
       where: { patientId: req.params.id },
       orderBy: { date: 'desc' },
@@ -482,6 +490,7 @@ const mbcSchema = z.object({
 
 clinicianRouter.post('/patients/:id/mbc', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = mbcSchema.parse(req.body);
 
     // Fetch last 3 scores for the same instrument to compute trend
@@ -576,6 +585,7 @@ clinicianRouter.post('/patients/:id/session-notes', async (req, res, next) => {
 
 clinicianRouter.patch('/patients/:id/session-notes/:noteId/sign', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const note = await prisma.sessionNote.findFirst({
       where: { id: req.params.noteId, patientId: req.params.id },
     });
@@ -620,6 +630,7 @@ clinicianRouter.get('/patients/:id/adherence', async (req, res, next) => {
 
 clinicianRouter.patch('/patients/:id/adherence/:itemId', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const item = await prisma.adherenceItem.findFirst({
       where: { id: req.params.itemId, patientId: req.params.id },
     });
@@ -697,6 +708,7 @@ const escalationPatchSchema = z.object({
 
 clinicianRouter.patch('/patients/:id/escalations/:escId', async (req, res, next) => {
   try {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
     const body = escalationPatchSchema.parse(req.body);
 
     const item = await prisma.escalationItem.findUnique({
@@ -743,6 +755,9 @@ clinicianRouter.patch('/escalations/:id', async (req, res, next) => {
     });
     if (!item) throw new AppError('Escalation not found', 404);
 
+    // SEC-009: Verify caseload access via the escalation item's patient
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, item.patientId);
+
     const now = new Date();
     const existingAudit = (item.auditTrail as any[]) ?? [];
 
@@ -776,15 +791,22 @@ clinicianRouter.patch('/escalations/:id', async (req, res, next) => {
 clinicianRouter.post(
   '/patients/:id/export',
   stepUpAuth,
-  (req, res) => {
-    res.json({
-      exportId: uuidv4(),
-      patientId: req.params.id,
-      format: req.body?.format ?? 'pdf',
-      status: 'GENERATING',
-      requestedBy: req.user!.sub,
-      requestedAt: new Date().toISOString(),
-      message: 'Export is being generated. You will be notified when ready.',
-    });
+  async (req, res, next) => {
+    try {
+      // SEC-009: Verify caseload access
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id as string);
+
+      res.json({
+        exportId: uuidv4(),
+        patientId: req.params.id,
+        format: req.body?.format ?? 'pdf',
+        status: 'GENERATING',
+        requestedBy: req.user!.sub,
+        requestedAt: new Date().toISOString(),
+        message: 'Export is being generated. You will be notified when ready.',
+      });
+    } catch (err) {
+      next(err);
+    }
   },
 );

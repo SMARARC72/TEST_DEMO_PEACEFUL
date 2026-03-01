@@ -501,6 +501,11 @@ const updateSafetyPlanSchema = z.object({
 
 patientRouter.put('/:id/safety-plan', async (req, res, next) => {
   try {
+    // SEC-003: Tenant isolation
+    const patient = await prisma.patient.findUnique({ where: { id: req.params.id }, select: { tenantId: true } });
+    if (!patient) throw new AppError('Patient not found', 404);
+    if (patient.tenantId !== req.user!.tid) throw new AppError('Access denied', 403);
+
     const data = updateSafetyPlanSchema.parse(req.body);
     const row = await prisma.safetyPlan.upsert({
       where: { patientId: req.params.id },
