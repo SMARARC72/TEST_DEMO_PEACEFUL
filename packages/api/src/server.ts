@@ -1,21 +1,21 @@
 // ─── Peacefull.ai API Server ─────────────────────────────────────────
 // Express 5 + TypeScript entry point with HIPAA-grade middleware stack.
 
-import 'dotenv/config';
-import express from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import compression from 'compression';
-import morgan from 'morgan';
+import "dotenv/config";
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import compression from "compression";
+import morgan from "morgan";
 
-import { env, API_VERSION } from './config/index.js';
-import { requestId } from './middleware/request-id.js';
-import { globalLimiter } from './middleware/rate-limit.js';
-import routes from './routes/index.js';
-import { auditLog } from './middleware/audit.js';
-import { notFound, errorHandler } from './middleware/error.js';
-import { apiLogger } from './utils/logger.js';
-import { prisma } from './models/index.js';
+import { env, API_VERSION } from "./config/index.js";
+import { requestId } from "./middleware/request-id.js";
+import { globalLimiter } from "./middleware/rate-limit.js";
+import routes from "./routes/index.js";
+import { auditLog } from "./middleware/audit.js";
+import { notFound, errorHandler } from "./middleware/error.js";
+import { apiLogger } from "./utils/logger.js";
+import { prisma } from "./models/index.js";
 
 // ─── Create App ──────────────────────────────────────────────────────
 
@@ -27,6 +27,14 @@ app.use(requestId);
 
 // ─── Security & Compression ─────────────────────────────────────────
 
+// Parse comma-separated CORS origins for CSP
+const cspConnectSrc = [
+  "'self'",
+  ...env.CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+];
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -34,8 +42,8 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", env.CORS_ORIGIN],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: cspConnectSrc,
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
@@ -46,15 +54,14 @@ app.use(
       includeSubDomains: true,
       preload: true,
     },
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   }),
 );
 
 // Parse comma-separated CORS origins — SEC-06: No wildcard `*` allowed.
-const allowedOrigins = env.CORS_ORIGIN
-  .split(',')
+const allowedOrigins = env.CORS_ORIGIN.split(",")
   .map((o) => o.trim())
-  .filter((o) => o !== '*'); // Strip wildcard — CORS must be explicit per PRD §3.4
+  .filter((o) => o !== "*"); // Strip wildcard — CORS must be explicit per PRD §3.4
 
 app.use(
   cors({
@@ -67,8 +74,13 @@ app.use(
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Tenant-ID'],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Request-ID",
+      "X-Tenant-ID",
+    ],
     maxAge: 7200,
   }),
 );
@@ -77,7 +89,7 @@ app.use(compression());
 // ─── Logging ─────────────────────────────────────────────────────────
 
 app.use(
-  morgan('short', {
+  morgan("short", {
     stream: {
       write: (message: string) => apiLogger.info(message.trim()),
     },
@@ -86,7 +98,7 @@ app.use(
 
 // ─── Body Parsing ────────────────────────────────────────────────────
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Rate Limiting ───────────────────────────────────────────────────
@@ -100,15 +112,15 @@ app.use(auditLog);
 // ─── Health / Ready / Version ────────────────────────────────────────
 
 const startedAt = Date.now();
-const APP_VERSION = '0.1.0';
+const APP_VERSION = "0.1.0";
 
 /**
  * Health check — always public, no auth required.
  * Returns server status, version, timestamp, and uptime.
  */
-app.get('/health', (_req, res) => {
+app.get("/health", (_req, res) => {
   res.json({
-    status: 'ok',
+    status: "ok",
     version: APP_VERSION,
     timestamp: new Date().toISOString(),
     uptime: Math.floor((Date.now() - startedAt) / 1000),
@@ -120,19 +132,19 @@ app.get('/health', (_req, res) => {
  * Readiness probe — checks database connectivity.
  * Returns 503 if the database is unreachable.
  */
-app.get('/ready', async (_req, res) => {
+app.get("/ready", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ready', database: 'connected' });
+    res.json({ status: "ready", database: "connected" });
   } catch {
-    res.status(503).json({ status: 'not-ready', database: 'disconnected' });
+    res.status(503).json({ status: "not-ready", database: "disconnected" });
   }
 });
 
 /**
  * Version endpoint — returns build metadata.
  */
-app.get('/version', (_req, res) => {
+app.get("/version", (_req, res) => {
   res.json({
     version: APP_VERSION,
     node: process.version,
@@ -163,27 +175,27 @@ async function shutdown(signal: string) {
 
   if (server) {
     server.close(() => {
-      apiLogger.info('HTTP server closed');
+      apiLogger.info("HTTP server closed");
     });
   }
 
   // Close Prisma connection pool
   try {
     await prisma.$disconnect();
-    apiLogger.info('Prisma disconnected');
+    apiLogger.info("Prisma disconnected");
   } catch (err) {
-    apiLogger.error({ err }, 'Error disconnecting Prisma');
+    apiLogger.error({ err }, "Error disconnecting Prisma");
   }
 
   // Give connections time to drain
   setTimeout(() => {
-    apiLogger.warn('Forcing shutdown after timeout');
+    apiLogger.warn("Forcing shutdown after timeout");
     process.exit(1);
   }, 10_000);
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // ─── Start Server ────────────────────────────────────────────────────
 
