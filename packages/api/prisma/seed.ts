@@ -1037,15 +1037,242 @@ async function main() {
   }
 
   // ═══════════════════════════════════════════════════
+  // PHASE 1 EXPANSION: 2 tenants, 4 clinicians, 20 patients, 600 check-ins
+  // ═══════════════════════════════════════════════════
+  console.log('\n📊 Phase 1 Production Scale Data...\n');
+
+  // Second tenant
+  const TENANT_2_ID = '10000000-0000-4000-8000-000000000002';
+  console.log('  → Creating second tenant...');
+  await prisma.tenant.upsert({
+    where: { slug: 'wellness-clinic' },
+    update: {},
+    create: {
+      id: TENANT_2_ID,
+      name: 'Wellness Mental Health Clinic',
+      slug: 'wellness-clinic',
+      domain: 'wellness-clinic.peacefull.ai',
+      plan: 'GROWTH',
+      ssoEnabled: false,
+      scimEnabled: false,
+      settings: {
+        timezone: 'America/New_York',
+        defaultLanguage: 'en',
+        features: ['mbc', 'chat', 'adherence'],
+      },
+    },
+  });
+
+  // Fourth clinician for second tenant
+  const USER_PATEL_ID = '20000000-0000-4000-8000-000000000004';
+  const CLINICIAN_PATEL_ID = '40000000-0000-4000-8000-000000000004';
+  console.log('  → Creating fourth clinician...');
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: TENANT_2_ID, email: 'anika.patel@wellness-clinic.com' } },
+    update: {},
+    create: {
+      id: USER_PATEL_ID,
+      tenantId: TENANT_2_ID,
+      email: 'anika.patel@wellness-clinic.com',
+      passwordHash,
+      role: 'CLINICIAN',
+      firstName: 'Anika',
+      lastName: 'Patel',
+      phone: '555-0400',
+      mfaEnabled: true,
+      mfaMethod: 'TOTP',
+      lastLogin: new Date('2026-02-27T10:00:00Z'),
+      status: 'ACTIVE',
+    },
+  });
+  await prisma.clinician.upsert({
+    where: { userId: USER_PATEL_ID },
+    update: {},
+    create: {
+      id: CLINICIAN_PATEL_ID,
+      userId: USER_PATEL_ID,
+      credentials: 'PsyD, Licensed Clinical Psychologist',
+      specialty: 'Adolescent Mental Health, Family Therapy',
+      npi: '1234567893',
+      caseloadSize: 28,
+    },
+  });
+
+  // Additional 17 patients (total 20)
+  console.log('  → Creating additional patients (17 more for total of 20)...');
+  const additionalPatientNames = [
+    { first: 'David', last: 'Park' },
+    { first: 'Sarah', last: 'Kim' },
+    { first: 'Michael', last: 'Johnson' },
+    { first: 'Lisa', last: 'Williams' },
+    { first: 'Kevin', last: 'Brown' },
+    { first: 'Jennifer', last: 'Davis' },
+    { first: 'Robert', last: 'Miller' },
+    { first: 'Amanda', last: 'Garcia' },
+    { first: 'Daniel', last: 'Martinez' },
+    { first: 'Jessica', last: 'Anderson' },
+    { first: 'Christopher', last: 'Taylor' },
+    { first: 'Ashley', last: 'Thomas' },
+    { first: 'Matthew', last: 'Jackson' },
+    { first: 'Stephanie', last: 'White' },
+    { first: 'Andrew', last: 'Harris' },
+    { first: 'Nicole', last: 'Martin' },
+    { first: 'Joshua', last: 'Thompson' },
+  ];
+  const diagnoses = ['F32.1', 'F41.1', 'F90.0', 'F33.0', 'F40.10', 'F43.10'];
+  const additionalPatientIds: string[] = [];
+
+  for (let i = 0; i < additionalPatientNames.length; i++) {
+    const patientName = additionalPatientNames[i];
+    if (!patientName) continue;
+    const idx = i + 4; // Start from 4 since we already have 3 patients
+    const userId = `30000000-0000-4000-8000-${String(idx).padStart(12, '0')}`;
+    const patientId = `50000000-0000-4000-8000-${String(idx).padStart(12, '0')}`;
+    additionalPatientIds.push(patientId);
+    const email = `${patientName.first.toLowerCase()}.${patientName.last.toLowerCase()}@example.com`;
+    const tenantForPatient = i < 10 ? TENANT_ID : TENANT_2_ID;
+    const clinicianForPatient = i < 10 ? CLINICIAN_CHEN_ID : CLINICIAN_PATEL_ID;
+
+    await prisma.user.upsert({
+      where: { tenantId_email: { tenantId: tenantForPatient, email } },
+      update: {},
+      create: {
+        id: userId,
+        tenantId: tenantForPatient,
+        email,
+        passwordHash,
+        role: 'PATIENT',
+        firstName: patientName.first,
+        lastName: patientName.last,
+        mfaEnabled: false,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.patient.upsert({
+      where: { userId },
+      update: {},
+      create: {
+        id: patientId,
+        userId,
+        tenantId: tenantForPatient,
+        age: 25 + (i % 30),
+        pronouns: i % 2 === 0 ? 'he/him' : 'she/her',
+        language: 'English',
+        emergencyName: 'Emergency Contact',
+        emergencyPhone: `555-${String(1000 + i).padStart(4, '0')}`,
+        emergencyRel: 'Family',
+        diagnosisPrimary: ['Depression', 'Anxiety', 'ADHD', 'MDD', 'Social Anxiety', 'PTSD'][i % 6],
+        diagnosisCode: diagnoses[i % 6],
+        treatmentStart: new Date(2025, 6 + (i % 6), 1),
+        medications: [],
+        allergies: [],
+        preferences: {},
+      },
+    });
+
+    // Care team assignment
+    await prisma.careTeamAssignment.upsert({
+      where: {
+        patientId_clinicianId: {
+          patientId,
+          clinicianId: clinicianForPatient,
+        },
+      },
+      update: {},
+      create: {
+        id: randomUUID(),
+        patientId,
+        clinicianId: clinicianForPatient,
+        role: 'Primary Therapist',
+      },
+    });
+
+    // Progress data for each patient
+    await prisma.progressData.upsert({
+      where: { patientId },
+      update: {},
+      create: {
+        id: randomUUID(),
+        patientId,
+        streak: Math.floor(Math.random() * 14),
+        xp: Math.floor(Math.random() * 500),
+        level: Math.floor(Math.random() * 3) + 1,
+        levelName: ['Seedling', 'Sprout', 'Sapling'][Math.floor(Math.random() * 3)],
+        badges: [],
+        weeklyMood: [],
+        milestones: [],
+      },
+    });
+  }
+
+  // 600 check-in submissions (30 per patient across all 20 patients)
+  console.log('  → Creating 600 check-in submissions...');
+  const allPatientIds = [PATIENT_MARIA_ID, PATIENT_JAMES_ID, PATIENT_EMMA_ID, ...additionalPatientIds];
+  const moodDescriptions = [
+    'Feeling okay today, some stress at work but manageable.',
+    'Had a good night sleep, energy levels are better.',
+    'Anxiety spiked this morning but used breathing techniques.',
+    'Feeling low, struggling to focus on tasks.',
+    'Better day than yesterday, practiced mindfulness.',
+    'Productive day at work, mood is stable.',
+    'Tired but accomplished my goals for the day.',
+    'Feeling anxious about upcoming deadline.',
+    'Good conversation with friend lifted my mood.',
+    'Struggled with motivation but pushed through.',
+  ];
+  const moods = ['calm', 'anxious', 'hopeful', 'stressed', 'content', 'overwhelmed', 'focused', 'tired'];
+
+  let checkInCount = 0;
+  for (const patientId of allPatientIds) {
+    for (let day = 0; day < 30; day++) {
+      const submissionId = randomUUID();
+      const checkInDate = new Date();
+      checkInDate.setDate(checkInDate.getDate() - day);
+      checkInDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
+
+      const mood = moods[Math.floor(Math.random() * moods.length)];
+      const moodDesc = moodDescriptions[Math.floor(Math.random() * moodDescriptions.length)];
+      const sleepHours = 5 + Math.floor(Math.random() * 5);
+      const energyLevel = Math.floor(Math.random() * 5) + 1;
+
+      await prisma.submission.create({
+        data: {
+          id: submissionId,
+          patientId,
+          source: 'CHECKIN',
+          status: day < 7 ? 'READY' : 'REVIEWED',
+          rawContent: JSON.stringify({
+            mood,
+            moodDescription: moodDesc,
+            sleepHours,
+            energyLevel,
+            medicationTaken: Math.random() > 0.1,
+            anxietyLevel: Math.floor(Math.random() * 10) + 1,
+            copingUsed: Math.random() > 0.5 ? ['breathing', 'mindfulness'] : [],
+          }),
+          patientTone: mood,
+          patientSummary: moodDesc,
+          clinicianSignalBand: ['LOW', 'GUARDED', 'MODERATE', 'ELEVATED'][Math.floor(Math.random() * 4)] as 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED',
+          processedAt: checkInDate,
+          createdAt: checkInDate,
+        },
+      });
+      checkInCount++;
+    }
+  }
+  console.log(`    Created ${checkInCount} check-in submissions`);
+
+  // ═══════════════════════════════════════════════════
   // SUMMARY
   // ═══════════════════════════════════════════════════
   console.log('\n✅ Seed complete! Summary:');
-  console.log('   • 1 tenant');
-  console.log('   • 6 users (3 clinicians + 3 patients)');
-  console.log('   • 3 clinician profiles');
-  console.log('   • 3 patient profiles');
-  console.log('   • 6 care team assignments');
-  console.log('   • 3 submissions');
+  console.log('   • 2 tenants');
+  console.log('   • 24 users (4 clinicians + 20 patients)');
+  console.log('   • 4 clinician profiles');
+  console.log('   • 20 patient profiles');
+  console.log('   • 23 care team assignments');
+  console.log('   • 603 submissions (3 journals + 600 check-ins)');
   console.log('   • 3 triage items');
   console.log('   • 3 AI drafts');
   console.log('   • 3 memory proposals');
@@ -1055,7 +1282,7 @@ async function main() {
   console.log('   • 3 escalation items');
   console.log('   • 3 session notes');
   console.log('   • 3 safety plans');
-  console.log('   • 3 progress data records');
+  console.log('   • 20 progress data records');
   console.log('   • 3 SDOH assessments');
   console.log('   • 3 chat sessions with 24 messages');
   console.log('   • 1 enterprise config');
