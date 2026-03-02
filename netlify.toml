@@ -17,6 +17,13 @@
   status = 200
   force = true
 
+# WebSocket proxy for real-time features (wss)
+[[redirects]]
+  from = "/ws"
+  to = "wss://peacefull-dev-alb-1054524413.us-east-1.elb.amazonaws.com/ws"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
