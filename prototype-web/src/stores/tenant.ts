@@ -60,7 +60,7 @@ export function extractTenantSlug(): string | null {
 
   // Path-based: /t/:slug/...
   const pathMatch = window.location.pathname.match(/^\/t\/([a-zA-Z0-9_-]+)/);
-  if (pathMatch) return pathMatch[1];
+  if (pathMatch?.[1]) return pathMatch[1];
 
   // Subdomain-based
   const hostname = window.location.hostname;
@@ -68,7 +68,7 @@ export function extractTenantSlug(): string | null {
   if (parts.length >= 3) {
     const sub = parts[0];
     // Exclude common non-tenant subdomains
-    if (!['www', 'app', 'api', 'localhost'].includes(sub)) {
+    if (sub && !['www', 'app', 'api', 'localhost'].includes(sub)) {
       return sub;
     }
   }

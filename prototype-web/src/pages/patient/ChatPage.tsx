@@ -134,7 +134,7 @@ export default function ChatPage() {
           "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
         ];
         const fallback =
-          fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+          fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)] ?? fallbackResponses[0] ?? '';
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, content: fallback } : m,

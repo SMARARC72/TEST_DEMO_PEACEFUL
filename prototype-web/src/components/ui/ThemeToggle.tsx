@@ -24,7 +24,7 @@ export function ThemeToggle() {
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
 
-  const current = themes.find((t) => t.value === theme) ?? themes[2];
+  const current = themes.find((t) => t.value === theme) ?? { value: 'system' as Theme, label: 'System', icon: '💻' };
 
   return (
     <div className="relative" ref={ref}>

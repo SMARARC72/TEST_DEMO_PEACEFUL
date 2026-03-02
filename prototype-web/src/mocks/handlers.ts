@@ -853,7 +853,7 @@ export const handlers = [
       "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
       `I understand. You mentioned: "${body.message.slice(0, 50)}" — let's unpack that together. What feels most important about this right now?`,
     ];
-    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const reply = replies[Math.floor(Math.random() * replies.length)] ?? replies[0] ?? '';
     const words = reply.split(' ');
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

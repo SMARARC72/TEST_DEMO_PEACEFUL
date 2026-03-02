@@ -15,7 +15,9 @@ function decodeJwtExp(token: string): number | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1])) as { exp?: number };
+    const payloadPart = parts[1];
+    if (!payloadPart) return null;
+    const payload = JSON.parse(atob(payloadPart)) as { exp?: number };
     return payload.exp ? payload.exp * 1000 : null;
   } catch {
     return null;
@@ -38,9 +40,9 @@ function collectFormDrafts(): Record<string, string>[] {
 export function SessionTimeoutWarning(): React.ReactElement | null {
   const [showWarning, setShowWarning] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-  const countdownRef = useRef<ReturnType<typeof setInterval>>();
-  const idleRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const idleRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const accessToken = useAuthStore((s) => s.accessToken);

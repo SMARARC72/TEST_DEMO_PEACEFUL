@@ -90,8 +90,11 @@ export default function AdherenceTrackerPage() {
 
   const categoryBreakdown = items.reduce<Record<string, { count: number; compliant: number }>>((acc, item) => {
     if (!acc[item.category]) acc[item.category] = { count: 0, compliant: 0 };
-    acc[item.category].count++;
-    if (item.status === 'COMPLIANT') acc[item.category].compliant++;
+    const catData = acc[item.category];
+    if (catData) {
+      catData.count++;
+      if (item.status === 'COMPLIANT') catData.compliant++;
+    }
     return acc;
   }, {});
 

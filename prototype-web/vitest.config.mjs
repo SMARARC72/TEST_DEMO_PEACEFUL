@@ -17,8 +17,7 @@ export default defineConfig({
     globals: true,
     testTimeout: 30_000,
     hookTimeout: 30_000,
-    pool: 'forks',
-    singleFork: true,
+    pool: 'threads',
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],

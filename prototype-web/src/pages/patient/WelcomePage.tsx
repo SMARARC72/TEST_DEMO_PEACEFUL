@@ -48,7 +48,7 @@ export default function WelcomePage() {
     navigate('/patient/consent');
   }
 
-  const item = boundaries[currentStep];
+  const item = boundaries[currentStep] ?? { icon: '', title: '', body: '' };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-brand-50 to-white px-4 py-12">

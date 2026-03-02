@@ -75,7 +75,7 @@ function DataExportCard({ patientId }: { patientId: string }) {
       const { apiGet } = await import('@/api/client');
       const [data, err] = await apiGet<Record<string, unknown>>(`patients/${patientId}/data-export`);
       if (err) {
-        addToast({ type: 'error', message: err.message || 'Export failed' });
+        addToast({ title: err.message || 'Export failed', variant: 'error' });
         return;
       }
       // Download as JSON file
@@ -88,9 +88,9 @@ function DataExportCard({ patientId }: { patientId: string }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      addToast({ type: 'success', message: 'Your data has been exported.' });
+      addToast({ title: 'Your data has been exported.', variant: 'success' });
     } catch {
-      addToast({ type: 'error', message: 'Export failed. Please try again later.' });
+      addToast({ title: 'Export failed. Please try again later.', variant: 'error' });
     } finally {
       setExporting(false);
     }
