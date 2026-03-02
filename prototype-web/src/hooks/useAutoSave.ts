@@ -29,7 +29,11 @@ interface UseAutoSaveReturn<T> {
 export function useAutoSave<T>({ key, data, enabled = true }: UseAutoSaveOptions<T>): UseAutoSaveReturn<T> {
   const userId = useAuthStore((s) => s.user?.id ?? 'anonymous');
   const dataRef = useRef(data);
-  dataRef.current = data;
+
+  // Update ref in effect to avoid setting during render (React Compiler compliance)
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const storageKey = `peacefull-draft-${key}`;
 

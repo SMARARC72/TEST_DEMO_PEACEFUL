@@ -101,7 +101,8 @@ export function SessionTimeoutWarning(): React.ReactElement | null {
     const timeUntilWarn = expiresAt - now - WARN_BEFORE_MS;
 
     if (timeUntilWarn <= 0) {
-      setShowWarning(true);
+      // Defer setState to avoid synchronous update during effect (React Compiler compliance)
+      queueMicrotask(() => setShowWarning(true));
     } else {
       timerRef.current = setTimeout(() => {
         setShowWarning(true);
@@ -116,7 +117,8 @@ export function SessionTimeoutWarning(): React.ReactElement | null {
   // Countdown timer
   useEffect(() => {
     if (!showWarning) {
-      setCountdown(0);
+      // Defer setState to avoid synchronous update during effect (React Compiler compliance)
+      queueMicrotask(() => setCountdown(0));
       if (countdownRef.current) clearInterval(countdownRef.current);
       return;
     }
