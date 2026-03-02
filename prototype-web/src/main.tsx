@@ -34,11 +34,17 @@ if (
   );
 }
 
-async function enableMocking() {
-  if (import.meta.env.VITE_ENABLE_MOCKS !== 'true') return;
+// ─── MSW Mocking (dev-only) ──────────────────────────────────────────
+// Only loads MSW in development when VITE_ENABLE_MOCKS=true
+// Tree-shaken out of production builds completely
+const enableMocking = async () => {
+  // Build-time elimination: this entire branch is removed in production
+  if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_MOCKS !== 'true') {
+    return;
+  }
   const { worker } = await import('./mocks/browser');
   return worker.start({ onUnhandledRequest: 'bypass' });
-}
+};
 
 enableMocking().then(() => {
   // Initialize Core Web Vitals monitoring
