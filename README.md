@@ -5,6 +5,103 @@
 
 ---
 
+## 🟢 ACTIVE PRD: PRD-MVP-STABILIZE-2026-001 (MVP Stabilization + Demo Environment)
+
+**Scope:** Frontend (Netlify), Backend (ECS/API), Infra, Data, Security  
+**Goal:** Fully working, pilot-ready MVP plus a separate demo environment with synthetic data; hardened against abuse; fast, reliable builds; guardrails against drift.  
+**Model:** GPT-5.1-Codex-Max (GitHub Copilot)  
+**Execution order (must follow):** Phase A → B → C → D → E → F → G
+
+### 1) Pain Points (Observed)
+- Mixed auth paths; env drift enabling MSW; CSP/CORS misconfig
+- API contract mismatches (`userId` vs `patientId`), incomplete auth payloads, 404s on valid routes
+- Deploy drift: Netlify auto-build vs manual; ECS using different DB than seeds
+- MSW in prod; runtime blanks on API errors; audit middleware FK failures
+- CSP blocking fonts/API; CORS wildcard stripped; unseeded prod DB
+
+### 2) Objectives (Definition of Done)
+- Auth E2E (login/register/logout/refresh/MFA) against production API
+- Critical flows green: journal, check-in, AI chat, clinician & patient dashboards
+- No mock mode in production (MSW off except demo)
+- CSP/CORS clean; no console errors; fonts/API reachable
+- Prod DB seeded; ECS/API uses that DB; no 404/500 on valid flows
+- User-facing error handling; no blank screens
+- Demo environment live, synthetic-only, clearly labeled “Demo”
+- Builds fast and reproducible; tests/type-checks pass; performance budgets respected
+- Red-team gates enforced pre-release
+
+### 3) Phased Work Plan (Ordered, Blocking)
+- **Phase A — Env & Config Hygiene:** Netlify env set; disable MSW in prod; explicit CORS/CSP; clear cache and redeploy
+- **Phase B — Backend Contract & Data Alignment:** Accept `patientId` or `userId`; full auth payload; seed real DB; audit middleware safe
+- **Phase C — Frontend Auth & API Integration:** Single auth path (direct API); login/register wiring; API client headers; user toasts; MSW excluded in prod
+- **Phase D — CSP/CORS & Proxy Verification:** Netlify redirects `/api/v1/*` → ALB; preflight passes; CSP console clean
+- **Phase E — End-to-End Smoke Tests:** Login, journal, check-in, AI chat, clinician view, logout, crisis alert
+- **Phase F — Deployment Confidence:** Netlify auto-deploy green; ECS healthy with correct image/secrets/DB; tag `mvp-stable`
+- **Phase G — Demo Environment (Synthetic Data):** Separate Netlify demo site; synthetic data via MSW or demo API; labeled “Demo”; run demo smoke tests
+
+### 4) Red-Team Hardening Gates (Must Pass Before Release)
+- Auth/session abuse protections (throttling/lockout, refresh rotation, strict aud/iss)
+- CORS/CSP explicit origins; no wildcards; minimal inline; allow fonts/API explicitly
+- Secrets/config only via env/Secrets Manager; no secrets in repo/logs; audit `.env`
+- Server-side validation; output encoding; AI endpoints rate-limited; payload/upload limits
+- No PHI in logs; audit logging tenant-scoped; crisis paths prioritized
+- Transport headers: HSTS; secure cookies; SameSite; no mixed content
+- Dependency/supply chain: `npm audit` gate; lockfile integrity; no `latest` Docker tags
+- RCE/SSRF/LFI: block arbitrary proxying; validate presign targets; no dynamic require on user input
+
+### 5) Code Quality, Compiling, Speed Gates
+- `tsc --noEmit` clean; strict; no `any`
+- ESLint/Prettier clean; no `console.log` in prod (except `error`)
+- Tests: unit+integration ≥80% coverage; critical flows planned tests at 100%; vitest/jest green
+- Build: Vite <60s CI; bundle budget <500KB gzip main; track regressions
+- Runtime perf: LCP <2.5s on Netlify; avoid blocking fonts; cache headers set
+- CI gates: lint, test, tsc, build; fail on CSP/CORS smoke assertions
+- Observability: error boundary + toasts; Sentry (or equivalent); API logs with correlation IDs
+
+### 6) Anti-Drift Guardrails
+- Single source of truth: Netlify env (frontend), AWS Secrets (backend); no local `.env` baked into builds
+- Protected main; PRs require green CI (lint/test/tsc/build)
+- Config freeze for pilot: changes via PR checklist (CSP/CORS/ENV reviewed)
+- No manual prod edits; deploy only via CI/Netlify auto; clear cache on env change
+
+### 7) Parallel Subagents (Specialized Workstreams)
+- Env/Config agent: Netlify env, CORS/CSP, MSW off in prod, redirects/proxy
+- Backend Contract agent: ID resolver, auth payload, audit middleware, seeds, CORS backend
+- Frontend Auth/API agent: Login/Register wiring, API client, error toasts, MSW exclusion
+- Security/Red-Team agent: gates, rate limits, headers, dependency audit, PHI logging guard
+- Demo agent: demo Netlify site, synthetic seeds/MSW fixtures, labeling, demo CSP
+- QA/Perf agent: smoke tests, perf budgets (LCP/bundle), CI gates, CSP/CORS console checks
+
+### 8) Demo Environment (Synthetic Data) Requirements
+- Separate Netlify site (e.g., `peacefull-ai-demo-static`)
+- `VITE_ENV=demo`; `VITE_ENABLE_MOCKS=true` with bundled MSW **or** dedicated demo API/DB seeded with synthetic data only
+- Clear “Demo” labeling; disable PHI and real account creation (or synthetic-only users)
+- CSP/CORS tailored to demo; MSW allowed only here
+- Demo smoke tests: login, journal, check-in, AI chat (mocked)
+
+### 9) Acceptance Criteria
+- No console CSP/CORS errors in production
+- MSW not registered in MVP; allowed only in demo (if chosen)
+- Pilot smoke tests pass with seeded prod DB and aligned ECS secrets
+- Red-team gates signed off (auth/session, secrets, CORS/CSP, rate limits, logging)
+- CI green: lint, tests, tsc, build within budgets
+- Demo environment live, synthetic-only, labeled; safe to share
+- Netlify deploy history green; ECS tasks healthy; DB source aligned
+
+### 10) Risks & Mitigations
+- Env drift: enforce CI builds; clear cache on env change; config PR checklist
+- CORS lockout: keep localhost allowlisted during verification; preflight tests before release
+- DB mismatch: verify `DATABASE_URL` before smoke; snapshot before reseed
+- Auth confusion: keep Auth0 redirect off until stable; document single auth path for MVP
+- Demo leakage: isolate demo data, read-only, labeled UI “Demo”
+
+### 11) Deliverables
+- Clean env/CSP/CORS; MSW disabled in MVP
+- Backend contract fixes; seeds on actual prod DB
+- Working auth and core flows verified via smoke tests; red-team gates passed
+- Netlify/ECS green; tag `mvp-stable`
+- Demo Netlify site live with synthetic data, labeled, investor-safe
+
 ## ⚠️ ACTIVE PRD: Phase 2 — Security Hardening, Patient Safety, Provider Experience & Code Quality
 
 **Document:** [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md)
