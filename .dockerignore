@@ -6,8 +6,17 @@ node_modules
 prototype-web
 peacefull-demo-github
 packages/infra/terraform
+packages/infra/k6
+packages/infra/runbook
+packages/infra/scripts
+packages/ml-pipeline
 .env
 .env.*
 dist
 test-results
 coverage
+*.pptx
+*.zip
+*.tar.gz
+ziNN8gsC
+ziybCqMH

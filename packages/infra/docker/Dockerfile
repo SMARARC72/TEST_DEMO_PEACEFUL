@@ -1,13 +1,28 @@
 # Build stage
 FROM node:22-alpine AS builder
 WORKDIR /app
+
+# Create root package.json with workspaces
+RUN echo '{"name":"peacefull-root","private":true,"workspaces":["packages/*"]}' > package.json
+
+# Copy package files first for better caching
 COPY packages/shared/package*.json ./packages/shared/
 COPY packages/api/package*.json ./packages/api/
+
+# Copy source files
 COPY packages/shared/ ./packages/shared/
-RUN cd packages/shared && npm ci && npm run build
-RUN cd packages/api && npm ci
 COPY packages/api/ ./packages/api/
+
+# Install all workspace dependencies at once
+RUN npm install --workspaces --include-workspace-root
+
+# Build shared first
+RUN cd packages/shared && npm run build
+
+# Generate Prisma client
 RUN cd packages/api && npx prisma generate
+
+# Build API
 RUN cd packages/api && npm run build
 
 # Production stage
