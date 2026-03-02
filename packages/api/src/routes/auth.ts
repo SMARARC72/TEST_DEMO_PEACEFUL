@@ -209,16 +209,7 @@ authRouter.post('/login', loginLimiter, async (req, res, next) => {
     const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     res.json({
       ...tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        profile: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phone: user.phone,
-        },
-      },
+      user: toUserResponse(user),
     });
   } catch (err) {
     next(err);
