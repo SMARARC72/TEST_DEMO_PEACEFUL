@@ -3,6 +3,18 @@
   command = "npm ci && npm run check:artifacts && npm run build"
   publish = "dist"
 
+[build.environment]
+  VITE_API_URL = "/api/v1"
+  VITE_ENV = "production"
+
+# ─── API Proxy to AWS ALB ─────────────────────────────────────────────
+# Proxies /api/* requests to the AWS backend (solves CORS + HTTPS mixed content)
+[[redirects]]
+  from = "/api/*"
+  to = "http://peacefull-dev-alb-1054524413.us-east-1.elb.amazonaws.com/api/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
