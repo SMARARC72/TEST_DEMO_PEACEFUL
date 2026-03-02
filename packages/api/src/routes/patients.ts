@@ -537,7 +537,10 @@ patientRouter.get("/:id/progress", async (req, res, next) => {
 patientRouter.get("/:id/safety-plan", crisisLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const patient = await resolvePatient(
+      req.params.id as string,
+      req.user!.tid,
+    );
     const row = await prisma.safetyPlan.findUnique({
       where: { patientId: patient.id },
     });
@@ -576,7 +579,10 @@ const updateSafetyPlanSchema = z
 patientRouter.put("/:id/safety-plan", crisisLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const patient = await resolvePatient(
+      req.params.id as string,
+      req.user!.tid,
+    );
 
     const data = updateSafetyPlanSchema.parse(req.body);
     const row = await prisma.safetyPlan.upsert({
@@ -1041,11 +1047,15 @@ patientRouter.get("/:id/voice/:memoId", async (req, res, next) => {
 patientRouter.get("/:id/settings", async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const resolved = await resolvePatient(req.params.id, req.user!.tid);
+    const resolved = await resolvePatient(
+      req.params.id as string,
+      req.user!.tid,
+    );
     const patient = await prisma.patient.findUnique({
       where: { id: resolved.id },
       select: { preferences: true, language: true },
     });
+    if (!patient) throw new AppError("Patient not found", 404);
 
     const prefs = (patient.preferences as any) ?? {};
     res.json({
@@ -1084,11 +1094,15 @@ patientRouter.patch("/:id/settings", async (req, res, next) => {
     const body = patientSettingsSchema.parse(req.body);
 
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const resolved = await resolvePatient(req.params.id, req.user!.tid);
+    const resolved = await resolvePatient(
+      req.params.id as string,
+      req.user!.tid,
+    );
     const patient = await prisma.patient.findUnique({
       where: { id: resolved.id },
       select: { preferences: true, language: true },
     });
+    if (!patient) throw new AppError("Patient not found", 404);
 
     const currentPrefs = (patient.preferences as any) ?? {};
     const updatedPrefs = { ...currentPrefs };
