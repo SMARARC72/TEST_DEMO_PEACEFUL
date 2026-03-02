@@ -102,7 +102,15 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
     await initializeChain();
 
     const userId = req.user?.sub ?? null;
-    const tenantId = req.user?.tid ?? 'unknown';
+    const tenantId = req.user?.tid ?? null;
+    
+    // Skip audit logging for unauthenticated requests (login, register, etc.)
+    // These don't have a valid tenant context and would violate FK constraint
+    if (!tenantId) {
+      auditLogger.debug({ path: req.path, method: req.method }, 'Skipping audit log for unauthenticated request');
+      return;
+    }
+    
     const action = `${req.method} ${req.path}`;
 
     // Derive resource type and id from route params
