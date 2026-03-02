@@ -140,7 +140,7 @@ function getNavType(): string {
 function defaultReporter(metric: WebVitalMetric) {
   if (import.meta.env.DEV) {
     const color = metric.rating === 'good' ? '#22c55e' : metric.rating === 'needs-improvement' ? '#eab308' : '#ef4444';
-    console.log(
+    console.warn(
       `%c[Web Vital] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`,
       `color: ${color}; font-weight: bold;`,
     );

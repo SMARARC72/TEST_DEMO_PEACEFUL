@@ -220,10 +220,11 @@ export default function SessionPrepPage() {
 
       {/* Notes */}
       <div className="mb-6">
-        <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label htmlFor="session-prep-notes" className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
           Additional notes <span className="text-neutral-400">(optional)</span>
         </label>
         <textarea
+          id="session-prep-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}

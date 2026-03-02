@@ -124,7 +124,6 @@ export default function LoginPage() {
                 maxLength={6}
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                autoFocus
               />
               <Button onClick={onMfaSubmit} className="w-full" loading={isLoading}>
                 Verify

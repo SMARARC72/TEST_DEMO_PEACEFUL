@@ -16,7 +16,7 @@ function cleanDistPlugin() {
         const filePath = path.resolve(__dirname, 'dist', file)
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
-          console.log(`  🗑  Removed dev-only file from dist: ${file}`)
+          console.warn(`  🗑  Removed dev-only file from dist: ${file}`)
         }
       }
     },

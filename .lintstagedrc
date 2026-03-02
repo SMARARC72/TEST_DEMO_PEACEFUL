@@ -1,7 +1,6 @@
 {
   "prototype-web/src/**/*.{ts,tsx}": [
-    "npx eslint --fix",
-    "npx prettier --write"
+    "node -e \"const { execSync } = require('child_process'); const root = execSync('git rev-parse --show-toplevel').toString().trim(); execSync('cd ' + root + '/prototype-web && npm run lint -- --fix', { stdio: 'inherit', shell: true });\""
   ],
   "packages/api/src/**/*.ts": [
     "npx prettier --write"

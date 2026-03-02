@@ -161,10 +161,11 @@ export default function ClinicianSettingsPage() {
         <CardContent className="space-y-4">
           <Toggle label="Multi-Factor Authentication (MFA)" checked={settings.security.mfaEnabled} onChange={(v) => updateSecurity('mfaEnabled', v)} />
           <div>
-            <label className="text-sm text-neutral-700 dark:text-neutral-300">
+            <label htmlFor="session-timeout" className="text-sm text-neutral-700 dark:text-neutral-300">
               Session Timeout (minutes)
             </label>
             <select
+              id="session-timeout"
               value={settings.security.sessionTimeout}
               onChange={(e) => updateSecurity('sessionTimeout', Number(e.target.value))}
               className="mt-1 block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"

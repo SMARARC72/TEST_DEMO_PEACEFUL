@@ -102,10 +102,10 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
         {step === 'password' ? (
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+              <label htmlFor="stepup-email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                 Email
               </label>
-              <Input value={userEmail} disabled aria-label="Email" />
+              <Input id="stepup-email" value={userEmail} disabled aria-label="Email" />
             </div>
             <div>
               <label htmlFor="stepup-password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
@@ -117,7 +117,6 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                autoFocus
                 required
                 autoComplete="current-password"
               />
@@ -149,7 +148,6 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
                 value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
-                autoFocus
                 required
                 inputMode="numeric"
                 maxLength={6}

@@ -90,6 +90,14 @@ export default function ChatPage() {
 
       const decoder = new TextDecoder();
       let accumulated = '';
+      let streamDone = false;
+
+      const appendContent = (content: string) => {
+        accumulated += content;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: accumulated } : m)),
+        );
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -99,30 +107,25 @@ export default function ChatPage() {
         const lines = chunk.split('\n');
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') break;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                accumulated += parsed.content;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantId ? { ...m, content: accumulated } : m,
-                  ),
-                );
-              }
-            } catch {
-              // Non-JSON SSE line, append as text
-              accumulated += data;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: accumulated } : m,
-                ),
-              );
+          if (!line.startsWith('data: ')) continue;
+
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              appendContent(parsed.content);
             }
+          } catch {
+            appendContent(data);
           }
         }
+
+        if (streamDone) break;
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
