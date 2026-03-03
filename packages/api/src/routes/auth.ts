@@ -19,6 +19,13 @@ import {
 import { authLogger } from "../utils/logger.js";
 import { sendSuccess } from "../utils/response.js";
 import { prisma } from "../models/index.js";
+import {
+  redisSet,
+  redisGet,
+  redisDel,
+  redisExists,
+} from "../services/redis.js";
+import { sendEmail } from "../services/notification.js";
 
 // Infer the User row type from the Prisma client's return type
 type PrismaUser = NonNullable<
@@ -52,13 +59,13 @@ function toUserResponse(u: PrismaUser) {
   };
 }
 
-// ─── In-memory stores (acceptable for MFA challenges & token revocation) ──
+// ─── Distributed stores (Redis-backed, in-memory fallback) ──────────
 
-/** Pending MFA verification codes keyed by userId. */
-const pendingMFA: Record<string, string> = {};
-
-/** Revoked refresh tokens (move to Redis / DB for multi-instance). */
-const invalidatedTokens = new Set<string>();
+// Key prefixes for Redis
+const MFA_KEY = (userId: string) => `mfa:${userId}`;
+const REVOKED_KEY = (token: string) => `revoked:${token}`;
+const MFA_TTL = 300; // 5 minutes
+const REVOKED_TTL = 7 * 24 * 3600; // 7 days (matches refresh token max age)
 
 // SEC-004: Per-route rate limiting for auth endpoints (from shared module)
 const loginLimiter = authLimiter;
@@ -188,14 +195,30 @@ authRouter.post("/register", async (req, res, next) => {
 const loginBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
+  tenantSlug: z.string().min(1).max(100).optional(),
 });
 
 authRouter.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const body = loginBodySchema.parse(req.body);
 
-    // Look up user by email in Postgres
-    const user = await prisma.user.findFirst({ where: { email: body.email } });
+    // C4: Resolve tenant — prevents cross-tenant login
+    let tenant;
+    if (body.tenantSlug) {
+      tenant = await prisma.tenant.findUnique({
+        where: { slug: body.tenantSlug },
+      });
+      if (!tenant) throw new AppError("Invalid credentials", 401);
+    } else {
+      // Pilot single-tenant fallback: use the first tenant
+      tenant = await prisma.tenant.findFirst({ orderBy: { createdAt: "asc" } });
+      if (!tenant) throw new AppError("No organization configured", 500);
+    }
+
+    // Look up user by email scoped to tenant (C4 fix)
+    const user = await prisma.user.findFirst({
+      where: { email: body.email, tenantId: tenant.id },
+    });
     if (!user) {
       throw new AppError("Invalid credentials", 401);
     }
@@ -212,23 +235,29 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       data: { lastLogin: new Date() },
     });
 
-    // If MFA is enabled, send code and require verification
+    // If MFA is enabled, generate code, store in Redis, deliver via SES
     if (user.mfaEnabled) {
       const code = generateMFACode();
-      pendingMFA[user.id] = code;
-      // SEC-006: Only log MFA code in non-production environments
-      if (process.env.NODE_ENV !== "production") {
-        authLogger.info(
-          { userId: user.id, code },
-          "MFA code generated (dev log)",
-        );
-      } else {
-        authLogger.info({ userId: user.id }, "MFA code generated");
-      }
+      await redisSet(MFA_KEY(user.id), code, MFA_TTL);
+
+      // C1/C7: Actually deliver the MFA code via email
+      await sendEmail(
+        user.email,
+        "Your Peacefull verification code",
+        "mfa-code",
+        {
+          code,
+        },
+      );
+
+      authLogger.info(
+        { userId: user.id },
+        "MFA code generated and sent via email",
+      );
       sendSuccess(res, req, {
         mfaRequired: true,
         userId: user.id,
-        message: "MFA code sent to registered device",
+        message: "MFA code sent to your email address",
       });
       return;
     }
@@ -258,7 +287,7 @@ const mfaBodySchema = z.object({
 authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
   try {
     const body = mfaBodySchema.parse(req.body);
-    const expectedCode = pendingMFA[body.userId];
+    const expectedCode = await redisGet(MFA_KEY(body.userId));
 
     if (!expectedCode) {
       throw new AppError("No pending MFA challenge", 400);
@@ -268,7 +297,7 @@ authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
       throw new AppError("Invalid MFA code", 401);
     }
 
-    delete pendingMFA[body.userId];
+    await redisDel(MFA_KEY(body.userId));
 
     // Fetch user from DB
     const user = await prisma.user.findUnique({ where: { id: body.userId } });
@@ -309,7 +338,8 @@ authRouter.post("/refresh", async (req, res, next) => {
   try {
     const body = refreshBodySchema.parse(req.body);
 
-    if (invalidatedTokens.has(body.refreshToken)) {
+    // C6: Check Redis-backed revocation list
+    if (await redisExists(REVOKED_KEY(body.refreshToken))) {
       throw new AppError("Refresh token has been invalidated", 401);
     }
 
@@ -343,11 +373,12 @@ const logoutBodySchema = z
   })
   .strict();
 
-authRouter.post("/logout", authenticate, (req, res, next) => {
+authRouter.post("/logout", authenticate, async (req, res, next) => {
   try {
     const body = logoutBodySchema.parse(req.body);
     if (body.refreshToken) {
-      invalidatedTokens.add(body.refreshToken);
+      // C6: Persist revocation in Redis with TTL
+      await redisSet(REVOKED_KEY(body.refreshToken), "1", REVOKED_TTL);
     }
     authLogger.info({ userId: req.user!.sub }, "User logged out");
     sendSuccess(res, req, { message: "Logged out successfully" });
@@ -416,9 +447,19 @@ authRouter.post("/forgot-password", loginLimiter, async (req, res, next) => {
     // Always return success to prevent email enumeration (SEC-007)
     const user = await prisma.user.findFirst({ where: { email: body.email } });
     if (user) {
-      authLogger.info({ userId: user.id }, "Password reset requested");
-      // In production: send email via SES with reset link + token
-      // For now, log the event for audit trail
+      // Generate a time-limited reset token (reuse MFA code path for now)
+      const resetCode = generateMFACode();
+      await redisSet(`reset:${user.id}`, resetCode, 3600); // 1 hour TTL
+      const resetUrl = `${process.env.FRONTEND_URL ?? "https://peacefullai.netlify.app"}/reset-password?userId=${user.id}&code=${resetCode}`;
+      await sendEmail(
+        user.email,
+        "Reset your Peacefull password",
+        "password-reset",
+        {
+          resetUrl,
+        },
+      );
+      authLogger.info({ userId: user.id }, "Password reset email sent");
     }
 
     sendSuccess(res, req, {
@@ -446,10 +487,16 @@ authRouter.post("/step-up/verify", authenticate, async (req, res, next) => {
 
     if (user.mfaEnabled) {
       const code = generateMFACode();
-      pendingMFA[user.id] = code;
-      if (process.env.NODE_ENV !== "production") {
-        authLogger.info({ userId: user.id, code }, "Step-up MFA code (dev)");
-      }
+      await redisSet(MFA_KEY(user.id), code, MFA_TTL);
+      await sendEmail(
+        user.email,
+        "Your Peacefull verification code",
+        "mfa-code",
+        {
+          code,
+        },
+      );
+      authLogger.info({ userId: user.id }, "Step-up MFA code sent via email");
       sendSuccess(res, req, { mfaRequired: true });
       return;
     }
@@ -480,13 +527,13 @@ authRouter.post(
     try {
       const body = stepUpMfaSchema.parse(req.body);
       const userId = req.user!.sub;
-      const expectedCode = pendingMFA[userId];
+      const expectedCode = await redisGet(MFA_KEY(userId));
 
       if (!expectedCode) throw new AppError("No pending MFA challenge", 400);
       if (!verifyMFACode(body.code, expectedCode))
         throw new AppError("Invalid MFA code", 401);
 
-      delete pendingMFA[userId];
+      await redisDel(MFA_KEY(userId));
 
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user) throw new AppError("User not found", 404);

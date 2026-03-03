@@ -259,6 +259,32 @@ function renderTemplate(
           </p>
         </body></html>
       `;
+    case "mfa-code":
+      return `
+        <html><body style="font-family: sans-serif; padding: 20px; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Your Peacefull verification code</h2>
+          <p>Use the following code to complete your sign-in. It expires in 5 minutes.</p>
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1e293b;">${String(data.code)}</span>
+          </div>
+          <p style="color: #666; font-size: 13px;">If you did not request this code, please ignore this email or contact support.</p>
+          <hr/>
+          <p style="color: #94a3b8; font-size: 11px;">Peacefull.ai — Secure Mental Health Platform</p>
+        </body></html>
+      `;
+    case "password-reset":
+      return `
+        <html><body style="font-family: sans-serif; padding: 20px; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Reset your Peacefull password</h2>
+          <p>We received a request to reset your password. Click the button below to set a new one.</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${String(data.resetUrl)}" style="background: #2563eb; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold;">Reset Password</a>
+          </div>
+          <p style="color: #666; font-size: 13px;">This link expires in 1 hour. If you did not request a reset, ignore this email.</p>
+          <hr/>
+          <p style="color: #94a3b8; font-size: 11px;">Peacefull.ai — Secure Mental Health Platform</p>
+        </body></html>
+      `;
     default:
       return `
         <html><body style="font-family: sans-serif; padding: 20px;">
