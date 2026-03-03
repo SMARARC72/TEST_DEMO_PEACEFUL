@@ -36,13 +36,13 @@ export function SubmissionReflection({ reflection, className = '' }: Props) {
       </div>
 
       {/* Evidence */}
-      {reflection.evidence.length > 0 && (
+      {(reflection.evidence?.length ?? 0) > 0 && (
         <div className="mb-4">
           <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             Key Points
           </h4>
           <ul className="space-y-1">
-            {reflection.evidence.map((item, i) => (
+            {reflection.evidence!.map((item, i) => (
               <li
                 key={i}
                 className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-300"
@@ -56,13 +56,13 @@ export function SubmissionReflection({ reflection, className = '' }: Props) {
       )}
 
       {/* Known Unknowns */}
-      {reflection.unknowns.length > 0 && (
+      {(reflection.unknowns?.length ?? 0) > 0 && (
         <div className="rounded-xl bg-amber-50 p-3 dark:bg-amber-900/20">
           <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
             Not Yet Assessed
           </h4>
           <ul className="space-y-1">
-            {reflection.unknowns.map((item, i) => (
+            {reflection.unknowns!.map((item, i) => (
               <li
                 key={i}
                 className="text-sm text-amber-700 dark:text-amber-300"
