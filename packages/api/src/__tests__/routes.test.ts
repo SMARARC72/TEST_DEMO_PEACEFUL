@@ -125,7 +125,7 @@ describe('Auth routes', () => {
       .set('Authorization', `Bearer ${clinicianToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('email', 'dr.smith@clinic.com');
+    expect(res.body.data).toHaveProperty('email', 'dr.smith@clinic.com');
   });
 
   it('POST /api/v1/auth/logout requires authentication', async () => {
@@ -245,8 +245,8 @@ describe('Upload routes', () => {
       .set('Authorization', `Bearer ${clinicianToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('allowedTypes');
-    expect(Array.isArray(res.body.allowedTypes)).toBe(true);
+    expect(res.body.data).toHaveProperty('allowedTypes');
+    expect(Array.isArray(res.body.data.allowedTypes)).toBe(true);
   });
 
   it('POST /api/v1/uploads/presign returns 401 without auth', async () => {

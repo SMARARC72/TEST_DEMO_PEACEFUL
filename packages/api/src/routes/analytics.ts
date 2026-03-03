@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { prisma } from '../models/index.js';
 import { UserRole } from '@peacefull/shared';
+import { sendSuccess } from '../utils/response.js';
 
 export const analyticsRouter = Router();
 
@@ -83,7 +84,7 @@ analyticsRouter.get('/population', async (req, res, next) => {
     const weeks = Math.max(1, (Date.now() - since.getTime()) / (7 * 86_400_000));
     const avgSessionsPerWeek = Math.round((sessionCount / weeks) * 10) / 10;
 
-    res.json({
+    sendSuccess(res, req, {
       tenantId,
       period,
       metrics: {
@@ -181,7 +182,7 @@ analyticsRouter.get('/kpi', async (req, res, next) => {
     const draftAcceptRate = totalDraftsReviewed > 0 ? Math.round((approvedDrafts / totalDraftsReviewed) * 100) : 0;
     const slaCompliance = totalEscalations > 0 ? Math.round((slaMetEscalations / totalEscalations) * 1000) / 10 : 100;
 
-    res.json({
+    sendSuccess(res, req, {
       kpis: [
         {
           name: 'Patient Engagement Rate',
@@ -248,7 +249,7 @@ analyticsRouter.get('/roi', async (req, res, next) => {
 
     const totalAnnualSavings = annualDocSavings + annualInterventionSavings;
 
-    res.json({
+    sendSuccess(res, req, {
       summary: {
         annualSavings: totalAnnualSavings,
         clinicianCount,
@@ -282,7 +283,7 @@ analyticsRouter.get('/financials', async (req, res, next) => {
     const tenantId = req.user!.tid;
     const patientCount = await prisma.patient.count({ where: { tenantId } });
 
-    res.json({
+    sendSuccess(res, req, {
       tam: {
         value: 12_000_000_000,
         label: 'Total Addressable Market',

@@ -365,7 +365,7 @@ describe('Session note signing (CLIN-003)', () => {
       .set('Authorization', `Bearer ${supervisor()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.signed).toBe(true);
+    expect(res.body.data.signed).toBe(true);
   });
 });
 

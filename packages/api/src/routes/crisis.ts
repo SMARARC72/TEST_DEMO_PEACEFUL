@@ -12,6 +12,8 @@ import { hashChain } from '../middleware/audit.js';
 import { prisma } from '../models/index.js';
 import { escalationCascade } from '../services/notification.js';
 import { apiLogger } from '../utils/logger.js';
+import { sendSuccess } from '../utils/response.js';
+import { AppError } from '../middleware/error.js';
 import type { EscalationItem } from '@peacefull/shared';
 
 export const crisisRouter = Router();
@@ -44,12 +46,10 @@ crisisRouter.post('/alert', crisisLimiter, async (req, res, next) => {
     });
 
     if (!patient) {
-      res.status(404).json({ error: 'Patient not found' });
-      return;
+      throw new AppError('Patient not found', 404);
     }
     if (patient.tenantId !== tenantId) {
-      res.status(403).json({ error: 'Access denied' });
-      return;
+      throw new AppError('Access denied', 403);
     }
 
     // Persist the crisis escalation record (T3 — highest severity)
@@ -136,7 +136,7 @@ crisisRouter.post('/alert', crisisLimiter, async (req, res, next) => {
       );
     });
 
-    res.status(201).json({
+    sendSuccess(res, req, {
       escalationId: escalation.id,
       status: 'OPEN',
       tier: 'T3',
@@ -149,7 +149,7 @@ crisisRouter.post('/alert', crisisLimiter, async (req, res, next) => {
         emergencyServices: '911',
         samhsa: '1-800-662-4357',
       },
-    });
+    }, 201);
   } catch (err) {
     next(err);
   }

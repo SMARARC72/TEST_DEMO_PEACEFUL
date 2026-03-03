@@ -7,6 +7,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { AppError } from "../middleware/error.js";
+import { sendSuccess } from "../utils/response.js";
 import { crisisLimiter, exportLimiter } from "../middleware/rate-limit.js";
 import { hashChain } from "../middleware/audit.js";
 import { prisma } from "../models/index.js";
@@ -202,7 +203,7 @@ patientRouter.get("/", async (req, res, next) => {
       where: { tenantId: req.user!.tid },
       include: patientInclude,
     });
-    res.json(rows.map(toPatientResponse));
+    sendSuccess(res, req, rows.map(toPatientResponse));
   } catch (err) {
     next(err);
   }
@@ -219,7 +220,7 @@ patientRouter.get("/:id", async (req, res, next) => {
       include: patientInclude,
     });
     if (!row) throw new AppError("Patient not found", 404);
-    res.json(toPatientResponse(row));
+    sendSuccess(res, req, toPatientResponse(row));
   } catch (err) {
     next(err);
   }
@@ -266,7 +267,7 @@ patientRouter.patch("/:id", async (req, res, next) => {
       data,
       include: patientInclude,
     });
-    res.json(toPatientResponse(row));
+    sendSuccess(res, req, toPatientResponse(row));
   } catch (err) {
     // Prisma P2025 = record not found
     if ((err as { code?: string }).code === "P2025") {
@@ -290,7 +291,7 @@ patientRouter.put("/:id", async (req, res, next) => {
       data,
       include: patientInclude,
     });
-    res.json(toPatientResponse(row));
+    sendSuccess(res, req, toPatientResponse(row));
   } catch (err) {
     if ((err as { code?: string }).code === "P2025") {
       next(new AppError("Patient not found", 404));
@@ -336,7 +337,7 @@ patientRouter.post("/:id/submissions", async (req, res, next) => {
       void err;
     });
 
-    res.status(201).json(toSubmissionResponse(row));
+    sendSuccess(res, req, toSubmissionResponse(row), 201);
   } catch (err) {
     next(err);
   }
@@ -363,7 +364,7 @@ patientRouter.get("/:id/submissions", async (req, res, next) => {
       prisma.submission.count({ where: { patientId: patient.id } }),
     ]);
 
-    res.json({
+    sendSuccess(res, req, {
       data: items.map(toSubmissionResponse),
       page,
       limit,
@@ -385,7 +386,7 @@ patientRouter.get("/:id/submissions/:subId", async (req, res, next) => {
       include: submissionInclude,
     });
     if (!row) throw new AppError("Submission not found", 404);
-    res.json(toSubmissionResponse(row));
+    sendSuccess(res, req, toSubmissionResponse(row));
   } catch (err) {
     next(err);
   }
@@ -476,7 +477,7 @@ patientRouter.get("/:id/session-prep", async (req, res, next) => {
         : "No previous session notes found.",
     };
 
-    res.json(sessionPrep);
+    sendSuccess(res, req, sessionPrep);
   } catch (err) {
     next(err);
   }
@@ -495,7 +496,7 @@ const sessionPrepSchema = z
 
 patientRouter.put("/:id/session-prep", (req, res) => {
   const data = sessionPrepSchema.parse(req.body);
-  res.json(data);
+  sendSuccess(res, req, data);
 });
 
 // ─── GET /:id/progress ──────────────────────────────────────────────
@@ -526,7 +527,7 @@ patientRouter.get("/:id/progress", async (req, res, next) => {
         }[]) ?? [],
     };
 
-    res.json(progress);
+    sendSuccess(res, req, progress);
   } catch (err) {
     next(err);
   }
@@ -554,7 +555,7 @@ patientRouter.get("/:id/safety-plan", crisisLimiter, async (req, res, next) => {
       version: row.version,
     };
 
-    res.json(plan);
+    sendSuccess(res, req, plan);
   } catch (err) {
     next(err);
   }
@@ -611,7 +612,7 @@ patientRouter.put("/:id/safety-plan", crisisLimiter, async (req, res, next) => {
       version: row.version,
     };
 
-    res.json(plan);
+    sendSuccess(res, req, plan);
   } catch (err) {
     next(err);
   }
@@ -650,7 +651,7 @@ patientRouter.get("/:id/memories", async (req, res, next) => {
       }),
     );
 
-    res.json(memories);
+    sendSuccess(res, req, memories);
   } catch (err) {
     next(err);
   }
@@ -703,7 +704,7 @@ patientRouter.get("/:id/history", async (req, res, next) => {
       })),
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    res.json({ patientId: patient.id, timeline });
+    sendSuccess(res, req, { patientId: patient.id, timeline });
   } catch (err) {
     next(err);
   }
@@ -712,8 +713,8 @@ patientRouter.get("/:id/history", async (req, res, next) => {
 // ─── GET /:id/resources ─────────────────────────────────────────────
 // Static resource list — no DB dependency.
 
-patientRouter.get("/:id/resources", (_req, res) => {
-  res.json({
+patientRouter.get("/:id/resources", (req, res) => {
+  sendSuccess(res, req, {
     copingStrategies: [
       { name: "4-7-8 Breathing", category: "Breathing", duration: "5 min" },
       {
@@ -785,7 +786,7 @@ patientRouter.post("/:id/checkin", async (req, res, next) => {
       patientId: patient.id,
       createdAt: row.createdAt.toISOString(),
     };
-    res.status(201).json(checkin);
+    sendSuccess(res, req, checkin, 201);
   } catch (err) {
     next(err);
   }
@@ -829,7 +830,7 @@ patientRouter.post("/:id/journal", async (req, res, next) => {
       category: body.category,
       createdAt: row.createdAt.toISOString(),
     };
-    res.status(201).json(entry);
+    sendSuccess(res, req, entry, 201);
   } catch (err) {
     next(err);
   }
@@ -878,7 +879,7 @@ patientRouter.post("/:id/voice", async (req, res, next) => {
       duration: 0,
       createdAt: row.createdAt.toISOString(),
     };
-    res.status(201).json(memo);
+    sendSuccess(res, req, memo, 201);
   } catch (err) {
     next(err);
   }
@@ -916,7 +917,7 @@ patientRouter.get("/:id/checkin/history", async (req, res, next) => {
       };
     });
 
-    res.json(history);
+    sendSuccess(res, req, history);
   } catch (err) {
     next(err);
   }
@@ -944,7 +945,7 @@ patientRouter.get("/:id/journal", async (req, res, next) => {
       createdAt: r.createdAt.toISOString(),
     }));
 
-    res.json(journals);
+    sendSuccess(res, req, journals);
   } catch (err) {
     next(err);
   }
@@ -966,7 +967,7 @@ patientRouter.get(
         throw new AppError("Submission not found", 404);
       }
 
-      res.json({
+      sendSuccess(res, req, {
         id: submission.id,
         submissionId: submission.id,
         patientTone: submission.patientTone ?? "neutral",
@@ -1007,7 +1008,7 @@ patientRouter.get("/:id/voice", async (req, res, next) => {
       createdAt: r.createdAt.toISOString(),
     }));
 
-    res.json(memos);
+    sendSuccess(res, req, memos);
   } catch (err) {
     next(err);
   }
@@ -1036,7 +1037,7 @@ patientRouter.get("/:id/voice/:memoId", async (req, res, next) => {
       createdAt: row.createdAt.toISOString(),
     };
 
-    res.json(memo);
+    sendSuccess(res, req, memo);
   } catch (err) {
     next(err);
   }
@@ -1058,7 +1059,7 @@ patientRouter.get("/:id/settings", async (req, res, next) => {
     if (!patient) throw new AppError("Patient not found", 404);
 
     const prefs = (patient.preferences as any) ?? {};
-    res.json({
+    sendSuccess(res, req, {
       notifications: prefs.notifications ?? true,
       language: patient.language ?? "en",
       theme: prefs.theme ?? "calm-blue",
@@ -1128,7 +1129,7 @@ patientRouter.patch("/:id/settings", async (req, res, next) => {
       },
     });
 
-    res.json({
+    sendSuccess(res, req, {
       notifications: updatedPrefs.notifications ?? true,
       language: body.language ?? patient.language ?? "en",
       theme: updatedPrefs.theme ?? "calm-blue",
@@ -1156,7 +1157,7 @@ patientRouter.get("/:id/consent", async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
 
-    res.json(
+    sendSuccess(res, req,
       records.map((r: any) => ({
         id: r.id,
         type: r.type,
@@ -1435,7 +1436,7 @@ patientRouter.get("/:id/data-export", exportLimiter, async (req, res, next) => {
       `attachment; filename="peacefull-data-export-${patientId}.json"`,
     );
     res.setHeader("Content-Type", "application/json");
-    res.json(exportData);
+    sendSuccess(res, req, exportData);
   } catch (err) {
     next(err);
   }

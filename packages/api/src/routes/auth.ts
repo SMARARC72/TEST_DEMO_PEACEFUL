@@ -17,6 +17,7 @@ import {
   verifyMFACode,
 } from '../services/auth.js';
 import { authLogger } from '../utils/logger.js';
+import { sendSuccess } from '../utils/response.js';
 import { prisma } from '../models/index.js';
 
 // Infer the User row type from the Prisma client's return type
@@ -134,11 +135,11 @@ authRouter.post('/register', async (req, res, next) => {
     authLogger.info({ userId: user.id, role: body.role, status }, 'User registered');
 
     if (status === 'SUSPENDED') {
-      res.status(201).json({
+      sendSuccess(res, req, {
         message: 'Registration successful. Your clinician account is pending admin approval.',
         userId: user.id,
         status: 'PENDING_APPROVAL',
-      });
+      }, 201);
       return;
     }
 
@@ -149,10 +150,10 @@ authRouter.post('/register', async (req, res, next) => {
       role: user.role as unknown as import('@peacefull/shared').UserRole,
     });
 
-    res.status(201).json({
+    sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
-    });
+    }, 201);
   } catch (err) {
     next(err);
   }
@@ -197,7 +198,7 @@ authRouter.post('/login', loginLimiter, async (req, res, next) => {
       } else {
         authLogger.info({ userId: user.id }, 'MFA code generated');
       }
-      res.json({
+      sendSuccess(res, req, {
         mfaRequired: true,
         userId: user.id,
         message: 'MFA code sent to registered device',
@@ -207,7 +208,7 @@ authRouter.post('/login', loginLimiter, async (req, res, next) => {
 
     // Generate tokens (expects { id, tenantId, role })
     const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
-    res.json({
+    sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
     });
@@ -245,7 +246,7 @@ authRouter.post('/mfa-verify', mfaLimiter, async (req, res, next) => {
     }
 
     const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
-    res.json({
+    sendSuccess(res, req, {
       ...tokens,
       user: {
         id: user.id,
@@ -289,7 +290,7 @@ authRouter.post('/refresh', async (req, res, next) => {
     }
 
     const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
-    res.json(tokens);
+    sendSuccess(res, req, tokens);
   } catch (err) {
     next(err);
   }
@@ -308,7 +309,7 @@ authRouter.post('/logout', authenticate, (req, res, next) => {
       invalidatedTokens.add(body.refreshToken);
     }
     authLogger.info({ userId: req.user!.sub }, 'User logged out');
-    res.json({ message: 'Logged out successfully' });
+    sendSuccess(res, req, { message: 'Logged out successfully' });
   } catch (err) {
     next(err);
   }
@@ -336,7 +337,7 @@ authRouter.post('/step-up', authenticate, async (req, res, next) => {
 
     const stepUpTokens = generateStepUpToken({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
     authLogger.info({ userId: user.id }, 'Step-up auth completed');
-    res.json(stepUpTokens);
+    sendSuccess(res, req, stepUpTokens);
   } catch (err) {
     next(err);
   }
@@ -351,7 +352,7 @@ authRouter.get('/me', authenticate, async (req, res, next) => {
       throw new AppError('User not found', 404);
     }
 
-    res.json(toUserResponse(user));
+    sendSuccess(res, req, toUserResponse(user));
   } catch (err) {
     next(err);
   }
@@ -375,7 +376,7 @@ authRouter.post('/forgot-password', loginLimiter, async (req, res, next) => {
       // For now, log the event for audit trail
     }
 
-    res.json({
+    sendSuccess(res, req, {
       success: true,
       message: 'If an account with that email exists, a password reset link has been sent.',
     });
@@ -403,7 +404,7 @@ authRouter.post('/step-up/verify', authenticate, async (req, res, next) => {
       if (process.env.NODE_ENV !== 'production') {
         authLogger.info({ userId: user.id, code }, 'Step-up MFA code (dev)');
       }
-      res.json({ mfaRequired: true });
+      sendSuccess(res, req, { mfaRequired: true });
       return;
     }
 
@@ -413,7 +414,7 @@ authRouter.post('/step-up/verify', authenticate, async (req, res, next) => {
       role: user.role as unknown as import('@peacefull/shared').UserRole,
     });
     authLogger.info({ userId: user.id }, 'Step-up verify completed');
-    res.json({ elevatedToken: stepUpTokens.accessToken });
+    sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
   } catch (err) {
     next(err);
   }
@@ -445,7 +446,7 @@ authRouter.post('/step-up/mfa', authenticate, mfaLimiter, async (req, res, next)
       role: user.role as unknown as import('@peacefull/shared').UserRole,
     });
     authLogger.info({ userId: user.id }, 'Step-up MFA completed');
-    res.json({ elevatedToken: stepUpTokens.accessToken });
+    sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
   } catch (err) {
     next(err);
   }
@@ -453,7 +454,7 @@ authRouter.post('/step-up/mfa', authenticate, mfaLimiter, async (req, res, next)
 
 // ─── GET /tenants ────────────────────────────────────────────────────
 
-authRouter.get('/tenants', async (_req, res, next) => {
+authRouter.get('/tenants', async (req, res, next) => {
   try {
     const tenants = await prisma.tenant.findMany({
       select: {
@@ -466,7 +467,7 @@ authRouter.get('/tenants', async (_req, res, next) => {
       orderBy: { name: 'asc' },
     });
 
-    res.json({
+    sendSuccess(res, req, {
       tenants: tenants.map((t) => ({
         id: t.id,
         slug: t.slug,

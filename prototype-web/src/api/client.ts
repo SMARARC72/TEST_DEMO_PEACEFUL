@@ -59,11 +59,15 @@ async function attemptRefresh(): Promise<boolean> {
   if (!refresh) return false;
 
   try {
-    const res = await ky
+    const raw = await ky
       .post(`${BASE_URL}/auth/refresh`, {
         json: { refreshToken: refresh },
       })
-      .json<{ accessToken: string; refreshToken: string }>();
+      .json();
+
+    const res = (raw && typeof raw === 'object' && 'data' in raw && 'requestId' in raw)
+      ? (raw as { data: { accessToken: string; refreshToken: string } }).data
+      : raw as { accessToken: string; refreshToken: string };
 
     setTokens(res.accessToken, res.refreshToken);
     return true;
@@ -139,6 +143,22 @@ export default api;
 // ─── Helpers ──────────────────────────────────
 
 /**
+ * Unwrap the standardized API response envelope `{ data, requestId, timestamp }`.
+ * Falls back gracefully for raw (non-envelope) responses during migration.
+ */
+function unwrapEnvelope<T>(raw: unknown): T {
+  if (
+    raw &&
+    typeof raw === 'object' &&
+    'data' in raw &&
+    'requestId' in raw
+  ) {
+    return (raw as { data: T }).data;
+  }
+  return raw as T;
+}
+
+/**
  * Normalise ky / fetch errors into ApiError shape.
  */
 export async function toApiError(err: unknown): Promise<ApiError> {
@@ -173,8 +193,8 @@ export async function toApiError(err: unknown): Promise<ApiError> {
  */
 export async function apiGet<T>(path: string, opts?: Options): Promise<[T, null] | [null, ApiError]> {
   try {
-    const data = await api.get(path, opts).json<T>();
-    return [data, null];
+    const raw = await api.get(path, opts).json();
+    return [unwrapEnvelope<T>(raw), null];
   } catch (err) {
     return [null, await toApiError(err)];
   }
@@ -182,8 +202,8 @@ export async function apiGet<T>(path: string, opts?: Options): Promise<[T, null]
 
 export async function apiPost<T>(path: string, body?: unknown, opts?: Options): Promise<[T, null] | [null, ApiError]> {
   try {
-    const data = await api.post(path, { ...opts, json: body }).json<T>();
-    return [data, null];
+    const raw = await api.post(path, { ...opts, json: body }).json();
+    return [unwrapEnvelope<T>(raw), null];
   } catch (err) {
     return [null, await toApiError(err)];
   }
@@ -191,8 +211,8 @@ export async function apiPost<T>(path: string, body?: unknown, opts?: Options): 
 
 export async function apiPatch<T>(path: string, body?: unknown, opts?: Options): Promise<[T, null] | [null, ApiError]> {
   try {
-    const data = await api.patch(path, { ...opts, json: body }).json<T>();
-    return [data, null];
+    const raw = await api.patch(path, { ...opts, json: body }).json();
+    return [unwrapEnvelope<T>(raw), null];
   } catch (err) {
     return [null, await toApiError(err)];
   }
@@ -202,8 +222,8 @@ export async function apiDelete<T = void>(path: string, opts?: Options): Promise
   try {
     const response = await api.delete(path, opts);
     if (response.status === 204) return [undefined as T, null];
-    const data = await response.json<T>();
-    return [data, null];
+    const raw = await response.json();
+    return [unwrapEnvelope<T>(raw), null];
   } catch (err) {
     return [null, await toApiError(err)];
   }

@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { sendSuccess } from '../utils/response.js';
 import {
   generateUploadUrl,
   generateDownloadUrl,
@@ -40,7 +41,7 @@ uploadRouter.post('/presign', async (req, res, next) => {
       body.contentType,
     );
 
-    res.json({
+    sendSuccess(res, req, {
       uploadUrl: result.uploadUrl,
       key: result.key,
       expiresAt: result.expiresAt,
@@ -67,7 +68,7 @@ uploadRouter.post('/download-url', async (req, res, next) => {
 
     const result = await generateDownloadUrl(body.key, user.tid);
 
-    res.json({
+    sendSuccess(res, req, {
       downloadUrl: result.downloadUrl,
       expiresAt: result.expiresAt,
     });
@@ -89,7 +90,7 @@ uploadRouter.delete('/*key', async (req, res, next) => {
     const user = req.user!;
     await deleteFile(key, user.tid);
 
-    res.json({ message: 'File deleted', key });
+    sendSuccess(res, req, { message: 'File deleted', key });
   } catch (err) {
     next(err);
   }
@@ -97,8 +98,8 @@ uploadRouter.delete('/*key', async (req, res, next) => {
 
 // ─── GET /allowed-types — List allowed upload MIME types ─────────────
 
-uploadRouter.get('/allowed-types', (_req, res) => {
-  res.json({
+uploadRouter.get('/allowed-types', (req, res) => {
+  sendSuccess(res, req, {
     allowedTypes: [...ALLOWED_CONTENT_TYPES],
     maxSizeMB: 25,
   });

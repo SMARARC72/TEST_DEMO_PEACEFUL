@@ -11,6 +11,7 @@ import { AppError } from "../middleware/error.js";
 import { crisisLimiter, exportLimiter } from "../middleware/rate-limit.js";
 import { UserRole } from "@peacefull/shared";
 import { prisma } from "../models/index.js";
+import { sendSuccess } from "../utils/response.js";
 
 export const clinicianRouter = Router();
 
@@ -83,7 +84,7 @@ clinicianRouter.get("/dashboard", async (req, res, next) => {
         }),
       ]);
 
-    res.json({
+    sendSuccess(res, req, {
       clinicianId: clinician.id,
       totalPatients,
       triageItems,
@@ -144,7 +145,7 @@ clinicianRouter.get("/caseload", async (req, res, next) => {
       };
     });
 
-    res.json({
+    sendSuccess(res, req, {
       clinicianId: clinician.id,
       totalPatients: patients.length,
       activePatients: patients.length,
@@ -202,7 +203,7 @@ clinicianRouter.get("/triage", async (req, res, next) => {
       updatedAt: item.updatedAt,
     }));
 
-    res.json({ data, total: data.length });
+    sendSuccess(res, req, { data, total: data.length });
   } catch (err) {
     next(err);
   }
@@ -240,7 +241,7 @@ clinicianRouter.patch("/triage/:id", async (req, res, next) => {
       },
     });
 
-    res.json(updated);
+    sendSuccess(res, req, updated);
   } catch (err) {
     next(err);
   }
@@ -274,7 +275,7 @@ clinicianRouter.get("/patients/:id", async (req, res, next) => {
       where: { patientId: patient.id },
     });
 
-    res.json({
+    sendSuccess(res, req, {
       id: patient.id,
       tenantId: patient.tenantId,
       name: `${patient.user.firstName} ${patient.user.lastName}`,
@@ -306,7 +307,7 @@ clinicianRouter.get("/patients/:id/drafts", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { createdAt: "desc" },
     });
-    res.json(drafts);
+    sendSuccess(res, req, drafts);
   } catch (err) {
     next(err);
   }
@@ -349,7 +350,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -366,7 +367,7 @@ clinicianRouter.get("/patients/:id/memories", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { createdAt: "desc" },
     });
-    res.json(proposals);
+    sendSuccess(res, req, proposals);
   } catch (err) {
     next(err);
   }
@@ -400,7 +401,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -417,7 +418,7 @@ clinicianRouter.get("/patients/:id/plans", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { createdAt: "desc" },
     });
-    res.json(plans);
+    sendSuccess(res, req, plans);
   } catch (err) {
     next(err);
   }
@@ -460,7 +461,7 @@ clinicianRouter.post("/patients/:id/plans", async (req, res, next) => {
       },
     });
 
-    res.status(201).json(plan);
+    sendSuccess(res, req, plan, 201);
   } catch (err) {
     next(err);
   }
@@ -490,7 +491,7 @@ clinicianRouter.patch("/patients/:id/plans/:planId", async (req, res, next) => {
       },
     });
 
-    res.json(updated);
+    sendSuccess(res, req, updated);
   } catch (err) {
     next(err);
   }
@@ -505,7 +506,7 @@ clinicianRouter.get("/patients/:id/mbc", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { date: "desc" },
     });
-    res.json(scores);
+    sendSuccess(res, req, scores);
   } catch (err) {
     next(err);
   }
@@ -559,7 +560,7 @@ clinicianRouter.post("/patients/:id/mbc", async (req, res, next) => {
       },
     });
 
-    res.status(201).json(newScore);
+    sendSuccess(res, req, newScore, 201);
   } catch (err) {
     next(err);
   }
@@ -575,7 +576,7 @@ clinicianRouter.get("/patients/:id/session-notes", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { date: "desc" },
     });
-    res.json(notes);
+    sendSuccess(res, req, notes);
   } catch (err) {
     next(err);
   }
@@ -609,7 +610,7 @@ clinicianRouter.post("/patients/:id/session-notes", async (req, res, next) => {
       },
     });
 
-    res.status(201).json(note);
+    sendSuccess(res, req, note, 201);
   } catch (err) {
     next(err);
   }
@@ -646,7 +647,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -663,7 +664,7 @@ clinicianRouter.get("/patients/:id/adherence", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { createdAt: "desc" },
     });
-    res.json(items);
+    sendSuccess(res, req, items);
   } catch (err) {
     next(err);
   }
@@ -694,7 +695,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -715,7 +716,7 @@ clinicianRouter.get(
         where: { patientId },
         orderBy: { detectedAt: "desc" },
       });
-      res.json(items);
+      sendSuccess(res, req, items);
     } catch (err) {
       next(err);
     }
@@ -748,7 +749,7 @@ clinicianRouter.get("/escalations", crisisLimiter, async (req, res, next) => {
       },
     }));
 
-    res.json({ data, total: data.length });
+    sendSuccess(res, req, { data, total: data.length });
   } catch (err) {
     next(err);
   }
@@ -798,7 +799,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -845,7 +846,7 @@ clinicianRouter.patch(
         },
       });
 
-      res.json(updated);
+      sendSuccess(res, req, updated);
     } catch (err) {
       next(err);
     }
@@ -870,7 +871,7 @@ clinicianRouter.post(
       const patientId = req.params.id as string;
       await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
 
-      res.json({
+      sendSuccess(res, req, {
         exportId: uuidv4(),
         patientId,
         format: body.format,
@@ -903,7 +904,7 @@ clinicianRouter.get("/triage/:id", async (req, res, next) => {
     // SEC-009: Verify caseload access
     await requireCaseloadAccess(req.user!.sub, req.user!.tid, item.patientId);
 
-    res.json({
+    sendSuccess(res, req, {
       ...item,
       patient: {
         id: item.patient.id,
@@ -946,7 +947,7 @@ clinicianRouter.get("/patients/:id/checkin", async (req, res, next) => {
       };
     });
 
-    res.json(checkins);
+    sendSuccess(res, req, checkins);
   } catch (err) {
     next(err);
   }
@@ -964,7 +965,7 @@ clinicianRouter.get("/patients/:id/journal", async (req, res, next) => {
       take: 100,
     });
 
-    res.json(
+    sendSuccess(res, req,
       rows.map((r: any) => ({
         id: r.id,
         patientId: r.patientId,
@@ -1009,7 +1010,7 @@ clinicianRouter.get("/patients/:id/recommendations", async (req, res, next) => {
       updatedAt: p.updatedAt.toISOString(),
     }));
 
-    res.json(recommendations);
+    sendSuccess(res, req, recommendations);
   } catch (err) {
     next(err);
   }
@@ -1048,7 +1049,7 @@ clinicianRouter.patch(
         data: { status: prismaStatus },
       });
 
-      res.json({
+      sendSuccess(res, req, {
         id: updated.id,
         patientId: updated.patientId,
         title: updated.goal,
@@ -1083,7 +1084,7 @@ clinicianRouter.get(
         },
       });
 
-      res.json(
+      sendSuccess(res, req,
         notes.map((n: any) => ({
           id: n.id,
           patientId: n.patientId,
@@ -1115,7 +1116,7 @@ clinicianRouter.get(
       const patientId = req.params.id as string;
       await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
       // Export records are not persisted (stub) — return empty list
-      res.json([]);
+      sendSuccess(res, req, []);
     } catch (err) {
       next(err);
     }
@@ -1134,7 +1135,7 @@ clinicianRouter.get("/settings", async (req, res, next) => {
     });
     if (!clinician) throw new AppError("Clinician profile not found", 404);
 
-    res.json({
+    sendSuccess(res, req, {
       id: clinician.id,
       email: user.email,
       firstName: user.firstName,
@@ -1221,7 +1222,7 @@ clinicianRouter.patch("/settings", async (req, res, next) => {
       });
     }
 
-    res.json({ success: true, message: "Settings updated" });
+    sendSuccess(res, req, { success: true, message: "Settings updated" });
   } catch (err) {
     next(err);
   }
@@ -1264,7 +1265,7 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
       }),
     ]);
 
-    res.json({
+    sendSuccess(res, req, {
       period,
       totalPatients,
       totalSubmissions,

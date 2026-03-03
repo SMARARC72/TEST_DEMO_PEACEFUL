@@ -9,6 +9,7 @@ import { exportLimiter } from '../middleware/rate-limit.js';
 import { prisma } from '../models/index.js';
 import { UserRole } from '@peacefull/shared';
 import type { CompliancePosture, RegulatoryStatus } from '@peacefull/shared';
+import { sendSuccess } from '../utils/response.js';
 
 export const complianceRouter = Router();
 
@@ -66,7 +67,7 @@ complianceRouter.get('/posture', async (req, res, next) => {
       lastAssessed: new Date().toISOString(),
     };
 
-    res.json({
+    sendSuccess(res, req, {
       ...posture,
       liveMetrics: {
         totalUsers,
@@ -114,7 +115,7 @@ complianceRouter.get('/audit-log', async (req, res, next) => {
       prisma.auditLog.count({ where }),
     ]);
 
-    res.json({
+    sendSuccess(res, req, {
       data: entries,
       total,
       limit: query.limit,
@@ -139,7 +140,7 @@ complianceRouter.get('/consent/:patientId', async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json({ data: records, total: records.length });
+    sendSuccess(res, req, { data: records, total: records.length });
   } catch (err) {
     next(err);
   }
@@ -172,7 +173,7 @@ complianceRouter.post('/consent', stepUpAuth, async (req, res, next) => {
       },
     });
 
-    res.status(201).json(record);
+    sendSuccess(res, req, record, 201);
   } catch (err) {
     next(err);
   }
@@ -183,7 +184,7 @@ complianceRouter.post('/consent', stepUpAuth, async (req, res, next) => {
 /**
  * Returns comprehensive regulatory status across all tracked frameworks.
  */
-complianceRouter.get('/regulatory', (_req, res) => {
+complianceRouter.get('/regulatory', (req, res) => {
   const status: RegulatoryStatus = {
     fdaSamd: {
       pathway: 'De Novo Classification (Class II SaMD)',
@@ -211,7 +212,7 @@ complianceRouter.get('/regulatory', (_req, res) => {
     },
   };
 
-  res.json(status);
+  sendSuccess(res, req, status);
 });
 
 // ─── POST /audit-log/export ──────────────────────────────────────────
@@ -239,7 +240,7 @@ complianceRouter.post('/audit-log/export', exportLimiter, stepUpAuth, async (req
     const count = await prisma.auditLog.count({ where: { tenantId } });
     const estimatedSizeKB = Math.round(count * 0.5); // ~0.5 KB per entry
 
-    res.json({
+    sendSuccess(res, req, {
       exportId: uuidv4(),
       format,
       dateRange,

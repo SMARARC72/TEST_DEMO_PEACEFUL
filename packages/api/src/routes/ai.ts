@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { AppError } from '../middleware/error.js';
+import { sendSuccess } from '../utils/response.js';
 import { crisisLimiter } from '../middleware/rate-limit.js';
 import { prisma } from '../models/index.js';
 import { claudeService } from '../services/claude.js';
@@ -110,7 +111,7 @@ aiRouter.post('/chat', async (req, res, next) => {
       return;
     }
 
-    res.json({ sessionId: session.id, ...response });
+    sendSuccess(res, req, { sessionId: session.id, ...response });
   } catch (err) {
     next(err);
   }
@@ -136,7 +137,7 @@ aiRouter.get('/chat/:sessionId/history', async (req, res, next) => {
       throw new AppError('Chat session not found', 404);
     }
 
-    res.json({
+    sendSuccess(res, req, {
       sessionId: session.id,
       patientId: session.patientId,
       active: session.active,
@@ -169,7 +170,7 @@ aiRouter.get('/chat/sessions/:patientId', async (req, res, next) => {
       },
     });
 
-    res.json({
+    sendSuccess(res, req, {
       data: sessions.map((s: { id: string; patientId: string; active: boolean; _count: { messages: number }; createdAt: Date; updatedAt: Date }) => ({
         id: s.id,
         patientId: s.patientId,
@@ -234,7 +235,7 @@ aiRouter.post('/summarize', async (req, res, next) => {
       }
     }
 
-    res.json(response);
+    sendSuccess(res, req, response);
   } catch (err) {
     next(err);
   }
@@ -288,7 +289,7 @@ aiRouter.post('/risk-assess', crisisLimiter, async (req, res, next) => {
       enrichedContent,
       body.checkinData,
     );
-    res.json(response);
+    sendSuccess(res, req, response);
   } catch (err) {
     next(err);
   }
@@ -354,7 +355,7 @@ aiRouter.post('/session-prep', async (req, res, next) => {
       patientData,
       recentActivity,
     );
-    res.json(response);
+    sendSuccess(res, req, response);
   } catch (err) {
     next(err);
   }
@@ -397,7 +398,7 @@ aiRouter.post('/memory-extract', async (req, res, next) => {
       });
     }
 
-    res.json(response);
+    sendSuccess(res, req, response);
   } catch (err) {
     next(err);
   }
@@ -444,7 +445,7 @@ aiRouter.post('/sdoh-analyze', async (req, res, next) => {
       });
     }
 
-    res.json(response);
+    sendSuccess(res, req, response);
   } catch (err) {
     next(err);
   }
