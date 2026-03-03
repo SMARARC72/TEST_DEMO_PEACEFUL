@@ -3,15 +3,18 @@
 // Steps: summarize → risk assess → extract memories → create triage item.
 // Runs synchronously in V1 (async job queue planned for V2).
 
-import { prisma } from '../models/index.js';
-import { claudeService } from './claude.js';
-import { apiLogger } from '../utils/logger.js';
+import { prisma } from "../models/index.js";
+import { claudeService } from "./claude.js";
+import { apiLogger } from "../utils/logger.js";
+import { escalationCascade, sendEmail } from "./notification.js";
+import { EscalationTier, EscalationStatus } from "@peacefull/shared";
+import type { EscalationItem } from "@peacefull/shared";
 
-const logger = apiLogger.child({ service: 'submission-pipeline' });
+const logger = apiLogger.child({ service: "submission-pipeline" });
 
 export interface ProcessingResult {
   submissionId: string;
-  status: 'READY' | 'PROCESSING';
+  status: "READY" | "PROCESSING";
   signalBand: string;
   triageItemId?: string;
   aiDraftId?: string;
@@ -34,12 +37,12 @@ export interface ProcessingResult {
 export async function processSubmission(
   submissionId: string,
 ): Promise<ProcessingResult> {
-  logger.info({ submissionId }, 'Starting submission processing');
+  logger.info({ submissionId }, "Starting submission processing");
 
   // Step 1: Mark as PROCESSING
   const submission = await prisma.submission.update({
     where: { id: submissionId },
-    data: { status: 'PROCESSING' },
+    data: { status: "PROCESSING" },
     include: {
       patient: {
         select: {
@@ -49,7 +52,7 @@ export async function processSubmission(
           diagnosisCode: true,
           language: true,
           careTeam: {
-            where: { active: true, role: 'Primary Therapist' },
+            where: { active: true, role: "Primary Therapist" },
             select: { clinicianId: true },
             take: 1,
           },
@@ -75,8 +78,8 @@ export async function processSubmission(
       patientContext,
     );
 
-    let patientSummary = 'Processing complete';
-    let clinicianSummary = 'AI summary generated — review required';
+    let patientSummary = "Processing complete";
+    let clinicianSummary = "AI summary generated — review required";
     let evidence: unknown[] = [];
     let unknowns: unknown[] = [];
 
@@ -93,21 +96,19 @@ export async function processSubmission(
     }
 
     // Step 3: Risk Assessment
-    const riskResponse = await claudeService.assessRisk(
-      submission.rawContent,
-    );
+    const riskResponse = await claudeService.assessRisk(submission.rawContent);
 
-    let signalBand = 'LOW';
+    let signalBand = "LOW";
     try {
       const parsed = JSON.parse(riskResponse.output.content);
-      signalBand = parsed.signalBand ?? 'LOW';
+      signalBand = parsed.signalBand ?? "LOW";
     } catch {
-      signalBand = riskResponse.output.signalBand ?? 'LOW';
+      signalBand = riskResponse.output.signalBand ?? "LOW";
     }
 
     // Validate signal band
-    if (!['LOW', 'GUARDED', 'MODERATE', 'ELEVATED'].includes(signalBand)) {
-      signalBand = 'LOW';
+    if (!["LOW", "GUARDED", "MODERATE", "ELEVATED"].includes(signalBand)) {
+      signalBand = "LOW";
     }
 
     // Step 4: Memory Extraction
@@ -137,14 +138,18 @@ export async function processSubmission(
       await tx.submission.update({
         where: { id: submissionId },
         data: {
-          status: 'READY',
+          status: "READY",
           patientSummary,
-          patientTone: signalBand === 'ELEVATED' ? 'concerned' : 'processed',
+          patientTone: signalBand === "ELEVATED" ? "concerned" : "processed",
           patientNextStep:
-            signalBand === 'ELEVATED'
-              ? 'Your care team has been notified and will follow up soon.'
-              : 'Your submission has been reviewed. Check back for updates.',
-          clinicianSignalBand: signalBand as 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED',
+            signalBand === "ELEVATED"
+              ? "Your care team has been notified and will follow up soon."
+              : "Your submission has been reviewed. Check back for updates.",
+          clinicianSignalBand: signalBand as
+            | "LOW"
+            | "GUARDED"
+            | "MODERATE"
+            | "ELEVATED",
           clinicianSummary,
           clinicianEvidence: evidence,
           clinicianUnknowns: unknowns,
@@ -158,9 +163,9 @@ export async function processSubmission(
           submissionId,
           patientId: submission.patientId,
           clinicianId: primaryClinicianId,
-          signalBand: signalBand as 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED',
+          signalBand: signalBand as "LOW" | "GUARDED" | "MODERATE" | "ELEVATED",
           summary: clinicianSummary,
-          status: signalBand === 'ELEVATED' ? 'ACK' : 'ACK',
+          status: signalBand === "ELEVATED" ? "ACK" : "ACK",
         },
       });
 
@@ -170,8 +175,8 @@ export async function processSubmission(
           submissionId,
           patientId: submission.patientId,
           content: clinicianSummary,
-          format: 'STRUCTURED',
-          status: 'DRAFT',
+          format: "STRUCTURED",
+          status: "DRAFT",
           modelVersion: summaryResponse.model,
           tokenUsage: {
             summarize: summaryResponse.usage,
@@ -188,16 +193,16 @@ export async function processSubmission(
           await tx.memoryProposal.create({
             data: {
               patientId: submission.patientId,
-              category: mem.category ?? 'GENERAL',
+              category: mem.category ?? "GENERAL",
               statement: mem.statement,
               confidence: Math.max(0, Math.min(1, mem.confidence ?? 0.5)),
-              status: 'PROPOSED',
+              status: "PROPOSED",
               evidence: mem.evidence ? [mem.evidence] : [],
             },
           });
           memoriesCreated++;
         } catch (err) {
-          logger.warn({ err, memory: mem }, 'Failed to create memory proposal');
+          logger.warn({ err, memory: mem }, "Failed to create memory proposal");
         }
       }
 
@@ -210,30 +215,77 @@ export async function processSubmission(
 
     logger.info(
       { submissionId, signalBand, ...result },
-      'Submission processing complete',
+      "Submission processing complete",
     );
+
+    // If signal is ELEVATED, trigger escalation cascade (T2)
+    if (signalBand === "ELEVATED") {
+      const escalationPayload: EscalationItem = {
+        id: result.triageItemId,
+        patientId: submission.patientId,
+        tier: EscalationTier.T2,
+        trigger: `Elevated signal detected in ${submission.source} submission`,
+        status: EscalationStatus.OPEN,
+        detectedAt: new Date().toISOString(),
+        auditTrail: [
+          {
+            action: "AI_ESCALATION",
+            by: "system",
+            at: new Date().toISOString(),
+            note: `Automated T2 escalation — signal band: ${signalBand}`,
+          },
+        ],
+      };
+      escalationCascade(escalationPayload).catch((err) => {
+        logger.error(
+          { err, submissionId },
+          "Escalation cascade failed after submission processing",
+        );
+      });
+    } else if (signalBand === "MODERATE") {
+      // For MODERATE signals, send clinician email notification only (no full cascade)
+      sendEmail(
+        "alerts@peacefull.cloud",
+        `[MODERATE] Patient submission requires attention — ${submission.patientId}`,
+        "escalation-alert",
+        {
+          tier: "MODERATE",
+          trigger: `Moderate signal in ${submission.source} submission`,
+          patientId: submission.patientId,
+          timestamp: new Date().toISOString(),
+        },
+      ).catch((err) => {
+        logger.error(
+          { err, submissionId },
+          "Moderate signal notification failed",
+        );
+      });
+    }
 
     return {
       submissionId,
-      status: 'READY',
+      status: "READY",
       signalBand,
       ...result,
     };
   } catch (err) {
     // On failure, mark as PENDING again so it can be retried
-    logger.error({ submissionId, err }, 'Submission processing failed');
+    logger.error({ submissionId, err }, "Submission processing failed");
 
     await prisma.submission.update({
       where: { id: submissionId },
-      data: { status: 'PENDING', clinicianSummary: 'AI processing failed — manual review required' },
+      data: {
+        status: "PENDING",
+        clinicianSummary: "AI processing failed — manual review required",
+      },
     });
 
     return {
       submissionId,
-      status: 'PROCESSING',
-      signalBand: 'LOW',
+      status: "PROCESSING",
+      signalBand: "LOW",
       memoriesProposed: 0,
-      error: err instanceof Error ? err.message : 'Unknown error',
+      error: err instanceof Error ? err.message : "Unknown error",
     };
   }
 }

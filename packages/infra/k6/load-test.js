@@ -2,7 +2,7 @@
 // k6 script for pre-launch load testing (Phase 8, Step 7)
 // Target: 500 concurrent users across critical API paths
 //
-// Run: k6 run --env BASE_URL=https://api.peacefull.ai packages/infra/k6/load-test.js
+// Run: k6 run --env BASE_URL=https://api.peacefull.cloud packages/infra/k6/load-test.js
 
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
@@ -17,7 +17,7 @@ const caseloadDuration = new Trend('caseload_duration', true);
 
 // ─── Configuration ──────────────────────────────────────────────────
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:3001';
 
 export const options = {
   stages: [
@@ -39,14 +39,14 @@ export const options = {
 // ─── Test Data ───────────────────────────────────────────────────────
 
 const TEST_PATIENTS = [
-  { email: 'loadtest-patient-1@peacefull.ai', password: 'LoadTest1!Secure' },
-  { email: 'loadtest-patient-2@peacefull.ai', password: 'LoadTest2!Secure' },
-  { email: 'loadtest-patient-3@peacefull.ai', password: 'LoadTest3!Secure' },
+  { email: 'test.patient.1@peacefull.cloud', password: 'Demo2026!' },
+  { email: 'test.patient.2@peacefull.cloud', password: 'Demo2026!' },
+  { email: 'test.patient.3@peacefull.cloud', password: 'Demo2026!' },
 ];
 
 const TEST_CLINICIANS = [
-  { email: 'loadtest-clinician-1@peacefull.ai', password: 'LoadTest1!Secure' },
-  { email: 'loadtest-clinician-2@peacefull.ai', password: 'LoadTest2!Secure' },
+  { email: 'pilot.clinician.1@peacefull.cloud', password: 'Demo2026!' },
+  { email: 'pilot.clinician.2@peacefull.cloud', password: 'Demo2026!' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -60,11 +60,11 @@ function login(email, password) {
 
   const ok = check(res, {
     'login status 200': (r) => r.status === 200,
-    'login has token':  (r) => r.json('accessToken') !== undefined,
+    'login has token':  (r) => r.json('data.accessToken') !== undefined,
   });
   errorRate.add(!ok);
 
-  return ok ? res.json('accessToken') : null;
+  return ok ? res.json('data.accessToken') : null;
 }
 
 function authHeaders(token) {

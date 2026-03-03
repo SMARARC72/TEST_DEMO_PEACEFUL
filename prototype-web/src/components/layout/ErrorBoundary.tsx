@@ -33,6 +33,31 @@ function reportError(error: Error, componentStack?: string) {
   // Cap local log at 50 entries
   if (errorLog.length > 50) errorLog.shift();
 
+  // Report to backend error tracking endpoint (always, even without Sentry)
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (apiUrl) {
+      const token = localStorage.getItem('accessToken');
+      fetch(`${apiUrl}/api/v1/errors/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          message: report.message,
+          stack: report.stack?.substring(0, 2000),
+          componentStack: report.componentStack?.substring(0, 2000),
+          url: report.url,
+          timestamp: report.timestamp,
+        }),
+        keepalive: true,
+      }).catch(() => { /* fire and forget */ });
+    }
+  } catch {
+    // Ignore backend reporting failures
+  }
+
   // If Sentry DSN is configured, send via beacon
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (dsn) {

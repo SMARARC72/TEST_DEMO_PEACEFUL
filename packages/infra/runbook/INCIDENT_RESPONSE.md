@@ -1,8 +1,26 @@
 # Peacefull.ai — Incident Response Runbook
 
-**Version:** 1.0  
-**Date:** 2026-02-28  
+**Version:** 2.0  
+**Date:** 2026-03-03  
 **Classification:** Internal — DevOps / On-Call
+
+## Production Environment Reference
+
+| Resource | Value |
+|----------|-------|
+| **AWS Account** | `827202647693` |
+| **Region** | `us-east-1` |
+| **ECS Cluster** | `peacefull-prod-cluster` |
+| **ECS Service** | `peacefull-prod-api` |
+| **Container** | `api` |
+| **ECR Repo** | `827202647693.dkr.ecr.us-east-1.amazonaws.com/peacefull-prod-api` |
+| **RDS Instance** | `peacefull-prod-postgres.cwbc646w4005.us-east-1.rds.amazonaws.com` |
+| **RDS SG** | `sg-0a6c11da4eb4c20bc` |
+| **API URL** | `https://api.peacefull.cloud` |
+| **Frontend** | `https://peacefullai.netlify.app` |
+| **Auth0 Tenant** | `dev-tu36ndmyt7pr2coi.us.auth0.com` |
+| **Auth0 Audience** | `https://api.peacefull.ai` |
+| **Docker Build Flags** | `--platform linux/amd64 --provenance=false --sbom=false` |
 
 ---
 
@@ -36,7 +54,7 @@
 ```bash
 # 1. Check ECS service health
 aws ecs describe-services \
-  --cluster peacefull-prod \
+  --cluster peacefull-prod-cluster \
   --services peacefull-prod-api \
   --query 'services[0].{desired:desiredCount,running:runningCount,status:status}'
 
@@ -51,13 +69,13 @@ aws rds describe-db-instances \
 
 # 4. Check recent deployments
 aws ecs describe-services \
-  --cluster peacefull-prod \
+  --cluster peacefull-prod-cluster \
   --services peacefull-prod-api \
   --query 'services[0].deployments'
 
 # 5. Rollback if recent deployment caused issue
 aws ecs update-service \
-  --cluster peacefull-prod \
+  --cluster peacefull-prod-cluster \
   --service peacefull-prod-api \
   --task-definition $PREVIOUS_TASK_DEF_ARN \
   --force-new-deployment
@@ -76,12 +94,12 @@ aws ecs update-service \
 ```bash
 # Revoke all sessions by rotating JWT secret
 aws secretsmanager update-secret \
-  --secret-id peacefull-prod-jwt-secret \
+  --secret-id peacefull/prod/jwt-secret-5Ike7z \
   --generate-cli-json
 
 # Force restart all ECS tasks to pick up new secret
 aws ecs update-service \
-  --cluster peacefull-prod \
+  --cluster peacefull-prod-cluster \
   --service peacefull-prod-api \
   --force-new-deployment
 ```
@@ -170,7 +188,7 @@ aws ecs wait services-stable \
   --services peacefull-prod-api
 
 # 5. Smoke test
-curl -sf https://api.peacefull.ai/api/v1/health | jq .
+curl -sf https://api.peacefull.cloud/health | jq .
 ```
 
 ---
@@ -180,7 +198,7 @@ curl -sf https://api.peacefull.ai/api/v1/health | jq .
 | Service | Dashboard | Support |
 |---------|-----------|---------|
 | AWS | console.aws.amazon.com | AWS Support (Business tier) |
-| Neon (Postgres) | console.neon.tech | support@neon.tech |
+| RDS (Postgres) | AWS RDS Console | AWS Support (Business tier) |
 | Auth0 | manage.auth0.com | Auth0 Support |
 | Twilio (SMS) | console.twilio.com | Twilio Support |
 | Anthropic (Claude) | console.anthropic.com | support@anthropic.com |

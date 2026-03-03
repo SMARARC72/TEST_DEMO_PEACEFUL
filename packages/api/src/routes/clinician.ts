@@ -965,7 +965,9 @@ clinicianRouter.get("/patients/:id/journal", async (req, res, next) => {
       take: 100,
     });
 
-    sendSuccess(res, req,
+    sendSuccess(
+      res,
+      req,
       rows.map((r: any) => ({
         id: r.id,
         patientId: r.patientId,
@@ -1084,7 +1086,9 @@ clinicianRouter.get(
         },
       });
 
-      sendSuccess(res, req,
+      sendSuccess(
+        res,
+        req,
         notes.map((n: any) => ({
           id: n.id,
           patientId: n.patientId,
@@ -1115,8 +1119,35 @@ clinicianRouter.get(
     try {
       const patientId = req.params.id as string;
       await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
-      // Export records are not persisted (stub) — return empty list
-      sendSuccess(res, req, []);
+
+      // Query audit log for export actions on this patient
+      const exportLogs = await prisma.auditLog.findMany({
+        where: {
+          tenantId: req.user!.tid,
+          resource: "Patient",
+          resourceId: patientId,
+          action: { in: ["DATA_EXPORT", "EXPORT_REQUEST"] },
+        },
+        orderBy: { timestamp: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          action: true,
+          details: true,
+          timestamp: true,
+          userId: true,
+        },
+      });
+
+      const exports = exportLogs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        requestedBy: log.userId,
+        requestedAt: log.timestamp.toISOString(),
+        details: log.details,
+      }));
+
+      sendSuccess(res, req, exports);
     } catch (err) {
       next(err);
     }

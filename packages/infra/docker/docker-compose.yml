@@ -26,6 +26,12 @@ services:
       NODE_ENV: development
       PORT: 3001
       DATABASE_URL: postgresql://peacefull:peacefull_dev@postgres:5432/peacefull
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-dev-placeholder}
+      AWS_REGION: us-east-1
+      CORS_ORIGIN: http://localhost:5173
+      LOG_LEVEL: debug
     depends_on:
       postgres:
         condition: service_healthy
