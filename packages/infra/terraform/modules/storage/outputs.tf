@@ -20,10 +20,10 @@ output "uploads_logs_bucket_name" {
 
 output "cloudfront_distribution_id" {
   description = "ID of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.web.id
+  value       = try(aws_cloudfront_distribution.web[0].id, null)
 }
 
 output "cloudfront_domain" {
   description = "Domain name of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.web.domain_name
+  value       = try(aws_cloudfront_distribution.web[0].domain_name, null)
 }

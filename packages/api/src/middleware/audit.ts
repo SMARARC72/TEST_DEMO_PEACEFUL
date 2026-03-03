@@ -1,19 +1,27 @@
 // ─── Audit Logging Middleware ─────────────────────────────────────────
 // Records every API request to a tamper-evident, hash-chained audit trail
 // persisted via Prisma (Neon Postgres).
+// PRD §3.7: Multi-instance safe — each entry chains to the DB-latest hash,
+// not an in-memory cache, so hash chains remain valid across ECS tasks.
 
-import { createHash } from 'node:crypto';
-import type { Request, Response, NextFunction } from 'express';
-import { PHI_FIELDS } from '../config/index.js';
-import { auditLogger } from '../utils/logger.js';
-import { prisma } from '../models/index.js';
-import type { AuditLogEntry } from '@peacefull/shared';
+import { createHash, randomUUID } from "node:crypto";
+import type { Request, Response, NextFunction } from "express";
+import { PHI_FIELDS } from "../config/index.js";
+import { auditLogger } from "../utils/logger.js";
+import { prisma } from "../models/index.js";
+import type { AuditLogEntry } from "@peacefull/shared";
 
-/** SHA-256 hash of the last audit entry in the chain (hot cache). */
-let lastHash = '0'.repeat(64); // genesis hash
+/** Unique identifier for this ECS task / process instance. */
+const TASK_INSTANCE_ID = randomUUID().slice(0, 8);
 
-/** Whether we've loaded the last hash from the DB on startup. */
-let chainInitialized = false;
+/** In-memory cached last hash — refreshed from DB periodically. */
+let lastHash = "0".repeat(64); // genesis hash
+
+/** Timestamp of last DB hash refresh. */
+let lastHashRefreshedAt = 0;
+
+/** Minimum interval between DB hash refreshes (ms). */
+const HASH_REFRESH_INTERVAL_MS = 5_000;
 
 // ─── Hash Chain ──────────────────────────────────────────────────────
 
@@ -21,11 +29,9 @@ let chainInitialized = false;
  * Creates a SHA-256 hash of the entry content chained to the
  * previous entry's hash, providing tamper evidence.
  */
-export function hashChain(
-  entry: Omit<AuditLogEntry, 'hash'>,
-): string {
+export function hashChain(entry: Omit<AuditLogEntry, "hash">): string {
   const data = JSON.stringify(entry);
-  return createHash('sha256').update(data).digest('hex');
+  return createHash("sha256").update(data).digest("hex");
 }
 
 // ─── PHI Masking ─────────────────────────────────────────────────────
@@ -35,12 +41,12 @@ export function hashChain(
  * the audit log.
  */
 function maskBody(body: unknown): Record<string, unknown> {
-  if (!body || typeof body !== 'object') return {};
+  if (!body || typeof body !== "object") return {};
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
     if (PHI_FIELDS.includes(key)) {
-      result[key] = '[REDACTED]';
-    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = "[REDACTED]";
+    } else if (value && typeof value === "object" && !Array.isArray(value)) {
       result[key] = maskBody(value);
     } else {
       result[key] = value;
@@ -52,24 +58,26 @@ function maskBody(body: unknown): Record<string, unknown> {
 // ─── Chain Initialization ────────────────────────────────────────────
 
 /**
- * Loads the most recent audit log hash from the database to resume the
- * hash chain after a server restart.
+ * Loads the most recent audit log hash from the database.
+ * Called periodically (not just at startup) so that multiple ECS tasks
+ * share a consistent chain even though they don't share memory.
+ * PRD §3.7: Multi-instance hash chain consistency.
  */
-async function initializeChain(): Promise<void> {
-  if (chainInitialized) return;
+async function refreshChainHash(): Promise<void> {
+  const now = Date.now();
+  if (now - lastHashRefreshedAt < HASH_REFRESH_INTERVAL_MS) return;
+
   try {
     const latest = await prisma.auditLog.findFirst({
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       select: { hash: true },
     });
     if (latest) {
       lastHash = latest.hash;
     }
-    chainInitialized = true;
-    auditLogger.info('Audit hash chain initialized from database');
+    lastHashRefreshedAt = now;
   } catch (err) {
-    auditLogger.warn({ err }, 'Failed to initialize audit chain — using genesis hash');
-    chainInitialized = true;
+    auditLogger.warn({ err }, "Failed to refresh audit chain hash");
   }
 }
 
@@ -86,7 +94,7 @@ export function auditLog(
   next: NextFunction,
 ): void {
   // Capture the response finish to log status code
-  res.on('finish', () => {
+  res.on("finish", () => {
     // Fire-and-forget — don't block the response
     void persistAuditEntry(req, res);
   });
@@ -99,18 +107,22 @@ export function auditLog(
  */
 async function persistAuditEntry(req: Request, res: Response): Promise<void> {
   try {
-    await initializeChain();
+    // PRD §3.7: Refresh chain hash from DB for multi-instance consistency
+    await refreshChainHash();
 
     const userId = req.user?.sub ?? null;
     const tenantId = req.user?.tid ?? null;
-    
+
     // Skip audit logging for unauthenticated requests (login, register, etc.)
     // These don't have a valid tenant context and would violate FK constraint
     if (!tenantId) {
-      auditLogger.debug({ path: req.path, method: req.method }, 'Skipping audit log for unauthenticated request');
+      auditLogger.debug(
+        { path: req.path, method: req.method },
+        "Skipping audit log for unauthenticated request",
+      );
       return;
     }
-    
+
     const action = `${req.method} ${req.path}`;
 
     // Derive resource type and id from route params
@@ -122,24 +134,25 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
       req.params.patientId ??
       null;
     const resourceId = Array.isArray(resourceIdRaw)
-      ? resourceIdRaw[0] ?? null
+      ? (resourceIdRaw[0] ?? null)
       : resourceIdRaw;
 
     const details = {
       statusCode: res.statusCode,
       body: maskBody(req.body),
+      taskInstanceId: TASK_INSTANCE_ID,
     };
 
-    const entryForHash: Omit<AuditLogEntry, 'hash'> = {
-      id: '', // placeholder — not used in hash computation
+    const entryForHash: Omit<AuditLogEntry, "hash"> = {
+      id: "", // placeholder — not used in hash computation
       tenantId,
-      userId: userId ?? 'anonymous',
+      userId: userId ?? "anonymous",
       action,
       resource,
-      resourceId: resourceId ?? '',
+      resourceId: resourceId ?? "",
       details,
-      ipAddress: String(req.ip ?? req.socket.remoteAddress ?? 'unknown'),
-      userAgent: req.headers['user-agent'] ?? 'unknown',
+      ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
+      userAgent: req.headers["user-agent"] ?? "unknown",
       timestamp: new Date().toISOString(),
       previousHash: lastHash,
     };
@@ -154,7 +167,10 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
         action,
         resource,
         resourceId,
-        details: details as unknown as Record<string, string | number | boolean | null>,
+        details: details as unknown as Record<
+          string,
+          string | number | boolean | null
+        >,
         ipAddress: entryForHash.ipAddress,
         userAgent: entryForHash.userAgent,
         previousHash: entryForHash.previousHash,
@@ -163,12 +179,12 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
     });
 
     auditLogger.info(
-      { userId: userId ?? 'anonymous', action, resource, resourceId },
-      'Audit log entry persisted',
+      { userId: userId ?? "anonymous", action, resource, resourceId },
+      "Audit log entry persisted",
     );
   } catch (err) {
     // Never let audit failures crash the server
-    auditLogger.error({ err }, 'Failed to persist audit log entry');
+    auditLogger.error({ err }, "Failed to persist audit log entry");
   }
 }
 
@@ -178,18 +194,18 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
  */
 function deriveResource(path: string): string {
   const segments = path
-    .replace(/^\/api\/v1\/?/, '')
-    .split('/')
+    .replace(/^\/api\/v1\/?/, "")
+    .split("/")
     .filter(Boolean);
 
-  if (segments.length === 0) return 'root';
+  if (segments.length === 0) return "root";
 
   // Remove UUID-like segments
   const meaningful = segments.filter(
     (s) => !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(s),
   );
 
-  return meaningful.join('.') || segments[0];
+  return meaningful.join(".") || segments[0];
 }
 
 /**
@@ -208,7 +224,7 @@ export async function getAuditEntries(options?: {
   if (options?.tenantId) where.tenantId = options.tenantId;
   if (options?.userId) where.userId = options.userId;
   if (options?.action) {
-    where.action = { contains: options.action, mode: 'insensitive' };
+    where.action = { contains: options.action, mode: "insensitive" };
   }
 
   const limit = options?.limit ?? 50;
@@ -217,7 +233,7 @@ export async function getAuditEntries(options?: {
   const [rows, total] = await Promise.all([
     prisma.auditLog.findMany({
       where,
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       take: limit,
       skip: offset,
     }),
@@ -227,15 +243,15 @@ export async function getAuditEntries(options?: {
   const entries: AuditLogEntry[] = rows.map((r) => ({
     id: r.id,
     tenantId: r.tenantId,
-    userId: r.userId ?? 'anonymous',
+    userId: r.userId ?? "anonymous",
     action: r.action,
     resource: r.resource,
-    resourceId: r.resourceId ?? '',
+    resourceId: r.resourceId ?? "",
     details: r.details as Record<string, unknown>,
-    ipAddress: r.ipAddress ?? 'unknown',
-    userAgent: r.userAgent ?? 'unknown',
+    ipAddress: r.ipAddress ?? "unknown",
+    userAgent: r.userAgent ?? "unknown",
     timestamp: r.timestamp.toISOString(),
-    previousHash: r.previousHash ?? '0'.repeat(64),
+    previousHash: r.previousHash ?? "0".repeat(64),
     hash: r.hash,
   }));
 

@@ -44,6 +44,8 @@ No backend required — MSW intercepts all API calls with realistic mock data.
 | `VITE_FEATURE_FLAGS_URL` | — | Remote feature flag config endpoint |
 | `VITE_FF_<FLAG>` | `true` | Per-feature toggle (e.g., `VITE_FF_PATIENT_CHAT=false`) |
 
+Prod connection to ECS/ALB (no mocks): copy [prototype-web/.env.example](prototype-web/.env.example) → `.env.production` and set `VITE_API_URL` to the ALB or custom domain (e.g., `https://api.peacefull.ai/api/v1`), `VITE_ENABLE_MOCKS=false`, `VITE_AUTH_MODE=cookie`, `VITE_ENV=production`.
+
 ---
 
 ## Architecture

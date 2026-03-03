@@ -109,7 +109,11 @@ module "storage" {
   environment         = local.environment
   domain_name         = var.domain_name
   acm_certificate_arn = var.acm_certificate_arn
-  cors_origins        = ["https://${var.domain_name}"]
+  cors_origins        = [
+    "https://${var.domain_name}",
+    "https://peacefullai.netlify.app"
+  ]
+  enable_cloudfront   = false
 }
 
 module "ecs" {
@@ -140,7 +144,7 @@ module "ecs" {
   redis_url                       = "redis://${module.database.redis_endpoint}:${module.database.redis_port}"
   uploads_bucket_arn              = module.storage.uploads_bucket_arn
   acm_certificate_arn             = var.acm_certificate_arn
-  cors_origin                     = "https://${var.domain_name}"
+  cors_origin                     = "https://${var.domain_name},https://peacefullai.netlify.app"
 }
 
 module "monitoring" {

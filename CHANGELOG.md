@@ -7,6 +7,18 @@
 
 ---
 
+## v2.9 — Prod API Stability & Audit Schema (NEW)
+
+### Production API runtime fixes
+- **Resolved:** ECS task crash due to invalid `ENCRYPTION_KEY` format; rotated secret to 64-hex/32-byte and forced new deployment.
+- **Validated:** ALB health checks returning 200s across 3 running tasks (prod service steady-state).
+
+### Audit log schema alignment
+- **Applied:** One-off Fargate task `npx prisma db push --skip-generate` inside VPC to sync Prisma schema; created `audit_logs` table in prod RDS.
+- **Verified:** App logs now clean of `audit_logs` missing-table errors; health endpoint remains green.
+
+---
+
 ## v2.8 — Clinician Visibility + Human-in-the-Loop Reinforcement (NEW)
 
 ### Live Chat → Clinical Workflow Continuity

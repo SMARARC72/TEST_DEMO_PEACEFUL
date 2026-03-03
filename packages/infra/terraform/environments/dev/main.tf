@@ -60,6 +60,12 @@ variable "alert_email" {
   type        = string
 }
 
+variable "acm_certificate_arn" {
+  description = "ARN of ACM certificate for HTTPS/WSS termination"
+  type        = string
+  default     = ""
+}
+
 # ------------------------------------------------------------------------------
 # Modules
 # ------------------------------------------------------------------------------
@@ -96,6 +102,7 @@ module "storage" {
   source      = "../../modules/storage"
   app_name    = local.app_name
   environment = local.environment
+  enable_cloudfront = false
 }
 
 module "ecs" {
@@ -125,6 +132,7 @@ module "ecs" {
   s3_uploads_bucket               = module.storage.uploads_bucket_name
   redis_url                       = "redis://${module.database.redis_endpoint}:${module.database.redis_port}"
   uploads_bucket_arn              = module.storage.uploads_bucket_arn
+  acm_certificate_arn             = var.acm_certificate_arn
 }
 
 module "monitoring" {

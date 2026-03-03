@@ -16,6 +16,8 @@ import { auditLog } from "./middleware/audit.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 import { apiLogger } from "./utils/logger.js";
 import { prisma } from "./models/index.js";
+import { WebSocketServer, WebSocket } from "ws";
+import { verifyTokenForWs } from "./middleware/auth.js";
 
 // ─── Create App ──────────────────────────────────────────────────────
 
@@ -57,6 +59,15 @@ app.use(
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   }),
 );
+
+// PRD §3.5: Permissions-Policy — deny access to sensitive browser APIs
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+  );
+  next();
+});
 
 // Parse comma-separated CORS origins — SEC-06: No wildcard `*` allowed.
 const allowedOrigins = env.CORS_ORIGIN.split(",")
@@ -166,6 +177,9 @@ app.use(errorHandler);
 
 let server: ReturnType<typeof app.listen> | undefined;
 
+// Track connected WebSocket clients (minimal state for broadcast later)
+const wsClients = new Set<WebSocket>();
+
 /**
  * Gracefully shuts down the server, closing HTTP connections,
  * database pools, and Redis clients.
@@ -209,5 +223,70 @@ server = app.listen(env.PORT, () => {
     `🚀 Peacefull API server listening on port ${env.PORT}`,
   );
 });
+
+// ─── WebSocket Server (notifications) ──────────────────────────────
+
+if (server) {
+  const wss = new WebSocketServer({ server, path: "/ws" });
+  const KEEPALIVE_MS = 30_000;
+
+  wss.on("connection", async (socket, req) => {
+    // Extract token from query string (client passes ?token=...)
+    const url = new URL(
+      req.url ?? "",
+      `http://${req.headers.host ?? "localhost"}`,
+    );
+    const token = url.searchParams.get("token");
+
+    if (!token) {
+      socket.close(4401, "Missing token");
+      return;
+    }
+
+    let userId = "unknown";
+
+    try {
+      const payload = await verifyTokenForWs(token);
+      userId = payload.sub;
+    } catch (err) {
+      apiLogger.warn({ err }, "WS auth failed");
+      socket.close(4401, "Invalid or expired token");
+      return;
+    }
+
+    apiLogger.info({ userId }, "WS connection established");
+    wsClients.add(socket);
+
+    // Send initial ack
+    socket.send(JSON.stringify({ type: "connected", userId }));
+
+    // Keepalive pings so Netlify/ALB doesn’t idle-timeout the socket
+    const keepalive = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "ping", ts: Date.now() }));
+      }
+    }, KEEPALIVE_MS);
+
+    socket.on("message", (data) => {
+      // Basic pong handling for clients that respond manually
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg?.type === "pong") return;
+      } catch {
+        // Ignore malformed messages
+      }
+    });
+
+    socket.on("close", () => {
+      clearInterval(keepalive);
+      wsClients.delete(socket);
+      apiLogger.info({ userId }, "WS connection closed");
+    });
+
+    socket.on("error", (err) => {
+      apiLogger.warn({ err, userId }, "WS error");
+    });
+  });
+}
 
 export { app };

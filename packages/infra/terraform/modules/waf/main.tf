@@ -125,7 +125,65 @@ resource "aws_wafv2_web_acl" "main" {
   }
 
   # --------------------------------------------------------------------------
-  # Rule 5: Rate Limiting – 2000 requests / 5 minutes per IP
+  # Rule 5: AWS Managed – Bot Control (common bots)
+  # PRD §3.1: Additional managed rule group for automated traffic
+  # --------------------------------------------------------------------------
+  rule {
+    name     = "AWSManagedRulesBotControlRuleSet"
+    priority = 37
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesBotControlRuleSet"
+
+        managed_rule_group_configs {
+          aws_managed_rules_bot_control_rule_set {
+            inspection_level = "COMMON"
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.app_name}-${var.environment}-bot-control"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # --------------------------------------------------------------------------
+  # Rule 6: AWS Managed – Anonymous IP List (VPN/Tor/proxies)
+  # PRD §3.1: Block requests from known anonymizing services
+  # --------------------------------------------------------------------------
+  rule {
+    name     = "AWSManagedRulesAnonymousIpList"
+    priority = 38
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesAnonymousIpList"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.app_name}-${var.environment}-anonymous-ip"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # --------------------------------------------------------------------------
+  # Rule 7: Rate Limiting – 2000 requests / 5 minutes per IP
   # --------------------------------------------------------------------------
   rule {
     name     = "RateLimitPerIP"

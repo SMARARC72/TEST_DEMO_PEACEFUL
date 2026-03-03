@@ -61,6 +61,9 @@ const envSchema = z.object({
 
   /** AES-256 encryption key for PHI at rest (required in production). */
   ENCRYPTION_KEY: z.string().optional(),
+
+  /** Redis URL for distributed rate limiting, MFA codes, and token blacklisting. */
+  REDIS_URL: z.string().optional(),
 });
 
 /**

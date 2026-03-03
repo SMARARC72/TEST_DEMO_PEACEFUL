@@ -10,4 +10,5 @@
 
 # Optional overrides
 # container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/peacefull-dev-api:latest"
+# acm_certificate_arn = "<ACM_ARN_FOR_DEV_DOMAIN>"
 alert_email       = "alerts-dev@peacefull.ai"

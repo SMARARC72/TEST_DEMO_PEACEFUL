@@ -25,3 +25,9 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "enable_cloudfront" {
+  description = "Whether to provision CloudFront distribution/OAC for the web bucket"
+  type        = bool
+  default     = true
+}

@@ -2,13 +2,14 @@
 // Dual-mode JWT verification: Auth0 RS256 (production) + local HS256 (dev).
 // Role gates, tenant scoping, and step-up auth.
 
-import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import jwksRsa from 'jwks-rsa';
-import { env } from '../config/index.js';
-import { AppError } from './error.js';
-import { authLogger } from '../utils/logger.js';
-import type { AuthTokenPayload, UserRole } from '@peacefull/shared';
+import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import jwksRsa from "jwks-rsa";
+import { env } from "../config/index.js";
+import { AppError } from "./error.js";
+import { authLogger } from "../utils/logger.js";
+import { isTokenBlacklisted } from "../services/token-blacklist.js";
+import type { AuthTokenPayload, UserRole } from "@peacefull/shared";
 
 // ─── Express Request Augmentation ────────────────────────────────────
 
@@ -50,12 +51,12 @@ function getJwksClient(): jwksRsa.JwksClient | null {
  */
 function getAuth0SigningKey(kid: string): Promise<string> {
   const client = getJwksClient();
-  if (!client) throw new AppError('Auth0 not configured', 500);
+  if (!client) throw new AppError("Auth0 not configured", 500);
 
   return new Promise((resolve, reject) => {
     client.getSigningKey(kid, (err, key) => {
       if (err || !key) {
-        reject(err ?? new Error('Signing key not found'));
+        reject(err ?? new Error("Signing key not found"));
         return;
       }
       resolve(key.getPublicKey());
@@ -69,20 +70,22 @@ function getAuth0SigningKey(kid: string): Promise<string> {
  * Attempts to verify a token as Auth0-issued (RS256 with JWKS).
  * Returns the decoded payload or null if verification fails.
  */
-async function verifyAuth0Token(token: string): Promise<AuthTokenPayload | null> {
+async function verifyAuth0Token(
+  token: string,
+): Promise<AuthTokenPayload | null> {
   if (!env.AUTH0_DOMAIN) return null;
 
   try {
     // Decode header to get kid
     const decoded = jwt.decode(token, { complete: true });
-    if (!decoded || decoded.header.alg !== 'RS256' || !decoded.header.kid) {
+    if (!decoded || decoded.header.alg !== "RS256" || !decoded.header.kid) {
       return null;
     }
 
     const signingKey = await getAuth0SigningKey(decoded.header.kid);
 
     const payload = jwt.verify(token, signingKey, {
-      algorithms: ['RS256'],
+      algorithms: ["RS256"],
       issuer: `https://${env.AUTH0_DOMAIN}/`,
       audience: env.AUTH0_AUDIENCE ?? `https://api.peacefull.ai`,
     }) as Record<string, unknown>;
@@ -90,26 +93,59 @@ async function verifyAuth0Token(token: string): Promise<AuthTokenPayload | null>
     // Map Auth0 claims to our internal AuthTokenPayload shape
     // Auth0 standard claims: sub, iss, aud, exp, iat
     // Custom claims under namespace: https://peacefull.ai/
-    const namespace = 'https://peacefull.ai/';
+    const namespace = "https://peacefull.ai/";
     return {
       sub: payload.sub as string,
-      tid: (payload[`${namespace}tid`] as string) ?? 'default',
-      role: (payload[`${namespace}role`] as UserRole) ?? 'PATIENT',
+      tid: (payload[`${namespace}tid`] as string) ?? "default",
+      role: (payload[`${namespace}role`] as UserRole) ?? "PATIENT",
       permissions: (payload.permissions as string[]) ?? [],
       iat: payload.iat as number,
       exp: payload.exp as number,
     } as AuthTokenPayload;
   } catch (err) {
-    authLogger.debug({ err }, 'Auth0 token verification failed, falling back to local');
+    authLogger.debug(
+      { err },
+      "Auth0 token verification failed, falling back to local",
+    );
     return null;
   }
 }
 
 /**
  * Verifies a token using the local HS256 JWT_SECRET.
+ * PRD §3.6: Validates exp, iss, nbf claims.
  */
 function verifyLocalToken(token: string): AuthTokenPayload {
-  return jwt.verify(token, env.JWT_SECRET) as AuthTokenPayload;
+  const payload = jwt.verify(token, env.JWT_SECRET, {
+    clockTolerance: 5, // 5-second skew tolerance
+  }) as AuthTokenPayload & { nbf?: number };
+
+  // PRD §3.6: Validate not-before claim if present
+  if (payload.nbf && Date.now() / 1000 < payload.nbf) {
+    throw new AppError("Token is not yet valid", 401);
+  }
+
+  return payload;
+}
+
+// ─── Shared Token Verification (REST + WS) ─────────────────────────
+
+/**
+ * Verifies a JWT using Auth0 (RS256) first, then local HS256 fallback.
+ * Throws AppError on failure. Safe for non-Express contexts (e.g., WebSocket).
+ */
+export async function verifyTokenForWs(
+  token: string,
+): Promise<AuthTokenPayload> {
+  const auth0Payload = await verifyAuth0Token(token);
+  if (auth0Payload) return auth0Payload;
+
+  try {
+    return verifyLocalToken(token);
+  } catch (err) {
+    authLogger.warn({ err }, "JWT verification failed (WS)");
+    throw new AppError("Invalid or expired token", 401);
+  }
 }
 
 // ─── authenticate ────────────────────────────────────────────────────
@@ -127,34 +163,45 @@ export function authenticate(
   next: NextFunction,
 ): void {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    next(new AppError('Missing or malformed Authorization header', 401));
+  if (!header?.startsWith("Bearer ")) {
+    next(new AppError("Missing or malformed Authorization header", 401));
     return;
   }
 
   const token = header.slice(7);
 
-  // Try Auth0 first (async), fall back to local sync verification
-  verifyAuth0Token(token)
-    .then((auth0Payload) => {
-      if (auth0Payload) {
-        req.user = auth0Payload;
-        next();
-        return;
+  // PRD §3.6: Check token blacklist before verification
+  isTokenBlacklisted(token)
+    .then((blacklisted) => {
+      if (blacklisted) {
+        next(new AppError("Token has been revoked", 401));
+        return Promise.resolve();
       }
 
-      // Fallback: local HS256 token
-      try {
-        req.user = verifyLocalToken(token);
-        next();
-      } catch (err) {
-        authLogger.warn({ err }, 'JWT verification failed (both Auth0 and local)');
-        next(new AppError('Invalid or expired token', 401));
-      }
+      // Try Auth0 first (async), fall back to local sync verification
+      return verifyAuth0Token(token).then((auth0Payload) => {
+        if (auth0Payload) {
+          req.user = auth0Payload;
+          next();
+          return;
+        }
+
+        // Fallback: local HS256 token
+        try {
+          req.user = verifyLocalToken(token);
+          next();
+        } catch (err) {
+          authLogger.warn(
+            { err },
+            "JWT verification failed (both Auth0 and local)",
+          );
+          next(new AppError("Invalid or expired token", 401));
+        }
+      });
     })
     .catch((err) => {
-      authLogger.warn({ err }, 'Token verification error');
-      next(new AppError('Invalid or expired token', 401));
+      authLogger.warn({ err }, "Token verification error");
+      next(new AppError("Invalid or expired token", 401));
     });
 }
 
@@ -170,16 +217,20 @@ export function authenticate(
 export function requireRole(...roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      next(new AppError('Authentication required', 401));
+      next(new AppError("Authentication required", 401));
       return;
     }
 
     if (!roles.includes(req.user.role)) {
       authLogger.warn(
-        { userId: req.user.sub, requiredRoles: roles, actualRole: req.user.role },
-        'Insufficient role',
+        {
+          userId: req.user.sub,
+          requiredRoles: roles,
+          actualRole: req.user.role,
+        },
+        "Insufficient role",
       );
-      next(new AppError('Insufficient permissions', 403));
+      next(new AppError("Insufficient permissions", 403));
       return;
     }
 
@@ -199,7 +250,7 @@ export function requireTenant(
   next: NextFunction,
 ): void {
   if (!req.user) {
-    next(new AppError('Authentication required', 401));
+    next(new AppError("Authentication required", 401));
     return;
   }
 
@@ -207,13 +258,17 @@ export function requireTenant(
   if (
     paramTenantId &&
     req.user.tid !== paramTenantId &&
-    req.user.role !== 'ADMIN'
+    req.user.role !== "ADMIN"
   ) {
     authLogger.warn(
-      { userId: req.user.sub, userTenant: req.user.tid, paramTenant: paramTenantId },
-      'Tenant mismatch',
+      {
+        userId: req.user.sub,
+        userTenant: req.user.tid,
+        paramTenant: paramTenantId,
+      },
+      "Tenant mismatch",
     );
-    next(new AppError('Access denied: tenant mismatch', 403));
+    next(new AppError("Access denied: tenant mismatch", 403));
     return;
   }
 
@@ -237,17 +292,15 @@ export function stepUpAuth(
   next: NextFunction,
 ): void {
   if (!req.user) {
-    next(new AppError('Authentication required', 401));
+    next(new AppError("Authentication required", 401));
     return;
   }
 
-  const stepUpAt = (req.user as AuthTokenPayload & { stepUpAt?: number }).stepUpAt;
+  const stepUpAt = (req.user as AuthTokenPayload & { stepUpAt?: number })
+    .stepUpAt;
   if (!stepUpAt) {
     next(
-      new AppError(
-        'Step-up authentication required for this operation',
-        403,
-      ),
+      new AppError("Step-up authentication required for this operation", 403),
     );
     return;
   }
@@ -256,7 +309,7 @@ export function stepUpAuth(
   if (elapsed > STEP_UP_WINDOW_MS) {
     next(
       new AppError(
-        'Step-up authentication has expired — please re-authenticate',
+        "Step-up authentication has expired — please re-authenticate",
         403,
       ),
     );

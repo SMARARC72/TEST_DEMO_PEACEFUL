@@ -128,6 +128,32 @@ resource "aws_s3_bucket_logging" "uploads" {
   target_prefix = "access-logs/"
 }
 
+# PRD §3.11: Enforce SSL transport on uploads bucket (HIPAA SEC-05)
+resource "aws_s3_bucket_policy" "uploads_ssl" {
+  bucket = aws_s3_bucket.uploads.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyNonSSLRequests"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.uploads.arn,
+          "${aws_s3_bucket.uploads.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # ------------------------------------------------------------------------------
 # S3 Bucket – Static Web Assets (CloudFront origin)
 # ------------------------------------------------------------------------------
@@ -166,19 +192,17 @@ resource "aws_s3_bucket_public_access_block" "web" {
   restrict_public_buckets = true
 }
 
-# ------------------------------------------------------------------------------
-# CloudFront – Web Frontend Distribution
-# ------------------------------------------------------------------------------
-
 resource "aws_cloudfront_origin_access_control" "web" {
-  name                              = "${var.app_name}-${var.environment}-web-oac"
-  description                       = "OAC for ${var.app_name} web frontend"
+  count                            = var.enable_cloudfront ? 1 : 0
+  name                             = "${var.app_name}-${var.environment}-web-oac"
+  description                      = "OAC for ${var.app_name} web frontend"
   origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+  signing_behavior                 = "always"
+  signing_protocol                 = "sigv4"
 }
 
 resource "aws_cloudfront_distribution" "web" {
+  count               = var.enable_cloudfront ? 1 : 0
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
@@ -188,7 +212,7 @@ resource "aws_cloudfront_distribution" "web" {
   origin {
     domain_name              = aws_s3_bucket.web.bucket_regional_domain_name
     origin_id                = "s3-web"
-    origin_access_control_id = aws_cloudfront_origin_access_control.web.id
+    origin_access_control_id = aws_cloudfront_origin_access_control.web[0].id
   }
 
   default_cache_behavior {
@@ -248,6 +272,7 @@ resource "aws_cloudfront_distribution" "web" {
 
 # S3 bucket policy allowing CloudFront OAC access
 resource "aws_s3_bucket_policy" "web" {
+  count  = var.enable_cloudfront ? 1 : 0
   bucket = aws_s3_bucket.web.id
 
   policy = jsonencode({
@@ -260,10 +285,13 @@ resource "aws_s3_bucket_policy" "web" {
           Service = "cloudfront.amazonaws.com"
         }
         Action   = "s3:GetObject"
-        Resource = "${aws_s3_bucket.web.arn}/*"
+        Resource = [
+          aws_s3_bucket.web.arn,
+          "${aws_s3_bucket.web.arn}/*"
+        ]
         Condition = {
           StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.web.arn
+            "AWS:SourceArn" = aws_cloudfront_distribution.web[0].arn
           }
         }
       }
