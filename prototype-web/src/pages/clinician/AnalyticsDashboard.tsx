@@ -84,7 +84,7 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  const { overview } = data;
+  const overview = data.overview ?? { totalPatients: 0, activePatients: 0, avgEngagementRate: 0, avgSignalImprovement: 0, pendingEscalations: 0, avgResponseTime: '0m' };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -132,7 +132,7 @@ export default function AnalyticsDashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={data.signalDistribution}
+                data={data.signalDistribution ?? []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -141,7 +141,7 @@ export default function AnalyticsDashboard() {
                 nameKey="band"
                 label={({ name, value }) => `${name}: ${value}`}
               >
-                {data.signalDistribution.map((entry) => (
+                {(data.signalDistribution ?? []).map((entry) => (
                   <Cell key={entry.band} fill={SIGNAL_COLORS[entry.band] || '#94a3b8'} />
                 ))}
               </Pie>
@@ -157,7 +157,7 @@ export default function AnalyticsDashboard() {
             Engagement Trend
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.engagementTrend}>
+            <BarChart data={data.engagementTrend ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="week" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
@@ -179,7 +179,7 @@ export default function AnalyticsDashboard() {
             Clinical Outcomes Trend
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={data.outcomesTrend}>
+            <LineChart data={data.outcomesTrend ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis domain={[0, 27]} tick={{ fontSize: 12 }} />
@@ -200,13 +200,13 @@ export default function AnalyticsDashboard() {
             Adherence by Category
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.adherenceByCategory} layout="vertical">
+            <BarChart data={data.adherenceByCategory ?? []} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="category" width={100} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value) => [`${value}%`, 'Rate']} />
               <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
-                {data.adherenceByCategory.map((entry, idx) => (
+                {(data.adherenceByCategory ?? []).map((entry, idx) => (
                   <Cell key={idx} fill={entry.rate >= 80 ? '#22c55e' : entry.rate >= 60 ? '#eab308' : '#ef4444'} />
                 ))}
               </Bar>
@@ -226,7 +226,7 @@ export default function AnalyticsDashboard() {
           </span>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {data.topMetrics.map((metric) => (
+          {(data.topMetrics ?? []).map((metric) => (
             <div
               key={metric.label}
               className="rounded-lg border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50"

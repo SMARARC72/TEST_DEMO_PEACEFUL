@@ -48,7 +48,12 @@ export default function PatientProfilePage() {
     );
   }
 
-  const { patient, recentCheckins, recentJournals, triageItems, drafts, signalHistory } = profile;
+  const patient = profile.patient ?? { firstName: 'Unknown', lastName: 'Patient', id: '', diagnosisPrimary: null, signalBand: null, submissionCount: 0 };
+  const recentCheckins = profile.recentCheckins ?? [];
+  const recentJournals = profile.recentJournals ?? [];
+  const triageItems = profile.triageItems ?? [];
+  const drafts = profile.drafts ?? [];
+  const signalHistory = profile.signalHistory ?? [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

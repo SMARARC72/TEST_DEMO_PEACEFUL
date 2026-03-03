@@ -105,7 +105,7 @@ export default function ClinicianSettingsPage() {
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Settings</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {user?.profile.firstName} {user?.profile.lastName} · {user?.email}
+          {user?.profile?.firstName} {user?.profile?.lastName} · {user?.email}
         </p>
       </div>
 
@@ -116,7 +116,7 @@ export default function ClinicianSettingsPage() {
           <div className="grid gap-3 sm:grid-cols-2 text-sm">
             <div>
               <p className="text-xs font-medium text-neutral-500 mb-1">Name</p>
-              <p className="text-neutral-700 dark:text-neutral-300">{user?.profile.firstName} {user?.profile.lastName}</p>
+              <p className="text-neutral-700 dark:text-neutral-300">{user?.profile?.firstName} {user?.profile?.lastName}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-neutral-500 mb-1">Email</p>

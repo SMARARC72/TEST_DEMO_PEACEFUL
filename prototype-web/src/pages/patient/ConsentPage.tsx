@@ -61,8 +61,8 @@ export default function ConsentPage() {
     setSubmitting(true);
 
     try {
-      // Submit each consent record
-      await Promise.all(
+      // Submit each consent record and check for tuple errors
+      const results = await Promise.all(
         consentItems.map((c) =>
           patientApi.submitConsent(patientId, {
             consentType: c.id,
@@ -71,6 +71,15 @@ export default function ConsentPage() {
           }),
         ),
       );
+
+      const failed = results.find(([, err]) => err !== null);
+      if (failed) {
+        const [, err] = failed;
+        addToast({ variant: 'error', title: err?.message ?? 'Failed to record consent. Please try again.' });
+        setSubmitting(false);
+        return;
+      }
+
       addToast({ variant: 'success', title: 'Consent recorded. Welcome to Peacefull.ai!' });
       navigate('/patient');
     } catch {

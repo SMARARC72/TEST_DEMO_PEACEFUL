@@ -36,7 +36,7 @@ export default function CaseloadPage() {
   const patients = caseload?.patients ?? [];
   const filtered = filter
     ? patients.filter((p) => {
-        const name = `${p.patient.user.firstName} ${p.patient.user.lastName}`.toLowerCase();
+        const name = `${p.patient?.user?.firstName ?? ''} ${p.patient?.user?.lastName ?? ''}`.toLowerCase();
         return name.includes(filter.toLowerCase());
       })
     : patients;
@@ -67,7 +67,7 @@ export default function CaseloadPage() {
         {[
           { label: 'Total Patients', value: caseload?.totalPatients ?? 0, icon: '👥' },
           { label: 'Active', value: caseload?.activePatients ?? 0, icon: '🟢' },
-          { label: 'Review Needed', value: patients.filter((p) => p.patient.triageItems?.some((t) => t.status === 'NEW')).length, icon: '🔔' },
+          { label: 'Review Needed', value: patients.filter((p) => p.patient?.triageItems?.some((t) => t.status === 'NEW')).length, icon: '🔔' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-3">

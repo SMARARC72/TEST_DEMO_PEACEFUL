@@ -26,7 +26,7 @@ export default function TriageInboxPage() {
     const params = statusFilter === 'ALL' ? undefined : { status: statusFilter };
     const [data, err] = await clinicianApi.getTriage(params);
     if (err) addToast({ title: 'Failed to load triage items', variant: 'error' });
-    if (data) setItems(data.data);
+    if (data) setItems(data.data ?? []);
     setLoading(false);
   }, [statusFilter, addToast]);
 

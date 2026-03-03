@@ -135,20 +135,20 @@ export default function TreatmentPlanPage() {
                     <p className="text-sm text-neutral-700 dark:text-neutral-300">{new Date(selected.targetDate).toLocaleDateString()}</p>
                   </div>
 
-                  {selected.evidence.length > 0 && (
+                  {(selected.evidence ?? []).length > 0 && (
                     <div>
                       <p className="text-xs font-medium text-neutral-500 mb-1">Evidence</p>
                       <ul className="list-disc list-inside text-sm text-neutral-600 dark:text-neutral-300 space-y-1">
-                        {selected.evidence.map((e, i) => <li key={i}>{e}</li>)}
+                        {(selected.evidence ?? []).map((e, i) => <li key={i}>{e}</li>)}
                       </ul>
                     </div>
                   )}
 
-                  {selected.unknowns.length > 0 && (
+                  {(selected.unknowns ?? []).length > 0 && (
                     <div>
                       <p className="text-xs font-medium text-neutral-500 mb-1">Known Unknowns</p>
                       <ul className="list-disc list-inside text-sm text-neutral-500 italic space-y-1">
-                        {selected.unknowns.map((u, i) => <li key={i}>{u}</li>)}
+                        {(selected.unknowns ?? []).map((u, i) => <li key={i}>{u}</li>)}
                       </ul>
                     </div>
                   )}
