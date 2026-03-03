@@ -98,11 +98,18 @@ export interface PatientSubmission {
 }
 
 export interface SubmissionReflection {
-  patientSummary: string;
-  clinicianSummary: string;
+  id: string;
+  submissionId: string;
+  /** Backend returns 'summary'; aliased as patientSummary for UI */
+  summary: string;
+  patientSummary?: string;
+  clinicianSummary?: string;
+  patientTone?: string;
+  nextStep?: string;
   signalBand: SignalBand;
-  evidence: string[];
-  unknowns: string[];
+  evidence?: string[];
+  unknowns?: string[];
+  createdAt: string;
 }
 
 // ─── Clinician ────────────────────────────────

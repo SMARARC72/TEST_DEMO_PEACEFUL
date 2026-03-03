@@ -30,12 +30,18 @@ export default function PatientHome() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [progressData] = await patientApi.getProgress(patientId);
+      // Try the progress endpoint first; fall back to check-in history
+      const [progressData, progressErr] = await patientApi.getProgress(patientId);
       if (cancelled) return;
       if (progressData) {
         setCheckins(progressData.checkins ?? []);
         const latest = progressData.signalHistory?.[0];
         if (latest) setSignalBand(latest.band as SignalBand);
+      } else if (progressErr) {
+        // Progress endpoint may 404 for new patients — get raw check-in history
+        const [history] = await patientApi.getCheckinHistory(patientId);
+        if (cancelled) return;
+        if (history) setCheckins(history);
       }
       setLoading(false);
     })();

@@ -23,7 +23,6 @@ export const authApi = {
     lastName: string;
     role: 'PATIENT' | 'CLINICIAN';
     tenantId?: string;
-    tenantSlug?: string;
   }) {
     return apiPost<RegisterResponse>('auth/register', data);
   },

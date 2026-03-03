@@ -82,7 +82,7 @@ export default function SubmissionSuccessPage() {
             <div>
               <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Summary</p>
               <p className="mt-1 text-sm text-neutral-800 dark:text-neutral-200">
-                {reflection.patientSummary ?? 'Your data has been processed by the AI system.'}
+                {reflection.patientSummary ?? reflection.summary ?? 'Your data has been processed by the AI system.'}
               </p>
             </div>
 

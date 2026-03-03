@@ -51,8 +51,17 @@ enableMocking().then(() => {
   // Initialize Core Web Vitals monitoring
   initWebVitals();
 
-  // Register service worker for offline fallback
+  // Unregister any stale MSW service worker from previous dev sessions
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        // Remove MSW workers (script URL contains 'mockServiceWorker')
+        if (registration.active?.scriptURL?.includes('mockServiceWorker')) {
+          registration.unregister();
+        }
+      }
+    });
+    // Register the offline-fallback service worker
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // Service worker registration is best-effort
     });
