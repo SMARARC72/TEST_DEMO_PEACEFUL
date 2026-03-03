@@ -22,7 +22,7 @@ test('React app smoke — register page loads', async ({ page }) => {
   await page.goto('/register');
 
   // Registration page should show role selector
-  await expect(page.locator('text=Create Account')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible();
 
   // Screenshot: Register page
   await page.screenshot({ path: 'test-results/screenshots/03-register.png', fullPage: true });
