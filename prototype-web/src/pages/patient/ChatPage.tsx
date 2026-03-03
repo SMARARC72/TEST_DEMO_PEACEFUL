@@ -13,6 +13,33 @@ interface ChatMessage {
   timestamp: string;
 }
 
+/** Parse a single SSE line into structured data */
+function parseSSELine(line: string): { sessionId?: string; content?: string; done?: boolean } | null {
+  if (!line.startsWith('data: ')) return null;
+  const data = line.slice(6);
+  if (data === '[DONE]') return { done: true };
+  try {
+    const parsed = JSON.parse(data);
+    return {
+      sessionId: parsed.sessionId,
+      content: parsed.content || parsed.output?.content,
+    };
+  } catch {
+    return { content: data };
+  }
+}
+
+const FALLBACK_RESPONSES = [
+  "I hear you, and I appreciate you sharing that with me. Let's take a moment to reflect on what you're feeling. What do you think is the strongest emotion right now?",
+  "Thank you for opening up. It takes courage to express your thoughts. Can you tell me more about what's been on your mind?",
+  "That's a really thoughtful observation. Between sessions, it can help to notice patterns in how we're feeling. Would you like to explore that further?",
+  "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
+];
+
+function getRandomFallback(): string {
+  return FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)] ?? FALLBACK_RESPONSES[0] ?? '';
+}
+
 export default function ChatPage() {
   const user = useAuthStore((s) => s.user);
   const addToast = useUIStore((s) => s.addToast);
@@ -27,6 +54,7 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -66,19 +94,27 @@ export default function ChatPage() {
 
       const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
       const token = useAuthStore.getState().accessToken;
+      const patientId = user?.id ?? '';
+
+      // Build message history in backend-expected format (exclude system messages)
+      const conversationMessages = messages
+        .filter((m) => m.role !== 'system')
+        .slice(-20)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      // Append the new user message
+      conversationMessages.push({ role: 'user', content: text });
 
       const response = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          message: text,
-          conversationHistory: messages
-            .filter((m) => m.role !== 'system')
-            .slice(-10)
-            .map((m) => ({ role: m.role, content: m.content })),
+          patientId,
+          messages: conversationMessages,
+          ...(sessionId ? { sessionId } : {}),
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -107,21 +143,17 @@ export default function ChatPage() {
         const lines = chunk.split('\n');
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-
-          const data = line.slice(6);
-          if (data === '[DONE]') {
+          const parsed = parseSSELine(line);
+          if (!parsed) continue;
+          if (parsed.done) {
             streamDone = true;
             break;
           }
-
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.content) {
-              appendContent(parsed.content);
-            }
-          } catch {
-            appendContent(data);
+          if (parsed.sessionId && !sessionId) {
+            setSessionId(parsed.sessionId);
+          }
+          if (parsed.content) {
+            appendContent(parsed.content);
           }
         }
 
@@ -130,14 +162,7 @@ export default function ChatPage() {
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         // Fallback: provide a canned supportive response when API is unavailable
-        const fallbackResponses = [
-          "I hear you, and I appreciate you sharing that with me. Let's take a moment to reflect on what you're feeling. What do you think is the strongest emotion right now?",
-          "Thank you for opening up. It takes courage to express your thoughts. Can you tell me more about what's been on your mind?",
-          "That's a really thoughtful observation. Between sessions, it can help to notice patterns in how we're feeling. Would you like to explore that further?",
-          "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
-        ];
-        const fallback =
-          fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)] ?? fallbackResponses[0] ?? '';
+        const fallback = getRandomFallback();
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, content: fallback } : m,

@@ -1,0 +1,162 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:827202647693:task-definition/peacefull-prod-api:3",
+    "containerDefinitions": [
+        {
+            "name": "api",
+            "image": "827202647693.dkr.ecr.us-east-1.amazonaws.com/peacefull-prod-api:prod-phase7",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 3001,
+                    "hostPort": 3001,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "AWS_REGION",
+                    "value": "us-east-1"
+                },
+                {
+                    "name": "PORT",
+                    "value": "3001"
+                },
+                {
+                    "name": "AWS_S3_BUCKET",
+                    "value": "peacefull-prod-uploads-827202647693"
+                },
+                {
+                    "name": "NODE_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "CORS_ORIGIN",
+                    "value": "https://api.peacefull.ai,https://peacefullai.netlify.app"
+                },
+                {
+                    "name": "AUTH0_AUDIENCE",
+                    "value": "https://api.peacefull.ai"
+                },
+                {
+                    "name": "REDIS_URL",
+                    "value": "redis://peacefull-prod-redis.cruycv.0001.use1.cache.amazonaws.com:6379"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DATABASE_URL",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/database-url-A3dX3c"
+                },
+                {
+                    "name": "ANTHROPIC_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/anthropic-api-key-HZQkkb"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/jwt-secret-5Ike7z"
+                },
+                {
+                    "name": "JWT_REFRESH_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/jwt-refresh-secret-IKqK0z"
+                },
+                {
+                    "name": "ENCRYPTION_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/encryption-key-9MC4nz"
+                },
+                {
+                    "name": "AUTH0_DOMAIN",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/auth0-domain-6W8Wfa"
+                },
+                {
+                    "name": "AUTH0_CLIENT_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/auth0-client-id-YMGRQA"
+                },
+                {
+                    "name": "AUTH0_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/auth0-client-secret-1F1nQx"
+                },
+                {
+                    "name": "DIRECT_DATABASE_URL",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:827202647693:secret:peacefull/prod/database-url-A3dX3c"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/peacefull-prod/api",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "api"
+                }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "wget -q --spider http://localhost:3001/health || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 10
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "peacefull-prod-api",
+    "taskRoleArn": "arn:aws:iam::827202647693:role/peacefull-prod-ecs-task",
+    "executionRoleArn": "arn:aws:iam::827202647693:role/peacefull-prod-ecs-execution",
+    "networkMode": "awsvpc",
+    "revision": 3,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE",
+        "MANAGED_INSTANCES"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "2048",
+    "registeredAt": "2026-03-03T13:43:59.375000-06:00",
+    "registeredBy": "arn:aws:iam::827202647693:user/Khoja+C"
+}

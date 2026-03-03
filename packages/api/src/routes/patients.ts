@@ -1157,7 +1157,9 @@ patientRouter.get("/:id/consent", async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
 
-    sendSuccess(res, req,
+    sendSuccess(
+      res,
+      req,
       records.map((r: any) => ({
         id: r.id,
         type: r.type,
@@ -1168,6 +1170,160 @@ patientRouter.get("/:id/consent", async (req, res, next) => {
         createdAt: r.createdAt.toISOString(),
       })),
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /:id/consent ──────────────────────────────────────────────
+// Records informed consent acknowledgment from a patient.
+// Required consent types: data-collection, ai-processing, not-emergency.
+
+const consentSchema = z.object({
+  consentType: z.string().min(1).max(100),
+  accepted: z.boolean(),
+  version: z.string().min(1).max(20),
+});
+
+patientRouter.post("/:id/consent", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+
+    // SEC: Only the patient can grant their own consent
+    if (patient.userId !== req.user!.sub) {
+      throw new AppError("Only the patient can grant consent", 403);
+    }
+
+    const body = consentSchema.parse(req.body);
+
+    // Upsert: if consent of this type already exists, update it
+    const existing = await prisma.consentRecord.findFirst({
+      where: { patientId: patient.id, type: body.consentType },
+    });
+
+    let record;
+    if (existing) {
+      record = await prisma.consentRecord.update({
+        where: { id: existing.id },
+        data: {
+          granted: body.accepted,
+          version: parseInt(body.version, 10) || 1,
+          grantedAt: body.accepted ? new Date() : existing.grantedAt,
+          revokedAt: !body.accepted ? new Date() : null,
+          ipAddress: req.ip ?? "unknown",
+        },
+      });
+    } else {
+      record = await prisma.consentRecord.create({
+        data: {
+          patientId: patient.id,
+          type: body.consentType,
+          version: parseInt(body.version, 10) || 1,
+          granted: body.accepted,
+          grantedAt: new Date(),
+          ipAddress: req.ip ?? "unknown",
+        },
+      });
+    }
+
+    // Audit log
+    await prisma.auditLog
+      .create({
+        data: {
+          id: uuidv4(),
+          tenantId: req.user!.tid,
+          userId: req.user!.sub,
+          action: body.accepted ? "CONSENT_GRANTED" : "CONSENT_REVOKED",
+          resource: "ConsentRecord",
+          resourceId: record.id,
+          details: { type: body.consentType, version: body.version },
+          ipAddress: req.ip ?? "unknown",
+          userAgent: req.get("user-agent") ?? "unknown",
+          previousHash: "0".repeat(64),
+          hash: "0".repeat(64),
+        },
+      })
+      .catch(() => {});
+
+    sendSuccess(
+      res,
+      req,
+      {
+        id: record.id,
+        type: record.type,
+        version: record.version,
+        granted: record.granted,
+        grantedAt: record.grantedAt.toISOString(),
+      },
+      201,
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── DELETE /:id/account ─────────────────────────────────────────────
+// HIPAA Right to Erasure — allows patients to delete their account and all data.
+// Rate-limited, requires self-access only.
+
+patientRouter.delete("/:id/account", exportLimiter, async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(
+      req.params.id as string,
+      req.user!.tid,
+    );
+
+    // SEC: Only the patient can delete their own account
+    if (patient.userId !== req.user!.sub) {
+      throw new AppError("Only the patient can delete their account", 403);
+    }
+
+    // Audit log BEFORE deletion (so we have a record)
+    await prisma.auditLog.create({
+      data: {
+        id: uuidv4(),
+        tenantId: req.user!.tid,
+        userId: req.user!.sub,
+        action: "ACCOUNT_DELETION",
+        resource: "Patient",
+        resourceId: patient.id,
+        details: { reason: "Patient-initiated account deletion" },
+        ipAddress: req.ip ?? "unknown",
+        userAgent: req.get("user-agent") ?? "unknown",
+        previousHash: "0".repeat(64),
+        hash: "0".repeat(64),
+      },
+    });
+
+    // Cascade delete all patient data
+    await prisma.$transaction([
+      prisma.chatMessage.deleteMany({
+        where: { session: { patientId: patient.id } },
+      }),
+      prisma.chatSession.deleteMany({ where: { patientId: patient.id } }),
+      prisma.consentRecord.deleteMany({ where: { patientId: patient.id } }),
+      prisma.memoryProposal.deleteMany({ where: { patientId: patient.id } }),
+      prisma.escalationItem.deleteMany({ where: { patientId: patient.id } }),
+      prisma.submission.deleteMany({ where: { patientId: patient.id } }),
+      prisma.safetyPlan.deleteMany({ where: { patientId: patient.id } }),
+      prisma.progressData.deleteMany({ where: { patientId: patient.id } }),
+      prisma.aIDraft.deleteMany({ where: { patientId: patient.id } }),
+      prisma.sDOHAssessment.deleteMany({ where: { patientId: patient.id } }),
+      prisma.mBCScore.deleteMany({ where: { patientId: patient.id } }),
+      prisma.treatmentPlan.deleteMany({ where: { patientId: patient.id } }),
+      prisma.adherenceItem.deleteMany({ where: { patientId: patient.id } }),
+      prisma.careTeamAssignment.deleteMany({
+        where: { patientId: patient.id },
+      }),
+      prisma.patient.delete({ where: { id: patient.id } }),
+      // Note: we keep the User record but mark it SUSPENDED
+      prisma.user.update({
+        where: { id: patient.userId },
+        data: { status: "SUSPENDED" },
+      }),
+    ]);
+
+    res.status(204).end();
   } catch (err) {
     next(err);
   }

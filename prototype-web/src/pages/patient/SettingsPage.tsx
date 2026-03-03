@@ -116,6 +116,86 @@ function DataExportCard({ patientId }: { patientId: string }) {
     </Card>
   );
 }
+
+// ─── Account Deletion Card ───────────────────────────────────────────
+function AccountDeletionCard({ patientId }: { patientId: string }) {
+  const addToast = useUIStore((s) => s.addToast);
+  const logout = useAuthStore((s) => s.logout);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (): Promise<void> => {
+    if (confirmText !== 'DELETE MY ACCOUNT') return;
+    setDeleting(true);
+    try {
+      const { apiDelete } = await import('@/api/client');
+      const [, err] = await apiDelete(`patients/${patientId}/account`);
+      if (err) {
+        addToast({ title: err.message || 'Deletion failed', variant: 'error' });
+        return;
+      }
+      addToast({ title: 'Your account has been deleted.', variant: 'success' });
+      await logout();
+    } catch {
+      addToast({ title: 'Deletion failed. Please try again later.', variant: 'error' });
+    } finally {
+      setDeleting(false);
+      setShowConfirm(false);
+      setConfirmText('');
+    }
+  };
+
+  return (
+    <Card className="border-red-300">
+      <CardHeader>
+        <CardTitle className="text-red-700">Delete Account</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-slate-600">
+          Permanently delete your account and all associated data. This action
+          cannot be undone. Your data will be removed in accordance with HIPAA.
+        </p>
+        {!showConfirm ? (
+          <Button variant="danger" onClick={() => setShowConfirm(true)}>
+            Delete My Account
+          </Button>
+        ) : (
+          <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-800">
+              Type <strong>DELETE MY ACCOUNT</strong> to confirm:
+            </p>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE MY ACCOUNT"
+              className="w-full rounded-lg border border-red-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="danger"
+                onClick={handleDelete}
+                disabled={confirmText !== 'DELETE MY ACCOUNT' || deleting}
+              >
+                {deleting ? 'Deleting...' : 'Permanently Delete'}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowConfirm(false);
+                  setConfirmText('');
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -320,6 +400,9 @@ export default function SettingsPage() {
 
       {/* Data Export (HIPAA Right of Access) */}
       <DataExportCard patientId={patientId} />
+
+      {/* Account Deletion (HIPAA Right to Erasure) */}
+      <AccountDeletionCard patientId={patientId} />
 
       {/* Sign Out */}
       <Card className="border-red-200">

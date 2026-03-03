@@ -103,6 +103,15 @@ export const crisisLimiter: ReturnType<typeof rateLimit> = createLimiter({
 });
 
 /**
+ * Chat rate limiter — 20 messages per minute per IP.
+ * Prevents abuse of the AI chat endpoint.
+ */
+export const chatLimiter: ReturnType<typeof rateLimit> = createLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+});
+
+/**
  * Strict rate limiter for data export / sensitive operations.
  * 3 requests per hour per IP — PRD §4.6 requires 1 export per 24h
  * but we allow a small burst for retries.
