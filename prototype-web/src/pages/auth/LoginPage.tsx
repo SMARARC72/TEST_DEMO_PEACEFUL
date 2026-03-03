@@ -153,6 +153,25 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Demo credentials */}
+          {!mfaState && (
+            <div className="mt-4 rounded-lg border border-brand-200 bg-brand-50/50 p-3 text-xs dark:border-brand-800 dark:bg-brand-900/20">
+              <p className="mb-1 font-semibold text-brand-700 dark:text-brand-300">Demo Accounts</p>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                <span className="font-medium">Patient:</span> test.patient.1@peacefull.cloud
+              </p>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                <span className="font-medium">Clinician:</span> pilot.clinician.1@peacefull.cloud
+              </p>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                <span className="font-medium">Supervisor:</span> pilot.supervisor@peacefull.cloud
+              </p>
+              <p className="mt-1 text-neutral-500 dark:text-neutral-500">
+                Password: <code className="rounded bg-neutral-200 px-1 dark:bg-neutral-700">Demo2026!</code>
+              </p>
+            </div>
+          )}
+
           <p className="mt-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
             Don't have an account?{' '}
             <Link to="/register" className="text-brand-600 hover:underline dark:text-brand-400">
