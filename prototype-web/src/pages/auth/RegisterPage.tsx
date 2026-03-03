@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '@/stores/auth';
+import { useUIStore } from '@/stores/ui';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -35,6 +36,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const registerUser = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const addToast = useUIStore((s) => s.addToast);
   const [error, setError] = useState('');
   const [pendingApproval, setPendingApproval] = useState(false);
 
@@ -80,7 +82,12 @@ export default function RegisterPage() {
         setPendingApproval(true);
         return;
       }
-      navigate(user.role === 'PATIENT' ? '/patient' : '/clinician', { replace: true });
+      addToast({ variant: 'success', title: 'Account created successfully!' });
+      // New patients go through welcome → consent flow; clinicians go to dashboard
+      navigate(
+        user.role === 'PATIENT' ? '/patient/welcome' : '/clinician',
+        { replace: true },
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Registration failed');
     }
