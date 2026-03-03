@@ -64,7 +64,11 @@ function login(email, password) {
   });
   errorRate.add(!ok);
 
-  return ok ? res.json('data.accessToken') : null;
+  if (!ok) return null;
+  return {
+    token: res.json('data.accessToken'),
+    userId: res.json('data.user.id'),
+  };
 }
 
 function authHeaders(token) {
@@ -78,34 +82,57 @@ function authHeaders(token) {
 
 // ─── Scenarios ───────────────────────────────────────────────────────
 
-export default function () {
+// Pre-authenticate all test users in setup phase (runs once)
+export function setup() {
+  const sessions = { patients: [], clinicians: [] };
+
+  for (const creds of TEST_PATIENTS) {
+    const session = login(creds.email, creds.password);
+    if (session) {
+      sessions.patients.push(session);
+    }
+    sleep(2); // avoid rate limits during setup
+  }
+
+  for (const creds of TEST_CLINICIANS) {
+    const session = login(creds.email, creds.password);
+    if (session) {
+      sessions.clinicians.push(session);
+    }
+    sleep(2);
+  }
+
+  return sessions;
+}
+
+export default function (sessions) {
   const isClinicianFlow = Math.random() < 0.3; // 30% clinician, 70% patient
 
-  if (isClinicianFlow) {
-    clinicianFlow();
-  } else {
-    patientFlow();
+  if (isClinicianFlow && sessions.clinicians.length > 0) {
+    clinicianFlow(sessions.clinicians);
+  } else if (sessions.patients.length > 0) {
+    patientFlow(sessions.patients);
   }
 
   sleep(Math.random() * 2 + 1); // 1-3s think time
 }
 
-function patientFlow() {
-  const creds = TEST_PATIENTS[Math.floor(Math.random() * TEST_PATIENTS.length)];
-  const token = login(creds.email, creds.password);
-  if (!token) return;
+function patientFlow(patients) {
+  const session = patients[Math.floor(Math.random() * patients.length)];
+  const { token, userId } = session;
 
   group('Patient - Home', () => {
-    const res = http.get(`${BASE_URL}/api/v1/patients/me`, authHeaders(token));
+    const res = http.get(`${BASE_URL}/api/v1/patients/${userId}`, authHeaders(token));
     check(res, { 'patient home 200': (r) => r.status === 200 });
     errorRate.add(res.status !== 200);
   });
 
   group('Patient - Submit Check-in', () => {
-    const res = http.post(`${BASE_URL}/api/v1/patients/me/checkin`, JSON.stringify({
-      mood: Math.floor(Math.random() * 5) + 1,
-      sleep: Math.floor(Math.random() * 5) + 1,
-      anxiety: Math.floor(Math.random() * 5) + 1,
+    const res = http.post(`${BASE_URL}/api/v1/patients/${userId}/checkin`, JSON.stringify({
+      mood: Math.floor(Math.random() * 10) + 1,
+      stress: Math.floor(Math.random() * 10) + 1,
+      sleep: Math.floor(Math.random() * 10) + 1,
+      focus: Math.floor(Math.random() * 10) + 1,
       notes: 'Load test check-in submission',
     }), authHeaders(token));
 
@@ -115,22 +142,21 @@ function patientFlow() {
   });
 
   group('Patient - View History', () => {
-    const res = http.get(`${BASE_URL}/api/v1/patients/me/history`, authHeaders(token));
+    const res = http.get(`${BASE_URL}/api/v1/patients/${userId}/history`, authHeaders(token));
     check(res, { 'history 200': (r) => r.status === 200 });
     errorRate.add(res.status !== 200);
   });
 
   group('Patient - View Safety Plan', () => {
-    const res = http.get(`${BASE_URL}/api/v1/patients/me/safety-plan`, authHeaders(token));
+    const res = http.get(`${BASE_URL}/api/v1/patients/${userId}/safety-plan`, authHeaders(token));
     check(res, { 'safety-plan 200|404': (r) => r.status === 200 || r.status === 404 });
     errorRate.add(res.status >= 500);
   });
 }
 
-function clinicianFlow() {
-  const creds = TEST_CLINICIANS[Math.floor(Math.random() * TEST_CLINICIANS.length)];
-  const token = login(creds.email, creds.password);
-  if (!token) return;
+function clinicianFlow(clinicians) {
+  const session = clinicians[Math.floor(Math.random() * clinicians.length)];
+  const { token } = session;
 
   group('Clinician - Dashboard', () => {
     const res = http.get(`${BASE_URL}/api/v1/clinician/dashboard`, authHeaders(token));
