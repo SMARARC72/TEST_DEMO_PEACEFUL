@@ -30,13 +30,14 @@ export default function RecommendationsPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getRecommendations(patientId);
+      const [data, err] = await clinicianApi.getRecommendations(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load recommendations', variant: 'error' });
       if (data) setItems(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleAction = async (id: string, status: string) => {
     if (!patientId) return;

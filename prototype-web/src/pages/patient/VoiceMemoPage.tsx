@@ -49,7 +49,8 @@ export default function VoiceMemoPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [data] = await patientApi.getVoiceMemos(patientId);
+        const [data, err] = await patientApi.getVoiceMemos(patientId);
+        if (!cancelled && err) addToast({ title: 'Failed to load voice memos', variant: 'error' });
         if (!cancelled && data) setMemos(data);
       } catch {
         // silent
@@ -58,7 +59,7 @@ export default function VoiceMemoPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   // Recording timer
   useEffect(() => {

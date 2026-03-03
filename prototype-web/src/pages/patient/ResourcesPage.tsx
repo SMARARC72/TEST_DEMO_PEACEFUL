@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
+import { useUIStore } from '@/stores/ui';
 import { patientApi } from '@/api/patients';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +57,7 @@ const COPING_SKILLS = [
 
 export default function ResourcesPage() {
   const user = useAuthStore((s) => s.user);
+  const addToast = useUIStore((s) => s.addToast);
   const patientId = user?.id ?? '';
 
   const [resources, setResources] = useState<CrisisResource[]>([]);
@@ -66,7 +68,8 @@ export default function ResourcesPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [data] = await patientApi.getResources(patientId);
+        const [data, err] = await patientApi.getResources(patientId);
+        if (!cancelled && err) addToast({ title: 'Additional resources unavailable', variant: 'info' });
         if (!cancelled && data) setResources(data);
       } catch {
         // API resources are optional — crisis contacts always show
@@ -75,7 +78,7 @@ export default function ResourcesPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   return (
     <div className="space-y-6">

@@ -32,13 +32,14 @@ export default function JournalPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await patientApi.getJournals(patientId);
+      const [data, err] = await patientApi.getJournals(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load journal entries', variant: 'error' });
       if (data) setEntries(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleSubmit = async () => {
     if (!patientId || !content.trim() || submitting) return;

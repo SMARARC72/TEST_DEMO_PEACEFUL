@@ -38,13 +38,14 @@ export default function ExportsCenterPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getExports(patientId);
+      const [data, err] = await clinicianApi.getExports(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load exports', variant: 'error' });
       if (data) setExports(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleCreateExport = async (profile: ExportProfile) => {
     if (!patientId || creating) return;

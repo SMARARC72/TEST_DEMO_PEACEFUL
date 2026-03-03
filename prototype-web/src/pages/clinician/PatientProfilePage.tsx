@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
+import { useUIStore } from '@/stores/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import type { PatientProfile } from '@/api/types';
 
 export default function PatientProfilePage() {
   const { patientId } = useParams<{ patientId: string }>();
+  const addToast = useUIStore((s) => s.addToast);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,8 +21,9 @@ export default function PatientProfilePage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getPatientProfile(patientId);
+      const [data, err] = await clinicianApi.getPatientProfile(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load patient profile', variant: 'error' });
       if (data) setProfile(data);
       setLoading(false);
     })();

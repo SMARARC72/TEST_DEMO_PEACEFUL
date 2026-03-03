@@ -29,13 +29,14 @@ export default function TreatmentPlanPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getPlans(patientId);
+      const [data, err] = await clinicianApi.getPlans(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load treatment plan', variant: 'error' });
       if (data) setPlans(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleStatus = async (id: string, status: PlanStatus) => {
     if (!patientId || actionLoading) return;

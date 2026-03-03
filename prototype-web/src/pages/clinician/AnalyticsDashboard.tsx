@@ -11,6 +11,7 @@ import {
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
 import { Spinner } from '@/components/ui/Spinner';
+import { PageError } from '@/components/ui/PageError';
 
 // ─── Types ──────────────────────────────
 
@@ -46,6 +47,7 @@ export default function AnalyticsDashboard() {
   const addToast = useUIStore((s) => s.addToast);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
@@ -55,19 +57,29 @@ export default function AnalyticsDashboard() {
 
   async function loadAnalytics() {
     setLoading(true);
+    setError(false);
     const [result, err] = await clinicianApi.getAnalytics(period);
     if (err) {
       addToast({ title: 'Failed to load analytics', variant: 'error' });
+      setError(true);
     } else if (result) {
       setData(result);
     }
     setLoading(false);
   }
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <PageError message="Failed to load analytics data." onRetry={loadAnalytics} />
       </div>
     );
   }

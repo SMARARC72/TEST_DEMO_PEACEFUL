@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
+import { useUIStore } from '@/stores/ui';
 import { patientApi } from '@/api/patients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 
@@ -74,6 +75,7 @@ const DEFAULT_STEPS = [
 
 export default function SafetyPlanPage() {
   const user = useAuthStore((s) => s.user);
+  const addToast = useUIStore((s) => s.addToast);
   const patientId = user?.id ?? '';
 
   const [plan, setPlan] = useState<SafetyPlan | null>(null);
@@ -85,7 +87,8 @@ export default function SafetyPlanPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [data] = await patientApi.getSafetyPlan(patientId);
+        const [data, err] = await patientApi.getSafetyPlan(patientId);
+        if (!cancelled && err) addToast({ title: 'Using default safety plan', variant: 'info' });
         if (!cancelled && data) setPlan(data);
       } catch {
         // Use default if API unavailable
@@ -94,7 +97,7 @@ export default function SafetyPlanPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const steps = plan?.steps ?? DEFAULT_STEPS;
 

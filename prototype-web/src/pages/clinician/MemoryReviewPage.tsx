@@ -29,13 +29,14 @@ export default function MemoryReviewPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getMemories(patientId);
+      const [data, err] = await clinicianApi.getMemories(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load memories', variant: 'error' });
       if (data) setMemories(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleAction = async (id: string, status: MemoryStatus) => {
     if (!patientId || actionLoading) return;

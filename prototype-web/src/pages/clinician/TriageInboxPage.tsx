@@ -24,10 +24,11 @@ export default function TriageInboxPage() {
 
   const fetchTriage = useCallback(async () => {
     const params = statusFilter === 'ALL' ? undefined : { status: statusFilter };
-    const [data] = await clinicianApi.getTriage(params);
+    const [data, err] = await clinicianApi.getTriage(params);
+    if (err) addToast({ title: 'Failed to load triage items', variant: 'error' });
     if (data) setItems(data.data);
     setLoading(false);
-  }, [statusFilter]);
+  }, [statusFilter, addToast]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch sets state on completion, not synchronously

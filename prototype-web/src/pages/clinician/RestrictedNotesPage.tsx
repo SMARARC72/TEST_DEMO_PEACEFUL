@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
+import { useUIStore } from '@/stores/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +26,7 @@ const typeIcon: Record<RestrictedNoteType, string> = {
 
 export default function RestrictedNotesPage() {
   const { patientId } = useParams<{ patientId: string }>();
+  const addToast = useUIStore((s) => s.addToast);
   const [notes, setNotes] = useState<RestrictedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -33,13 +35,14 @@ export default function RestrictedNotesPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getRestrictedNotes(patientId);
+      const [data, err] = await clinicianApi.getRestrictedNotes(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load restricted notes', variant: 'error' });
       if (data) setNotes(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const selected = notes.find((n) => n.id === selectedId);
 

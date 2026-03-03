@@ -211,7 +211,8 @@ export default function SettingsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [data] = await patientApi.getSettings(patientId);
+        const [data, err] = await patientApi.getSettings(patientId);
+        if (!cancelled && err) addToast({ title: 'Using default settings', variant: 'info' });
         if (!cancelled && data) setSettings(data);
       } catch {
         // Use defaults if API unavailable
@@ -220,7 +221,7 @@ export default function SettingsPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   async function saveSettings(updated: SettingsType) {
     if (saving) return;

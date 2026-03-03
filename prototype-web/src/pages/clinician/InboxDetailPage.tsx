@@ -30,13 +30,14 @@ export default function InboxDetailPage() {
     if (!triageId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getTriageItem(triageId);
+      const [data, err] = await clinicianApi.getTriageItem(triageId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load triage item', variant: 'error' });
       if (data) setItem(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [triageId]);
+  }, [triageId, addToast]);
 
   const handleAction = async (status: string) => {
     if (!triageId || actionLoading) return;

@@ -21,13 +21,14 @@ export default function DraftReviewPage() {
     if (!patientId) return;
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getDrafts(patientId);
+      const [data, err] = await clinicianApi.getDrafts(patientId);
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load drafts', variant: 'error' });
       if (data) setDrafts(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, addToast]);
 
   const handleAction = async (draftId: string, status: DraftStatus, notes?: string) => {
     if (!patientId || loadingDraftId) return;

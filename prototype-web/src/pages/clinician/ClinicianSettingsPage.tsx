@@ -59,13 +59,14 @@ export default function ClinicianSettingsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getSettings();
+      const [data, err] = await clinicianApi.getSettings();
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load settings', variant: 'error' });
       if (data) setSettings(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [addToast]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -35,10 +35,10 @@ function reportError(error: Error, componentStack?: string) {
 
   // Report to backend error tracking endpoint (always, even without Sentry)
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
     if (apiUrl) {
-      const token = localStorage.getItem('accessToken');
-      fetch(`${apiUrl}/api/v1/errors/report`, {
+      const token = sessionStorage.getItem('accessToken');
+      fetch(`${apiUrl}/errors/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

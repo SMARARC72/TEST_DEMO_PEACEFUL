@@ -1,12 +1,14 @@
 // ─── Caseload Page ───────────────────────────────────────────────────
 import { useEffect, useState } from 'react';
 import { clinicianApi } from '@/api/clinician';
+import { useUIStore } from '@/stores/ui';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { PatientCard } from '@/components/domain/PatientCard';
 import type { CaseloadResponse } from '@/api/types';
 
 export default function CaseloadPage() {
+  const addToast = useUIStore((s) => s.addToast);
   const [caseload, setCaseload] = useState<CaseloadResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -14,13 +16,14 @@ export default function CaseloadPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [data] = await clinicianApi.getCaseload();
+      const [data, err] = await clinicianApi.getCaseload();
       if (cancelled) return;
+      if (err) addToast({ title: 'Failed to load caseload', variant: 'error' });
       if (data) setCaseload(data);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [addToast]);
 
   if (loading) {
     return (
