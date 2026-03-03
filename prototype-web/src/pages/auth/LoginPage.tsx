@@ -184,6 +184,12 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
+            <Link to="/terms" className="hover:underline">Terms of Service</Link>
+            {' · '}
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+          </p>
         </CardContent>
       </Card>
     </div>

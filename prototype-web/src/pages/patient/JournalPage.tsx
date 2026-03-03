@@ -128,25 +128,54 @@ export default function JournalPage() {
         ) : (
           <div className="space-y-3">
             {entries.slice(0, 10).map((entry) => (
-              <Card key={entry.id}>
-                <CardContent>
-                  <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {new Date(entry.createdAt).toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </p>
-                  <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap dark:text-neutral-300 line-clamp-4">
-                    {entry.content}
-                  </p>
-                </CardContent>
-              </Card>
+              <JournalEntryCard key={entry.id} entry={entry} />
             ))}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+/** Expandable journal entry card */
+function JournalEntryCard({ entry }: { entry: JournalEntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = entry.content.length > 200;
+
+  return (
+    <Card
+      className={`cursor-pointer transition-shadow hover:shadow-md ${expanded ? 'ring-2 ring-brand-200' : ''}`}
+      onClick={() => setExpanded(!expanded)}
+    >
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            {new Date(entry.createdAt).toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </p>
+          {isLong && (
+            <span className="text-xs text-brand-500">
+              {expanded ? 'Show less ▴' : 'Read more ▾'}
+            </span>
+          )}
+        </div>
+        <p
+          className={`mt-1 text-sm text-neutral-700 whitespace-pre-wrap dark:text-neutral-300 ${
+            !expanded && isLong ? 'line-clamp-4' : ''
+          }`}
+        >
+          {entry.content}
+        </p>
+        {expanded && (
+          <p className="mt-2 text-xs text-neutral-400">
+            {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

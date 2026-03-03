@@ -1,5 +1,5 @@
 // ─── Router ──────────────────────────────────────────────────────────
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import { lazy, Suspense, type ComponentType } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/layout/AuthGuard';
@@ -63,6 +63,16 @@ export const router = createBrowserRouter([
   {
     path: '/callback',
     element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
+  },
+
+  // ── Legal pages ────────────────────────────
+  {
+    path: '/terms',
+    element: lazyPage(() => import('@/pages/legal/TermsPage')),
+  },
+  {
+    path: '/privacy',
+    element: lazyPage(() => import('@/pages/legal/PrivacyPage')),
   },
 
   // ── Patient onboarding (public-ish, no AppShell) ───
@@ -218,9 +228,9 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Catch-all → redirect to login ──────────
+  // ── 404 Not Found ───────────────────────────
   {
     path: '*',
-    element: <Navigate to="/login" replace />,
+    element: lazyPage(() => import('@/pages/NotFoundPage')),
   },
 ]);

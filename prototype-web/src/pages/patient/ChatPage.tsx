@@ -5,6 +5,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
+import { patientApi } from '@/api/patients';
 
 interface ChatMessage {
   id: string;
@@ -58,6 +59,24 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [resolvedPatientId, setResolvedPatientId] = useState<string | null>(null);
+
+  // Resolve the actual Patient-table ID (backend AI route needs patient.id, not user.id)
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const [patient] = await patientApi.getPatient(userId);
+      if (!cancelled && patient) {
+        setResolvedPatientId(patient.id);
+      } else if (!cancelled) {
+        // Fallback: use user.id directly (works if backend has resolvePatientForAI)
+        setResolvedPatientId(userId);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,12 +108,20 @@ export default function ChatPage() {
       { id: assistantId, role: 'assistant', content: '', timestamp: new Date().toISOString() },
     ]);
 
+    // Auto-timeout after 30 seconds to prevent hanging connections
+    const CHAT_TIMEOUT_MS = 30_000;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     try {
       abortControllerRef.current = new AbortController();
 
+      timeoutId = setTimeout(() => {
+        abortControllerRef.current?.abort();
+      }, CHAT_TIMEOUT_MS);
+
       const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
       const token = useAuthStore.getState().accessToken;
-      const patientId = user?.id ?? '';
+      const patientId = resolvedPatientId ?? user?.id ?? '';
 
       // Build message history in backend-expected format (exclude system messages)
       const conversationMessages = messages
@@ -169,8 +196,19 @@ export default function ChatPage() {
           ),
         );
         addToast({ title: 'Using offline mode — responses are pre-generated', variant: 'info' });
+      } else {
+        // Timed out or user stopped — show a timeout-specific fallback
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId && m.content === ''
+              ? { ...m, content: "I'm having trouble connecting right now. Please try again in a moment, or reach out to your care team if you need support." }
+              : m,
+          ),
+        );
+        addToast({ title: 'Connection timed out — please try again', variant: 'warning' });
       }
     } finally {
+      clearTimeout(timeoutId);
       setIsStreaming(false);
       abortControllerRef.current = null;
     }

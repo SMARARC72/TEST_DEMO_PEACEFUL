@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { SignalBadge } from '@/components/domain/SignalBadge';
 import type { CheckinData, SignalBand } from '@/api/types';
+import { OnboardingOverlay } from '@/components/domain/OnboardingOverlay';
 import {
   ResponsiveContainer,
   LineChart,
@@ -67,6 +68,7 @@ export default function PatientHome() {
 
   return (
     <div className="space-y-6">
+      <OnboardingOverlay />
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <div>

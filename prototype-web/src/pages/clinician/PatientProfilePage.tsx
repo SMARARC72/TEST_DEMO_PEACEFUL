@@ -28,6 +28,7 @@ export default function PatientProfilePage() {
       setLoading(false);
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
   if (loading) {

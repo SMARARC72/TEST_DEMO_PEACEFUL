@@ -50,6 +50,18 @@ export default function RegisterPage() {
 
   // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch() is intentionally non-memoizable
   const selectedRole = watch('role');
+   
+  const watchedPassword = watch('password') ?? '';
+
+  // Real-time password strength feedback
+  const pwChecks = [
+    { label: '12+ characters', met: watchedPassword.length >= 12 },
+    { label: 'Uppercase letter', met: /[A-Z]/.test(watchedPassword) },
+    { label: 'Lowercase letter', met: /[a-z]/.test(watchedPassword) },
+    { label: 'Number', met: /[0-9]/.test(watchedPassword) },
+    { label: 'Special character', met: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(watchedPassword) },
+  ];
+  const pwStrength = pwChecks.filter((c) => c.met).length;
 
   const onSubmit = async (data: FormData) => {
     setError('');
@@ -139,6 +151,37 @@ export default function RegisterPage() {
               error={errors.password?.message}
               {...register('password')}
             />
+            {/* Password strength indicator */}
+            {watchedPassword.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div
+                      key={level}
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        level <= pwStrength
+                          ? pwStrength <= 2
+                            ? 'bg-red-400'
+                            : pwStrength <= 3
+                              ? 'bg-amber-400'
+                              : 'bg-green-400'
+                          : 'bg-neutral-200 dark:bg-neutral-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                  {pwChecks.map((c) => (
+                    <span
+                      key={c.label}
+                      className={`text-[10px] ${c.met ? 'text-green-600 dark:text-green-400' : 'text-neutral-400'}`}
+                    >
+                      {c.met ? '✓' : '○'} {c.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <Input
               label="Confirm Password"
               type="password"
@@ -158,6 +201,13 @@ export default function RegisterPage() {
             <Link to="/login" className="text-brand-600 hover:underline dark:text-brand-400">
               Sign in
             </Link>
+          </p>
+
+          <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
+            By creating an account, you agree to our{' '}
+            <Link to="/terms" className="hover:underline">Terms of Service</Link>
+            {' and '}
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>.
           </p>
         </CardContent>
       </Card>

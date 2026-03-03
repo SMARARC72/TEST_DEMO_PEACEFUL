@@ -16,6 +16,7 @@ import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { SessionTimeoutWarning } from './components/SessionTimeoutWarning';
 import { CrisisButton } from './components/domain/CrisisButton';
+import { FeedbackWidget } from './components/domain/FeedbackWidget';
 import { initWebVitals } from './hooks/useWebVitals';
 import { useWsStore } from './stores/ws';
 import { useAuthStore } from './stores/auth';
@@ -92,6 +93,7 @@ enableMocking().then(() => {
           <RouterProvider router={router} />
           <SessionTimeoutWarning />
           <CrisisButton />
+          <FeedbackWidget />
           <ToastContainer />
         </Auth0ProviderWithNavigate>
       </ErrorBoundary>

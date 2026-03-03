@@ -164,6 +164,18 @@ function unwrapEnvelope<T>(raw: unknown): T {
 export async function toApiError(err: unknown): Promise<ApiError> {
   if (err && typeof err === 'object' && 'response' in err) {
     const res = (err as { response: Response }).response;
+
+    // Rate limit handling: surface Retry-After header info
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After');
+      const waitSec = retryAfter ? parseInt(retryAfter, 10) : 60;
+      return {
+        status: 429,
+        code: 'RATE_LIMITED',
+        message: `Too many requests. Please wait ${waitSec} seconds before trying again.`,
+      };
+    }
+
     try {
       const body = await res.json();
       // Backend wraps errors in { error: { code, message, details }, requestId, timestamp }

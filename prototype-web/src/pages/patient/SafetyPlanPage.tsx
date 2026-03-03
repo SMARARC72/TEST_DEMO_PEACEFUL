@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { patientApi } from '@/api/patients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 import { Spinner } from '@/components/ui/Spinner';
 import type { SafetyPlan } from '@/api/types';
@@ -111,16 +112,26 @@ export default function SafetyPlanPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Safety Plan</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Your personalized safety plan based on the Stanley-Brown model
-        </p>
-        {plan?.reviewedDate && (
-          <p className="mt-1 text-xs text-slate-400">
-            Last reviewed: {new Date(plan.reviewedDate).toLocaleDateString()} • Version {plan.version}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Safety Plan</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Your personalized safety plan based on the Stanley-Brown model
           </p>
-        )}
+          {plan?.reviewedDate && (
+            <p className="mt-1 text-xs text-slate-400">
+              Last reviewed: {new Date(plan.reviewedDate).toLocaleDateString()} • Version {plan.version}
+            </p>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => window.print()}
+          aria-label="Print or export safety plan"
+        >
+          🖨️ Print / Export
+        </Button>
       </div>
 
       {/* Crisis banner */}

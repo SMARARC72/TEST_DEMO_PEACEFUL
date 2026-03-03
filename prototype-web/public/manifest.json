@@ -1,0 +1,19 @@
+{
+  "name": "Peacefull.ai",
+  "short_name": "Peacefull",
+  "description": "AI-augmented clinical mental health platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6C5CE7",
+  "orientation": "portrait-primary",
+  "categories": ["health", "medical"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
