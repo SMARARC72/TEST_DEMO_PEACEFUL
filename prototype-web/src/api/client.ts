@@ -166,11 +166,13 @@ export async function toApiError(err: unknown): Promise<ApiError> {
     const res = (err as { response: Response }).response;
     try {
       const body = await res.json();
+      // Backend wraps errors in { error: { code, message, details }, requestId, timestamp }
+      const errPayload = body?.error ?? body;
       return {
         status: res.status,
-        code: body?.code ?? 'UNKNOWN',
-        message: body?.message ?? res.statusText,
-        details: body?.details,
+        code: errPayload?.code ?? 'UNKNOWN',
+        message: errPayload?.message ?? res.statusText,
+        details: errPayload?.details,
       };
     } catch {
       return {
