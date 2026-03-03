@@ -132,11 +132,17 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" loading={isLoading}>
                 Sign in with email
               </Button>
+
+              <div className="text-center">
+                <Link to="/forgot-password" className="text-sm text-brand-600 hover:underline dark:text-brand-400">
+                  Forgot your password?
+                </Link>
+              </div>
             </form>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                Enter the verification code from your authenticator app.
+                A verification code has been sent to your email. Enter it below.
               </p>
               <Input
                 label="Verification Code"

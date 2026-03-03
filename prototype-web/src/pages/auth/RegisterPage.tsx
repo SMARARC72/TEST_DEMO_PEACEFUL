@@ -16,9 +16,11 @@ const schema = z
     email: z.string().email('Valid email required'),
     password: z
       .string()
-      .min(8, 'At least 8 characters')
+      .min(12, 'At least 12 characters')
       .regex(/[A-Z]/, 'Include an uppercase letter')
-      .regex(/[0-9]/, 'Include a number'),
+      .regex(/[a-z]/, 'Include a lowercase letter')
+      .regex(/[0-9]/, 'Include a number')
+      .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Include a special character'),
     confirmPassword: z.string(),
     role: z.enum(['PATIENT', 'CLINICIAN']),
   })
@@ -34,6 +36,7 @@ export default function RegisterPage() {
   const registerUser = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
   const [error, setError] = useState('');
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const {
     register,
@@ -50,6 +53,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: FormData) => {
     setError('');
+    setPendingApproval(false);
     try {
       await registerUser({
         email: data.email,
@@ -58,8 +62,13 @@ export default function RegisterPage() {
         lastName: data.lastName,
         role: data.role,
       });
-      const role = useAuthStore.getState().user?.role;
-      navigate(role === 'PATIENT' ? '/patient' : '/clinician', { replace: true });
+      // If the store didn't set a user (clinician pending approval), show message
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        setPendingApproval(true);
+        return;
+      }
+      navigate(user.role === 'PATIENT' ? '/patient' : '/clinician', { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Registration failed');
     }
@@ -83,6 +92,14 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {pendingApproval && (
+            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+              <p className="font-semibold">Registration submitted!</p>
+              <p className="mt-1">Your clinician account is pending supervisor approval. You'll receive an email once approved.</p>
+            </div>
+          )}
+
+          {!pendingApproval && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Role selector */}
             <div className="flex gap-2">
@@ -134,6 +151,7 @@ export default function RegisterPage() {
               Create Account
             </Button>
           </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
             Already have an account?{' '}
