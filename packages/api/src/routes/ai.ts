@@ -21,6 +21,24 @@ export const aiRouter = Router();
 // All AI routes require authentication
 aiRouter.use(authenticate);
 
+/**
+ * Resolve a patient by either patient.id or user.id.
+ * The frontend typically has the userId from the JWT, not the patientId.
+ */
+async function resolvePatientForAI(idOrUserId: string) {
+  let patient = await prisma.patient.findUnique({
+    where: { id: idOrUserId },
+    select: { id: true, tenantId: true, userId: true },
+  });
+  if (!patient) {
+    patient = await prisma.patient.findUnique({
+      where: { userId: idOrUserId },
+      select: { id: true, tenantId: true, userId: true },
+    });
+  }
+  return patient;
+}
+
 // ─── Chat Rate Limiter (imported from rate-limit module) ─────────────
 // chatLimiter is imported above — 20 messages/min/IP
 
@@ -106,13 +124,12 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
     }
 
     // Verify the patient exists and belongs to the authenticated user's tenant
-    const patient = await prisma.patient.findUnique({
-      where: { id: body.patientId },
-      select: { id: true, tenantId: true, userId: true },
-    });
+    const patient = await resolvePatientForAI(body.patientId);
     if (!patient) {
       throw new AppError("Patient not found", 404);
     }
+    // Use resolved patient.id for all downstream queries
+    const resolvedPatientId = patient.id;
     // SEC: Patient can only chat as themselves
     if (patient.userId !== req.user!.sub && patient.id !== req.user!.sub) {
       // Allow if user is clinician/supervisor viewing (read-only in future)
@@ -140,7 +157,7 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
       await prisma.escalationItem
         .create({
           data: {
-            patientId: body.patientId,
+            patientId: resolvedPatientId,
             tier: "T3",
             trigger: "crisis_language_chat",
             status: "OPEN",
@@ -169,12 +186,12 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
         throw new AppError("Chat session not found", 404);
       }
       // SEC: Verify session belongs to this patient
-      if (session.patientId !== body.patientId) {
+      if (session.patientId !== resolvedPatientId) {
         throw new AppError("Session does not belong to this patient", 403);
       }
     } else {
       session = await prisma.chatSession.create({
-        data: { patientId: body.patientId },
+        data: { patientId: resolvedPatientId },
       });
     }
 
@@ -196,20 +213,20 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
       [
         prisma.memoryProposal
           .findMany({
-            where: { patientId: body.patientId, status: "APPROVED" },
+            where: { patientId: resolvedPatientId, status: "APPROVED" },
             select: { statement: true, category: true },
             take: 20,
           })
           .catch(() => []),
         prisma.safetyPlan
           .findUnique({
-            where: { patientId: body.patientId },
+            where: { patientId: resolvedPatientId },
             select: { steps: true },
           })
           .catch(() => null),
         prisma.submission
           .findMany({
-            where: { patientId: body.patientId },
+            where: { patientId: resolvedPatientId },
             orderBy: { createdAt: "desc" },
             take: 3,
             select: {
@@ -420,10 +437,7 @@ aiRouter.get("/chat/sessions/:patientId", async (req, res, next) => {
     const { patientId } = req.params;
 
     // SEC: Verify the requesting user owns this patient record
-    const patient = await prisma.patient.findUnique({
-      where: { id: patientId },
-      select: { userId: true, tenantId: true },
-    });
+    const patient = await resolvePatientForAI(patientId);
     if (!patient) {
       throw new AppError("Patient not found", 404);
     }
@@ -436,7 +450,7 @@ aiRouter.get("/chat/sessions/:patientId", async (req, res, next) => {
     }
 
     const sessions = await prisma.chatSession.findMany({
-      where: { patientId },
+      where: { patientId: patient.id },
       orderBy: { updatedAt: "desc" },
       include: {
         _count: { select: { messages: true } },
