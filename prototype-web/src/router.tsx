@@ -6,8 +6,27 @@ import { AuthGuard } from '@/components/layout/AuthGuard';
 import { Spinner } from '@/components/ui/Spinner';
 
 // ─── Lazy-loaded pages ──────────────────────────
+// Retry dynamic imports once on failure (handles stale chunk hashes after deploy)
+function retryImport(
+  factory: () => Promise<{ default: ComponentType }>,
+): Promise<{ default: ComponentType }> {
+  return factory().catch(() => {
+    // If we already retried, don't loop — hard reload to get fresh index.html
+    const key = 'chunk-retry';
+    const hasRetried = sessionStorage.getItem(key);
+    if (hasRetried) {
+      sessionStorage.removeItem(key);
+      return factory(); // let it throw naturally for ErrorBoundary
+    }
+    sessionStorage.setItem(key, '1');
+    window.location.reload();
+    // Return a never-resolving promise so React doesn't render stale content
+    return new Promise<{ default: ComponentType }>(() => {});
+  });
+}
+
 function lazyPage(factory: () => Promise<{ default: ComponentType }>) {
-  const Component = lazy(factory);
+  const Component = lazy(() => retryImport(factory));
   return (
     <Suspense
       fallback={
