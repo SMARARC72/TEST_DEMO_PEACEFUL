@@ -27,6 +27,7 @@ interface AuthState {
     firstName: string;
     lastName: string;
     role: 'PATIENT' | 'CLINICIAN';
+    tenantSlug?: string;
   }) => Promise<void>;
   mfaVerify: (userId: string, code: string) => Promise<void>;
   logout: () => Promise<void>;

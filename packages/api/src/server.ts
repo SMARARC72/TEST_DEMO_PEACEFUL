@@ -70,9 +70,17 @@ app.use((_req, res, next) => {
 });
 
 // Parse comma-separated CORS origins — SEC-06: No wildcard `*` allowed.
-const allowedOrigins = env.CORS_ORIGIN.split(",")
-  .map((o) => o.trim())
-  .filter((o) => o !== "*"); // Strip wildcard — CORS must be explicit per PRD §3.4
+const allowedOrigins = [
+  "https://peacefullai.netlify.app",
+  "https://www.peacefullai.netlify.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+  ...env.CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter((o) => o !== "*"),
+].filter(Boolean) as string[];
 
 app.use(
   cors({
@@ -89,10 +97,13 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
-      "X-Request-ID",
+      "X-Requested-With",
+      "X-Tenant-Slug",
       "X-Tenant-ID",
+      "X-Request-ID",
     ],
-    maxAge: 7200,
+    exposedHeaders: ["X-Request-ID"],
+    maxAge: 86400,
   }),
 );
 app.use(compression());

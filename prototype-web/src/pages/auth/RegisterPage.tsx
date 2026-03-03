@@ -61,6 +61,7 @@ export default function RegisterPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
+        tenantSlug: 'default',
       });
       // If the store didn't set a user (clinician pending approval), show message
       const user = useAuthStore.getState().user;
