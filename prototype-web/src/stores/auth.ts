@@ -1,6 +1,7 @@
 // ─── Auth Store ──────────────────────────────────────────────────────
 // Zustand store that owns auth state + wires token accessors into the
 // api client to avoid circular dependencies.
+// Supports dual-mode: Auth0 Universal Login (production) + local JWT (dev/test).
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -15,6 +16,8 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  /** Whether the current session is via Auth0 (affects logout behavior) */
+  isAuth0Session: boolean;
 
   // actions
   login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; userId?: string }>;
@@ -30,6 +33,8 @@ interface AuthState {
   fetchMe: () => Promise<void>;
   setTokens: (access: string, refresh: string) => void;
   clearAuth: () => void;
+  /** Called after Auth0 callback to set session from Auth0 tokens */
+  setAuth0Session: (accessToken: string, user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -41,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isAuth0Session: false,
 
       setTokens: (access, refresh) => {
         set({ accessToken: access, refreshToken: refresh, isAuthenticated: true });
@@ -53,6 +59,18 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
           error: null,
+          isAuth0Session: false,
+        });
+      },
+
+      setAuth0Session: (accessToken, user) => {
+        set({
+          user,
+          accessToken,
+          refreshToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+          isAuth0Session: true,
         });
       },
 
@@ -142,6 +160,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isAuth0Session: state.isAuth0Session,
       }),
     },
   ),

@@ -11,6 +11,7 @@ import './i18n';
 // Import auth store to wire token accessors on app start
 import './stores/auth';
 
+import { Auth0ProviderWithNavigate } from './auth/Auth0ProviderWithNavigate';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { SessionTimeoutWarning } from './components/SessionTimeoutWarning';
@@ -78,10 +79,12 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
-        <RouterProvider router={router} />
-        <SessionTimeoutWarning />
-        <CrisisButton />
-        <ToastContainer />
+        <Auth0ProviderWithNavigate>
+          <RouterProvider router={router} />
+          <SessionTimeoutWarning />
+          <CrisisButton />
+          <ToastContainer />
+        </Auth0ProviderWithNavigate>
       </ErrorBoundary>
     </StrictMode>,
   );

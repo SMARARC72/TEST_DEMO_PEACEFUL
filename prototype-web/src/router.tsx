@@ -41,6 +41,10 @@ export const router = createBrowserRouter([
     path: '/forgot-password',
     element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
   },
+  {
+    path: '/callback',
+    element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
+  },
 
   // ── Patient onboarding (public-ish, no AppShell) ───
   {

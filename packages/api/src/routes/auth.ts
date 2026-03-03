@@ -2,11 +2,11 @@
 // Login, MFA verification, token refresh, logout, step-up auth, profile.
 // All queries now target Neon Postgres via Prisma.
 
-import { Router } from 'express';
-import { z } from 'zod';
-import { authenticate } from '../middleware/auth.js';
-import { authLimiter } from '../middleware/rate-limit.js';
-import { AppError } from '../middleware/error.js';
+import { Router } from "express";
+import { z } from "zod";
+import { authenticate } from "../middleware/auth.js";
+import { authLimiter } from "../middleware/rate-limit.js";
+import { AppError } from "../middleware/error.js";
 import {
   generateTokens,
   generateStepUpToken,
@@ -15,13 +15,15 @@ import {
   hashPassword,
   generateMFACode,
   verifyMFACode,
-} from '../services/auth.js';
-import { authLogger } from '../utils/logger.js';
-import { sendSuccess } from '../utils/response.js';
-import { prisma } from '../models/index.js';
+} from "../services/auth.js";
+import { authLogger } from "../utils/logger.js";
+import { sendSuccess } from "../utils/response.js";
+import { prisma } from "../models/index.js";
 
 // Infer the User row type from the Prisma client's return type
-type PrismaUser = NonNullable<Awaited<ReturnType<typeof prisma.user.findUnique>>>;
+type PrismaUser = NonNullable<
+  Awaited<ReturnType<typeof prisma.user.findUnique>>
+>;
 
 export const authRouter = Router();
 
@@ -66,22 +68,26 @@ const mfaLimiter = authLimiter;
 
 const registerBodySchema = z.object({
   email: z.string().email(),
-  password: z.string().min(12, 'Password must be at least 12 characters').max(128),
+  password: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(128),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  role: z.enum(['PATIENT', 'CLINICIAN']).default('PATIENT'),
+  role: z.enum(["PATIENT", "CLINICIAN"]).default("PATIENT"),
   tenantSlug: z.string().min(1).max(100).optional(),
 });
 
-authRouter.post('/register', async (req, res, next) => {
+authRouter.post("/register", async (req, res, next) => {
   try {
     const body = registerBodySchema.parse(req.body);
 
     // Validate password complexity first (before any DB queries)
-    const complexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
+    const complexityRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
     if (!complexityRegex.test(body.password)) {
       throw new AppError(
-        'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character',
+        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
         400,
       );
     }
@@ -89,25 +95,29 @@ authRouter.post('/register', async (req, res, next) => {
     // Find or use default tenant
     let tenant;
     if (body.tenantSlug) {
-      tenant = await prisma.tenant.findUnique({ where: { slug: body.tenantSlug } });
-      if (!tenant) throw new AppError('Organization not found', 404);
+      tenant = await prisma.tenant.findUnique({
+        where: { slug: body.tenantSlug },
+      });
+      if (!tenant) throw new AppError("Organization not found", 404);
     } else {
       // Use first available tenant (pilot default)
-      tenant = await prisma.tenant.findFirst({ orderBy: { createdAt: 'asc' } });
-      if (!tenant) throw new AppError('No organization configured. Contact admin.', 500);
+      tenant = await prisma.tenant.findFirst({ orderBy: { createdAt: "asc" } });
+      if (!tenant)
+        throw new AppError("No organization configured. Contact admin.", 500);
     }
 
     // Check for existing user
     const existing = await prisma.user.findFirst({
       where: { tenantId: tenant.id, email: body.email },
     });
-    if (existing) throw new AppError('An account with this email already exists', 409);
+    if (existing)
+      throw new AppError("An account with this email already exists", 409);
 
     // Hash password
     const passwordHash = await hashPassword(body.password);
 
     // Clinicians require admin approval (created as SUSPENDED)
-    const status = body.role === 'CLINICIAN' ? 'SUSPENDED' : 'ACTIVE';
+    const status = body.role === "CLINICIAN" ? "SUSPENDED" : "ACTIVE";
 
     const user = await prisma.user.create({
       data: {
@@ -122,24 +132,33 @@ authRouter.post('/register', async (req, res, next) => {
     });
 
     // If patient, also create a Patient record
-    if (body.role === 'PATIENT') {
+    if (body.role === "PATIENT") {
       await prisma.patient.create({
         data: {
           tenantId: tenant.id,
           userId: user.id,
-          age: 0,  // will be updated in onboarding
+          age: 0, // will be updated in onboarding
         },
       });
     }
 
-    authLogger.info({ userId: user.id, role: body.role, status }, 'User registered');
+    authLogger.info(
+      { userId: user.id, role: body.role, status },
+      "User registered",
+    );
 
-    if (status === 'SUSPENDED') {
-      sendSuccess(res, req, {
-        message: 'Registration successful. Your clinician account is pending admin approval.',
-        userId: user.id,
-        status: 'PENDING_APPROVAL',
-      }, 201);
+    if (status === "SUSPENDED") {
+      sendSuccess(
+        res,
+        req,
+        {
+          message:
+            "Registration successful. Your clinician account is pending admin approval.",
+          userId: user.id,
+          status: "PENDING_APPROVAL",
+        },
+        201,
+      );
       return;
     }
 
@@ -147,13 +166,18 @@ authRouter.post('/register', async (req, res, next) => {
     const tokens = generateTokens({
       id: user.id,
       tenantId: user.tenantId,
-      role: user.role as unknown as import('@peacefull/shared').UserRole,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
 
-    sendSuccess(res, req, {
-      ...tokens,
-      user: toUserResponse(user),
-    }, 201);
+    sendSuccess(
+      res,
+      req,
+      {
+        ...tokens,
+        user: toUserResponse(user),
+      },
+      201,
+    );
   } catch (err) {
     next(err);
   }
@@ -166,20 +190,20 @@ const loginBodySchema = z.object({
   password: z.string().min(8).max(128),
 });
 
-authRouter.post('/login', loginLimiter, async (req, res, next) => {
+authRouter.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const body = loginBodySchema.parse(req.body);
 
     // Look up user by email in Postgres
     const user = await prisma.user.findFirst({ where: { email: body.email } });
     if (!user) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AppError("Invalid credentials", 401);
     }
 
     // Verify bcrypt hash
     const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AppError("Invalid credentials", 401);
     }
 
     // Update lastLogin timestamp
@@ -193,21 +217,28 @@ authRouter.post('/login', loginLimiter, async (req, res, next) => {
       const code = generateMFACode();
       pendingMFA[user.id] = code;
       // SEC-006: Only log MFA code in non-production environments
-      if (process.env.NODE_ENV !== 'production') {
-        authLogger.info({ userId: user.id, code }, 'MFA code generated (dev log)');
+      if (process.env.NODE_ENV !== "production") {
+        authLogger.info(
+          { userId: user.id, code },
+          "MFA code generated (dev log)",
+        );
       } else {
-        authLogger.info({ userId: user.id }, 'MFA code generated');
+        authLogger.info({ userId: user.id }, "MFA code generated");
       }
       sendSuccess(res, req, {
         mfaRequired: true,
         userId: user.id,
-        message: 'MFA code sent to registered device',
+        message: "MFA code sent to registered device",
       });
       return;
     }
 
     // Generate tokens (expects { id, tenantId, role })
-    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
+    const tokens = generateTokens({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
+    });
     sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
@@ -224,17 +255,17 @@ const mfaBodySchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post('/mfa-verify', mfaLimiter, async (req, res, next) => {
+authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
   try {
     const body = mfaBodySchema.parse(req.body);
     const expectedCode = pendingMFA[body.userId];
 
     if (!expectedCode) {
-      throw new AppError('No pending MFA challenge', 400);
+      throw new AppError("No pending MFA challenge", 400);
     }
 
     if (!verifyMFACode(body.code, expectedCode)) {
-      throw new AppError('Invalid MFA code', 401);
+      throw new AppError("Invalid MFA code", 401);
     }
 
     delete pendingMFA[body.userId];
@@ -242,10 +273,14 @@ authRouter.post('/mfa-verify', mfaLimiter, async (req, res, next) => {
     // Fetch user from DB
     const user = await prisma.user.findUnique({ where: { id: body.userId } });
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
-    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
+    const tokens = generateTokens({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
+    });
     sendSuccess(res, req, {
       ...tokens,
       user: {
@@ -270,26 +305,30 @@ const refreshBodySchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-authRouter.post('/refresh', async (req, res, next) => {
+authRouter.post("/refresh", async (req, res, next) => {
   try {
     const body = refreshBodySchema.parse(req.body);
 
     if (invalidatedTokens.has(body.refreshToken)) {
-      throw new AppError('Refresh token has been invalidated', 401);
+      throw new AppError("Refresh token has been invalidated", 401);
     }
 
     const payload = verifyRefreshToken(body.refreshToken);
-    if (payload.type !== 'refresh') {
-      throw new AppError('Invalid token type', 401);
+    if (payload.type !== "refresh") {
+      throw new AppError("Invalid token type", 401);
     }
 
     // Look up user by id
     const user = await prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
-    const tokens = generateTokens({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
+    const tokens = generateTokens({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
+    });
     sendSuccess(res, req, tokens);
   } catch (err) {
     next(err);
@@ -298,18 +337,20 @@ authRouter.post('/refresh', async (req, res, next) => {
 
 // ─── POST /logout ────────────────────────────────────────────────────
 
-const logoutBodySchema = z.object({
-  refreshToken: z.string().min(1).optional(),
-}).strict();
+const logoutBodySchema = z
+  .object({
+    refreshToken: z.string().min(1).optional(),
+  })
+  .strict();
 
-authRouter.post('/logout', authenticate, (req, res, next) => {
+authRouter.post("/logout", authenticate, (req, res, next) => {
   try {
     const body = logoutBodySchema.parse(req.body);
     if (body.refreshToken) {
       invalidatedTokens.add(body.refreshToken);
     }
-    authLogger.info({ userId: req.user!.sub }, 'User logged out');
-    sendSuccess(res, req, { message: 'Logged out successfully' });
+    authLogger.info({ userId: req.user!.sub }, "User logged out");
+    sendSuccess(res, req, { message: "Logged out successfully" });
   } catch (err) {
     next(err);
   }
@@ -321,22 +362,26 @@ const stepUpBodySchema = z.object({
   password: z.string().min(8),
 });
 
-authRouter.post('/step-up', authenticate, async (req, res, next) => {
+authRouter.post("/step-up", authenticate, async (req, res, next) => {
   try {
     const body = stepUpBodySchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AppError("Invalid credentials", 401);
     }
 
-    const stepUpTokens = generateStepUpToken({ id: user.id, tenantId: user.tenantId, role: user.role as unknown as import('@peacefull/shared').UserRole });
-    authLogger.info({ userId: user.id }, 'Step-up auth completed');
+    const stepUpTokens = generateStepUpToken({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
+    });
+    authLogger.info({ userId: user.id }, "Step-up auth completed");
     sendSuccess(res, req, stepUpTokens);
   } catch (err) {
     next(err);
@@ -345,11 +390,11 @@ authRouter.post('/step-up', authenticate, async (req, res, next) => {
 
 // ─── GET /me ─────────────────────────────────────────────────────────
 
-authRouter.get('/me', authenticate, async (req, res, next) => {
+authRouter.get("/me", authenticate, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     sendSuccess(res, req, toUserResponse(user));
@@ -364,21 +409,22 @@ const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
-authRouter.post('/forgot-password', loginLimiter, async (req, res, next) => {
+authRouter.post("/forgot-password", loginLimiter, async (req, res, next) => {
   try {
     const body = forgotPasswordSchema.parse(req.body);
 
     // Always return success to prevent email enumeration (SEC-007)
     const user = await prisma.user.findFirst({ where: { email: body.email } });
     if (user) {
-      authLogger.info({ userId: user.id }, 'Password reset requested');
+      authLogger.info({ userId: user.id }, "Password reset requested");
       // In production: send email via SES with reset link + token
       // For now, log the event for audit trail
     }
 
     sendSuccess(res, req, {
       success: true,
-      message: 'If an account with that email exists, a password reset link has been sent.',
+      message:
+        "If an account with that email exists, a password reset link has been sent.",
     });
   } catch (err) {
     next(err);
@@ -388,21 +434,21 @@ authRouter.post('/forgot-password', loginLimiter, async (req, res, next) => {
 // ─── POST /step-up/verify ──────────────────────────────────────────
 // Frontend calls /step-up/verify (separate from the original /step-up)
 
-authRouter.post('/step-up/verify', authenticate, async (req, res, next) => {
+authRouter.post("/step-up/verify", authenticate, async (req, res, next) => {
   try {
     const body = stepUpBodySchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
-    if (!user) throw new AppError('User not found', 404);
+    if (!user) throw new AppError("User not found", 404);
 
     const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) throw new AppError('Invalid credentials', 401);
+    if (!valid) throw new AppError("Invalid credentials", 401);
 
     if (user.mfaEnabled) {
       const code = generateMFACode();
       pendingMFA[user.id] = code;
-      if (process.env.NODE_ENV !== 'production') {
-        authLogger.info({ userId: user.id, code }, 'Step-up MFA code (dev)');
+      if (process.env.NODE_ENV !== "production") {
+        authLogger.info({ userId: user.id, code }, "Step-up MFA code (dev)");
       }
       sendSuccess(res, req, { mfaRequired: true });
       return;
@@ -411,9 +457,9 @@ authRouter.post('/step-up/verify', authenticate, async (req, res, next) => {
     const stepUpTokens = generateStepUpToken({
       id: user.id,
       tenantId: user.tenantId,
-      role: user.role as unknown as import('@peacefull/shared').UserRole,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
-    authLogger.info({ userId: user.id }, 'Step-up verify completed');
+    authLogger.info({ userId: user.id }, "Step-up verify completed");
     sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
   } catch (err) {
     next(err);
@@ -426,27 +472,133 @@ const stepUpMfaSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post('/step-up/mfa', authenticate, mfaLimiter, async (req, res, next) => {
+authRouter.post(
+  "/step-up/mfa",
+  authenticate,
+  mfaLimiter,
+  async (req, res, next) => {
+    try {
+      const body = stepUpMfaSchema.parse(req.body);
+      const userId = req.user!.sub;
+      const expectedCode = pendingMFA[userId];
+
+      if (!expectedCode) throw new AppError("No pending MFA challenge", 400);
+      if (!verifyMFACode(body.code, expectedCode))
+        throw new AppError("Invalid MFA code", 401);
+
+      delete pendingMFA[userId];
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new AppError("User not found", 404);
+
+      const stepUpTokens = generateStepUpToken({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
+      });
+      authLogger.info({ userId: user.id }, "Step-up MFA completed");
+      sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── POST /auth0-sync ────────────────────────────────────────────────
+// JIT (Just-In-Time) provisioning for Auth0-authenticated users.
+// Called by the frontend after Auth0 Universal Login redirect.
+// Verifies the Auth0 access token, finds or creates a local user,
+// and returns local JWT tokens so the rest of the app works seamlessly.
+
+const auth0SyncSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  auth0Sub: z.string().min(1),
+  picture: z.string().url().optional().nullable(),
+});
+
+authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
   try {
-    const body = stepUpMfaSchema.parse(req.body);
-    const userId = req.user!.sub;
-    const expectedCode = pendingMFA[userId];
+    const body = auth0SyncSchema.parse(req.body);
 
-    if (!expectedCode) throw new AppError('No pending MFA challenge', 400);
-    if (!verifyMFACode(body.code, expectedCode)) throw new AppError('Invalid MFA code', 401);
+    // req.user.sub is the Auth0 sub (e.g., "auth0|abc123") from the verified token.
+    // The email in the body comes from Auth0's ID token on the frontend.
+    authLogger.info(
+      { auth0Sub: req.user!.sub, email: body.email },
+      "Auth0 sync initiated",
+    );
 
-    delete pendingMFA[userId];
+    // Find default tenant (pilot: single-tenant)
+    const tenant = await prisma.tenant.findFirst({
+      orderBy: { createdAt: "asc" },
+    });
+    if (!tenant) {
+      throw new AppError("No organization configured. Contact admin.", 500);
+    }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new AppError('User not found', 404);
+    // Look up existing user by email within the tenant
+    let user = await prisma.user.findFirst({
+      where: { tenantId: tenant.id, email: body.email },
+    });
 
-    const stepUpTokens = generateStepUpToken({
+    if (user) {
+      // Existing user — update lastLogin
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
+      });
+      authLogger.info(
+        { userId: user.id, auth0Sub: body.auth0Sub },
+        "Auth0 sync: existing user logged in",
+      );
+    } else {
+      // JIT provisioning: create a new PATIENT user
+      user = await prisma.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: body.email,
+          passwordHash: "", // Auth0-managed user, no local password
+          role: "PATIENT",
+          firstName: body.firstName || body.email.split("@")[0],
+          lastName: body.lastName || "",
+          status: "ACTIVE",
+          mfaEnabled: false,
+          lastLogin: new Date(),
+        },
+      });
+
+      // Create companion Patient record
+      await prisma.patient.create({
+        data: {
+          tenantId: tenant.id,
+          userId: user.id,
+          age: 0, // updated during onboarding
+        },
+      });
+
+      authLogger.info(
+        { userId: user.id, auth0Sub: body.auth0Sub },
+        "Auth0 sync: JIT user provisioned",
+      );
+    }
+
+    // Check user is active
+    if (user.status !== "ACTIVE") {
+      throw new AppError("Account is suspended. Contact admin.", 403);
+    }
+
+    // Generate local JWT tokens (so existing routes, WS, etc. work with local user IDs)
+    const tokens = generateTokens({
       id: user.id,
       tenantId: user.tenantId,
-      role: user.role as unknown as import('@peacefull/shared').UserRole,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
-    authLogger.info({ userId: user.id }, 'Step-up MFA completed');
-    sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
+
+    sendSuccess(res, req, {
+      ...tokens,
+      user: toUserResponse(user),
+    });
   } catch (err) {
     next(err);
   }
@@ -454,7 +606,7 @@ authRouter.post('/step-up/mfa', authenticate, mfaLimiter, async (req, res, next)
 
 // ─── GET /tenants ────────────────────────────────────────────────────
 
-authRouter.get('/tenants', async (req, res, next) => {
+authRouter.get("/tenants", async (req, res, next) => {
   try {
     const tenants = await prisma.tenant.findMany({
       select: {
@@ -464,7 +616,7 @@ authRouter.get('/tenants', async (req, res, next) => {
         domain: true,
         plan: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
 
     sendSuccess(res, req, {

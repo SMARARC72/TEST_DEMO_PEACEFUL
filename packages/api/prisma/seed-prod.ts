@@ -129,8 +129,8 @@ async function main() {
         firstName: u.firstName,
         lastName: u.lastName,
         phone: u.phone,
-        mfaEnabled: true,
-        mfaMethod: 'TOTP',
+        mfaEnabled: false,
+        mfaMethod: null,
         status: 'ACTIVE',
       },
     });
