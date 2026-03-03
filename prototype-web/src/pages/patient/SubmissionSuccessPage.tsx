@@ -1,5 +1,5 @@
 // ─── Submission Success Page ─────────────────────────────────────────
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { patientApi } from '@/api/patients';
@@ -10,6 +10,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { SignalBadge } from '@/components/domain/SignalBadge';
 import type { SubmissionReflection } from '@/api/types';
 
+const MAX_POLL_ATTEMPTS = 5;
+const POLL_INTERVAL_MS = 3_000;
+
 export default function SubmissionSuccessPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
   const user = useAuthStore((s) => s.user);
@@ -18,20 +21,34 @@ export default function SubmissionSuccessPage() {
   const [reflection, setReflection] = useState<SubmissionReflection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const pollCount = useRef(0);
 
   useEffect(() => {
     if (!patientId || !submissionId) return;
     let cancelled = false;
-    (async () => {
+
+    const fetchReflection = async () => {
       const [data, err] = await patientApi.getReflection(patientId, submissionId);
       if (cancelled) return;
+
       if (err) {
+        // 404 = reflection not ready yet; retry with backoff
+        if (err.status === 404 && pollCount.current < MAX_POLL_ATTEMPTS) {
+          pollCount.current += 1;
+          setTimeout(fetchReflection, POLL_INTERVAL_MS);
+          return;
+        }
         if (err.status !== 404) setError(err.message);
+        setLoading(false);
       } else if (data) {
         setReflection(data);
+        setLoading(false);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
-    })();
+    };
+
+    fetchReflection();
     return () => { cancelled = true; };
   }, [patientId, submissionId]);
 
@@ -59,23 +76,23 @@ export default function SubmissionSuccessPage() {
         <Card>
           <CardHeader>
             <CardTitle>Your Reflection</CardTitle>
-            <SignalBadge band={reflection.signalBand} />
+            {reflection.signalBand && <SignalBadge band={reflection.signalBand} />}
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Summary</p>
               <p className="mt-1 text-sm text-neutral-800 dark:text-neutral-200">
-                {reflection.patientSummary}
+                {reflection.patientSummary ?? 'Your data has been processed by the AI system.'}
               </p>
             </div>
 
-            {reflection.evidence.length > 0 && (
+            {(reflection.evidence ?? []).length > 0 && (
               <div>
                 <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
                   Key Observations
                 </p>
                 <ul className="mt-1 space-y-1">
-                  {reflection.evidence.map((e, i) => (
+                  {(reflection.evidence ?? []).map((e, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                       <Badge variant="info" className="mt-0.5 shrink-0">•</Badge>
                       {e}

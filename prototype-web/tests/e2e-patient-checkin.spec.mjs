@@ -11,8 +11,8 @@ test.describe('Patient check-in flow', () => {
 
   test('patient can login, navigate to checkin, submit, and see reflection', async ({ page }) => {
     // ── Step 1: Login as patient ──
-    await page.fill('input[type="email"]', 'patient@demo.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="email"]', 'test.patient.1@peacefull.cloud');
+    await page.fill('input[type="password"]', 'Demo2026!');
     await page.click('button[type="submit"]');
 
     // Should navigate to patient home
@@ -47,8 +47,8 @@ test.describe('Patient check-in flow', () => {
 
   test('patient can navigate all key pages without errors', async ({ page }) => {
     // Login
-    await page.fill('input[type="email"]', 'patient@demo.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="email"]', 'test.patient.1@peacefull.cloud');
+    await page.fill('input[type="password"]', 'Demo2026!');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/patient/, { timeout: 10_000 });
 

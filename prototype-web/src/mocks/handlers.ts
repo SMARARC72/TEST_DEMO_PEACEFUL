@@ -18,6 +18,16 @@ import type {
 
 const BASE = '/api/v1';
 
+// ─── Envelope helper — mirrors production API `{ data, requestId }` wrapper ──
+let mockReqCounter = 0;
+function mockJson<T>(payload: T, status = 200) {
+  mockReqCounter += 1;
+  return HttpResponse.json(
+    { data: payload, requestId: `mock-req-${mockReqCounter}` },
+    { status },
+  );
+}
+
 // ─── Seed data ───────────────────────────────
 
 const mockUser: User = {
@@ -148,42 +158,48 @@ export const handlers = [
       refreshToken: 'mock-refresh-token-' + Date.now(),
       user,
     };
-    return HttpResponse.json(response);
+    return mockJson(response);
   }),
 
   http.post(`${BASE}/auth/register`, async ({ request }) => {
     const body = await request.json() as { firstName: string; lastName: string; email: string; role: string };
+    const isClinician = body.role === 'CLINICIAN';
     const user: User = {
       ...mockUser,
       email: body.email,
       role: body.role as User['role'],
+      status: isClinician ? 'PENDING_APPROVAL' : 'ACTIVE',
       profile: { firstName: body.firstName, lastName: body.lastName },
     };
-    return HttpResponse.json({
+    // Clinicians require admin approval — return user but no tokens
+    if (isClinician) {
+      return mockJson({ user, status: 'PENDING_APPROVAL' }, 201);
+    }
+    return mockJson({
       accessToken: 'mock-access-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
       user,
-    });
+    }, 201);
   }),
 
   http.post(`${BASE}/auth/refresh`, () => {
-    return HttpResponse.json({
+    return mockJson({
       accessToken: 'mock-refreshed-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
     });
   }),
 
   http.post(`${BASE}/auth/logout`, () => {
-    return HttpResponse.json({ success: true });
+    return mockJson({ success: true });
   }),
 
   http.get(`${BASE}/auth/me`, () => {
-    return HttpResponse.json(mockUser);
+    return mockJson(mockUser);
   }),
 
   http.post(`${BASE}/auth/mfa-verify`, async ({ request }) => {
     const body = await request.json() as { userId: string; code: string };
-    return HttpResponse.json({
+    return mockJson({
       accessToken: 'mock-mfa-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
       user: body.userId.includes('clinician') ? mockClinician : mockUser,
@@ -192,7 +208,7 @@ export const handlers = [
 
   // Patient - Progress
   http.get(`${BASE}/patients/:id/progress`, () => {
-    return HttpResponse.json({
+    return mockJson({
       checkins: mockCheckins,
       signalHistory: [
         { band: 'LOW', date: new Date().toISOString() },
@@ -214,16 +230,16 @@ export const handlers = [
       notes: body.notes as string | undefined,
       createdAt: new Date().toISOString(),
     };
-    return HttpResponse.json(newCheckin, { status: 201 });
+    return mockJson(newCheckin, 201);
   }),
 
   http.get(`${BASE}/patients/:id/checkin/history`, () => {
-    return HttpResponse.json(mockCheckins);
+    return mockJson(mockCheckins);
   }),
 
   // Patient - Journal
   http.get(`${BASE}/patients/:id/journal`, () => {
-    return HttpResponse.json(mockJournals);
+    return mockJson(mockJournals);
   }),
 
   http.post(`${BASE}/patients/:id/journal`, async ({ request }) => {
@@ -234,21 +250,21 @@ export const handlers = [
       content: body.content,
       createdAt: new Date().toISOString(),
     };
-    return HttpResponse.json(entry, { status: 201 });
+    return mockJson(entry, 201);
   }),
 
   // Patient - Safety Plan
   http.get(`${BASE}/patients/:id/safety-plan`, () => {
-    return HttpResponse.json(mockSafetyPlan);
+    return mockJson(mockSafetyPlan);
   }),
 
   // Patient - Voice Memos
   http.get(`${BASE}/patients/:id/voice`, () => {
-    return HttpResponse.json([]);
+    return mockJson([]);
   }),
 
   http.post(`${BASE}/patients/:id/voice`, () => {
-    return HttpResponse.json({
+    return mockJson({
       id: `voice-${Date.now()}`,
       status: 'processing',
       duration: 45,
@@ -258,16 +274,16 @@ export const handlers = [
 
   // Patient - Resources
   http.get(`${BASE}/patients/:id/resources`, () => {
-    return HttpResponse.json(mockResources);
+    return mockJson(mockResources);
   }),
 
   // Patient - Submissions
   http.get(`${BASE}/patients/:id/submissions`, () => {
-    return HttpResponse.json([]);
+    return mockJson([]);
   }),
 
   http.get(`${BASE}/patients/:id/submissions/:subId`, ({ params }) => {
-    return HttpResponse.json({
+    return mockJson({
       id: params.subId,
       patientId: 'patient-001',
       source: 'CHECKIN',
@@ -278,7 +294,7 @@ export const handlers = [
   }),
 
   http.get(`${BASE}/patients/:id/submissions/:subId/reflection`, () => {
-    return HttpResponse.json({
+    return mockJson({
       patientSummary: 'You reported improved mood and sleep quality today.',
       clinicianSummary: 'Patient shows improvement in mood metrics. Sleep quality trending upward.',
       signalBand: 'LOW',
@@ -289,22 +305,22 @@ export const handlers = [
 
   // Patient - Settings
   http.get(`${BASE}/patients/:id/settings`, () => {
-    return HttpResponse.json(mockSettings);
+    return mockJson(mockSettings);
   }),
 
   http.patch(`${BASE}/patients/:id/settings`, async ({ request }) => {
     const body = await request.json() as Partial<PatientSettings>;
-    return HttpResponse.json({ ...mockSettings, ...body });
+    return mockJson({ ...mockSettings, ...body });
   }),
 
   // Patient - Consent
   http.get(`${BASE}/patients/:id/consent`, () => {
-    return HttpResponse.json([]);
+    return mockJson([]);
   }),
 
   http.post(`${BASE}/patients/:id/consent`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
-    return HttpResponse.json({
+    return mockJson({
       id: `consent-${Date.now()}`,
       patientId: 'patient-001',
       ...body,
@@ -321,7 +337,7 @@ export const handlers = [
       pendingDrafts: 3,
       escalations: 1,
     };
-    return HttpResponse.json(response);
+    return mockJson(response);
   }),
 
   // Clinician - Caseload
@@ -363,7 +379,7 @@ export const handlers = [
         },
       ],
     };
-    return HttpResponse.json(response);
+    return mockJson(response);
   }),
 
   // Clinician - Triage
@@ -393,11 +409,11 @@ export const handlers = [
       ],
       total: 2,
     };
-    return HttpResponse.json(response);
+    return mockJson(response);
   }),
 
   http.get(`${BASE}/clinician/triage/:id`, ({ params }) => {
-    return HttpResponse.json({
+    return mockJson({
       id: params.id,
       patientId: 'patient-002',
       signalBand: 'MODERATE',
@@ -411,7 +427,7 @@ export const handlers = [
 
   http.patch(`${BASE}/clinician/triage/:id`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return HttpResponse.json({
+    return mockJson({
       id: params.id,
       patientId: 'patient-002',
       signalBand: 'MODERATE',
@@ -424,7 +440,7 @@ export const handlers = [
 
   // Clinician - Patient Profile
   http.get(`${BASE}/clinician/patients/:id`, ({ params }) => {
-    return HttpResponse.json({
+    return mockJson({
       patient: {
         id: params.id,
         userId: `user-${params.id}`,
@@ -450,7 +466,7 @@ export const handlers = [
 
   // Clinician - Drafts
   http.get(`${BASE}/clinician/patients/:id/drafts`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'draft-001',
         patientId: 'patient-001',
@@ -464,7 +480,7 @@ export const handlers = [
 
   http.patch(`${BASE}/clinician/patients/:id/drafts/:draftId`, async ({ params, request }) => {
     const body = await request.json() as { status: string; reviewNotes?: string };
-    return HttpResponse.json({
+    return mockJson({
       id: params.draftId,
       patientId: params.id,
       format: 'progress_note',
@@ -477,7 +493,7 @@ export const handlers = [
 
   // Clinician - Recommendations
   http.get(`${BASE}/clinician/patients/:id/recommendations`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'rec-001',
         patientId: 'patient-001',
@@ -494,7 +510,7 @@ export const handlers = [
 
   // Clinician - Memories
   http.get(`${BASE}/clinician/patients/:id/memories`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'mem-001',
         patientId: 'patient-001',
@@ -527,7 +543,7 @@ export const handlers = [
 
   // Clinician - Treatment Plans
   http.get(`${BASE}/clinician/patients/:id/plans`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'plan-001',
         patientId: 'patient-001',
@@ -546,7 +562,7 @@ export const handlers = [
 
   // Clinician - Restricted Notes
   http.get(`${BASE}/clinician/patients/:id/restricted-notes`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'rn-001',
         patientId: 'patient-001',
@@ -563,7 +579,7 @@ export const handlers = [
 
   // Clinician - Exports
   http.get(`${BASE}/clinician/patients/:id/exports`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'exp-001',
         patientId: 'patient-001',
@@ -582,7 +598,7 @@ export const handlers = [
 
   http.post(`${BASE}/clinician/patients/:id/export`, async ({ request }) => {
     const body = await request.json() as { profile: string };
-    return HttpResponse.json({
+    return mockJson({
       id: `exp-${Date.now()}`,
       patientId: 'patient-001',
       profile: body.profile,
@@ -590,12 +606,12 @@ export const handlers = [
       format: 'PDF',
       requestedBy: 'Dr. Sarah Chen',
       createdAt: new Date().toISOString(),
-    }, { status: 201 });
+    }, 201);
   }),
 
   // Clinician - Settings
   http.get(`${BASE}/clinician/settings`, () => {
-    return HttpResponse.json({
+    return mockJson({
       notifications: {
         newTriageAlerts: true,
         draftReadyAlerts: true,
@@ -609,37 +625,37 @@ export const handlers = [
 
   http.patch(`${BASE}/clinician/settings`, async ({ request }) => {
     const body = await request.json();
-    return HttpResponse.json(body);
+    return mockJson(body);
   }),
 
   // Clinician - Patient checkins/journals
   http.get(`${BASE}/clinician/patients/:id/checkin`, () => {
-    return HttpResponse.json(mockCheckins);
+    return mockJson(mockCheckins);
   }),
 
   http.get(`${BASE}/clinician/patients/:id/journal`, () => {
-    return HttpResponse.json(mockJournals);
+    return mockJson(mockJournals);
   }),
 
   // Recommendations / Memories / Plans patches
   http.patch(`${BASE}/clinician/patients/:id/recommendations/:recId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return HttpResponse.json({ id: params.recId, status: body.status });
+    return mockJson({ id: params.recId, status: body.status });
   }),
 
   http.patch(`${BASE}/clinician/patients/:id/memories/:memId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return HttpResponse.json({ id: params.memId, status: body.status });
+    return mockJson({ id: params.memId, status: body.status });
   }),
 
   http.patch(`${BASE}/clinician/patients/:id/plans/:planId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return HttpResponse.json({ id: params.planId, status: body.status });
+    return mockJson({ id: params.planId, status: body.status });
   }),
 
   // ── Password Reset ──────────────────────────
   http.post(`${BASE}/auth/forgot-password`, async () => {
-    return HttpResponse.json({ success: true });
+    return mockJson({ success: true });
   }),
 
   // ── MBC Scores ──────────────────────────────
@@ -652,23 +668,23 @@ export const handlers = [
       { id: 'mbc-005', patientId: 'patient-001', instrument: 'PHQ9', score: 8, items: [1, 1, 1, 1, 1, 1, 1, 0, 1], administeredAt: new Date(Date.now() - 30 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
       { id: 'mbc-006', patientId: 'patient-001', instrument: 'GAD7', score: 6, items: [1, 1, 1, 1, 1, 0, 1], administeredAt: new Date(Date.now() - 30 * 86400000).toISOString(), administeredBy: 'Dr. Sarah Chen' },
     ];
-    return HttpResponse.json(scores);
+    return mockJson(scores);
   }),
 
   http.post(`${BASE}/clinician/patients/:id/mbc`, async ({ params, request }) => {
     const body = await request.json() as { instrument: string; score: number; items: number[] };
-    return HttpResponse.json({
+    return mockJson({
       id: `mbc-${Date.now()}`,
       patientId: params.id,
       ...body,
       administeredAt: new Date().toISOString(),
       administeredBy: 'Dr. Sarah Chen',
-    }, { status: 201 });
+    }, 201);
   }),
 
   // ── Session Notes ───────────────────────────
   http.get(`${BASE}/clinician/patients/:id/session-notes`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'note-001',
         patientId: 'patient-001',
@@ -702,17 +718,17 @@ export const handlers = [
 
   http.post(`${BASE}/clinician/patients/:id/session-notes`, async ({ params, request }) => {
     const body = await request.json() as Record<string, unknown>;
-    return HttpResponse.json({
+    return mockJson({
       id: `note-${Date.now()}`,
       patientId: params.id,
       ...body,
       status: 'DRAFT',
       createdAt: new Date().toISOString(),
-    }, { status: 201 });
+    }, 201);
   }),
 
   http.post(`${BASE}/clinician/patients/:id/session-notes/:noteId/sign`, ({ params }) => {
-    return HttpResponse.json({
+    return mockJson({
       id: params.noteId,
       patientId: params.id,
       status: 'SIGNED',
@@ -723,7 +739,7 @@ export const handlers = [
 
   // ── Adherence ───────────────────────────────
   http.get(`${BASE}/clinician/patients/:id/adherence`, () => {
-    return HttpResponse.json([
+    return mockJson([
       { id: 'adh-001', patientId: 'patient-001', category: 'MEDICATION', title: 'Sertraline 50mg', description: 'Daily SSRI', status: 'COMPLIANT', frequency: 'Daily', lastLoggedAt: new Date().toISOString(), adherenceRate: 92, createdAt: new Date(Date.now() - 60 * 86400000).toISOString() },
       { id: 'adh-002', patientId: 'patient-001', category: 'EXERCISE', title: 'Morning Walk', description: '30min walk', status: 'PARTIAL', frequency: '5x/week', lastLoggedAt: new Date(Date.now() - 86400000).toISOString(), adherenceRate: 68, createdAt: new Date(Date.now() - 30 * 86400000).toISOString() },
       { id: 'adh-003', patientId: 'patient-001', category: 'HOMEWORK', title: 'CBT Thought Record', description: 'Complete thought record when anxious', status: 'COMPLIANT', frequency: '3x/week', lastLoggedAt: new Date(Date.now() - 2 * 86400000).toISOString(), adherenceRate: 85, createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
@@ -734,7 +750,7 @@ export const handlers = [
 
   http.patch(`${BASE}/clinician/patients/:id/adherence/:itemId`, async ({ params, request }) => {
     const body = await request.json() as { status: string; notes?: string };
-    return HttpResponse.json({
+    return mockJson({
       id: params.itemId,
       patientId: params.id,
       status: body.status,
@@ -745,7 +761,7 @@ export const handlers = [
 
   // ── Escalations ─────────────────────────────
   http.get(`${BASE}/clinician/escalations`, () => {
-    return HttpResponse.json([
+    return mockJson([
       {
         id: 'esc-001',
         patientId: 'patient-003',
@@ -791,7 +807,7 @@ export const handlers = [
 
   http.patch(`${BASE}/clinician/escalations/:id`, async ({ params, request }) => {
     const body = await request.json() as { status: string; resolution?: string };
-    return HttpResponse.json({
+    return mockJson({
       id: params.id,
       status: body.status,
       ...(body.status === 'ACKNOWLEDGED' ? { acknowledgedAt: new Date().toISOString() } : {}),
@@ -801,7 +817,7 @@ export const handlers = [
 
   // ── Analytics ───────────────────────────────
   http.get(`${BASE}/clinician/analytics`, () => {
-    return HttpResponse.json({
+    return mockJson({
       overview: {
         totalPatients: 24,
         activePatients: 18,
@@ -876,10 +892,10 @@ export const handlers = [
   http.post(`${BASE}/auth/step-up/verify`, async ({ request }) => {
     const body = await request.json() as { password: string };
     if (!body.password || body.password.length < 3) {
-      return HttpResponse.json({ message: 'Invalid password' }, { status: 401 });
+      return mockJson({ message: 'Invalid password' }, 401);
     }
     // Mock: accept any password, return elevated token
-    return HttpResponse.json({
+    return mockJson({
       elevatedToken: `elevated-${crypto.randomUUID()}`,
     });
   }),
@@ -887,16 +903,16 @@ export const handlers = [
   http.post(`${BASE}/auth/step-up/mfa`, async ({ request }) => {
     const body = await request.json() as { code: string };
     if (body.code !== '123456') {
-      return HttpResponse.json({ message: 'Invalid MFA code' }, { status: 401 });
+      return mockJson({ message: 'Invalid MFA code' }, 401);
     }
-    return HttpResponse.json({
+    return mockJson({
       elevatedToken: `elevated-mfa-${crypto.randomUUID()}`,
     });
   }),
 
   // ── Tenants ───────────────────────────────
   http.get(`${BASE}/auth/tenants`, () => {
-    return HttpResponse.json({
+    return mockJson({
       tenants: [
         { id: 'tenant-001', slug: 'demo-clinic', name: 'Demo Clinic', primaryColor: '#6C5CE7' },
         { id: 'tenant-002', slug: 'wellness-center', name: 'Wellness Center', primaryColor: '#00B4D8' },

@@ -3,7 +3,7 @@
 // are self-contained so the frontend builds independently.
 
 export type UserRole = 'PATIENT' | 'CLINICIAN' | 'SUPERVISOR' | 'ADMIN';
-export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'PENDING_APPROVAL';
 export type SignalBand = 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED';
 export type TriageStatus = 'NEW' | 'ACK' | 'IN_REVIEW' | 'ESCALATED' | 'RESOLVED';
 export type DraftStatus = 'DRAFT' | 'REVIEWED' | 'APPROVED' | 'REJECTED' | 'ESCALATED';

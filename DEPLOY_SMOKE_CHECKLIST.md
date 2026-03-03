@@ -91,3 +91,33 @@ Ship only if all are true:
 - ✅ Both variants render and navigate cleanly
 - ✅ No regressions in logic/workflows/interactivity
 - ✅ Hosted URL reproduces local smoke behavior
+
+---
+
+## 7) Post-UX Audit Verification (Phase 1B)
+
+After deploying the Phase 1B UX audit fixes, verify:
+
+### Critical Path: Patient Check-in → Reflection
+- [ ] Login as `test.patient.1@peacefull.cloud` / `Demo2026!`
+- [ ] Navigate to Check-in → submit daily check-in
+- [ ] SubmissionSuccessPage renders without TypeError
+- [ ] AI Reflection card shows summary + evidence (or graceful fallback)
+- [ ] "Back to Home" and "New Check-in" buttons work
+
+### Auth Flow Integrity
+- [ ] Register as CLINICIAN → shows "Pending Approval" (no auto-login)
+- [ ] Register as PATIENT → auto-login + redirect to `/patient`
+- [ ] "Forgot your password?" link visible on login page
+- [ ] MFA prompt says "email verification code" (not "authenticator app")
+- [ ] Password field enforces 12-char minimum with complexity
+
+### Credential Alignment
+- [ ] Demo credentials on login page match actual seed data
+- [ ] E2E tests (`e2e-prod-smoke.spec.mjs`) pass with correct emails
+- [ ] k6 load test credentials match seed data
+
+### Console Clean
+- [ ] No `TypeError` in console during check-in flow
+- [ ] No `undefined` property access errors
+- [ ] No CSP/CORS violations

@@ -10,8 +10,8 @@ test.describe('Clinician triage review flow', () => {
 
   test('clinician can login, view triage, and review a draft', async ({ page }) => {
     // ── Step 1: Login as clinician ──
-    await page.fill('input[type="email"]', 'clinician@demo.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="email"]', 'pilot.clinician.1@peacefull.cloud');
+    await page.fill('input[type="password"]', 'Demo2026!');
     await page.click('button[type="submit"]');
 
     // Should navigate to clinician dashboard
@@ -41,8 +41,8 @@ test.describe('Clinician triage review flow', () => {
 
   test('clinician can navigate all key pages without errors', async ({ page }) => {
     // Login
-    await page.fill('input[type="email"]', 'clinician@demo.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="email"]', 'pilot.clinician.1@peacefull.cloud');
+    await page.fill('input[type="password"]', 'Demo2026!');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/clinician/, { timeout: 10_000 });
 
@@ -67,8 +67,8 @@ test.describe('Clinician triage review flow', () => {
 
   test('clinician can view escalations page', async ({ page }) => {
     // Login
-    await page.fill('input[type="email"]', 'clinician@demo.com');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="email"]', 'pilot.clinician.1@peacefull.cloud');
+    await page.fill('input[type="password"]', 'Demo2026!');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/clinician/, { timeout: 10_000 });
 

@@ -102,6 +102,44 @@
 - Netlify/ECS green; tag `mvp-stable`
 - Demo Netlify site live with synthetic data, labeled, investor-safe
 
+---
+
+## 🧪 Live MVP v1 — Test It Yourself
+
+**Frontend:** https://peacefullai.netlify.app  
+**API:** https://api.peacefull.cloud  
+**Status:** Live (ECS Fargate × 3, RDS PostgreSQL, Auth0, CloudWatch, SES, SNS)
+
+### Demo Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Patient | `test.patient.1@peacefull.cloud` | `Demo2026!` |
+| Clinician | `pilot.clinician.1@peacefull.cloud` | `Demo2026!` |
+| Supervisor | `pilot.supervisor@peacefull.cloud` | `Demo2026!` |
+
+### Quick Smoke Test
+
+1. Open https://peacefullai.netlify.app → redirects to `/login`
+2. Login as **Patient** → navigate to Check-in → submit → see AI Reflection (no crash)
+3. Login as **Clinician** → Triage Inbox → Caseload → Patient Profile → Review AI Draft
+4. Login as **Supervisor** → Dashboard → Analytics → Escalation Queue
+5. Register a new clinician → see "Pending Approval" message (no auto-login)
+6. Forgot Password link → navigates to `/forgot-password`
+
+### Known Fixes (Phase 1B UX Audit — this commit)
+
+| Fix | File | Detail |
+|-----|------|--------|
+| SubmissionSuccessPage TypeError | `prototype-web/src/pages/patient/SubmissionSuccessPage.tsx` | Safe access on `evidence`, `patientSummary`, `signalBand`; 404 retry polling (5 attempts × 3s) |
+| MSW envelope parity | `prototype-web/src/mocks/handlers.ts` | All mock responses wrapped in `{ data, requestId }` matching production API |
+| MSW register PENDING_APPROVAL | `prototype-web/src/mocks/handlers.ts` | Clinician registration returns `PENDING_APPROVAL` status, no tokens |
+| E2E credential alignment | `prototype-web/tests/e2e-*.spec.mjs` | Updated from `patient@demo.com` / `password123` to actual demo creds |
+| DEPLOY_SMOKE_CHECKLIST updated | `DEPLOY_SMOKE_CHECKLIST.md` | Added post-UX-audit verification steps |
+| PRD Phase 5 added | `PRD_REACT_MIGRATION.md` | Phase 5: UX Audit + Production Verification |
+
+---
+
 ## ⚠️ ACTIVE PRD: Phase 2 — Security Hardening, Patient Safety, Provider Experience & Code Quality
 
 **Document:** [`PRD_PHASE2_SECURITY_POLISH_PROVIDER.md`](./PRD_PHASE2_SECURITY_POLISH_PROVIDER.md)

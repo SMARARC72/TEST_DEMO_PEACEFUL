@@ -286,6 +286,27 @@ The infrastructure already exists in Terraform. The React app deploys to **S3 + 
 
 ---
 
+## Phase 5: UX Audit + Production Verification
+
+**Outcome:** All user-facing flows are crash-free, credentials are aligned, and dev/prod parity is established.
+
+**Phase 5A (commit `6cfdb58`):**
+- [x] RegisterPage: password min(12) with full complexity regex
+- [x] RegisterPage: PENDING_APPROVAL handling for clinician registration
+- [x] LoginPage: "Forgot your password?" link
+- [x] LoginPage: MFA prompt text updated to "email verification code"
+
+**Phase 5B (current):**
+- [x] SubmissionSuccessPage: safe access on `evidence`, `patientSummary`, `signalBand` (crash fix)
+- [x] SubmissionSuccessPage: 404 retry polling (5 attempts × 3s backoff)
+- [x] MSW handlers: all responses wrapped in `{ data, requestId }` envelope (dev/prod parity)
+- [x] MSW register handler: clinician returns `PENDING_APPROVAL` status without tokens
+- [x] E2E test credentials aligned to actual demo seed data
+- [x] DEPLOY_SMOKE_CHECKLIST: post-UX-audit verification steps added
+- [x] README: Live MVP v1 testing section with demo accounts + smoke test steps
+
+---
+
 ## Testing Strategy
 
 | Layer | Tool | What to Test |
