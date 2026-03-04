@@ -52,7 +52,7 @@ const mockClinician: User = {
   role: 'CLINICIAN',
   status: 'ACTIVE',
   profile: { firstName: 'Dr. Sarah', lastName: 'Chen' },
-  mfaEnabled: true,
+  mfaEnabled: false,
   createdAt: '2025-01-10T00:00:00Z',
 };
 
@@ -1214,6 +1214,10 @@ export const handlers = [
     const body = await request.json() as { code: string };
     if (body.code.length !== 6) {
       return mockJson({ message: 'Invalid code' }, 400);
+    }
+    // Mark user as MFA-enrolled so subsequent auth/me calls reflect it
+    if (currentSessionUser) {
+      currentSessionUser = { ...currentSessionUser, mfaEnabled: true };
     }
     return mockJson({
       backupCodes: ['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890'],

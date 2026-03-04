@@ -2,8 +2,9 @@
 // Clinicians are redirected here to set up TOTP-based MFA.
 // Displays QR code, accepts verification code, shows backup codes.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/api/auth';
 import { Button } from '@/components/ui/Button';
@@ -13,16 +14,21 @@ import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 export default function MfaEnrollmentPage() {
   const navigate = useNavigate();
-  // user needed for future MFA-per-role gating
-  useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user);
   const [step, setStep] = useState<'setup' | 'verify' | 'backup'>('setup');
-  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [secret, setSecret] = useState<string>('');
   const [verifyCode, setVerifyCode] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Build TOTP URI for QR code rendering
+  const totpUri = useMemo(() => {
+    if (!secret) return '';
+    const email = user?.email ?? 'user@peacefull.ai';
+    return `otpauth://totp/Peacefull:${encodeURIComponent(email)}?secret=${secret}&issuer=Peacefull`;
+  }, [secret, user?.email]);
 
   useEffect(() => {
     // Fetch MFA setup data from backend
@@ -35,7 +41,6 @@ export default function MfaEnrollmentPage() {
           return;
         }
         if (data) {
-          setQrDataUrl(data.qrCodeDataUrl ?? '');
           setSecret(data.secret ?? '');
         }
       } catch {
@@ -118,12 +123,13 @@ export default function MfaEnrollmentPage() {
                 <p className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   2. Scan this QR code with your authenticator app:
                 </p>
-                {qrDataUrl ? (
+                {totpUri ? (
                   <div className="flex justify-center">
-                    <img
-                      src={qrDataUrl}
-                      alt="MFA QR Code"
-                      className="h-48 w-48 rounded-lg border border-neutral-200"
+                    <QRCodeSVG
+                      value={totpUri}
+                      size={192}
+                      level="M"
+                      className="rounded-lg border border-neutral-200"
                     />
                   </div>
                 ) : (

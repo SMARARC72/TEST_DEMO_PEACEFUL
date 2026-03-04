@@ -105,7 +105,7 @@ export async function transcribeAudio(
     });
 
     // Handle both single and chunked results
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const text: string = Array.isArray(result)
       ? result.map((r: any) => String(r.text ?? '')).join(' ')
       : String(result.text ?? '');
