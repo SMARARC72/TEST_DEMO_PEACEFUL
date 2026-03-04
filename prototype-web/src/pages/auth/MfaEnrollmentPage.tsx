@@ -13,7 +13,8 @@ import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 export default function MfaEnrollmentPage() {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
+  // user needed for future MFA-per-role gating
+  useAuthStore((s) => s.user);
   const [step, setStep] = useState<'setup' | 'verify' | 'backup'>('setup');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [secret, setSecret] = useState<string>('');

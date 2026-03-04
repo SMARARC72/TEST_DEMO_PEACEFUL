@@ -39,7 +39,8 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const registerUser = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const addToast = useUIStore((s) => s.addToast);
+  // addToast retained for upcoming inline validation feedback
+  useUIStore((s) => s.addToast);
   const [error, setError] = useState('');
   const [pendingApproval, setPendingApproval] = useState(false);
 

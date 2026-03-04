@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { patientApi } from '@/api/patients';
+import type { ConsentRecord } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useUIStore } from '@/stores/ui';
@@ -70,11 +71,11 @@ export default function ConsentPage() {
     (async () => {
       try {
         // Try to fetch existing consent records. If any are outdated, show re-consent notice.
-        const [records] = await patientApi.getConsentRecords?.(patientId) ?? [null];
+        const [records] = await patientApi.getConsents(patientId) ?? [null];
         if (cancelled) return;
         if (records && Array.isArray(records) && records.length > 0) {
           const hasOutdated = records.some(
-            (r: { version?: number }) => (r.version ?? 1) < CURRENT_CONSENT_VERSION
+            (r: ConsentRecord) => (parseInt(r.version, 10) || 1) < CURRENT_CONSENT_VERSION
           );
           if (hasOutdated) {
             setIsReConsent(true);

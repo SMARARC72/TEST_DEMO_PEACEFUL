@@ -70,7 +70,7 @@ export function BreathingExercise() {
     setActive(true);
     setCyclesCompleted(0);
     setPhaseIndex(0);
-    setCountdown(config.phases[0].duration);
+    setCountdown(config.phases[0]?.duration ?? 4);
   }, [config.phases]);
 
   // Timer logic
@@ -87,10 +87,10 @@ export function BreathingExercise() {
               // Cycle complete
               setCyclesCompleted((c) => c + 1);
               // Start next cycle from phase 0
-              setCountdown(config.phases[0].duration);
+              setCountdown(config.phases[0]?.duration ?? 4);
               return 0;
             }
-            setCountdown(config.phases[nextPhase].duration);
+            setCountdown(config.phases[nextPhase]?.duration ?? 4);
             return nextPhase;
           });
           return prev; // Will be overwritten by setCountdown above

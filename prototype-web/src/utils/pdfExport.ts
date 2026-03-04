@@ -152,8 +152,9 @@ export function generatePdf(options: GeneratePdfOptions): Uint8Array {
     for (const line of contentLines) {
       const wrapped = wrapText(line, CHARS_PER_LINE);
       for (let i = 0; i < wrapped.length; i++) {
+        const lineText = wrapped[i] ?? '';
         allLines.push({
-          text: wrapped[i],
+          text: lineText,
           fontSize: 10,
           bold: false,
           color: '0.2 0.2 0.2 rg',
@@ -337,7 +338,7 @@ export function downloadPatientPdf(
     sections,
   });
 
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

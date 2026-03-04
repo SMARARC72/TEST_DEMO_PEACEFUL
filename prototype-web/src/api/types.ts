@@ -74,6 +74,7 @@ export interface CheckinData {
   stress: number;
   sleep: number;
   focus: number;
+  anxiety?: number;
   notes?: string;
   createdAt: string;
 }

@@ -5,6 +5,33 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 
+/* ─── Web Speech API type shims ─────────────────────────────────── */
+interface SpeechRecognitionEventShim extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEventShim extends Event {
+  readonly error: string;
+  readonly message: string;
+}
+interface SpeechRecognitionShim extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onstart: ((this: SpeechRecognitionShim, ev: Event) => void) | null;
+  onresult: ((this: SpeechRecognitionShim, ev: SpeechRecognitionEventShim) => void) | null;
+  onerror: ((this: SpeechRecognitionShim, ev: SpeechRecognitionErrorEventShim) => void) | null;
+  onend: ((this: SpeechRecognitionShim, ev: Event) => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionShim;
+}
+/* ─────────────────────────────────────────────────────────────────── */
+
 interface VoiceInputProps {
   /** Called when final transcript text is available */
   onTranscript: (text: string) => void;
@@ -17,10 +44,10 @@ interface VoiceInputProps {
 }
 
 // Check browser support
-const SpeechRecognition =
+const SpeechRecognition: SpeechRecognitionConstructor | undefined =
   typeof window !== 'undefined'
-    ? (window as unknown as { SpeechRecognition?: typeof window.SpeechRecognition; webkitSpeechRecognition?: typeof window.SpeechRecognition }).SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: typeof window.SpeechRecognition }).webkitSpeechRecognition
+    ? (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor; webkitSpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ??
+      (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition
     : undefined;
 
 export function VoiceInput({
@@ -32,7 +59,7 @@ export function VoiceInput({
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState('');
   const [supported] = useState(() => !!SpeechRecognition);
-  const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionShim | null>(null);
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
@@ -51,16 +78,19 @@ export function VoiceInput({
 
     recognition.onstart = () => setIsListening(true);
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEventShim) => {
       let finalTranscript = '';
       let interim = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
+        const result = event.results.item(i);
+        if (!result) continue;
+        const firstAlt = result.item(0);
+        if (!firstAlt) continue;
         if (result.isFinal) {
-          finalTranscript += result[0].transcript;
+          finalTranscript += firstAlt.transcript;
         } else {
-          interim += result[0].transcript;
+          interim += firstAlt.transcript;
         }
       }
 
@@ -72,7 +102,7 @@ export function VoiceInput({
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEventShim) => {
       console.warn('Speech recognition error:', event.error);
       setIsListening(false);
       setInterimText('');

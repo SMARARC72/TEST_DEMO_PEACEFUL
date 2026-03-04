@@ -28,10 +28,10 @@ function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
     });
     setLoading(false);
     if (err) {
-      addToast({ type: 'error', message: err.message ?? 'Failed to create organization' });
+      addToast({ variant: 'error', title: err.message ?? 'Failed to create organization' });
       return;
     }
-    addToast({ type: 'success', message: 'Organization created!' });
+    addToast({ variant: 'success', title: 'Organization created!' });
     setName('');
     setNpi('');
     setPhone('');
@@ -111,10 +111,10 @@ function InviteMemberForm({ orgId, onSent }: { orgId: string; onSent: () => void
     });
     setLoading(false);
     if (err) {
-      addToast({ type: 'error', message: err.message ?? 'Failed to send invitation' });
+      addToast({ variant: 'error', title: err.message ?? 'Failed to send invitation' });
       return;
     }
-    addToast({ type: 'success', message: `Invitation sent to ${email}` });
+    addToast({ variant: 'success', title: `Invitation sent to ${email}` });
     setEmail('');
     onSent();
   }
@@ -172,13 +172,13 @@ export default function OrgManagementPage() {
     const [data, err] = await organizationApi.listOrganizations();
     setLoading(false);
     if (err) {
-      addToast({ type: 'error', message: 'Failed to load organizations' });
+      addToast({ variant: 'error', title: 'Failed to load organizations' });
       return;
     }
     setOrganizations(data?.organizations ?? []);
     // Auto-select first org if none selected
     if (!selectedOrg && data?.organizations?.length) {
-      setSelectedOrg(data.organizations[0].id);
+      setSelectedOrg(data.organizations[0]?.id ?? null);
     }
   }, [addToast, selectedOrg]);
 
@@ -203,10 +203,10 @@ export default function OrgManagementPage() {
     if (!selectedOrg) return;
     const [, err] = await organizationApi.removeMember(selectedOrg, userId);
     if (err) {
-      addToast({ type: 'error', message: err.message ?? 'Failed to remove member' });
+      addToast({ variant: 'error', title: err.message ?? 'Failed to remove member' });
       return;
     }
-    addToast({ type: 'success', message: 'Member removed' });
+    addToast({ variant: 'success', title: 'Member removed' });
     loadOrgDetail(selectedOrg);
   }
 
@@ -214,10 +214,10 @@ export default function OrgManagementPage() {
     if (!selectedOrg) return;
     const [, err] = await organizationApi.revokeInvitation(selectedOrg, inviteId);
     if (err) {
-      addToast({ type: 'error', message: err.message ?? 'Failed to revoke invitation' });
+      addToast({ variant: 'error', title: err.message ?? 'Failed to revoke invitation' });
       return;
     }
-    addToast({ type: 'success', message: 'Invitation revoked' });
+    addToast({ variant: 'success', title: 'Invitation revoked' });
     loadOrgDetail(selectedOrg);
   }
 
