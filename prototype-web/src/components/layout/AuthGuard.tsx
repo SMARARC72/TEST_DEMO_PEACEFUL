@@ -38,6 +38,16 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
   useEffect(() => {
     if (!needsConsentCheck) return;
 
+    // Demo mode: check localStorage for consent completion (MSW-independent)
+    const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
+    if (isDemoMode) {
+      const stored = localStorage.getItem('peacefull-consent-accepted');
+      if (stored === 'true') {
+        setConsentApiResult({ hasConsent: true });
+        return;
+      }
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -54,7 +64,8 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
         const allGranted = REQUIRED_CONSENT_TYPES.every((t) => grantedTypes.has(t));
         setConsentApiResult({ hasConsent: allGranted });
       } catch {
-        setConsentApiResult({ hasConsent: false }); // fail closed for safety
+        // In demo mode, default to no-consent (will redirect to consent page)
+        setConsentApiResult({ hasConsent: false });
       }
     })();
     return () => { cancelled = true; };

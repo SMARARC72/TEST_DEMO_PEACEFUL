@@ -34,6 +34,9 @@ function mockJson<T>(payload: T, status = 200) {
 // so auth/me returns the correct user (patient vs clinician vs supervisor)
 let currentSessionUser: User | null = null;
 
+// Track consented types per session so GET /consent reflects POST /consent state
+let mockGrantedConsentTypes: string[] = [];
+
 const mockUser: User = {
   id: 'patient-001',
   tenantId: 'tenant-001',
@@ -513,32 +516,32 @@ export const handlers = [
   }),
 
   // Patient - Consent
+  // Track granted consent types per session so AuthGuard sees accepted consents
   http.get(`${BASE}/patients/:id/consent`, () => {
-    return mockJson([
-      {
-        id: 'consent-001',
+    return mockJson(
+      mockGrantedConsentTypes.map((type, i) => ({
+        id: `consent-${i + 1}`,
         patientId: 'patient-001',
-        type: 'TREATMENT',
-        version: '2.1',
+        type,
+        granted: true,
+        version: '2.0',
         acceptedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-        content: 'Treatment consent for behavioral health services.',
-      },
-      {
-        id: 'consent-002',
-        patientId: 'patient-001',
-        type: 'DATA_SHARING',
-        version: '1.3',
-        acceptedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-        content: 'Consent for data sharing with care team.',
-      },
-    ]);
+      })),
+    );
   }),
 
   http.post(`${BASE}/patients/:id/consent`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
+    // Track that this consent type has been granted
+    const consentType = body.consentType as string | undefined;
+    if (consentType && !mockGrantedConsentTypes.includes(consentType)) {
+      mockGrantedConsentTypes.push(consentType);
+    }
     return mockJson({
       id: `consent-${Date.now()}`,
       patientId: 'patient-001',
+      type: consentType ?? body.type,
+      granted: true,
       ...body,
       acceptedAt: new Date().toISOString(),
     });

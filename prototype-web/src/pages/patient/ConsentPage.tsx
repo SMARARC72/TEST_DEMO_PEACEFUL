@@ -99,27 +99,50 @@ export default function ConsentPage() {
     setSubmitting(true);
 
     try {
-      // Submit each consent record
-      const results = await Promise.all(
-        consentItems.map((c) =>
-          patientApi.submitConsent(patientId, {
-            consentType: c.id,
-            accepted: true,
-            version: c.version,
-          }),
-        ),
-      );
+      // In demo mode, bypass API calls entirely to avoid MSW dependency
+      const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
 
-      const failed = results.find(([, err]) => err !== null);
-      if (failed) {
-        const [, err] = failed;
-        addToast({ variant: 'error', title: err?.message ?? 'Failed to record consent. Please try again.' });
-        setSubmitting(false);
-        return;
+      if (!isDemoMode) {
+        // Submit each consent record
+        const results = await Promise.all(
+          consentItems.map((c) =>
+            patientApi.submitConsent(patientId, {
+              consentType: c.id,
+              accepted: true,
+              version: c.version,
+            }),
+          ),
+        );
+
+        const failed = results.find(([, err]) => err !== null);
+        if (failed) {
+          const [, err] = failed;
+          addToast({ variant: 'error', title: err?.message ?? 'Failed to record consent. Please try again.' });
+          setSubmitting(false);
+          return;
+        }
+      } else {
+        // Demo mode: try API but don't block on failure
+        try {
+          await Promise.all(
+            consentItems.map((c) =>
+              patientApi.submitConsent(patientId, {
+                consentType: c.id,
+                accepted: true,
+                version: c.version,
+              }),
+            ),
+          );
+        } catch {
+          // MSW may not be active — proceed anyway in demo mode
+        }
       }
 
+      // Persist consent status locally so AuthGuard doesn't re-redirect
+      localStorage.setItem('peacefull-consent-accepted', 'true');
+
       addToast({ variant: 'success', title: 'Consent recorded. Welcome to Peacefull.ai!' });
-      navigate('/patient');
+      navigate('/patient', { replace: true });
     } catch {
       addToast({ variant: 'error', title: 'Failed to record consent. Please try again.' });
     } finally {
