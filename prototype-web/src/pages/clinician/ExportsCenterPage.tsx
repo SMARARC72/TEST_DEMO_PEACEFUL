@@ -47,10 +47,38 @@ export default function ExportsCenterPage() {
     return () => { cancelled = true; };
   }, [patientId, addToast]);
 
+  const [exportFormat, setExportFormat] = useState<'JSON' | 'PDF'>('JSON');
+
   const handleCreateExport = async (profile: ExportProfile) => {
     if (!patientId || creating) return;
     setConfirmModal(null);
     setCreating(true);
+
+    // If PDF format selected, generate client-side PDF from the export data
+    if (exportFormat === 'PDF') {
+      const [job, err] = await clinicianApi.createExport(patientId, { profile, format: 'JSON' });
+      setCreating(false);
+      if (err) {
+        addToast({ title: 'Export failed', description: err.message, variant: 'error' });
+        return;
+      }
+      if (job) {
+        try {
+          const { downloadPatientPdf } = await import('@/utils/pdfExport');
+          // Use the job data to generate a PDF
+          downloadPatientPdf(
+            { exportId: job.id, profile: job.profile, status: job.status, format: 'PDF', createdAt: job.createdAt } as unknown as Record<string, unknown>,
+            `patient-${patientId}`,
+          );
+          addToast({ title: 'PDF export downloaded', variant: 'success' });
+          setExports((prev) => [{ ...job, format: 'PDF' }, ...prev]);
+        } catch {
+          addToast({ title: 'PDF generation failed', variant: 'error' });
+        }
+      }
+      return;
+    }
+
     const [job, err] = await clinicianApi.createExport(patientId, { profile, format: 'JSON' });
     setCreating(false);
     if (err) {
@@ -82,6 +110,33 @@ export default function ExportsCenterPage() {
           <Button variant="ghost" size="sm">← Patient</Button>
         </Link>
       </div>
+
+      {/* Export format selector */}
+      <Card>
+        <CardHeader><CardTitle>Export Format</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            {(['JSON', 'PDF'] as const).map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => setExportFormat(fmt)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  exportFormat === fmt
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300'
+                }`}
+              >
+                {fmt}
+              </button>
+            ))}
+          </div>
+          {exportFormat === 'PDF' && (
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              PDF exports are generated in-browser. The document includes HIPAA confidentiality headers.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Export profiles */}
       <Card>

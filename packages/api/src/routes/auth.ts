@@ -537,6 +537,159 @@ authRouter.post("/forgot-password", loginLimiter, async (req, res, next) => {
   }
 });
 
+// ─── POST /reset-password ───────────────────────────────────────────
+// Consumes the reset code from /forgot-password and sets a new password.
+// Invalidates all existing sessions/refresh tokens for the user (Phase 5.4).
+
+const resetPasswordSchema = z.object({
+  userId: z.string().uuid(),
+  code: z.string().min(1),
+  newPassword: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(128),
+});
+
+authRouter.post("/reset-password", loginLimiter, async (req, res, next) => {
+  try {
+    const body = resetPasswordSchema.parse(req.body);
+
+    // Validate password complexity
+    const complexityRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+    if (!complexityRegex.test(body.newPassword)) {
+      throw new AppError(
+        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
+        400,
+      );
+    }
+
+    // Verify the reset code from Redis
+    const storedCode = await redisGet(`reset:${body.userId}`);
+    if (!storedCode || storedCode !== body.code) {
+      throw new AppError(
+        "Invalid or expired reset code. Please request a new reset link.",
+        400,
+      );
+    }
+
+    // Consume the reset code (one-time use)
+    await redisDel(`reset:${body.userId}`);
+
+    // Hash the new password and update
+    const newHash = await hashPassword(body.newPassword);
+    await prisma.user.update({
+      where: { id: body.userId },
+      data: { passwordHash: newHash },
+    });
+
+    // Phase 5.4: Invalidate all existing refresh tokens for this user
+    // Delete all refresh tokens from the RefreshToken table
+    await prisma.refreshToken.deleteMany({ where: { userId: body.userId } });
+
+    // Also revoke any cached tokens in Redis (scan for user-specific keys)
+    authLogger.info(
+      { userId: body.userId },
+      "Password reset completed; all sessions invalidated",
+    );
+
+    sendSuccess(res, req, {
+      success: true,
+      message: "Password has been reset. Please log in with your new password.",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /change-password ──────────────────────────────────────────
+// Authenticated endpoint for logged-in users to change their password.
+// Requires current password verification. Invalidates other sessions (Phase 5.4).
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(128),
+});
+
+authRouter.post(
+  "/change-password",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const body = changePasswordSchema.parse(req.body);
+      const userId = req.user!.sub;
+
+      // Validate password complexity
+      const complexityRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+      if (!complexityRegex.test(body.newPassword)) {
+        throw new AppError(
+          "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
+          400,
+        );
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new AppError("User not found", 404);
+
+      // Verify current password
+      const valid = await verifyPassword(
+        body.currentPassword,
+        user.passwordHash,
+      );
+      if (!valid) {
+        throw new AppError("Current password is incorrect", 401);
+      }
+
+      // Prevent setting the same password
+      const sameAsOld = await verifyPassword(
+        body.newPassword,
+        user.passwordHash,
+      );
+      if (sameAsOld) {
+        throw new AppError(
+          "New password must be different from your current password",
+          400,
+        );
+      }
+
+      // Hash and save new password
+      const newHash = await hashPassword(body.newPassword);
+      await prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash: newHash },
+      });
+
+      // Phase 5.4: Invalidate ALL refresh tokens except the current session
+      // Delete all refresh tokens for this user
+      await prisma.refreshToken.deleteMany({ where: { userId } });
+
+      authLogger.info(
+        { userId },
+        "Password changed; all other sessions invalidated",
+      );
+
+      // Generate new tokens for the current session so user stays logged in
+      const newTokens = generateTokens({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
+      });
+
+      sendSuccess(res, req, {
+        success: true,
+        message: "Password changed successfully. All other sessions have been signed out.",
+        ...newTokens,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ─── POST /step-up/verify ──────────────────────────────────────────
 // Frontend calls /step-up/verify (separate from the original /step-up)
 

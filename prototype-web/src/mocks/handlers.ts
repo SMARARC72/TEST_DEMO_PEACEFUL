@@ -658,6 +658,24 @@ export const handlers = [
     return mockJson({ success: true });
   }),
 
+  // ── Reset Password (consume reset code) ─────
+  http.post(`${BASE}/auth/reset-password`, async () => {
+    return mockJson({
+      success: true,
+      message: 'Password has been reset. Please log in with your new password.',
+    });
+  }),
+
+  // ── Change Password (authenticated) ─────────
+  http.post(`${BASE}/auth/change-password`, async () => {
+    return mockJson({
+      success: true,
+      message: 'Password changed successfully. All other sessions have been signed out.',
+      accessToken: 'mock-new-access-token-' + Date.now(),
+      refreshToken: 'mock-new-refresh-token-' + Date.now(),
+    });
+  }),
+
   // ── MBC Scores ──────────────────────────────
   http.get(`${BASE}/clinician/patients/:id/mbc`, () => {
     const scores = [

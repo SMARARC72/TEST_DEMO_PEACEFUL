@@ -47,6 +47,23 @@ export const authApi = {
     return apiPost<{ success: boolean }>('auth/forgot-password', { email });
   },
 
+  resetPassword(userId: string, code: string, newPassword: string) {
+    return apiPost<{ success: boolean; message: string }>('auth/reset-password', {
+      userId,
+      code,
+      newPassword,
+    });
+  },
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return apiPost<{
+      success: boolean;
+      message: string;
+      accessToken: string;
+      refreshToken: string;
+    }>('auth/change-password', { currentPassword, newPassword });
+  },
+
   /** Step-up auth: re-verify password before sensitive actions */
   stepUpVerify(password: string) {
     return apiPost<{ elevatedToken?: string; mfaRequired?: boolean }>(

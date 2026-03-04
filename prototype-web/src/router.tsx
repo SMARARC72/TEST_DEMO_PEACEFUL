@@ -71,6 +71,10 @@ export const router = createBrowserRouter([
     element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
   },
   {
+    path: '/reset-password',
+    element: lazyPage(() => import('@/pages/auth/ResetPasswordPage')),
+  },
+  {
     path: '/callback',
     element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
   },

@@ -14,11 +14,13 @@
 
 # ─── API Proxy to Production Backend ──────────────────────────────────
 # Proxies /api/* requests to the production API (TLS, custom domain)
+# H10: headers = "X-RateLimit*" forwards rate-limit headers from backend
 [[redirects]]
   from = "/api/*"
   to = "https://api.peacefull.cloud/api/:splat"
   status = 200
   force = true
+  headers = {X-RateLimit-Limit = "", X-RateLimit-Remaining = "", X-RateLimit-Reset = ""}
 
 # WebSocket proxy for real-time features (wss)
 [[redirects]]

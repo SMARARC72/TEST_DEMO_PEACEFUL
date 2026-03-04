@@ -68,7 +68,7 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
 function DataExportCard({ patientId }: { patientId: string }) {
   const addToast = useUIStore((s) => s.addToast);
   const [exporting, setExporting] = useState(false);
-  const [format, setFormat] = useState<'json' | 'csv'>('json');
+  const [format, setFormat] = useState<'json' | 'csv' | 'pdf'>('json');
 
   const handleExport = async (): Promise<void> => {
     setExporting(true);
@@ -83,7 +83,14 @@ function DataExportCard({ patientId }: { patientId: string }) {
       let blob: Blob;
       let extension: string;
 
-      if (format === 'csv') {
+      if (format === 'pdf') {
+        // Generate PDF using client-side PDF utility
+        const { downloadPatientPdf } = await import('@/utils/pdfExport');
+        const userName = useAuthStore.getState().user?.profile?.firstName ?? 'Patient';
+        downloadPatientPdf(data as Record<string, unknown>, userName);
+        addToast({ title: 'Your data has been exported as PDF.', variant: 'success' });
+        return;
+      } else if (format === 'csv') {
         // Convert to CSV format
         const csvContent = convertToCSV(data);
         blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -122,7 +129,7 @@ function DataExportCard({ patientId }: { patientId: string }) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-600">Format:</span>
           <div className="flex gap-1">
-            {(['json', 'csv'] as const).map((f) => (
+            {(['json', 'csv', 'pdf'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFormat(f)}
@@ -184,6 +191,143 @@ function convertToCSV(data: Record<string, unknown> | null): string {
   }
 
   return lines.join('\n');
+}
+
+// ─── Change Password Card ────────────────────────────────────────────
+function ChangePasswordCard() {
+  const addToast = useUIStore((s) => s.addToast);
+  const setTokens = useAuthStore((s) => s.setTokens);
+  const [showForm, setShowForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changing, setChanging] = useState(false);
+  const [error, setError] = useState('');
+
+  const complexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{12,}$/;
+  const isValid =
+    currentPassword.length > 0 &&
+    complexityRegex.test(newPassword) &&
+    newPassword === confirmPassword;
+
+  const handleChange = async (): Promise<void> => {
+    if (!isValid || changing) return;
+    setChanging(true);
+    setError('');
+    try {
+      const { authApi } = await import('@/api/auth');
+      const [data, err] = await authApi.changePassword(currentPassword, newPassword);
+      if (err) {
+        setError(err.message || 'Password change failed');
+        return;
+      }
+      if (data) {
+        // Update tokens so the current session stays valid
+        setTokens(data.accessToken, data.refreshToken);
+        addToast({ title: 'Password changed. All other sessions signed out.', variant: 'success' });
+        setShowForm(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch {
+      setError('Password change failed. Please try again.');
+    } finally {
+      setChanging(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Change Password</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-slate-600">
+          Update your password. All other active sessions will be signed out for
+          security.
+        </p>
+        {!showForm ? (
+          <Button variant="secondary" onClick={() => setShowForm(true)}>
+            Change Password
+          </Button>
+        ) : (
+          <div className="space-y-3">
+            {error && (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </div>
+            )}
+            <div>
+              <label htmlFor="cp-current" className="mb-1 block text-sm font-medium text-slate-700">
+                Current Password
+              </label>
+              <input
+                id="cp-current"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            </div>
+            <div>
+              <label htmlFor="cp-new" className="mb-1 block text-sm font-medium text-slate-700">
+                New Password
+              </label>
+              <input
+                id="cp-new"
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                placeholder="Min. 12 chars, uppercase, lowercase, digit, special"
+              />
+              {newPassword.length > 0 && !complexityRegex.test(newPassword) && (
+                <p className="mt-1 text-xs text-red-500">
+                  Must be 12+ chars with uppercase, lowercase, digit, and special character
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="cp-confirm" className="mb-1 block text-sm font-medium text-slate-700">
+                Confirm New Password
+              </label>
+              <input
+                id="cp-confirm"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+              {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleChange} disabled={!isValid || changing}>
+                {changing ? 'Changing...' : 'Update Password'}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowForm(false);
+                  setError('');
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 // ─── Account Deletion Card ───────────────────────────────────────────
@@ -470,6 +614,9 @@ export default function SettingsPage() {
 
       {/* Data Export (HIPAA Right of Access) */}
       <DataExportCard patientId={patientId} />
+
+      {/* Change Password (PRD_PH3 Phase 5.4) */}
+      <ChangePasswordCard />
 
       {/* Account Deletion (HIPAA Right to Erasure) */}
       <AccountDeletionCard patientId={patientId} />
