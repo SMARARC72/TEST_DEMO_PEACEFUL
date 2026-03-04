@@ -52,7 +52,7 @@ const mockClinician: User = {
   role: 'CLINICIAN',
   status: 'ACTIVE',
   profile: { firstName: 'Dr. Sarah', lastName: 'Chen' },
-  mfaEnabled: false,
+  mfaEnabled: true,   // Demo accounts are pre-enrolled; new registrations get mfaEnabled: false
   createdAt: '2025-01-10T00:00:00Z',
 };
 
@@ -200,6 +200,7 @@ export const handlers = [
       email: body.email,
       role: body.role as User['role'],
       status: isClinician ? 'PENDING_APPROVAL' : 'ACTIVE',
+      mfaEnabled: false,  // New registrations always start without MFA
       profile: { firstName: body.firstName, lastName: body.lastName },
     };
     // Track session for auth/me

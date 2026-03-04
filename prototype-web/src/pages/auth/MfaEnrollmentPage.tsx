@@ -23,6 +23,10 @@ export default function MfaEnrollmentPage() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Demo mode: mock environment auto-fills verification for ease of presentation
+  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
+  const DEMO_CODE = '123456';
+
   // Build TOTP URI for QR code rendering
   const totpUri = useMemo(() => {
     if (!secret) return '';
@@ -151,6 +155,17 @@ export default function MfaEnrollmentPage() {
               <Button onClick={() => setStep('verify')} className="w-full">
                 I've scanned the QR code →
               </Button>
+              {isDemoMode && (
+                <button
+                  onClick={() => {
+                    setVerifyCode(DEMO_CODE);
+                    setStep('verify');
+                  }}
+                  className="w-full text-sm text-brand-600 hover:underline dark:text-brand-400"
+                >
+                  Demo: Skip to verification →
+                </button>
+              )}
             </div>
           )}
 
@@ -167,6 +182,17 @@ export default function MfaEnrollmentPage() {
                 inputMode="numeric"
                 autoFocus
               />
+              {isDemoMode && (
+                <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800 dark:bg-brand-900/20">
+                  <p className="text-xs text-brand-700 dark:text-brand-300">
+                    <span className="font-semibold">Demo Mode:</span> Enter any 6-digit code (e.g. <button
+                      type="button"
+                      onClick={() => setVerifyCode(DEMO_CODE)}
+                      className="font-mono font-bold underline hover:text-brand-900 dark:hover:text-brand-200"
+                    >{DEMO_CODE}</button>) to proceed.
+                  </p>
+                </div>
+              )}
               <Button onClick={handleVerify} className="w-full" loading={loading}>
                 Verify & Enable MFA
               </Button>
