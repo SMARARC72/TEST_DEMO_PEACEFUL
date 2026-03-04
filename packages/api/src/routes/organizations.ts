@@ -69,7 +69,7 @@ organizationRouter.post(
     try {
       const data = createOrgSchema.parse(req.body);
       const userId = req.user!.sub;
-      const tenantId = req.user!.tenantId;
+      const tenantId = req.user!.tid;
 
       // Generate unique slug
       let slug = slugify(data.name);
@@ -120,7 +120,7 @@ organizationRouter.post(
 organizationRouter.get("/:id", authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.sub;
-    const orgId = req.params.id;
+    const orgId = req.params.id as string;
 
     await requireOrgRole(userId, orgId);
 
@@ -175,7 +175,7 @@ const updateOrgSchema = z.object({
 organizationRouter.patch("/:id", authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.sub;
-    const orgId = req.params.id;
+    const orgId = req.params.id as string;
 
     await requireOrgRole(userId, orgId, "OWNER", "ADMIN");
 
@@ -205,7 +205,7 @@ organizationRouter.patch("/:id", authenticate, async (req, res, next) => {
 organizationRouter.get("/:id/members", authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.sub;
-    const orgId = req.params.id;
+    const orgId = req.params.id as string;
 
     await requireOrgRole(userId, orgId);
 
@@ -241,8 +241,8 @@ organizationRouter.delete(
   async (req, res, next) => {
     try {
       const requesterId = req.user!.sub;
-      const orgId = req.params.id;
-      const targetUserId = req.params.userId;
+      const orgId = req.params.id as string;
+      const targetUserId = req.params.userId as string;
 
       const requesterMembership = await requireOrgRole(
         requesterId,
@@ -288,7 +288,7 @@ const inviteSchema = z.object({
 organizationRouter.post("/:id/invite", authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.sub;
-    const orgId = req.params.id;
+    const orgId = req.params.id as string;
 
     await requireOrgRole(userId, orgId, "OWNER", "ADMIN");
 
@@ -311,7 +311,7 @@ organizationRouter.post("/:id/invite", authenticate, async (req, res, next) => {
 
     // Check if already a member
     const existingUser = await prisma.user.findFirst({
-      where: { email: data.email, tenantId: req.user!.tenantId },
+      where: { email: data.email, tenantId: req.user!.tid },
     });
     if (existingUser) {
       const existingMembership = await prisma.orgMembership.findUnique({
@@ -384,8 +384,8 @@ organizationRouter.delete(
   async (req, res, next) => {
     try {
       const userId = req.user!.sub;
-      const orgId = req.params.id;
-      const inviteId = req.params.inviteId;
+      const orgId = req.params.id as string;
+      const inviteId = req.params.inviteId as string;
 
       await requireOrgRole(userId, orgId, "OWNER", "ADMIN");
 
@@ -513,6 +513,7 @@ organizationRouter.post(
             data: {
               userId: user.id,
               tenantId: invitation.organization.tenantId,
+              age: 0,
             },
           });
         }
@@ -601,7 +602,7 @@ organizationRouter.get("/", authenticate, async (req, res, next) => {
       orderBy: { joinedAt: "asc" },
     });
 
-    const organizations = memberships.map((m) => ({
+    const organizations = memberships.map((m: typeof memberships[number]) => ({
       ...m.organization,
       role: m.role,
       joinedAt: m.joinedAt,
@@ -621,7 +622,7 @@ organizationRouter.get(
   async (req, res, next) => {
     try {
       const userId = req.user!.sub;
-      const orgId = req.params.id;
+      const orgId = req.params.id as string;
 
       await requireOrgRole(userId, orgId, "OWNER", "ADMIN");
 

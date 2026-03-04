@@ -38,6 +38,10 @@ describe('PatientCard', () => {
   const entry: CaseloadPatient = {
     id: 'cp-1',
     patientId: 'p-1',
+    name: 'Alex Rivera',
+    lastContact: '2026-01-15',
+    signalBand: 'LOW',
+    adherenceRate: 85,
     patient: {
       id: 'p-1',
       user: { firstName: 'Alex', lastName: 'Rivera' },

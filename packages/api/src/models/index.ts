@@ -41,11 +41,16 @@ function createPrismaClient() {
   return baseClient.$extends(phiEncryptionExtension);
 }
 
-type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
+// Use PrismaClient as the export type so model accessors remain visible.
+// The $extends() return type strips model generics in some Prisma versions;
+// since the extension only adds query hooks (no model shape changes),
+// PrismaClient is a safe type annotation.
+type ExtendedPrismaClient = PrismaClient;
 
 const globalForPrisma = globalThis as unknown as { prisma: ExtendedPrismaClient };
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+export const prisma: ExtendedPrismaClient =
+  globalForPrisma.prisma ?? (createPrismaClient() as unknown as ExtendedPrismaClient);
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
