@@ -2,7 +2,7 @@
 // Track patient treatment adherence: medications, exercises, homework.
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
 import { Badge } from '@/components/ui/Badge';
@@ -110,6 +110,12 @@ export default function AdherenceTrackerPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <Link
+        to={`/clinician/patients/${patientId}`}
+        className="mb-2 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
+      >
+        ← Back to Patient
+      </Link>
       <h1 className="mb-1 text-2xl font-bold text-neutral-900 dark:text-white">
         Adherence Tracker
       </h1>

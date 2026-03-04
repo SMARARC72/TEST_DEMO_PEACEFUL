@@ -192,11 +192,13 @@ export default function OrgManagementPage() {
   }, []);
 
   useEffect(() => {
-    loadOrgs();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- standard data-fetching pattern
+    void loadOrgs();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (selectedOrg) loadOrgDetail(selectedOrg);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- standard data-fetching pattern
+    if (selectedOrg) void loadOrgDetail(selectedOrg);
   }, [selectedOrg, loadOrgDetail]);
 
   async function handleRemoveMember(userId: string) {

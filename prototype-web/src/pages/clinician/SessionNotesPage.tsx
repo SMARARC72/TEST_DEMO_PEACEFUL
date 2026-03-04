@@ -3,7 +3,7 @@
 // Supports Draft → Signed → Co-Signed lifecycle.
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -139,6 +139,12 @@ export default function SessionNotesPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
+          <Link
+            to={`/clinician/patients/${patientId}`}
+            className="mb-2 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
+          >
+            ← Back to Patient
+          </Link>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
             Session Notes
           </h1>

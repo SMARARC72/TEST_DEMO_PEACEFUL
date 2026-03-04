@@ -487,9 +487,50 @@ export const handlers = [
     return mockJson({ ...mockSettings, ...body });
   }),
 
+  // Patient - Data Export (HIPAA Right of Access)
+  http.get(`${BASE}/patients/:id/data-export`, ({ params }) => {
+    return mockJson({
+      profile: { id: params.id, firstName: 'Alex', lastName: 'Rivera', dateOfBirth: '1990-03-15' },
+      checkins: [
+        { date: new Date(Date.now() - 2 * 86400000).toISOString(), mood: 7, stress: 4, anxiety: 3, sleep: 8, focus: 6 },
+        { date: new Date(Date.now() - 86400000).toISOString(), mood: 8, stress: 3, anxiety: 2, sleep: 7, focus: 7 },
+      ],
+      journals: [
+        { date: new Date(Date.now() - 86400000).toISOString(), content: 'Feeling better today. Practiced mindfulness.' },
+      ],
+      safetyPlan: { warningSign: 'Withdrawal', copingStrategy: 'Deep breathing', emergencyContact: '988' },
+      auditLog: [
+        { action: 'LOGIN', timestamp: new Date(Date.now() - 86400000).toISOString(), ip: '192.168.1.1' },
+        { action: 'DATA_EXPORT', timestamp: new Date().toISOString(), ip: '192.168.1.1' },
+      ],
+    });
+  }),
+
+  // Patient - Account Deletion (HIPAA Right to Erasure)
+  http.delete(`${BASE}/patients/:id/account`, () => {
+    return mockJson({ success: true, message: 'Account and all associated data have been permanently deleted.' });
+  }),
+
   // Patient - Consent
   http.get(`${BASE}/patients/:id/consent`, () => {
-    return mockJson([]);
+    return mockJson([
+      {
+        id: 'consent-001',
+        patientId: 'patient-001',
+        type: 'TREATMENT',
+        version: '2.1',
+        acceptedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+        content: 'Treatment consent for behavioral health services.',
+      },
+      {
+        id: 'consent-002',
+        patientId: 'patient-001',
+        type: 'DATA_SHARING',
+        version: '1.3',
+        acceptedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+        content: 'Consent for data sharing with care team.',
+      },
+    ]);
   }),
 
   http.post(`${BASE}/patients/:id/consent`, async ({ request }) => {
@@ -879,6 +920,18 @@ export const handlers = [
     return mockJson({ success: true });
   }),
 
+  // ── Auth0 Sync ──────────────────────────────
+  http.post(`${BASE}/auth/auth0-sync`, async ({ request }) => {
+    const body = await request.json() as { auth0Id: string; email: string };
+    currentSessionUser = { ...mockUser, email: body.email };
+    const response: LoginResponse = {
+      accessToken: 'mock-auth0-token-' + Date.now(),
+      refreshToken: 'mock-auth0-refresh-' + Date.now(),
+      user: currentSessionUser,
+    };
+    return mockJson(response);
+  }),
+
   // ── Reset Password (consume reset code) ─────
   http.post(`${BASE}/auth/reset-password`, async () => {
     return mockJson({
@@ -1263,7 +1316,7 @@ export const handlers = [
     return mockJson({ invitations: [] });
   }),
 
-  http.get(`${BASE}/invitations/validate`, () => {
+  http.get(`${BASE}/organizations/invitations/:token`, () => {
     return mockJson({
       email: 'invited@example.com',
       role: 'MEMBER',
@@ -1274,7 +1327,7 @@ export const handlers = [
     });
   }),
 
-  http.post(`${BASE}/invitations/accept`, async () => {
+  http.post(`${BASE}/organizations/invitations/:token/accept`, async () => {
     return mockJson({ success: true, redirectTo: '/clinician/caseload' });
   }),
 

@@ -152,5 +152,6 @@ const clinicianNav = [
   { to: '/clinician/triage', label: 'Triage Inbox', icon: '🔔' },
   { to: '/clinician/escalations', label: 'Escalations', icon: '🚨' },
   { to: '/clinician/analytics', label: 'Analytics', icon: '📈' },
+  { to: '/clinician/organization', label: 'Organization', icon: '🏥' },
   { to: '/clinician/settings', label: 'Settings', icon: '⚙️' },
 ];

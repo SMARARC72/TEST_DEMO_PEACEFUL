@@ -23,7 +23,7 @@ export const patientApi = {
   /** POST /patients/:id/checkin */
   submitCheckin(
     patientId: string,
-    data: { mood: number; stress: number; sleep: number; focus: number; notes?: string },
+    data: { mood: number; stress: number; anxiety: number; sleep: number; focus: number; notes?: string },
   ) {
     return apiPost<CheckinData>(`patients/${patientId}/checkin`, data);
   },

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useUIStore } from '@/stores/ui';
+import { useThemeStore } from '@/hooks/useTheme';
 import type { PatientSettings as SettingsType } from '@/api/types';
 
 const DEFAULT_SETTINGS: SettingsType = {
@@ -41,8 +42,8 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
   return (
     <div className="flex items-center justify-between py-3">
       <div>
-        <p className="text-sm font-medium text-slate-700">{label}</p>
-        {description && <p className="text-xs text-slate-500">{description}</p>}
+        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">{label}</p>
+        {description && <p className="text-xs text-neutral-500 dark:text-neutral-400">{description}</p>}
       </div>
       <button
         role="switch"
@@ -51,7 +52,7 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-          checked ? 'bg-brand-600' : 'bg-slate-300'
+          checked ? 'bg-brand-600' : 'bg-neutral-300 dark:bg-neutral-600'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span
@@ -122,12 +123,12 @@ function DataExportCard({ patientId }: { patientId: string }) {
         <CardTitle>Your Data</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Under HIPAA Right of Access, you can download all of your data at any time.
           This includes check-ins, journal entries, safety plans, and audit logs.
         </p>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600">Format:</span>
+          <span className="text-sm text-neutral-600 dark:text-neutral-400">Format:</span>
           <div className="flex gap-1">
             {(['json', 'csv', 'pdf'] as const).map((f) => (
               <button
@@ -136,7 +137,7 @@ function DataExportCard({ patientId }: { patientId: string }) {
                 className={`rounded-md px-3 py-1 text-xs font-medium uppercase transition-colors ${
                   format === f
                     ? 'bg-brand-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600'
                 }`}
                 aria-label={`Export as ${f.toUpperCase()}`}
               >
@@ -148,7 +149,7 @@ function DataExportCard({ patientId }: { patientId: string }) {
         <Button onClick={handleExport} disabled={exporting}>
           {exporting ? 'Preparing Export...' : `Download My Data (${format.toUpperCase()})`}
         </Button>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-neutral-400 dark:text-neutral-500">
           Exports are limited to once per 24 hours for security.
         </p>
       </CardContent>
@@ -243,7 +244,7 @@ function ChangePasswordCard() {
         <CardTitle>Change Password</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Update your password. All other active sessions will be signed out for
           security.
         </p>
@@ -259,7 +260,7 @@ function ChangePasswordCard() {
               </div>
             )}
             <div>
-              <label htmlFor="cp-current" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="cp-current" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">
                 Current Password
               </label>
               <input
@@ -268,11 +269,11 @@ function ChangePasswordCard() {
                 autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
               />
             </div>
             <div>
-              <label htmlFor="cp-new" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="cp-new" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">
                 New Password
               </label>
               <input
@@ -281,7 +282,7 @@ function ChangePasswordCard() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
                 placeholder="Min. 12 chars, uppercase, lowercase, digit, special"
               />
               {newPassword.length > 0 && !complexityRegex.test(newPassword) && (
@@ -291,7 +292,7 @@ function ChangePasswordCard() {
               )}
             </div>
             <div>
-              <label htmlFor="cp-confirm" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="cp-confirm" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">
                 Confirm New Password
               </label>
               <input
@@ -300,7 +301,7 @@ function ChangePasswordCard() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
               />
               {confirmPassword.length > 0 && newPassword !== confirmPassword && (
                 <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
@@ -365,7 +366,7 @@ function AccountDeletionCard({ patientId }: { patientId: string }) {
         <CardTitle className="text-red-700">Delete Account</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Permanently delete your account and all associated data. This action
           cannot be undone. Your data will be removed in accordance with HIPAA.
         </p>
@@ -473,6 +474,10 @@ export default function SettingsPage() {
       ...settings,
       display: { ...settings.display, [key]: value },
     };
+    // Wire dark mode toggle to actual theme store
+    if (key === 'darkMode') {
+      useThemeStore.getState().setTheme(value ? 'dark' : 'light');
+    }
     saveSettings(updated as SettingsType);
   }
 
@@ -487,8 +492,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6" role="main" aria-label="Settings">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800" id="settings-heading">Settings</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100" id="settings-heading">Settings</h1>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
           Manage your notifications, privacy, and display preferences
         </p>
       </div>
@@ -505,10 +510,10 @@ export default function SettingsPage() {
               {user?.profile.lastName?.[0]}
             </div>
             <div>
-              <p className="font-medium text-slate-800">
+              <p className="font-medium text-neutral-800 dark:text-neutral-100">
                 {user?.profile.firstName} {user?.profile.lastName}
               </p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{user?.email}</p>
             </div>
           </div>
         </CardContent>
@@ -519,7 +524,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Notifications</CardTitle>
         </CardHeader>
-        <CardContent className="divide-y divide-slate-100">
+        <CardContent className="divide-y divide-neutral-100 dark:divide-neutral-700">
           <ToggleRow
             label="Check-in Reminders"
             description="Daily reminder to complete your mood check-in"
@@ -556,7 +561,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Privacy</CardTitle>
         </CardHeader>
-        <CardContent className="divide-y divide-slate-100">
+        <CardContent className="divide-y divide-neutral-100 dark:divide-neutral-700">
           <ToggleRow
             label="Share Progress with Clinician"
             description="Allow your clinician to view check-in trends and journal entries"
@@ -579,7 +584,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Display</CardTitle>
         </CardHeader>
-        <CardContent className="divide-y divide-slate-100">
+        <CardContent className="divide-y divide-neutral-100 dark:divide-neutral-700">
           <ToggleRow
             label="Dark Mode"
             description="Use dark color scheme"
@@ -588,7 +593,7 @@ export default function SettingsPage() {
             disabled={saving}
           />
           <div className="py-3">
-            <p className="mb-2 text-sm font-medium text-slate-700">Font Size</p>
+            <p className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-200">Font Size</p>
             <div className="flex gap-2">
               {(['small', 'medium', 'large'] as const).map((size) => (
                 <button
@@ -598,7 +603,7 @@ export default function SettingsPage() {
                   className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors ${
                     settings.display.fontSize === size
                       ? 'bg-brand-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600'
                   } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {size}
@@ -625,8 +630,8 @@ export default function SettingsPage() {
       <Card className="border-red-200">
         <CardContent className="flex items-center justify-between p-4">
           <div>
-            <p className="font-medium text-slate-800">Sign Out</p>
-            <p className="text-sm text-slate-500">Sign out of your account on this device</p>
+            <p className="font-medium text-neutral-800 dark:text-neutral-100">Sign Out</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Sign out of your account on this device</p>
           </div>
           <Button variant="danger" onClick={logout}>
             Sign Out

@@ -27,6 +27,7 @@ export default function InviteAcceptPage() {
 
   useEffect(() => {
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guard clause before async work
       setError('No invitation token provided.');
       setLoading(false);
       return;

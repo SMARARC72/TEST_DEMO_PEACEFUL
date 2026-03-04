@@ -71,7 +71,7 @@ export default function CaseloadPage() {
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-3">
-              <span className="text-2xl">{stat.icon}</span>
+              <span className="text-2xl" aria-hidden="true">{stat.icon}</span>
               <div>
                 <p className="text-2xl font-bold text-neutral-900 dark:text-white">{stat.value}</p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">{stat.label}</p>

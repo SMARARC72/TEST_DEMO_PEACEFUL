@@ -44,7 +44,8 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
         const [records, err] = await apiGet<ConsentRecord[]>(`patients/${userId}/consent`);
         if (cancelled) return;
         if (err || !records) {
-          setConsentApiResult({ hasConsent: true }); // fail open for UX
+          // On error, redirect to consent to be safe (don't fail-open)
+          setConsentApiResult({ hasConsent: false });
           return;
         }
         const grantedTypes = new Set(
@@ -53,7 +54,7 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
         const allGranted = REQUIRED_CONSENT_TYPES.every((t) => grantedTypes.has(t));
         setConsentApiResult({ hasConsent: allGranted });
       } catch {
-        setConsentApiResult({ hasConsent: true }); // fail open
+        setConsentApiResult({ hasConsent: false }); // fail closed for safety
       }
     })();
     return () => { cancelled = true; };

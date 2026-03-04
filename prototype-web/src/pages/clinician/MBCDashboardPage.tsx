@@ -3,7 +3,7 @@
 // Enables clinicians to track standardized outcome measures over time.
 
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
@@ -151,6 +151,12 @@ export default function MBCDashboardPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
+          <Link
+            to={`/clinician/patients/${patientId}`}
+            className="mb-2 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400"
+          >
+            ← Back to Patient
+          </Link>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
             Measurement-Based Care
           </h1>
@@ -215,9 +221,15 @@ export default function MBCDashboardPage() {
 
       {/* Score entry form (modal-like) */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mbc-form-title"
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowForm(null); }}
+        >
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-800">
-            <h2 className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
+            <h2 id="mbc-form-title" className="mb-1 text-xl font-bold text-neutral-900 dark:text-white">
               {showForm === 'PHQ9' ? 'PHQ-9 Patient Health Questionnaire' : 'GAD-7 Generalized Anxiety Disorder'}
             </h2>
             <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
