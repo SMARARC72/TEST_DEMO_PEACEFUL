@@ -39,6 +39,11 @@ export default function MfaEnrollmentPage() {
     (async () => {
       setLoading(true);
       try {
+        // Demo mode: use hardcoded TOTP secret — no backend/MSW dependency
+        if (isDemoMode) {
+          setSecret('JBSWY3DPEHPK3PXP');
+          return;
+        }
         const [data, err] = await authApi.mfaSetup();
         if (err) {
           setError(err.message ?? 'Failed to initialize MFA setup');
@@ -48,11 +53,17 @@ export default function MfaEnrollmentPage() {
           setSecret(data.secret ?? '');
         }
       } catch {
-        setError('Failed to initialize MFA setup');
+        // Fallback for demo mode or if MSW isn't intercepting
+        if (isDemoMode) {
+          setSecret('JBSWY3DPEHPK3PXP');
+        } else {
+          setError('Failed to initialize MFA setup');
+        }
       } finally {
         setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleVerify() {
@@ -63,6 +74,12 @@ export default function MfaEnrollmentPage() {
     setError('');
     setLoading(true);
     try {
+      // Demo mode: skip API call, return mock backup codes
+      if (isDemoMode) {
+        setBackupCodes(['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890']);
+        setStep('backup');
+        return;
+      }
       const [data, err] = await authApi.mfaConfirmSetup(verifyCode);
       if (err) {
         setError(err.message ?? 'Invalid code. Please try again.');
@@ -73,7 +90,13 @@ export default function MfaEnrollmentPage() {
       }
       setStep('backup');
     } catch {
-      setError('Verification failed');
+      // Fallback for demo mode
+      if (isDemoMode) {
+        setBackupCodes(['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890']);
+        setStep('backup');
+      } else {
+        setError('Verification failed');
+      }
     } finally {
       setLoading(false);
     }

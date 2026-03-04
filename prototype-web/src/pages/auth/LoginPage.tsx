@@ -55,7 +55,9 @@ export default function LoginPage() {
         const currentUser = useAuthStore.getState().user;
         const role = currentUser?.role;
         // Clinicians without MFA must enroll before proceeding
-        if ((role === 'CLINICIAN' || role === 'SUPERVISOR') && !currentUser?.mfaEnabled) {
+        // In demo/mock mode, skip MFA enrollment — demo accounts are pre-enrolled
+        const inDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
+        if (!inDemoMode && (role === 'CLINICIAN' || role === 'SUPERVISOR') && !currentUser?.mfaEnabled) {
           navigate('/mfa-enrollment', { replace: true });
           return;
         }
