@@ -1,8 +1,8 @@
 // ─── Notification Service Tests ──────────────────────────────────────
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // We need to mock logger before importing the service
-vi.mock('../utils/logger.js', () => ({
+vi.mock("../utils/logger.js", () => ({
   apiLogger: {
     info: vi.fn(),
     warn: vi.fn(),
@@ -16,90 +16,144 @@ import {
   sendSMS,
   sendPush,
   escalationCascade,
-} from './notification.js';
-import { apiLogger } from '../utils/logger.js';
-import { EscalationTier, EscalationStatus } from '@peacefull/shared';
+} from "./notification.js";
+import { apiLogger } from "../utils/logger.js";
+import { EscalationTier, EscalationStatus } from "@peacefull/shared";
 
-describe('sendEmail', () => {
+describe("sendEmail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('logs a stub message in test/dev environment', async () => {
-    await sendEmail(
-      'test@example.com',
-      'Test Subject',
-      'welcome',
-      { name: 'Test User' },
-    );
+  it("logs a stub message in test/dev environment", async () => {
+    await sendEmail("test@example.com", "Test Subject", "welcome", {
+      name: "Test User",
+    });
 
     expect(apiLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: 'test@example.com',
-        subject: 'Test Subject',
-        template: 'welcome',
+        to: "test@example.com",
+        subject: "Test Subject",
+        template: "welcome",
       }),
-      expect.stringContaining('STUB'),
+      expect.stringContaining("STUB"),
     );
   });
 
-  it('does not throw on valid input', async () => {
+  it("does not throw on valid input", async () => {
     await expect(
-      sendEmail('user@domain.com', 'Hello', 'tpl', {}),
+      sendEmail("user@domain.com", "Hello", "tpl", {}),
     ).resolves.toBeUndefined();
   });
-});
 
-describe('sendSMS', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('logs a stub message in test/dev environment', async () => {
-    await sendSMS('+15551234567', 'Test message');
+  it("handles welcome email template without error", async () => {
+    await expect(
+      sendEmail("newpatient@test.com", "Welcome to Peacefull.ai!", "welcome", {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "newpatient@test.com",
+        role: "PATIENT",
+      }),
+    ).resolves.toBeUndefined();
 
     expect(apiLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: '+15551234567',
-        message: 'Test message',
+        to: "newpatient@test.com",
+        template: "welcome",
       }),
-      expect.stringContaining('STUB'),
+      expect.any(String),
+    );
+  });
+
+  it("handles pending-approval email template without error", async () => {
+    await expect(
+      sendEmail(
+        "dr.new@test.com",
+        "Peacefull.ai — Registration Received",
+        "pending-approval",
+        { firstName: "Dr", lastName: "New", email: "dr.new@test.com" },
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(apiLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "dr.new@test.com",
+        template: "pending-approval",
+      }),
+      expect.any(String),
+    );
+  });
+
+  it("handles supervisor-new-clinician email template without error", async () => {
+    await expect(
+      sendEmail(
+        "supervisor@test.com",
+        "New Clinician Registration — Approval Required",
+        "supervisor-new-clinician",
+        { firstName: "Dr", lastName: "NewClinician", email: "dr.new@test.com" },
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(apiLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "supervisor@test.com",
+        template: "supervisor-new-clinician",
+      }),
+      expect.any(String),
     );
   });
 });
 
-describe('sendPush', () => {
+describe("sendSMS", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('logs a stub message in test/dev environment', async () => {
-    await sendPush('user-123', 'Alert', 'Body text');
+  it("logs a stub message in test/dev environment", async () => {
+    await sendSMS("+15551234567", "Test message");
 
     expect(apiLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        userId: 'user-123',
-        title: 'Alert',
-        body: 'Body text',
+        to: "+15551234567",
+        message: "Test message",
       }),
-      expect.stringContaining('STUB'),
+      expect.stringContaining("STUB"),
     );
   });
 });
 
-describe('escalationCascade', () => {
+describe("sendPush", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('initiates push + email for T2 escalation', async () => {
+  it("logs a stub message in test/dev environment", async () => {
+    await sendPush("user-123", "Alert", "Body text");
+
+    expect(apiLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-123",
+        title: "Alert",
+        body: "Body text",
+      }),
+      expect.stringContaining("STUB"),
+    );
+  });
+});
+
+describe("escalationCascade", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("initiates push + email for T2 escalation", async () => {
     const escalation = {
-      id: 'esc-1',
+      id: "esc-1",
       tier: EscalationTier.T2,
-      trigger: 'PHQ-9 score ≥ 20',
-      patientId: 'patient-001',
+      trigger: "PHQ-9 score ≥ 20",
+      patientId: "patient-001",
       status: EscalationStatus.OPEN,
-      assignedTo: 'clinician-001',
+      assignedTo: "clinician-001",
       createdAt: new Date().toISOString(),
       detectedAt: new Date().toISOString(),
       auditTrail: [],
@@ -109,8 +163,8 @@ describe('escalationCascade', () => {
 
     // Should log cascade initiated
     expect(apiLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ tier: 'T2', patientId: 'patient-001' }),
-      expect.stringContaining('Escalation cascade'),
+      expect.objectContaining({ tier: "T2", patientId: "patient-001" }),
+      expect.stringContaining("Escalation cascade"),
     );
 
     // Push + Email called (2 stub logs for T2), cascade completed (1 info log)
@@ -119,14 +173,14 @@ describe('escalationCascade', () => {
     expect(infoCalls.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('additionally sends SMS for T3 escalation', async () => {
+  it("additionally sends SMS for T3 escalation", async () => {
     const escalation = {
-      id: 'esc-2',
+      id: "esc-2",
       tier: EscalationTier.T3,
-      trigger: 'Suicidal ideation detected',
-      patientId: 'patient-002',
+      trigger: "Suicidal ideation detected",
+      patientId: "patient-002",
       status: EscalationStatus.OPEN,
-      assignedTo: 'clinician-002',
+      assignedTo: "clinician-002",
       createdAt: new Date().toISOString(),
       detectedAt: new Date().toISOString(),
       auditTrail: [],
@@ -140,9 +194,9 @@ describe('escalationCascade', () => {
 
     // SMS should mention urgent
     const smsCalls = infoCalls.filter(
-      (call) => typeof call[0] === 'object' && 'message' in call[0],
+      (call) => typeof call[0] === "object" && "message" in call[0],
     );
     expect(smsCalls.length).toBe(1);
-    expect(smsCalls[0][0].message).toContain('URGENT');
+    expect(smsCalls[0][0].message).toContain("URGENT");
   });
 });

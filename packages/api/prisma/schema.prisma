@@ -24,6 +24,7 @@ model Tenant {
 
   users             User[]
   patients          Patient[]
+  organizations     Organization[]
   enterpriseConfigs EnterpriseConfig[]
   auditLogs         AuditLog[]
 
@@ -61,6 +62,8 @@ model User {
   auditLogs   AuditLog[]
   draftReviews AIDraft[]   @relation("ReviewedDrafts")
   memoryReviews MemoryProposal[] @relation("ReviewedMemories")
+  orgMemberships OrgMembership[]
+  sentInvitations OrgInvitation[] @relation("InvitedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -612,4 +615,80 @@ model ConsentRecord {
 
   @@index([patientId])
   @@map("consent_records")
+}
+
+// ── Organization / Practice Model ─────────────────────────────
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  BILLING
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  slug        String
+  npi         String?  // National Provider Identifier
+  taxId       String?  // Encrypted
+  address     Json?    // { street, city, state, zip, country }
+  phone       String?
+  website     String?
+  logoUrl     String?
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  memberships OrgMembership[]
+  invitations OrgInvitation[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id        String   @id @default(uuid())
+  orgId     String
+  userId    String
+  role      OrgRole  @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@map("org_memberships")
+}
+
+model OrgInvitation {
+  id        String           @id @default(uuid())
+  orgId     String
+  email     String
+  role      OrgRole          @default(MEMBER)
+  token     String           @unique @default(uuid())
+  status    InvitationStatus @default(PENDING)
+  invitedBy String
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  inviter      User         @relation("InvitedBy", fields: [invitedBy], references: [id])
+
+  @@index([orgId])
+  @@index([token])
+  @@map("org_invitations")
 }

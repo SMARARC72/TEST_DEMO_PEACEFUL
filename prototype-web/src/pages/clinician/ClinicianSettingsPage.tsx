@@ -62,7 +62,15 @@ export default function ClinicianSettingsPage() {
       const [data, err] = await clinicianApi.getSettings();
       if (cancelled) return;
       if (err) addToast({ title: 'Failed to load settings', variant: 'error' });
-      if (data) setSettings(data);
+      if (data) {
+        setSettings({
+          ...defaultSettings,
+          ...data,
+          notifications: { ...defaultSettings.notifications, ...data.notifications },
+          display: { ...defaultSettings.display, ...data.display },
+          security: { ...defaultSettings.security, ...data.security },
+        });
+      }
       setLoading(false);
     })();
     return () => { cancelled = true; };

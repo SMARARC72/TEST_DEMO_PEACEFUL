@@ -85,8 +85,9 @@ export default function MBCDashboardPage() {
   }, [patientId]);
 
   async function loadScores() {
+    if (!patientId) return;
     setLoading(true);
-    const [data, err] = await clinicianApi.getMBCScores(patientId!);
+    const [data, err] = await clinicianApi.getMBCScores(patientId);
     if (err) {
       addToast({ title: 'Failed to load MBC scores', variant: 'error' });
     } else if (data) {

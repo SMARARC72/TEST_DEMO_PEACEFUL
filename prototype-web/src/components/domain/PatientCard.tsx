@@ -6,7 +6,7 @@ import type { CaseloadPatient } from '@/api/types';
 
 export function PatientCard({ entry }: { entry: CaseloadPatient }) {
   // Support both flat API shape (name, signalBand, lastContact) and legacy nested shape
-  const name = entry.name ?? `${entry.patient?.user?.firstName ?? ''} ${entry.patient?.user?.lastName ?? ''}`.trim() || 'Unknown Patient';
+  const name = entry.name ?? (`${entry.patient?.user?.firstName ?? ''} ${entry.patient?.user?.lastName ?? ''}`.trim() || 'Unknown Patient');
   const patientId = entry.id ?? entry.patient?.id ?? entry.patientId ?? '';
   const band = entry.signalBand ?? entry.patient?.triageItems?.[0]?.signalBand ?? null;
   const lastActivity = entry.lastContact ?? entry.patient?.submissions?.[0]?.createdAt ?? null;

@@ -20,9 +20,9 @@ export interface TriageCardProps {
 }
 
 export function TriageCard({ item, onAcknowledge, onResolve }: TriageCardProps) {
-  const patientName = item.patient
-    ? `${item.patient.user.firstName} ${item.patient.user.lastName}`
-    : `Patient ${item.patientId.slice(0, 8)}`;
+  const patientName = item.patient?.user
+    ? `${item.patient.user.firstName ?? ''} ${item.patient.user.lastName ?? ''}`
+    : `Patient ${(item.patientId ?? '').slice(0, 8)}`;
 
   return (
     <Card className="space-y-3">

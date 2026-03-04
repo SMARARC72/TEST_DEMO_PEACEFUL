@@ -10,6 +10,7 @@ import { aiRouter } from "./ai.js";
 import { analyticsRouter } from "./analytics.js";
 import { complianceRouter } from "./compliance.js";
 import { uploadRouter } from "./uploads.js";
+import { organizationRouter } from "./organizations.js";
 import { apiLogger } from "../utils/logger.js";
 
 const router = Router();
@@ -22,6 +23,7 @@ router.use("/ai", aiRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/compliance", complianceRouter);
 router.use("/uploads", uploadRouter);
+router.use("/organizations", organizationRouter);
 
 // ─── Client Error Reporting ──────────────────────────────────────────
 // Receives frontend error reports from ErrorBoundary.

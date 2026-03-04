@@ -84,8 +84,9 @@ export default function SessionNotesPage() {
   }, [patientId]);
 
   async function loadNotes() {
+    if (!patientId) return;
     setLoading(true);
-    const [data, err] = await clinicianApi.getSessionNotes(patientId!);
+    const [data, err] = await clinicianApi.getSessionNotes(patientId);
     if (err) {
       addToast({ title: 'Failed to load session notes', variant: 'error' });
     } else if (data) {
@@ -95,7 +96,8 @@ export default function SessionNotesPage() {
   }
 
   async function onSubmit(data: NoteFormData) {
-    const [result, err] = await clinicianApi.createSessionNote(patientId!, data);
+    if (!patientId) return;
+    const [result, err] = await clinicianApi.createSessionNote(patientId, data);
     if (err) {
       addToast({ title: 'Failed to save note', variant: 'error' });
     } else if (result) {
@@ -107,7 +109,8 @@ export default function SessionNotesPage() {
   }
 
   async function signNote(noteId: string) {
-    const [, err] = await clinicianApi.signSessionNote(patientId!, noteId);
+    if (!patientId) return;
+    const [, err] = await clinicianApi.signSessionNote(patientId, noteId);
     if (err) {
       addToast({ title: 'Failed to sign note', variant: 'error' });
     } else {

@@ -1,6 +1,6 @@
 // ─── Register Page ───────────────────────────────────────────────────
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,11 +34,20 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const registerUser = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
   const addToast = useUIStore((s) => s.addToast);
   const [error, setError] = useState('');
   const [pendingApproval, setPendingApproval] = useState(false);
+
+  // If arriving with an invite token, redirect to the invite accept page
+  useEffect(() => {
+    const inviteToken = searchParams.get('invite');
+    if (inviteToken) {
+      navigate(`/invite?token=${encodeURIComponent(inviteToken)}`, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const {
     register,
@@ -76,18 +85,30 @@ export default function RegisterPage() {
         lastName: data.lastName,
         role: data.role,
       });
-      // If the store didn't set a user (clinician pending approval), show message
+      // If the store didn't set a user (clinician pending approval), redirect to success with pending flag
       const user = useAuthStore.getState().user;
       if (!user) {
-        setPendingApproval(true);
+        navigate('/register/success', {
+          replace: true,
+          state: {
+            firstName: data.firstName,
+            email: data.email,
+            role: data.role,
+            pendingApproval: true,
+          },
+        });
         return;
       }
-      addToast({ variant: 'success', title: 'Account created successfully!' });
-      // New patients go through welcome → consent flow; clinicians go to dashboard
-      navigate(
-        user.role === 'PATIENT' ? '/patient/welcome' : '/clinician',
-        { replace: true },
-      );
+      // Redirect to success page which will guide them to the next step
+      navigate('/register/success', {
+        replace: true,
+        state: {
+          firstName: data.firstName,
+          email: data.email,
+          role: data.role,
+          pendingApproval: false,
+        },
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Registration failed');
     }

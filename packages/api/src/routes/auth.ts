@@ -154,6 +154,71 @@ authRouter.post("/register", async (req, res, next) => {
       "User registered",
     );
 
+    // Send welcome/confirmation email (fire-and-forget — don't block registration)
+    if (status === "SUSPENDED") {
+      // Clinician pending approval: email the clinician + notify supervisor
+      sendEmail(
+        body.email,
+        "Peacefull.ai — Registration Received",
+        "pending-approval",
+        {
+          firstName: body.firstName,
+          lastName: body.lastName,
+          email: body.email,
+        },
+      ).catch((err) =>
+        authLogger.error(
+          { err, email: body.email },
+          "Failed to send pending-approval email",
+        ),
+      );
+
+      // Notify tenant supervisor(s)
+      prisma.user
+        .findMany({
+          where: { tenantId: tenant.id, role: "SUPERVISOR", status: "ACTIVE" },
+          select: { email: true },
+        })
+        .then((supervisors) => {
+          for (const sup of supervisors) {
+            sendEmail(
+              sup.email,
+              "New Clinician Registration — Approval Required",
+              "supervisor-new-clinician",
+              {
+                firstName: body.firstName,
+                lastName: body.lastName,
+                email: body.email,
+              },
+            ).catch((err) =>
+              authLogger.error(
+                { err, supervisorEmail: sup.email },
+                "Failed to send supervisor notification",
+              ),
+            );
+          }
+        })
+        .catch((err) =>
+          authLogger.error(
+            { err },
+            "Failed to query supervisors for clinician approval",
+          ),
+        );
+    } else {
+      // Patient welcome email
+      sendEmail(body.email, "Welcome to Peacefull.ai!", "welcome", {
+        firstName: body.firstName,
+        lastName: body.lastName,
+        email: body.email,
+        role: body.role,
+      }).catch((err) =>
+        authLogger.error(
+          { err, email: body.email },
+          "Failed to send welcome email",
+        ),
+      );
+    }
+
     if (status === "SUSPENDED") {
       sendSuccess(
         res,

@@ -63,12 +63,20 @@ export const router = createBrowserRouter([
     element: lazyPage(() => import('@/pages/auth/RegisterPage')),
   },
   {
+    path: '/register/success',
+    element: lazyPage(() => import('@/pages/auth/RegistrationSuccessPage')),
+  },
+  {
     path: '/forgot-password',
     element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
   },
   {
     path: '/callback',
     element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
+  },
+  {
+    path: '/invite',
+    element: lazyPage(() => import('@/pages/auth/InviteAcceptPage')),
   },
 
   // ── Legal pages ────────────────────────────
@@ -228,6 +236,10 @@ export const router = createBrowserRouter([
           {
             path: '/clinician/analytics',
             element: lazyPage(() => import('@/pages/clinician/AnalyticsDashboard')),
+          },
+          {
+            path: '/clinician/organization',
+            element: lazyPage(() => import('@/pages/clinician/OrgManagementPage')),
           },
         ],
       },

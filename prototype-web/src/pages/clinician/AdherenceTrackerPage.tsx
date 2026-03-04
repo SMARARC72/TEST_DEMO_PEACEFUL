@@ -58,8 +58,9 @@ export default function AdherenceTrackerPage() {
   }, [patientId]);
 
   async function loadAdherence() {
+    if (!patientId) return;
     setLoading(true);
-    const [data, err] = await clinicianApi.getAdherence(patientId!);
+    const [data, err] = await clinicianApi.getAdherence(patientId);
     if (err) {
       addToast({ title: 'Failed to load adherence data', variant: 'error' });
     } else if (data) {
@@ -69,7 +70,8 @@ export default function AdherenceTrackerPage() {
   }
 
   async function logAdherence(itemId: string) {
-    const [, err] = await clinicianApi.logAdherence(patientId!, itemId, {
+    if (!patientId) return;
+    const [, err] = await clinicianApi.logAdherence(patientId, itemId, {
       status: logStatus,
       notes: logNotes || undefined,
     });

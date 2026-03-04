@@ -71,9 +71,9 @@ export default function InboxDetailPage() {
     );
   }
 
-  const patientName = item.patient
-    ? `${item.patient.user.firstName} ${item.patient.user.lastName}`
-    : `Patient ${item.patientId.slice(0, 8)}`;
+  const patientName = item.patient?.user
+    ? `${item.patient.user.firstName ?? ''} ${item.patient.user.lastName ?? ''}`
+    : `Patient ${(item.patientId ?? '').slice(0, 8)}`;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
