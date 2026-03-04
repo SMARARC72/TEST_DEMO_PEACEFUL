@@ -64,13 +64,15 @@ export default function ConsentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isReConsent, setIsReConsent] = useState(false);
 
+  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
+
   // Check if user has already consented to current version
+  // In demo mode: skip API call entirely — consent is tracked via localStorage only
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || isDemoMode) return;
     let cancelled = false;
     (async () => {
       try {
-        // Try to fetch existing consent records. If any are outdated, show re-consent notice.
         const [records] = await patientApi.getConsents(patientId) ?? [null];
         if (cancelled) return;
         if (records && Array.isArray(records) && records.length > 0) {
@@ -86,7 +88,7 @@ export default function ConsentPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [patientId, isDemoMode]);
 
   const allAccepted = consentItems.every((c) => accepted[c.id]);
 
@@ -99,48 +101,34 @@ export default function ConsentPage() {
     setSubmitting(true);
 
     try {
-      // In demo mode, bypass API calls entirely to avoid MSW dependency
-      const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
-
-      if (!isDemoMode) {
-        // Submit each consent record
-        const results = await Promise.all(
-          consentItems.map((c) =>
-            patientApi.submitConsent(patientId, {
-              consentType: c.id,
-              accepted: true,
-              version: c.version,
-            }),
-          ),
-        );
-
-        const failed = results.find(([, err]) => err !== null);
-        if (failed) {
-          const [, err] = failed;
-          addToast({ variant: 'error', title: err?.message ?? 'Failed to record consent. Please try again.' });
-          setSubmitting(false);
-          return;
-        }
-      } else {
-        // Demo mode: try API but don't block on failure
-        try {
-          await Promise.all(
-            consentItems.map((c) =>
-              patientApi.submitConsent(patientId, {
-                consentType: c.id,
-                accepted: true,
-                version: c.version,
-              }),
-            ),
-          );
-        } catch {
-          // MSW may not be active — proceed anyway in demo mode
-        }
+      if (isDemoMode) {
+        // Demo mode: skip ALL API calls — consent is tracked via localStorage only.
+        localStorage.setItem('peacefull-consent-accepted', 'true');
+        addToast({ variant: 'success', title: 'Consent recorded. Welcome to Peacefull.ai!' });
+        navigate('/patient', { replace: true });
+        return;
       }
 
-      // Persist consent status locally so AuthGuard doesn't re-redirect
-      localStorage.setItem('peacefull-consent-accepted', 'true');
+      // Production: submit each consent record via API
+      const results = await Promise.all(
+        consentItems.map((c) =>
+          patientApi.submitConsent(patientId, {
+            consentType: c.id,
+            accepted: true,
+            version: c.version,
+          }),
+        ),
+      );
 
+      const failed = results.find(([, err]) => err !== null);
+      if (failed) {
+        const [, err] = failed;
+        addToast({ variant: 'error', title: err?.message ?? 'Failed to record consent. Please try again.' });
+        setSubmitting(false);
+        return;
+      }
+
+      localStorage.setItem('peacefull-consent-accepted', 'true');
       addToast({ variant: 'success', title: 'Consent recorded. Welcome to Peacefull.ai!' });
       navigate('/patient', { replace: true });
     } catch {

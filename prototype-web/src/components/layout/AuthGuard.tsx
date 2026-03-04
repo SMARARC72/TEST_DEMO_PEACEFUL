@@ -1,5 +1,5 @@
 // ─── Auth Guard ──────────────────────────────────────────────────────
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { apiGet } from '@/api/client';
@@ -14,6 +14,8 @@ interface ConsentRecord {
 
 const REQUIRED_CONSENT_TYPES = ['data-collection', 'ai-processing', 'not-emergency'];
 
+const IS_DEMO_MODE = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
+
 interface AuthGuardProps {
   allowedRoles?: UserRole[];
 }
@@ -24,29 +26,28 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
   const userId = useAuthStore((s) => s.user?.id);
   const location = useLocation();
 
-  // Determine if consent API check is needed (only for authenticated patients on protected pages)
+  // Determine if consent check is needed (only for authenticated patients on protected pages)
   const needsConsentCheck = isAuthenticated && role === 'PATIENT' && !!userId &&
     location.pathname !== '/patient/consent' && location.pathname !== '/patient/welcome';
 
-  const [consentApiResult, setConsentApiResult] = useState<{ hasConsent: boolean } | null>(null);
+  // Demo mode: consent is tracked via localStorage only — zero API calls.
+  // Computed synchronously (useMemo, not useEffect) to avoid set-state-in-effect lint error.
+  const demoConsentResult = useMemo(() => {
+    if (!IS_DEMO_MODE || !needsConsentCheck) return null;
+    return { hasConsent: localStorage.getItem('peacefull-consent-accepted') === 'true' };
+  }, [needsConsentCheck]);
 
-  // Derive consent status: skip check → implicitly granted; API responded → use result
-  const consentChecked = !needsConsentCheck || consentApiResult !== null;
-  const hasConsent = !needsConsentCheck || (consentApiResult?.hasConsent ?? true);
+  // Production mode: API-based consent check
+  const [apiConsentResult, setApiConsentResult] = useState<{ hasConsent: boolean } | null>(null);
 
-  // Fetch consent status for patients (setState only in async callback, not synchronously)
+  // Effective consent result: demo mode takes priority over API
+  const consentResult = IS_DEMO_MODE ? demoConsentResult : apiConsentResult;
+  const consentChecked = !needsConsentCheck || consentResult !== null;
+  const hasConsent = !needsConsentCheck || (consentResult?.hasConsent ?? true);
+
+  // Fetch consent status from API — production mode only (demo uses useMemo above)
   useEffect(() => {
-    if (!needsConsentCheck) return;
-
-    // Demo mode: check localStorage for consent completion (MSW-independent)
-    const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
-    if (isDemoMode) {
-      const stored = localStorage.getItem('peacefull-consent-accepted');
-      if (stored === 'true') {
-        setConsentApiResult({ hasConsent: true });
-        return;
-      }
-    }
+    if (!needsConsentCheck || IS_DEMO_MODE) return;
 
     let cancelled = false;
     (async () => {
@@ -54,18 +55,16 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
         const [records, err] = await apiGet<ConsentRecord[]>(`patients/${userId}/consent`);
         if (cancelled) return;
         if (err || !records) {
-          // On error, redirect to consent to be safe (don't fail-open)
-          setConsentApiResult({ hasConsent: false });
+          setApiConsentResult({ hasConsent: false });
           return;
         }
         const grantedTypes = new Set(
           records.filter((r) => r.granted).map((r) => r.type),
         );
         const allGranted = REQUIRED_CONSENT_TYPES.every((t) => grantedTypes.has(t));
-        setConsentApiResult({ hasConsent: allGranted });
+        setApiConsentResult({ hasConsent: allGranted });
       } catch {
-        // In demo mode, default to no-consent (will redirect to consent page)
-        setConsentApiResult({ hasConsent: false });
+        setApiConsentResult({ hasConsent: false });
       }
     })();
     return () => { cancelled = true; };

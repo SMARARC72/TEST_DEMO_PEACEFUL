@@ -2,7 +2,7 @@
 // Network-first for API, cache-first for static assets,
 // offline fallback with crisis information.
 
-const CACHE_NAME = 'peacefull-v1';
+const CACHE_NAME = 'peacefull-v2';
 const STATIC_ASSETS = [
   '/',
   '/offline.html',

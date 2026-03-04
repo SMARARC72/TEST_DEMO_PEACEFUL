@@ -35,7 +35,7 @@ function mockJson<T>(payload: T, status = 200) {
 let currentSessionUser: User | null = null;
 
 // Track consented types per session so GET /consent reflects POST /consent state
-let mockGrantedConsentTypes: string[] = [];
+const mockGrantedConsentTypes: string[] = [];
 
 const mockUser: User = {
   id: 'patient-001',

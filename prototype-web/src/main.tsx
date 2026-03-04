@@ -47,7 +47,7 @@ const enableMocking = async () => {
   try {
     const { worker } = await import('./mocks/browser');
     await worker.start({ onUnhandledRequest: 'bypass' });
-    console.info('[Peacefull] MSW mock service worker started successfully');
+    console.warn('[Peacefull] MSW mock service worker started successfully');
   } catch (err) {
     console.warn('[Peacefull] MSW failed to start — demo mode will use inline fallbacks', err);
   }
@@ -60,9 +60,25 @@ enableMocking().then(() => {
   // Service worker management
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     if (import.meta.env.VITE_ENABLE_MOCKS === 'true') {
-      // Mocks enabled in prod: keep MSW worker alive, do NOT register sw.js
-      // (registering sw.js at the same scope would replace the MSW worker)
-      console.info('[Peacefull] MSW active — skipping offline service worker');
+      // Mocks enabled in prod: keep MSW worker alive, do NOT register sw.js.
+      // CRITICAL: Unregister any previously-registered sw.js that may be
+      // caching stale JS bundles via stale-while-revalidate.
+      console.warn('[Peacefull] MSW active — unregistering offline SW & clearing caches');
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          if (!registration.active?.scriptURL?.includes('mockServiceWorker')) {
+            registration.unregister();
+          }
+        }
+      });
+      // Purge all Cache Storage entries left by sw.js
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
+          }
+        });
+      }
     } else {
       // Production without mocks: unregister stale MSW workers, register offline SW
       navigator.serviceWorker.getRegistrations().then((registrations) => {
