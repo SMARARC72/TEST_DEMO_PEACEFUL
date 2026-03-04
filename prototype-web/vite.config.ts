@@ -11,7 +11,9 @@ function cleanDistPlugin() {
   return {
     name: 'clean-dist-dev-files',
     closeBundle() {
-      const devOnlyFiles = ['mockServiceWorker.js', 'vite.svg']
+      // Keep mockServiceWorker.js when mocks are enabled (demo deploys)
+      const mocksEnabled = process.env.VITE_ENABLE_MOCKS === 'true'
+      const devOnlyFiles = mocksEnabled ? ['vite.svg'] : ['mockServiceWorker.js', 'vite.svg']
       for (const file of devOnlyFiles) {
         const filePath = path.resolve(__dirname, 'dist', file)
         if (fs.existsSync(filePath)) {

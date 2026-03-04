@@ -37,7 +37,7 @@ let currentSessionUser: User | null = null;
 const mockUser: User = {
   id: 'patient-001',
   tenantId: 'tenant-001',
-  email: 'demo@peacefull.ai',
+  email: 'test.patient.1@peacefull.cloud',
   role: 'PATIENT',
   status: 'ACTIVE',
   profile: { firstName: 'Alex', lastName: 'Rivera' },
@@ -48,7 +48,7 @@ const mockUser: User = {
 const mockClinician: User = {
   id: 'clinician-001',
   tenantId: 'tenant-001',
-  email: 'dr.chen@peacefull.ai',
+  email: 'pilot.clinician.1@peacefull.cloud',
   role: 'CLINICIAN',
   status: 'ACTIVE',
   profile: { firstName: 'Dr. Sarah', lastName: 'Chen' },
@@ -69,9 +69,9 @@ const mockSupervisor: User = {
 
 // Resolve the correct mock user from an email address
 function resolveUserByEmail(email: string): User {
-  if (email.includes('supervisor')) return mockSupervisor;
-  if (email.includes('clinician') || email.includes('dr.')) return mockClinician;
-  return mockUser;
+  if (email.includes('supervisor')) return { ...mockSupervisor };
+  if (email.includes('clinician') || email.includes('dr.')) return { ...mockClinician };
+  return { ...mockUser };
 }
 
 const mockCheckins: CheckinData[] = Array.from({ length: 14 }, (_, i) => ({
@@ -1205,9 +1205,14 @@ export const handlers = [
 
   // ── MFA Enrollment ────────────────────────
   http.post(`${BASE}/auth/mfa-setup`, () => {
+    // QR code is rendered client-side via qrcode.react from the secret;
+    // qrCodeDataUrl kept for API shape parity but not used by the UI.
+    const email = currentSessionUser?.email ?? 'user@peacefull.ai';
+    const secret = 'JBSWY3DPEHPK3PXP';
+    const totpUri = `otpauth://totp/Peacefull:${encodeURIComponent(email)}?secret=${secret}&issuer=Peacefull`;
     return mockJson({
-      qrCodeDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-      secret: 'JBSWY3DPEHPK3PXP',
+      qrCodeDataUrl: totpUri,   // production backend returns a data-URL PNG; demo returns the URI
+      secret,
     });
   }),
 

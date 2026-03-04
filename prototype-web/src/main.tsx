@@ -36,12 +36,12 @@ if (
   );
 }
 
-// ─── MSW Mocking (dev-only) ──────────────────────────────────────────
-// Only loads MSW in development when VITE_ENABLE_MOCKS=true
-// Tree-shaken out of production builds completely
+// ─── MSW Mocking ─────────────────────────────────────────────────────
+// Loads MSW mock service worker whenever VITE_ENABLE_MOCKS=true.
+// In a hosted demo (e.g. Netlify) this allows the app to function
+// without a real backend — all API calls are intercepted.
 const enableMocking = async () => {
-  // Build-time elimination: this entire branch is removed in production
-  if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_MOCKS !== 'true') {
+  if (import.meta.env.VITE_ENABLE_MOCKS !== 'true') {
     return;
   }
   const { worker } = await import('./mocks/browser');
@@ -52,16 +52,19 @@ enableMocking().then(() => {
   // Initialize Core Web Vitals monitoring
   initWebVitals();
 
-  // Unregister any stale MSW service worker from previous dev sessions
+  // Service worker management
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (const registration of registrations) {
-        // Remove MSW workers (script URL contains 'mockServiceWorker')
-        if (registration.active?.scriptURL?.includes('mockServiceWorker')) {
-          registration.unregister();
+    // If mocks are enabled in prod, keep the MSW worker alive;
+    // otherwise unregister any stale MSW workers.
+    if (import.meta.env.VITE_ENABLE_MOCKS !== 'true') {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          if (registration.active?.scriptURL?.includes('mockServiceWorker')) {
+            registration.unregister();
+          }
         }
-      }
-    });
+      });
+    }
     // Register the offline-fallback service worker
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // Service worker registration is best-effort
