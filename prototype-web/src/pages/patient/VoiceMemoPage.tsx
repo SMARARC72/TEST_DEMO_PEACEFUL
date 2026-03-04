@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { useUIStore } from '@/stores/ui';
+import { transcribeAudio, initWhisper, isWhisperReady, type TranscriptionProgress } from '@/services/whisper';
 import type { VoiceMemo, VoiceMemoStatus } from '@/api/types';
 
 const STATUS_LABELS: Record<VoiceMemoStatus, string> = {
@@ -38,10 +39,26 @@ export default function VoiceMemoPage() {
   const [memos, setMemos] = useState<VoiceMemo[]>([]);
   const [loading, setLoading] = useState(true);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [transcription, setTranscription] = useState<string | null>(null);
+  const [transcribing, setTranscribing] = useState(false);
+  const [whisperProgress, setWhisperProgress] = useState<TranscriptionProgress | null>(null);
+  const [whisperReady, setWhisperReady] = useState(isWhisperReady());
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Pre-warm Whisper model download in background
+  useEffect(() => {
+    initWhisper((progress) => {
+      setWhisperProgress(progress);
+      if (progress.status === 'complete' || (progress.status === 'loading' && progress.progress === 100)) {
+        setWhisperReady(true);
+      }
+    }).catch(() => {
+      // Whisper init failed — will fall back to Web Speech API
+    });
+  }, []);
 
   // Load existing voice memos
   useEffect(() => {
@@ -95,6 +112,7 @@ export default function VoiceMemoPage() {
       setRecording(true);
       setElapsed(0);
       setAudioBlob(null);
+      setTranscription(null);
     } catch {
       addToast({ variant: 'error', title: 'Microphone access denied. Please allow microphone access in your browser settings.' });
     }
@@ -106,6 +124,31 @@ export default function VoiceMemoPage() {
     }
     setRecording(false);
   }, []);
+
+  // Whisper AI transcription
+  const handleTranscribe = useCallback(async () => {
+    if (!audioBlob || transcribing) return;
+    setTranscribing(true);
+    setTranscription(null);
+    try {
+      const text = await transcribeAudio(audioBlob, (progress) => {
+        setWhisperProgress(progress);
+        if (progress.text) {
+          setTranscription(progress.text);
+        }
+      });
+      setTranscription(text);
+      addToast({ variant: 'success', title: 'Transcription complete!' });
+    } catch (err) {
+      addToast({
+        variant: 'error',
+        title: 'Transcription failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    } finally {
+      setTranscribing(false);
+    }
+  }, [audioBlob, transcribing, addToast]);
 
   const uploadMemo = useCallback(async () => {
     if (!audioBlob || uploading) return;
@@ -153,6 +196,12 @@ export default function VoiceMemoPage() {
         <p className="mt-1 text-sm text-slate-600">
           Record a voice memo to share with your clinician
         </p>
+        <div className="mt-2 flex items-center gap-2">
+          <Badge variant={whisperReady ? 'success' : 'info'}>
+            {whisperReady ? '✓ Whisper AI Ready' : '⏳ Loading Whisper AI…'}
+          </Badge>
+          <span className="text-xs text-slate-400">Powered by OpenAI Whisper</span>
+        </div>
       </div>
 
       {/* Privacy Notice */}
@@ -198,11 +247,11 @@ export default function VoiceMemoPage() {
           <span className="font-mono text-3xl text-slate-700">{formatTime(elapsed)}</span>
 
           {/* Controls */}
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4 justify-center">
             {!recording ? (
               <Button
                 onClick={startRecording}
-                disabled={uploading}
+                disabled={uploading || transcribing}
                 size="lg"
                 className="rounded-full"
               >
@@ -220,11 +269,49 @@ export default function VoiceMemoPage() {
             )}
 
             {audioBlob && !recording && (
-              <Button onClick={uploadMemo} disabled={uploading} size="lg">
-                {uploading ? 'Uploading…' : '📤 Upload'}
-              </Button>
+              <>
+                <Button
+                  onClick={handleTranscribe}
+                  disabled={transcribing || uploading}
+                  size="lg"
+                  variant="secondary"
+                >
+                  {transcribing ? 'Transcribing…' : '🤖 Transcribe (Whisper AI)'}
+                </Button>
+                <Button onClick={uploadMemo} disabled={uploading || transcribing} size="lg">
+                  {uploading ? 'Uploading…' : '📤 Upload'}
+                </Button>
+              </>
             )}
           </div>
+
+          {/* Whisper model loading status */}
+          {!whisperReady && whisperProgress?.status === 'loading' && (
+            <div className="w-full max-w-sm text-center">
+              <p className="text-xs text-slate-500">
+                Downloading Whisper AI model… {whisperProgress.progress ?? 0}%
+              </p>
+              <div className="mt-1 h-1.5 w-full rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-blue-500 transition-all"
+                  style={{ width: `${whisperProgress.progress ?? 0}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Transcription result */}
+          {transcription && (
+            <div className="w-full max-w-sm rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <p className="mb-1 text-xs font-semibold text-blue-700">
+                AI Transcription (Whisper)
+              </p>
+              <p className="text-sm text-slate-700 italic">"{transcription}"</p>
+              <p className="mt-1 text-[10px] text-slate-400">
+                AI-generated draft — clinician will review before clinical use
+              </p>
+            </div>
+          )}
 
           {/* Upload progress */}
           {uploading && (

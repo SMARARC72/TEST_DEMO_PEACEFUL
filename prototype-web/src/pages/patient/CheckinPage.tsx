@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/Button';
 
 const metrics = [
   { key: 'mood', label: 'Mood', emoji: '😊', color: 'accent-violet-600' },
-  { key: 'stress', label: 'Stress', emoji: '😰', color: 'accent-red-500' },
+  { key: 'anxiety', label: 'Anxiety', emoji: '😰', color: 'accent-orange-500' },
+  { key: 'stress', label: 'Stress', emoji: '😤', color: 'accent-red-500' },
   { key: 'sleep', label: 'Sleep Quality', emoji: '😴', color: 'accent-blue-500' },
   { key: 'focus', label: 'Focus', emoji: '🎯', color: 'accent-amber-500' },
 ] as const;
@@ -26,12 +27,15 @@ export default function CheckinPage() {
 
   const [values, setValues] = useState<Record<MetricKey, number>>({
     mood: 5,
+    anxiety: 5,
     stress: 5,
     sleep: 5,
     focus: 5,
   });
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const DEBOUNCE_MS = 60_000; // 60 second debounce
 
   const handleChange = (key: MetricKey, value: number) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -39,6 +43,17 @@ export default function CheckinPage() {
 
   const handleSubmit = async () => {
     if (!patientId || submitting) return;
+    // Client-side rate limiting: prevent duplicate submissions within 60 seconds
+    const now = Date.now();
+    if (now - lastSubmitTime < DEBOUNCE_MS) {
+      const remainingSec = Math.ceil((DEBOUNCE_MS - (now - lastSubmitTime)) / 1000);
+      addToast({
+        title: 'Please wait',
+        description: `You can submit another check-in in ${remainingSec} seconds.`,
+        variant: 'warning',
+      });
+      return;
+    }
     setSubmitting(true);
     const [data, err] = await patientApi.submitCheckin(patientId, {
       ...values,
@@ -47,10 +62,16 @@ export default function CheckinPage() {
     setSubmitting(false);
 
     if (err) {
-      addToast({ title: 'Check-in failed', description: err.message, variant: 'error' });
+      // Handle 429 rate-limit from server
+      if ('status' in err && (err as { status: number }).status === 429) {
+        addToast({ title: 'Rate limit', description: 'Please wait before submitting another check-in.', variant: 'warning' });
+      } else {
+        addToast({ title: 'Check-in failed', description: err.message, variant: 'error' });
+      }
       return;
     }
 
+    setLastSubmitTime(Date.now());
     addToast({ title: 'Check-in submitted!', variant: 'success' });
     if (data?.id) {
       navigate(`/patient/submission/${data.id}`);

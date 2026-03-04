@@ -30,6 +30,10 @@ function mockJson<T>(payload: T, status = 200) {
 
 // ─── Seed data ───────────────────────────────
 
+// Session-aware user tracking: stores the currently logged-in user
+// so auth/me returns the correct user (patient vs clinician vs supervisor)
+let currentSessionUser: User | null = null;
+
 const mockUser: User = {
   id: 'patient-001',
   tenantId: 'tenant-001',
@@ -52,6 +56,24 @@ const mockClinician: User = {
   createdAt: '2025-01-10T00:00:00Z',
 };
 
+const mockSupervisor: User = {
+  id: 'supervisor-001',
+  tenantId: 'tenant-001',
+  email: 'pilot.supervisor@peacefull.cloud',
+  role: 'SUPERVISOR',
+  status: 'ACTIVE',
+  profile: { firstName: 'Dr. Maria', lastName: 'Santos' },
+  mfaEnabled: true,
+  createdAt: '2025-01-05T00:00:00Z',
+};
+
+// Resolve the correct mock user from an email address
+function resolveUserByEmail(email: string): User {
+  if (email.includes('supervisor')) return mockSupervisor;
+  if (email.includes('clinician') || email.includes('dr.')) return mockClinician;
+  return mockUser;
+}
+
 const mockCheckins: CheckinData[] = Array.from({ length: 14 }, (_, i) => ({
   id: `checkin-${i}`,
   patientId: 'patient-001',
@@ -59,6 +81,7 @@ const mockCheckins: CheckinData[] = Array.from({ length: 14 }, (_, i) => ({
   stress: 3 + Math.round(Math.random() * 5),
   sleep: 5 + Math.round(Math.random() * 3),
   focus: 4 + Math.round(Math.random() * 4),
+  anxiety: 2 + Math.round(Math.random() * 5),
   notes: i === 0 ? 'Feeling better today after morning walk.' : undefined,
   createdAt: new Date(Date.now() - (13 - i) * 86400000).toISOString(),
 }));
@@ -87,31 +110,37 @@ const mockSafetyPlan: SafetyPlan = {
   reviewedDate: new Date().toISOString(),
   steps: [
     {
+      step: 1,
       title: 'Warning Signs',
       description: 'Recognize the thoughts, moods, and situations that precede a crisis',
       items: ['Feeling overwhelmed', 'Difficulty sleeping', 'Withdrawing from friends'],
     },
     {
+      step: 2,
       title: 'Internal Coping Strategies',
       description: 'Things I can do on my own to distract myself',
       items: ['Deep breathing (4-7-8)', 'Go for a walk', 'Listen to calming music', 'Journal'],
     },
     {
+      step: 3,
       title: 'People Who Provide Distraction',
       description: 'People and social settings that help take my mind off problems',
       items: ['Call my sister Maria', 'Visit the coffee shop', 'Join a group fitness class'],
     },
     {
+      step: 4,
       title: 'People I Can Ask for Help',
       description: 'People I can reach out to during a crisis',
       items: ['Dr. Sarah Chen (therapist)', 'Mom: 555-0123', 'Best friend Jamie: 555-0456'],
     },
     {
+      step: 5,
       title: 'Professional Help',
       description: 'Professionals and agencies I can contact during a crisis',
       items: ['988 Suicide & Crisis Lifeline', 'Crisis Text Line: Text HOME to 741741', 'Local ER: City General Hospital'],
     },
     {
+      step: 6,
       title: 'Making the Environment Safe',
       description: 'Steps to reduce access to lethal means',
       items: ['Medications stored with roommate', 'Removed sharp objects from bedroom'],
@@ -151,8 +180,9 @@ export const handlers = [
   // Auth
   http.post(`${BASE}/auth/login`, async ({ request }) => {
     const body = await request.json() as { email: string; password: string };
-    const isClinicianLogin = body.email.includes('clinician') || body.email.includes('dr.');
-    const user = isClinicianLogin ? mockClinician : mockUser;
+    const user = resolveUserByEmail(body.email);
+    // Track the session so auth/me returns the right user
+    currentSessionUser = user;
     const response: LoginResponse = {
       accessToken: 'mock-access-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
@@ -162,23 +192,33 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/auth/register`, async ({ request }) => {
-    const body = await request.json() as { firstName: string; lastName: string; email: string; role: string };
+    const body = await request.json() as { firstName: string; lastName: string; email: string; role: string; password: string };
     const isClinician = body.role === 'CLINICIAN';
     const user: User = {
       ...mockUser,
+      id: `user-${Date.now()}`,
       email: body.email,
       role: body.role as User['role'],
       status: isClinician ? 'PENDING_APPROVAL' : 'ACTIVE',
       profile: { firstName: body.firstName, lastName: body.lastName },
     };
+    // Track session for auth/me
+    currentSessionUser = user;
     // Clinicians require admin approval — return user but no tokens
     if (isClinician) {
-      return mockJson({ user, status: 'PENDING_APPROVAL' }, 201);
+      return mockJson({
+        user,
+        status: 'PENDING_APPROVAL',
+        emailSent: true,
+        message: `A confirmation email has been sent to ${body.email}. Your account is pending supervisor approval.`,
+      }, 201);
     }
     return mockJson({
       accessToken: 'mock-access-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
       user,
+      emailSent: true,
+      message: `Welcome! A confirmation email has been sent to ${body.email}.`,
     }, 201);
   }),
 
@@ -190,19 +230,61 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/auth/logout`, () => {
+    currentSessionUser = null;
     return mockJson({ success: true });
   }),
 
   http.get(`${BASE}/auth/me`, () => {
-    return mockJson(mockUser);
+    // Return the user from the current session (clinician, supervisor, or patient)
+    return mockJson(currentSessionUser ?? mockUser);
   }),
 
   http.post(`${BASE}/auth/mfa-verify`, async ({ request }) => {
     const body = await request.json() as { userId: string; code: string };
+    const user = body.userId.includes('supervisor')
+      ? mockSupervisor
+      : body.userId.includes('clinician')
+        ? mockClinician
+        : mockUser;
+    currentSessionUser = user;
     return mockJson({
       accessToken: 'mock-mfa-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
-      user: body.userId.includes('clinician') ? mockClinician : mockUser,
+      user,
+    });
+  }),
+
+  // Patient - /me resolver (returns current patient by auth user ID)
+  http.get(`${BASE}/patients/me`, () => {
+    const user = currentSessionUser ?? mockUser;
+    return mockJson({
+      id: 'patient-001',
+      userId: user.id,
+      firstName: user.profile.firstName,
+      lastName: user.profile.lastName,
+      dateOfBirth: '1990-03-15',
+      createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
+    });
+  }),
+
+  // Patient - /me/progress (convenience route)
+  http.get(`${BASE}/patients/me/progress`, () => {
+    return mockJson({
+      checkins: mockCheckins,
+      signalHistory: [
+        { band: 'LOW', date: new Date().toISOString() },
+        { band: 'GUARDED', date: new Date(Date.now() - 7 * 86400000).toISOString() },
+        { band: 'MODERATE', date: new Date(Date.now() - 14 * 86400000).toISOString() },
+        { band: 'ELEVATED', date: new Date(Date.now() - 21 * 86400000).toISOString() },
+      ],
+      weeklyAvg: {
+        mood: 6.8,
+        stress: 4.2,
+        sleep: 7.1,
+        focus: 6.5,
+        anxiety: 3.8,
+      },
+      streaks: { currentDays: 7, longestDays: 14 },
     });
   }),
 
@@ -213,13 +295,31 @@ export const handlers = [
       signalHistory: [
         { band: 'LOW', date: new Date().toISOString() },
         { band: 'GUARDED', date: new Date(Date.now() - 7 * 86400000).toISOString() },
+        { band: 'MODERATE', date: new Date(Date.now() - 14 * 86400000).toISOString() },
+        { band: 'ELEVATED', date: new Date(Date.now() - 21 * 86400000).toISOString() },
       ],
+      weeklyAvg: {
+        mood: 6.8,
+        stress: 4.2,
+        sleep: 7.1,
+        focus: 6.5,
+        anxiety: 3.8,
+      },
+      streaks: { currentDays: 7, longestDays: 14 },
     });
   }),
 
-  // Patient - Check-in
+  // Patient - Check-in (with rate limiting)
   http.post(`${BASE}/patients/:id/checkin`, async ({ request }) => {
     const body = await request.json() as Record<string, unknown>;
+    // Rate limiting: reject if submitted within 60 seconds
+    const lastCheckinTime = mockCheckins[mockCheckins.length - 1]?.createdAt;
+    if (lastCheckinTime && Date.now() - new Date(lastCheckinTime).getTime() < 60_000) {
+      return mockJson(
+        { message: 'Rate limit exceeded. Please wait at least 60 seconds between check-ins.' },
+        429,
+      );
+    }
     const newCheckin: CheckinData = {
       id: `checkin-${Date.now()}`,
       patientId: 'patient-001',
@@ -227,9 +327,11 @@ export const handlers = [
       stress: body.stress as number,
       sleep: body.sleep as number,
       focus: body.focus as number,
+      anxiety: (body.anxiety as number) ?? undefined,
       notes: body.notes as string | undefined,
       createdAt: new Date().toISOString(),
     };
+    mockCheckins.push(newCheckin);
     return mockJson(newCheckin, 201);
   }),
 
@@ -260,15 +362,37 @@ export const handlers = [
 
   // Patient - Voice Memos
   http.get(`${BASE}/patients/:id/voice`, () => {
-    return mockJson([]);
+    return mockJson([
+      {
+        id: 'voice-001',
+        patientId: 'patient-001',
+        audioUrl: '/mock-audio.webm',
+        transcription: 'I\'ve been feeling a lot better this week. The breathing exercises are really helping me manage my anxiety during work meetings. I also started journaling before bed which helps me sleep.',
+        duration: 45,
+        status: 'COMPLETE' as const,
+        createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      },
+      {
+        id: 'voice-002',
+        patientId: 'patient-001',
+        audioUrl: '/mock-audio-2.webm',
+        transcription: 'Today was tough. Had a presentation at work and felt really anxious beforehand. But I used the 4-7-8 breathing technique and it helped me get through it.',
+        duration: 32,
+        status: 'COMPLETE' as const,
+        createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+      },
+    ]);
   }),
 
   http.post(`${BASE}/patients/:id/voice`, () => {
     return mockJson({
       id: `voice-${Date.now()}`,
+      patientId: 'patient-001',
       status: 'PROCESSING',
       duration: 45,
       createdAt: new Date().toISOString(),
+      // Simulate transcription becoming available after processing
+      transcription: null,
     });
   }),
 
@@ -277,9 +401,55 @@ export const handlers = [
     return mockJson(mockResources);
   }),
 
-  // Patient - Submissions
+  // Patient - Submissions (populated with real summaries instead of empty array)
   http.get(`${BASE}/patients/:id/submissions`, () => {
-    return mockJson([]);
+    return mockJson([
+      {
+        id: 'sub-001',
+        patientId: 'patient-001',
+        source: 'CHECKIN',
+        rawContent: JSON.stringify({ mood: 7, stress: 4, sleep: 8, focus: 6, anxiety: 3 }),
+        status: 'PROCESSED',
+        summary: 'Feeling better today. Mood improved, stress manageable.',
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
+      {
+        id: 'sub-002',
+        patientId: 'patient-001',
+        source: 'JOURNAL',
+        rawContent: 'Today I practiced the breathing exercise...',
+        status: 'PROCESSED',
+        summary: 'Patient practiced breathing exercises and reported feeling more centered.',
+        createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      },
+      {
+        id: 'sub-003',
+        patientId: 'patient-001',
+        source: 'CHECKIN',
+        rawContent: JSON.stringify({ mood: 6, stress: 5, sleep: 7, focus: 5, anxiety: 4 }),
+        status: 'PROCESSED',
+        summary: 'Moderate day. Sleep quality improving, stress slightly elevated.',
+        createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      },
+      {
+        id: 'sub-004',
+        patientId: 'patient-001',
+        source: 'VOICE',
+        rawContent: '',
+        status: 'PROCESSED',
+        summary: 'Voice memo about anxiety management techniques. Patient feels coping skills are improving.',
+        createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+      },
+      {
+        id: 'sub-005',
+        patientId: 'patient-001',
+        source: 'JOURNAL',
+        rawContent: 'I noticed I was catastrophizing...',
+        status: 'PROCESSED',
+        summary: 'Patient used cognitive restructuring to address catastrophizing about work presentation.',
+        createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+      },
+    ]);
   }),
 
   http.get(`${BASE}/patients/:id/submissions/:subId`, ({ params }) => {

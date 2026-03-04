@@ -213,6 +213,7 @@ export interface SafetyPlan {
 }
 
 export interface SafetyPlanStep {
+  step?: number;
   title: string;
   description: string;
   items: string[];

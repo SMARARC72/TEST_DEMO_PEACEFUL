@@ -21,6 +21,7 @@ const BUDGETS = {
   mainJs: 250 * KB,     // Main entry chunk
   lazyJs: 100 * KB,     // Lazy-loaded page chunks
   vendorJs: 150 * KB,   // Vendor/library chunks (recharts, react, etc.)
+  mlRuntime: 250 * KB,  // ML model runtimes (Whisper/transformers.js — loaded on-demand)
   css: 25 * KB,          // CSS bundle
 };
 
@@ -31,6 +32,16 @@ const VENDOR_PATTERNS = [
   /^schemas-/,    // Zod schemas
   /^react-/,      // React runtime
 ];
+
+// Heavy ML runtime chunks — loaded lazily, on explicit user action only
+const ML_RUNTIME_PATTERNS = [
+  /^transformers/,     // @huggingface/transformers (Whisper AI)
+  /^ort-/,             // ONNX Runtime
+];
+
+function isMLRuntime(name) {
+  return ML_RUNTIME_PATTERNS.some((p) => p.test(name));
+}
 
 function isVendorChunk(name) {
   return VENDOR_PATTERNS.some((p) => p.test(name));
@@ -78,6 +89,9 @@ function checkBundles() {
     } else if (file.startsWith('router-') && file.endsWith('.js')) {
       budget = BUDGETS.mainJs;
       category = 'Router';
+    } else if (file.endsWith('.js') && isMLRuntime(file)) {
+      budget = BUDGETS.mlRuntime;
+      category = 'ML-Runtime';
     } else if (file.endsWith('.js') && isVendorChunk(file)) {
       budget = BUDGETS.vendorJs;
       category = 'Vendor';

@@ -173,6 +173,9 @@ function TimelineCard({ item }: { item: TimelineItem }) {
             {item.type === 'checkin' && (
               <div className="flex flex-wrap gap-3 text-sm text-neutral-600 dark:text-neutral-300">
                 <span>Mood: {(item.data as CheckinData).mood}/10</span>
+                {(item.data as CheckinData).anxiety != null && (
+                  <span>Anxiety: {(item.data as CheckinData).anxiety}/10</span>
+                )}
                 <span>Stress: {(item.data as CheckinData).stress}/10</span>
                 <span>Sleep: {(item.data as CheckinData).sleep}/10</span>
                 <span>Focus: {(item.data as CheckinData).focus}/10</span>
