@@ -88,8 +88,7 @@ describe('Badge Class Helpers', () => {
     });
   });
 
-  // enterpriseBadgeClass was never exported from helpers.js
-  describe.skip('enterpriseBadgeClass', () => {
+  describe('enterpriseBadgeClass', () => {
     it('returns green for APPROVED status', () => {
       expect(enterpriseBadgeClass('APPROVED')).toBe('bg-emerald-100 text-emerald-700');
     });
@@ -104,8 +103,7 @@ describe('Badge Class Helpers', () => {
   });
 });
 
-// computeRiskPosture was never exported from helpers.js
-describe.skip('Risk Posture Calculator', () => {
+describe('Risk Posture Calculator', () => {
   function createSelectWithValue(id, value) {
     const select = document.createElement('select');
     select.id = id;
@@ -191,8 +189,7 @@ describe('Readiness Verdict Calculator', () => {
   });
 });
 
-// computePilotExpansionScore was never exported from helpers.js
-describe.skip('Pilot Expansion Score Calculator', () => {
+describe('Pilot Expansion Score Calculator', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     mockState.triageQueue = [];

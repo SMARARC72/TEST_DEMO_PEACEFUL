@@ -266,7 +266,7 @@ export const handlers = [
   http.post(`${BASE}/patients/:id/voice`, () => {
     return mockJson({
       id: `voice-${Date.now()}`,
-      status: 'processing',
+      status: 'PROCESSING',
       duration: 45,
       createdAt: new Date().toISOString(),
     });
@@ -293,13 +293,17 @@ export const handlers = [
     });
   }),
 
-  http.get(`${BASE}/patients/:id/submissions/:subId/reflection`, () => {
+  http.get(`${BASE}/patients/:id/submissions/:subId/reflection`, ({ params }) => {
     return mockJson({
+      id: `ref-${params.subId}`,
+      submissionId: params.subId as string,
+      summary: 'Patient shows improvement in mood metrics. Sleep quality trending upward.',
       patientSummary: 'You reported improved mood and sleep quality today.',
       clinicianSummary: 'Patient shows improvement in mood metrics. Sleep quality trending upward.',
       signalBand: 'LOW',
       evidence: ['Mood score 7/10', 'Sleep quality 8/10', 'Stress decreased from 6 to 4'],
       unknowns: ['Social activity level not assessed'],
+      createdAt: new Date().toISOString(),
     });
   }),
 
@@ -650,19 +654,54 @@ export const handlers = [
   }),
 
   // Recommendations / Memories / Plans patches
+  // Return full objects so in-place state replacement doesn't lose fields
   http.patch(`${BASE}/clinician/patients/:id/recommendations/:recId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return mockJson({ id: params.recId, status: body.status });
+    return mockJson({
+      id: params.recId,
+      patientId: params.id,
+      type: 'treatment',
+      title: 'Consider CBT Intensification',
+      description: 'Based on 3-week mood trend, patient may benefit from increased CBT session frequency.',
+      status: body.status,
+      evidence: ['Mood trend: -1.2 avg over 3 weeks', 'Stress trend: +0.8 avg'],
+      signalBand: 'GUARDED',
+      createdAt: new Date().toISOString(),
+    });
   }),
 
   http.patch(`${BASE}/clinician/patients/:id/memories/:memId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return mockJson({ id: params.memId, status: body.status });
+    return mockJson({
+      id: params.memId,
+      patientId: params.id,
+      category: 'coping',
+      statement: 'Patient uses deep breathing (4-7-8 technique) as primary coping mechanism.',
+      confidence: 'HIGH',
+      conflictFlag: false,
+      status: body.status,
+      evidence: ['Mentioned in 3 journal entries', 'Referenced in check-in notes'],
+      unknowns: [],
+      auditTrail: 'Status updated by clinician',
+      createdAt: new Date().toISOString(),
+    });
   }),
 
   http.patch(`${BASE}/clinician/patients/:id/plans/:planId`, async ({ params, request }) => {
     const body = await request.json() as { status: string };
-    return mockJson({ id: params.planId, status: body.status });
+    return mockJson({
+      id: params.planId,
+      patientId: params.id,
+      goal: 'Reduce anxiety symptoms by 30% within 8 weeks',
+      intervention: 'Weekly CBT sessions + daily 4-7-8 breathing exercise',
+      owner: 'Dr. Sarah Chen',
+      targetDate: new Date(Date.now() + 56 * 86400000).toISOString(),
+      status: body.status,
+      evidence: ['Baseline GAD-7 score: 14', 'Current GAD-7 score: 10'],
+      unknowns: ['Response to increased session frequency'],
+      auditTrail: 'Status updated by clinician',
+      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    });
   }),
 
   // ── Password Reset ──────────────────────────
@@ -937,6 +976,147 @@ export const handlers = [
     }
     return mockJson({
       elevatedToken: `elevated-mfa-${crypto.randomUUID()}`,
+    });
+  }),
+
+  // ── MFA Enrollment ────────────────────────
+  http.post(`${BASE}/auth/mfa-setup`, () => {
+    return mockJson({
+      qrCodeDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      secret: 'JBSWY3DPEHPK3PXP',
+    });
+  }),
+
+  http.post(`${BASE}/auth/mfa-confirm-setup`, async ({ request }) => {
+    const body = await request.json() as { code: string };
+    if (body.code.length !== 6) {
+      return mockJson({ message: 'Invalid code' }, 400);
+    }
+    return mockJson({
+      backupCodes: ['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890'],
+    });
+  }),
+
+  // ── Organizations ─────────────────────────
+  http.get(`${BASE}/organizations`, () => {
+    return mockJson({
+      organizations: [
+        {
+          id: 'org-001',
+          tenantId: 'tenant-001',
+          name: 'Demo Clinic',
+          slug: 'demo-clinic',
+          npi: '1234567890',
+          phone: '(555) 123-4567',
+          website: 'https://democlinic.example.com',
+          settings: {},
+          createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          role: 'OWNER',
+          joinedAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+          _count: { memberships: 5 },
+        },
+      ],
+    });
+  }),
+
+  http.post(`${BASE}/organizations`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return mockJson({
+      id: `org-${Date.now()}`,
+      tenantId: 'tenant-001',
+      slug: String(body.name ?? 'new-org').toLowerCase().replace(/\s+/g, '-'),
+      settings: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...body,
+    }, 201);
+  }),
+
+  http.get(`${BASE}/organizations/:orgId`, ({ params }) => {
+    return mockJson({
+      id: params.orgId,
+      tenantId: 'tenant-001',
+      name: 'Demo Clinic',
+      slug: 'demo-clinic',
+      npi: '1234567890',
+      phone: '(555) 123-4567',
+      settings: {},
+      createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+      updatedAt: new Date().toISOString(),
+      memberships: [
+        {
+          id: 'mem-001',
+          orgId: params.orgId,
+          userId: 'clinician-001',
+          role: 'OWNER',
+          joinedAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+          user: { id: 'clinician-001', firstName: 'Sarah', lastName: 'Chen', email: 'sarah@example.com', role: 'CLINICIAN', status: 'ACTIVE' },
+        },
+      ],
+    });
+  }),
+
+  http.get(`${BASE}/organizations/:orgId/members`, ({ params }) => {
+    return mockJson({
+      members: [
+        {
+          id: 'mem-001',
+          orgId: params.orgId as string,
+          userId: 'clinician-001',
+          role: 'OWNER',
+          joinedAt: new Date(Date.now() - 180 * 86400000).toISOString(),
+          user: { id: 'clinician-001', firstName: 'Sarah', lastName: 'Chen', email: 'sarah@example.com', role: 'CLINICIAN', status: 'ACTIVE' },
+        },
+      ],
+    });
+  }),
+
+  http.post(`${BASE}/organizations/:orgId/invite`, async ({ params, request }) => {
+    const body = await request.json() as { email: string; role?: string };
+    return mockJson({
+      invitation: {
+        id: `inv-${Date.now()}`,
+        orgId: params.orgId,
+        email: body.email,
+        role: body.role ?? 'MEMBER',
+        token: crypto.randomUUID(),
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+        createdAt: new Date().toISOString(),
+        inviter: { firstName: 'Sarah', lastName: 'Chen' },
+      },
+    }, 201);
+  }),
+
+  http.get(`${BASE}/organizations/:orgId/invitations`, () => {
+    return mockJson({ invitations: [] });
+  }),
+
+  http.get(`${BASE}/invitations/validate`, () => {
+    return mockJson({
+      email: 'invited@example.com',
+      role: 'MEMBER',
+      organizationName: 'Demo Clinic',
+      organizationSlug: 'demo-clinic',
+      inviterName: 'Dr. Sarah Chen',
+      expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+    });
+  }),
+
+  http.post(`${BASE}/invitations/accept`, async () => {
+    return mockJson({ success: true, redirectTo: '/clinician/caseload' });
+  }),
+
+  // ── Patient by ID ─────────────────────────
+  http.get(`${BASE}/patients/:id`, ({ params }) => {
+    return mockJson({
+      id: params.id,
+      userId: params.id,
+      firstName: 'Alex',
+      lastName: 'Rivera',
+      dateOfBirth: '1990-03-15',
+      createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
     });
   }),
 
