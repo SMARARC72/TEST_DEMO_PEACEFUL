@@ -716,6 +716,130 @@ authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
   }
 });
 
+// ─── POST /mfa-setup ─────────────────────────────────────────────────
+// Clinician MFA enrollment: generates TOTP secret and QR code data URL.
+
+authRouter.post("/mfa-setup", authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user!.sub;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError("User not found", 404);
+
+    if (user.mfaEnabled) {
+      throw new AppError("MFA is already enabled", 400);
+    }
+
+    // Generate a TOTP secret
+    const crypto = await import("crypto");
+    const secret = crypto.randomBytes(20).toString("hex").slice(0, 32);
+
+    // Store the pending secret in Redis (10 min TTL)
+    await redisSet(`mfa-setup:${userId}`, secret, 600);
+
+    // Build an otpauth URI for QR code
+    const issuer = "Peacefull.ai";
+    const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=6&period=30`;
+
+    // Generate a simple SVG-based QR code data URL (or return the URL for client-side rendering)
+    // For now, return the secret + otpauth URL — the frontend can use a QR library
+    sendSuccess(res, req, {
+      secret,
+      otpauthUrl,
+      qrCodeDataUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /mfa-confirm-setup ─────────────────────────────────────────
+// Verifies the TOTP code against the pending secret and enables MFA.
+
+const mfaConfirmSetupSchema = z.object({
+  code: z.string().regex(/^\d{6}$/),
+});
+
+authRouter.post(
+  "/mfa-confirm-setup",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const body = mfaConfirmSetupSchema.parse(req.body);
+      const userId = req.user!.sub;
+
+      const pendingSecret = await redisGet(`mfa-setup:${userId}`);
+      if (!pendingSecret) {
+        throw new AppError(
+          "No pending MFA setup. Please start the setup process again.",
+          400,
+        );
+      }
+
+      // Verify the TOTP code against the pending secret
+      // Simple TOTP verification: generate expected code from secret and compare
+      const crypto = await import("crypto");
+      const timeStep = Math.floor(Date.now() / 30000);
+      let validCode = false;
+
+      // Check current and adjacent time steps (±1 for clock drift)
+      for (const offset of [-1, 0, 1]) {
+        const t = timeStep + offset;
+        const hmac = crypto.createHmac("sha1", pendingSecret);
+        hmac.update(Buffer.from(t.toString(16).padStart(16, "0"), "hex"));
+        const hash = hmac.digest();
+        const offsetByte = hash[hash.length - 1] & 0x0f;
+        const binary =
+          ((hash[offsetByte] & 0x7f) << 24) |
+          ((hash[offsetByte + 1] & 0xff) << 16) |
+          ((hash[offsetByte + 2] & 0xff) << 8) |
+          (hash[offsetByte + 3] & 0xff);
+        const otp = (binary % 1000000).toString().padStart(6, "0");
+        if (otp === body.code) {
+          validCode = true;
+          break;
+        }
+      }
+
+      if (!validCode) {
+        throw new AppError("Invalid verification code. Please try again.", 401);
+      }
+
+      // Enable MFA on the user record
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          mfaEnabled: true,
+          mfaMethod: "TOTP",
+          mfaSecret: pendingSecret, // In production: encrypt this with ENCRYPTION_KEY
+        },
+      });
+
+      // Clean up the pending secret
+      await redisDel(`mfa-setup:${userId}`);
+
+      // Generate backup codes
+      const backupCodes: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        backupCodes.push(
+          crypto.randomBytes(4).toString("hex").toUpperCase(),
+        );
+      }
+
+      // Store backup codes in Redis with long TTL (or in DB in production)
+      await redisSet(
+        `mfa-backup:${userId}`,
+        JSON.stringify(backupCodes),
+        365 * 24 * 3600,
+      );
+
+      authLogger.info({ userId }, "MFA enabled via TOTP");
+      sendSuccess(res, req, { backupCodes });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ─── GET /tenants ────────────────────────────────────────────────────
 
 authRouter.get("/tenants", async (req, res, next) => {

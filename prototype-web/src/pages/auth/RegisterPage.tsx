@@ -1,4 +1,6 @@
 // ─── Register Page ───────────────────────────────────────────────────
+// Clinician-only self-registration. Patients must be invited by their
+// practice via the /invite flow — no patient self-registration allowed.
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router';
 import { useForm } from 'react-hook-form';
@@ -9,6 +11,7 @@ import { useUIStore } from '@/stores/ui';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
+import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 const schema = z
   .object({
@@ -23,7 +26,6 @@ const schema = z
       .regex(/[0-9]/, 'Include a number')
       .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Include a special character'),
     confirmPassword: z.string(),
-    role: z.enum(['PATIENT', 'CLINICIAN']),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords must match',
@@ -56,12 +58,8 @@ export default function RegisterPage() {
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { role: 'PATIENT' },
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- React Hook Form watch() is intentionally non-memoizable
-  const selectedRole = watch('role');
-   
   const watchedPassword = watch('password') ?? '';
 
   // Real-time password strength feedback
@@ -83,9 +81,9 @@ export default function RegisterPage() {
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
-        role: data.role,
+        role: 'CLINICIAN',
       });
-      // If the store didn't set a user (clinician pending approval), redirect to success with pending flag
+      // Clinician pending approval — redirect to success with pending flag
       const user = useAuthStore.getState().user;
       if (!user) {
         navigate('/register/success', {
@@ -93,19 +91,18 @@ export default function RegisterPage() {
           state: {
             firstName: data.firstName,
             email: data.email,
-            role: data.role,
+            role: 'CLINICIAN',
             pendingApproval: true,
           },
         });
         return;
       }
-      // Redirect to success page which will guide them to the next step
       navigate('/register/success', {
         replace: true,
         state: {
           firstName: data.firstName,
           email: data.email,
-          role: data.role,
+          role: 'CLINICIAN',
           pendingApproval: false,
         },
       });
@@ -120,10 +117,26 @@ export default function RegisterPage() {
         <CardContent>
           <div className="mb-6 text-center">
             <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600" />
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Create Account</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Clinician Registration</h1>
             <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              Join Peacefull for better mental health care
+              Register as a clinician on Peacefull
             </p>
+            <HipaaBadge className="mt-2" />
+          </div>
+
+          {/* Patient invitation callout */}
+          <div className="mb-4 rounded-lg border border-brand-200 bg-brand-50/60 p-4 text-sm dark:border-brand-800 dark:bg-brand-900/20">
+            <p className="font-semibold text-brand-700 dark:text-brand-300">🧑 Are you a patient?</p>
+            <p className="mt-1 text-neutral-600 dark:text-neutral-400">
+              Patients join Peacefull through an invitation from their clinician or practice.
+              If you received an invite link or code, use it to create your account.
+            </p>
+            <Link
+              to="/invite"
+              className="mt-2 inline-block font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              I have an invitation →
+            </Link>
           </div>
 
           {error && (
@@ -149,26 +162,6 @@ export default function RegisterPage() {
 
           {!pendingApproval && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Role selector */}
-            <div className="flex gap-2">
-              {(['PATIENT', 'CLINICIAN'] as const).map((r) => (
-                <label
-                  key={r}
-                  className={`
-                    flex-1 cursor-pointer rounded-lg border-2 p-3 text-center text-sm font-medium transition-colors
-                    ${
-                      selectedRole === r
-                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
-                        : 'border-neutral-200 text-neutral-600 hover:border-neutral-300 dark:border-neutral-700 dark:text-neutral-400'
-                    }
-                  `.trim()}
-                >
-                  <input type="radio" value={r} className="sr-only" {...register('role')} />
-                  {r === 'PATIENT' ? '🧑 Patient' : '👩‍⚕️ Clinician'}
-                </label>
-              ))}
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               <Input label="First Name" error={errors.firstName?.message} {...register('firstName')} />
               <Input label="Last Name" error={errors.lastName?.message} {...register('lastName')} />

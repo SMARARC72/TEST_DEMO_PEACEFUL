@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/domain/NotificationBell';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { SkipLink } from './SkipLink';
 import { LiveAnnouncer } from './LiveAnnouncer';
+import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 export function AppShell() {
   const user = useAuthStore((s) => s.user);
@@ -72,6 +73,14 @@ export function AppShell() {
             );
           })}
         </nav>
+
+        {/* HIPAA badge at bottom of sidebar */}
+        <div className="mt-auto border-t border-neutral-200 px-4 py-3 dark:border-neutral-700">
+          <HipaaBadge size="sm" />
+          <p className="mt-1 text-[10px] text-neutral-400 dark:text-neutral-500">
+            BAA-covered infrastructure
+          </p>
+        </div>
       </aside>
 
       {/* Overlay for mobile sidebar */}

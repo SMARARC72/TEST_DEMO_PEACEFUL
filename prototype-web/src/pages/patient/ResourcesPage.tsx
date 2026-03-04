@@ -11,6 +11,8 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import type { CrisisResource } from '@/api/types';
+import { BreathingExercise } from '@/components/domain/BreathingExercise';
+import { useFeatureFlag } from '@/lib/featureFlags';
 
 // Always-available crisis contacts (never depend on API)
 const CRISIS_CONTACTS = [
@@ -62,6 +64,7 @@ export default function ResourcesPage() {
 
   const [resources, setResources] = useState<CrisisResource[]>([]);
   const [loading, setLoading] = useState(true);
+  const showBreathing = useFeatureFlag('breathingExercise');
 
   useEffect(() => {
     if (!patientId) return;
@@ -81,7 +84,7 @@ export default function ResourcesPage() {
   }, [patientId, addToast]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Resources and crisis support">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Resources</h1>
         <p className="mt-1 text-sm text-slate-600">
@@ -161,6 +164,16 @@ export default function ResourcesPage() {
           ))}
         </div>
       </section>
+
+      {/* Guided Breathing Exercise (feature-flagged) */}
+      {showBreathing && (
+        <section aria-label="Guided breathing exercise">
+          <h2 className="mb-3 text-lg font-semibold text-slate-700">
+            <span aria-hidden="true">🫁</span> Guided Breathing
+          </h2>
+          <BreathingExercise />
+        </section>
+      )}
 
       {/* Additional Resources from API */}
       {loading ? (

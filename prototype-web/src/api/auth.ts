@@ -64,4 +64,14 @@ export const authApi = {
   getTenants() {
     return apiGet<{ tenants: Array<{ id: string; slug: string; name: string; logoUrl?: string; primaryColor?: string }> }>('auth/tenants');
   },
+
+  /** MFA enrollment: get QR code and secret for TOTP setup */
+  mfaSetup() {
+    return apiPost<{ qrCodeDataUrl: string; secret: string }>('auth/mfa-setup', {});
+  },
+
+  /** MFA enrollment: verify TOTP code and enable MFA */
+  mfaConfirmSetup(code: string) {
+    return apiPost<{ backupCodes: string[] }>('auth/mfa-confirm-setup', { code });
+  },
 } as const;

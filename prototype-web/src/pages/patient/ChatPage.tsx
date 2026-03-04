@@ -6,6 +6,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { patientApi } from '@/api/patients';
+import { VoiceInput } from '@/components/domain/VoiceInput';
+import { useFeatureFlag } from '@/lib/featureFlags';
 
 interface ChatMessage {
   id: string;
@@ -60,6 +62,7 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [resolvedPatientId, setResolvedPatientId] = useState<string | null>(null);
+  const showVoice = useFeatureFlag('voiceInput');
 
   // Resolve the actual Patient-table ID (backend AI route needs patient.id, not user.id)
   useEffect(() => {
@@ -229,7 +232,14 @@ export default function ChatPage() {
   const firstName = user?.profile?.firstName ?? 'there';
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" role="main" aria-label="AI Companion chat">
+      {/* Crisis safety disclaimer — non-dismissible */}
+      <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300" role="alert">
+        <strong>⚠ This AI companion is not a crisis service.</strong> If you are in danger, call{' '}
+        <a href="tel:988" className="font-bold underline">988</a> (Suicide &amp; Crisis Lifeline) or{' '}
+        <a href="tel:911" className="font-bold underline">911</a> immediately.
+      </div>
+
       {/* Header */}
       <div className="border-b border-neutral-200 bg-white px-6 py-4 dark:border-neutral-700 dark:bg-neutral-800">
         <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
@@ -290,6 +300,14 @@ export default function ChatPage() {
       {/* Input */}
       <div className="border-t border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
         <div className="mx-auto flex max-w-2xl gap-3">
+          {showVoice && (
+            <VoiceInput
+              onTranscript={(text) => setInput((prev) => prev + (prev ? ' ' : '') + text)}
+              label=""
+              disabled={isStreaming}
+              className="flex-shrink-0"
+            />
+          )}
           <textarea
             ref={inputRef}
             value={input}
@@ -297,6 +315,7 @@ export default function ChatPage() {
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder={`Hi ${firstName}, what's on your mind?`}
+            aria-label="Type your message"
             className="flex-1 resize-none rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white dark:placeholder-neutral-500"
           />
           {isStreaming ? (

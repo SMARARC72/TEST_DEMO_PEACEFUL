@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import type { JournalEntry } from '@/api/types';
+import { VoiceInput } from '@/components/domain/VoiceInput';
+import { useFeatureFlag } from '@/lib/featureFlags';
 
 const prompts = [
   'What are you grateful for today?',
@@ -27,6 +29,7 @@ export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const showVoice = useFeatureFlag('voiceInput');
 
   useEffect(() => {
     if (!patientId) return;
@@ -62,9 +65,9 @@ export default function JournalPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6" role="main" aria-label="Journal">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Journal</h1>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white" id="journal-heading">Journal</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Write freely or pick a prompt to guide your reflection.
         </p>
@@ -103,14 +106,23 @@ export default function JournalPage() {
             onChange={(e) => setContent(e.target.value)}
             rows={8}
           />
-          <Button
-            onClick={handleSubmit}
-            loading={submitting}
-            disabled={!content.trim()}
-            className="mt-4 w-full"
-          >
-            Save Entry
-          </Button>
+          <div className="mt-4 flex items-center gap-3">
+            {showVoice && (
+              <VoiceInput
+                onTranscript={(text) => setContent((prev) => prev + (prev ? ' ' : '') + text)}
+                label="Dictate"
+                disabled={submitting}
+              />
+            )}
+            <Button
+              onClick={handleSubmit}
+              loading={submitting}
+              disabled={!content.trim()}
+              className="flex-1"
+            >
+              Save Entry
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

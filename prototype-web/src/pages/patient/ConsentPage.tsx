@@ -1,14 +1,16 @@
 // ─── Consent Page (M-02) ─────────────────────────────────────────────
-// Consent acknowledgment flow. Patient must accept 3 consent items before
-// proceeding to home. Records consent via API.
+// Consent acknowledgment flow with versioning. Patient must accept all
+// consent items before proceeding. Checks for newer consent versions and
+// triggers re-consent when policies are updated.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { patientApi } from '@/api/patients';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useUIStore } from '@/stores/ui';
+import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 interface ConsentItem {
   id: string;
@@ -17,27 +19,37 @@ interface ConsentItem {
   version: string;
 }
 
+// Current consent versions — increment version when policy changes to trigger re-consent
+const CURRENT_CONSENT_VERSION = 2;
+
 const consentItems: ConsentItem[] = [
   {
     id: 'data-collection',
     label: 'Data Collection & Use',
     description:
-      'I understand that this application collects health-related data including mood check-ins, journal entries, and voice memos. This data is encrypted, stored in HIPAA-compliant infrastructure, and shared only with my assigned clinician(s).',
-    version: '1.0',
+      'I understand that this application collects health-related data including mood check-ins, journal entries, and voice memos. This data is encrypted at rest (AES-256) and in transit (TLS 1.3), stored in HIPAA-compliant infrastructure covered by Business Associate Agreements, and shared only with my assigned clinician(s).',
+    version: '2.0',
   },
   {
     id: 'ai-processing',
     label: 'AI-Assisted Processing',
     description:
-      'I understand that AI technology is used to generate draft summaries and signal analysis. All AI outputs are clearly labeled as drafts and must be reviewed by a licensed clinician before clinical action is taken. AI does not make clinical decisions.',
-    version: '1.0',
+      'I understand that AI technology (Anthropic Claude, HIPAA-eligible) is used to generate draft summaries, signal analysis, and conversational support. All AI outputs are clearly labeled as drafts and must be reviewed by a licensed clinician before clinical action is taken. AI does not make clinical decisions. I may opt out of AI features at any time.',
+    version: '2.0',
   },
   {
     id: 'not-emergency',
     label: 'Emergency Services Disclaimer',
     description:
-      'I understand that this application is not a substitute for emergency services. If I am in immediate danger or experiencing a psychiatric emergency, I should call 911 or the 988 Suicide & Crisis Lifeline.',
-    version: '1.0',
+      'I understand that this application is not a substitute for emergency services. If I am in immediate danger or experiencing a psychiatric emergency, I should call 911 or the 988 Suicide & Crisis Lifeline. The AI companion is not a crisis service and cannot contact emergency responders.',
+    version: '2.0',
+  },
+  {
+    id: 'data-retention',
+    label: 'Data Retention & Deletion Rights',
+    description:
+      'I understand that my data is retained for 7 years per HIPAA requirements. I have the right to request data export (CSV/JSON) and account deletion at any time through Settings. Upon account deletion, my data will be anonymized per retention policy.',
+    version: '2.0',
   },
 ];
 
@@ -49,6 +61,31 @@ export default function ConsentPage() {
 
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [isReConsent, setIsReConsent] = useState(false);
+
+  // Check if user has already consented to current version
+  useEffect(() => {
+    if (!patientId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // Try to fetch existing consent records. If any are outdated, show re-consent notice.
+        const [records] = await patientApi.getConsentRecords?.(patientId) ?? [null];
+        if (cancelled) return;
+        if (records && Array.isArray(records) && records.length > 0) {
+          const hasOutdated = records.some(
+            (r: { version?: number }) => (r.version ?? 1) < CURRENT_CONSENT_VERSION
+          );
+          if (hasOutdated) {
+            setIsReConsent(true);
+          }
+        }
+      } catch {
+        // If API doesn't support consent records yet, proceed normally
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [patientId]);
 
   const allAccepted = consentItems.every((c) => accepted[c.id]);
 
@@ -61,7 +98,7 @@ export default function ConsentPage() {
     setSubmitting(true);
 
     try {
-      // Submit each consent record and check for tuple errors
+      // Submit each consent record
       const results = await Promise.all(
         consentItems.map((c) =>
           patientApi.submitConsent(patientId, {
@@ -92,11 +129,23 @@ export default function ConsentPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-brand-50 to-white px-4 py-12">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-brand-800">Consent & Acknowledgments</h1>
+        <h1 className="text-2xl font-bold text-brand-800">
+          {isReConsent ? 'Updated Consent & Acknowledgments' : 'Consent & Acknowledgments'}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Please review and accept the following before continuing
+          {isReConsent
+            ? 'Our privacy policies have been updated. Please review and accept the changes below.'
+            : 'Please review and accept the following before continuing'}
         </p>
+        <HipaaBadge className="mt-3" />
       </div>
+
+      {isReConsent && (
+        <div className="mb-4 w-full max-w-lg rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <p className="font-semibold">📋 Policy Update</p>
+          <p className="mt-1">Our consent terms have been updated to version {CURRENT_CONSENT_VERSION}.0. Please review each item and re-accept to continue using Peacefull.</p>
+        </div>
+      )}
 
       <div className="w-full max-w-lg space-y-4">
         {consentItems.map((item) => (

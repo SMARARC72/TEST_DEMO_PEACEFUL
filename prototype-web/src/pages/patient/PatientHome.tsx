@@ -9,15 +9,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { SignalBadge } from '@/components/domain/SignalBadge';
 import type { CheckinData, SignalBand } from '@/api/types';
 import { OnboardingOverlay } from '@/components/domain/OnboardingOverlay';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from 'recharts';
+import { MoodTrendChart } from '@/components/domain/MoodTrendChart';
+import { MoodHeatmap } from '@/components/domain/MoodHeatmap';
+import { useFeatureFlag } from '@/lib/featureFlags';
 
 export default function PatientHome() {
   const user = useAuthStore((s) => s.user);
@@ -26,6 +20,7 @@ export default function PatientHome() {
   const [checkins, setCheckins] = useState<CheckinData[]>([]);
   const [signalBand, setSignalBand] = useState<SignalBand | null>(null);
   const [loading, setLoading] = useState(true);
+  const showHeatmap = useFeatureFlag('moodHeatmap');
 
   useEffect(() => {
     if (!patientId) return;
@@ -57,17 +52,8 @@ export default function PatientHome() {
     );
   }
 
-  const chartData = checkins
-    .slice(-14)
-    .map((c) => ({
-      date: new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      mood: c.mood,
-      stress: c.stress,
-      sleep: c.sleep,
-    }));
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Patient dashboard">
       <OnboardingOverlay />
       {/* Greeting */}
       <div className="flex items-center justify-between">
@@ -106,31 +92,23 @@ export default function PatientHome() {
         </Link>
       </div>
 
-      {/* Trend chart */}
-      {chartData.length > 1 && (
+      {/* Enhanced Mood Trend Chart with date range picker */}
+      {checkins.length > 1 && (
         <Card>
           <CardHeader>
             <CardTitle>Your Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="mood" stroke="#7c3aed" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="stress" stroke="#ef4444" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="sleep" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-2 flex gap-4 text-xs text-neutral-500">
-              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-violet-600" /> Mood</span>
-              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Stress</span>
-              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-blue-500" /> Sleep</span>
-            </div>
+            <MoodTrendChart checkins={checkins} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Mood Heatmap (feature-flagged) */}
+      {showHeatmap && checkins.length > 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <MoodHeatmap checkins={checkins} />
           </CardContent>
         </Card>
       )}

@@ -78,6 +78,10 @@ export const router = createBrowserRouter([
     path: '/invite',
     element: lazyPage(() => import('@/pages/auth/InviteAcceptPage')),
   },
+  {
+    path: '/mfa-enrollment',
+    element: lazyPage(() => import('@/pages/auth/MfaEnrollmentPage')),
+  },
 
   // ── Legal pages ────────────────────────────
   {

@@ -134,7 +134,7 @@ export default function SafetyPlanPage() {
         </Button>
       </div>
 
-      {/* Crisis banner */}
+      {/* Crisis banner with deep-link buttons */}
       <Card className="border-red-200 bg-red-50">
         <CardContent className="p-4 text-center">
           <p className="font-semibold text-red-800">
@@ -143,6 +143,36 @@ export default function SafetyPlanPage() {
           <p className="mt-1 text-sm text-red-700">
             988 Suicide & Crisis Lifeline: call or text <strong>988</strong> (24/7)
           </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <a
+              href="tel:988"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              aria-label="Call 988 Suicide and Crisis Lifeline"
+            >
+              📞 Call 988
+            </a>
+            <a
+              href="sms:988"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/40 dark:text-red-300"
+              aria-label="Text 988 Suicide and Crisis Lifeline"
+            >
+              💬 Text 988
+            </a>
+            <a
+              href="sms:741741&body=HOME"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/40 dark:text-red-300"
+              aria-label="Text HOME to Crisis Text Line 741741"
+            >
+              📱 Crisis Text Line
+            </a>
+            <a
+              href="tel:911"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-700 dark:bg-neutral-800 dark:text-red-300"
+              aria-label="Call 911 Emergency Services"
+            >
+              🚨 Call 911
+            </a>
+          </div>
         </CardContent>
       </Card>
 

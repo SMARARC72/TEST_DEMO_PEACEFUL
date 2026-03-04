@@ -6,6 +6,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router';
 import { organizationApi, type InviteValidation } from '@/api/organizations';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 export default function InviteAcceptPage() {
   const [searchParams] = useSearchParams();
@@ -144,6 +145,7 @@ export default function InviteAcceptPage() {
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             {invite?.inviterName} has invited you to join their practice on Peacefull.ai
           </p>
+          <HipaaBadge className="mt-2" />
         </div>
 
         {error && (

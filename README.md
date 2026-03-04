@@ -104,6 +104,52 @@
 
 ---
 
+## 🚀 Sprint 1 & Sprint 2 — Platform Value Enhancement
+
+### Sprint 1: Security Hardening (Completed)
+| # | Task | Status |
+|---|------|--------|
+| S1-T01 | RegisterPage patient gating (clinician-only, patients via invite) | ✅ |
+| S1-T02 | Backend MFA setup endpoints (`/mfa-setup`, `/mfa-confirm-setup`) | ✅ |
+| S1-T03 | `HipaaBadge` reusable component | ✅ |
+| S1-T04 | HipaaBadge on Login, Register, Invite, AppShell sidebar | ✅ |
+| S1-T05 | ChatPage non-dismissible crisis disclaimer with tel: links | ✅ |
+| S1-T06 | SafetyPlanPage 988/911 deep-link buttons (tel:/sms:) | ✅ |
+| S1-T07 | MFA enforcement backend (TOTP + backup codes via Redis) | ✅ |
+| S1-T08 | LoginPage MFA enrollment redirect for clinicians | ✅ |
+| S1-T09 | `MfaEnrollmentPage` (3-step: QR → verify → backup codes) | ✅ |
+| S1-T10 | `ConsentVersion` Prisma model | ✅ |
+| S1-T11 | ConsentPage version check + re-consent flow (v2.0) | ✅ |
+| S1-T12 | `INCIDENT_RESPONSE.md` (SEV levels, HIPAA breach notification) | ✅ |
+| S1-T13 | InviteAcceptPage HIPAA badge polish | ✅ |
+
+### Sprint 2: UX & Value Enhancements (Completed)
+| # | Task | Status |
+|---|------|--------|
+| S2-T01 | `MoodTrendChart` — enhanced chart with date range picker + averages | ✅ |
+| S2-T02 | `MoodHeatmap` — 90-day GitHub-style mood heatmap | ✅ |
+| S2-T03 | Mood visuals integrated into PatientHome dashboard | ✅ |
+| S2-T04 | `BreathingExercise` — animated 4-7-8 / Box / Deep breathing | ✅ |
+| S2-T05 | BreathingExercise integrated into ResourcesPage | ✅ |
+| S2-T06 | `VoiceInput` — Web Speech API speech-to-text component | ✅ |
+| S2-T07 | VoiceInput integrated into JournalPage + ChatPage | ✅ |
+| S2-T08 | WCAG 2.1 AA audit — aria-labels, roles, focus management | ✅ |
+| S2-T09 | Account deletion (frontend + backend — already existed) | ✅ |
+| S2-T10 | Data export CSV format option (alongside JSON) | ✅ |
+| S2-T11 | Feature flag system (`featureFlags.ts` — env + localStorage) | ✅ |
+| S2-T12 | README updated | ✅ |
+
+### New Components Created
+- `src/components/domain/MoodTrendChart.tsx` — Recharts line chart with date range picker, clinical thresholds, averages
+- `src/components/domain/MoodHeatmap.tsx` — Calendar heatmap, color-coded mood scores (90 days)
+- `src/components/domain/BreathingExercise.tsx` — Guided breathing with animated circle, 3 patterns
+- `src/components/domain/VoiceInput.tsx` — Web Speech API dictation with interim text display
+- `src/components/ui/HipaaBadge.tsx` — HIPAA compliance badge with shield icon
+- `src/pages/auth/MfaEnrollmentPage.tsx` — TOTP MFA enrollment wizard
+- `src/lib/featureFlags.ts` — Build-time + runtime feature flag system with React hooks
+
+---
+
 ## 🧪 Live MVP v1 — Test It Yourself
 
 **Frontend:** https://peacefullai.netlify.app  

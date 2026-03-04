@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
+import { HipaaBadge } from '@/components/ui/HipaaBadge';
 
 // Check if Auth0 is configured (present in env at build time)
 const AUTH0_CONFIGURED = !!(
@@ -51,7 +52,13 @@ export default function LoginPage() {
       if (result.mfaRequired && result.userId) {
         setMfaState({ required: true, userId: result.userId });
       } else {
-        const role = useAuthStore.getState().user?.role;
+        const currentUser = useAuthStore.getState().user;
+        const role = currentUser?.role;
+        // Clinicians without MFA must enroll before proceeding
+        if ((role === 'CLINICIAN' || role === 'SUPERVISOR') && !currentUser?.mfaEnabled) {
+          navigate('/mfa-enrollment', { replace: true });
+          return;
+        }
         const dest = from ?? (role === 'PATIENT' ? '/patient' : '/clinician');
         navigate(dest, { replace: true });
       }
@@ -91,6 +98,7 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               Sign in to continue
             </p>
+            <HipaaBadge className="mt-2" />
           </div>
 
           {error && (

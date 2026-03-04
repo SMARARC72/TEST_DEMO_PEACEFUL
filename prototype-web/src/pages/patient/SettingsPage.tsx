@@ -68,6 +68,7 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
 function DataExportCard({ patientId }: { patientId: string }) {
   const addToast = useUIStore((s) => s.addToast);
   const [exporting, setExporting] = useState(false);
+  const [format, setFormat] = useState<'json' | 'csv'>('json');
 
   const handleExport = async (): Promise<void> => {
     setExporting(true);
@@ -78,17 +79,29 @@ function DataExportCard({ patientId }: { patientId: string }) {
         addToast({ title: err.message || 'Export failed', variant: 'error' });
         return;
       }
-      // Download as JSON file
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+      let blob: Blob;
+      let extension: string;
+
+      if (format === 'csv') {
+        // Convert to CSV format
+        const csvContent = convertToCSV(data);
+        blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        extension = 'csv';
+      } else {
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        extension = 'json';
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `peacefull-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `peacefull-export-${new Date().toISOString().slice(0, 10)}.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      addToast({ title: 'Your data has been exported.', variant: 'success' });
+      addToast({ title: `Your data has been exported as ${format.toUpperCase()}.`, variant: 'success' });
     } catch {
       addToast({ title: 'Export failed. Please try again later.', variant: 'error' });
     } finally {
@@ -101,13 +114,32 @@ function DataExportCard({ patientId }: { patientId: string }) {
       <CardHeader>
         <CardTitle>Your Data</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         <p className="text-sm text-slate-600">
           Under HIPAA Right of Access, you can download all of your data at any time.
           This includes check-ins, journal entries, safety plans, and audit logs.
         </p>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-600">Format:</span>
+          <div className="flex gap-1">
+            {(['json', 'csv'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFormat(f)}
+                className={`rounded-md px-3 py-1 text-xs font-medium uppercase transition-colors ${
+                  format === f
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+                aria-label={`Export as ${f.toUpperCase()}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
         <Button onClick={handleExport} disabled={exporting}>
-          {exporting ? 'Preparing Export...' : 'Download My Data (JSON)'}
+          {exporting ? 'Preparing Export...' : `Download My Data (${format.toUpperCase()})`}
         </Button>
         <p className="text-xs text-slate-400">
           Exports are limited to once per 24 hours for security.
@@ -115,6 +147,43 @@ function DataExportCard({ patientId }: { patientId: string }) {
       </CardContent>
     </Card>
   );
+}
+
+/** Convert nested data object to CSV string */
+function convertToCSV(data: Record<string, unknown> | null): string {
+  if (!data) return '';
+  const lines: string[] = [];
+
+  for (const [section, value] of Object.entries(data)) {
+    if (Array.isArray(value) && value.length > 0) {
+      // Section header
+      lines.push(`\n--- ${section.toUpperCase()} ---`);
+      // Column headers from first object
+      const firstItem = value[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const headers = Object.keys(firstItem as Record<string, unknown>);
+        lines.push(headers.join(','));
+        for (const item of value) {
+          const row = headers.map((h) => {
+            const val = (item as Record<string, unknown>)[h];
+            const str = String(val ?? '');
+            // Escape CSV values containing commas or quotes
+            return str.includes(',') || str.includes('"')
+              ? `"${str.replace(/"/g, '""')}"`
+              : str;
+          });
+          lines.push(row.join(','));
+        }
+      }
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      lines.push(`\n--- ${section.toUpperCase()} ---`);
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        lines.push(`${k},${String(v ?? '')}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
 }
 
 // ─── Account Deletion Card ───────────────────────────────────────────
@@ -272,9 +341,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Settings">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-800" id="settings-heading">Settings</h1>
         <p className="mt-1 text-sm text-slate-600">
           Manage your notifications, privacy, and display preferences
         </p>

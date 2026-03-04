@@ -617,6 +617,20 @@ model ConsentRecord {
   @@map("consent_records")
 }
 
+model ConsentVersion {
+  id          String   @id @default(uuid())
+  type        String   // "data_processing", "ai_analysis", "voice_recording"
+  version     Int
+  title       String
+  body        String   // full legal text
+  effectiveAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([type, version])
+  @@index([type])
+  @@map("consent_versions")
+}
+
 // ── Organization / Practice Model ─────────────────────────────
 
 enum OrgRole {
