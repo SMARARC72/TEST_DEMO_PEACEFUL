@@ -1,5 +1,5 @@
 // ─── Router ──────────────────────────────────────────────────────────
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { lazy, Suspense, type ComponentType } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/layout/AuthGuard';
@@ -41,6 +41,12 @@ function lazyPage(factory: () => Promise<{ default: ComponentType }>) {
 }
 
 export const router = createBrowserRouter([
+  // ── Root redirect ─────────────────────────
+  {
+    path: '/',
+    element: <Navigate to="/login" replace />,
+  },
+
   // ── Tenant selector (multi-tenant login) ───
   {
     path: '/select-tenant',

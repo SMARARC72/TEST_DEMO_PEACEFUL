@@ -123,12 +123,17 @@ export interface CaseloadResponse {
 
 export interface CaseloadPatient {
   id: string;
-  patientId: string;
-  patient: {
+  name: string;
+  lastContact: string | null;
+  signalBand: SignalBand | null;
+  adherenceRate: number | null;
+  // Legacy nested shape (may still appear in mocks)
+  patientId?: string;
+  patient?: {
     id: string;
     user: { firstName: string; lastName: string };
-    triageItems: TriageItem[];
-    submissions: { createdAt: string }[];
+    triageItems?: TriageItem[];
+    submissions?: { createdAt: string }[];
   };
 }
 

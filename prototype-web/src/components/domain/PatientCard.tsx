@@ -5,24 +5,25 @@ import { SignalBadge } from './SignalBadge';
 import type { CaseloadPatient } from '@/api/types';
 
 export function PatientCard({ entry }: { entry: CaseloadPatient }) {
-  const { patient } = entry;
-  const name = `${patient.user.firstName} ${patient.user.lastName}`;
-  const latestBand = patient.triageItems?.[0]?.signalBand;
-  const lastSubmission = patient.submissions?.[0]?.createdAt;
+  // Support both flat API shape (name, signalBand, lastContact) and legacy nested shape
+  const name = entry.name ?? `${entry.patient?.user?.firstName ?? ''} ${entry.patient?.user?.lastName ?? ''}`.trim() || 'Unknown Patient';
+  const patientId = entry.id ?? entry.patient?.id ?? entry.patientId ?? '';
+  const band = entry.signalBand ?? entry.patient?.triageItems?.[0]?.signalBand ?? null;
+  const lastActivity = entry.lastContact ?? entry.patient?.submissions?.[0]?.createdAt ?? null;
 
   return (
-    <Link to={`/clinician/patients/${patient.id}`} className="block group">
+    <Link to={`/clinician/patients/${patientId}`} className="block group">
       <Card className="transition-shadow group-hover:shadow-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-neutral-900 dark:text-neutral-50">{name}</p>
-            {lastSubmission && (
+            {lastActivity && (
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Last activity: {new Date(lastSubmission).toLocaleDateString()}
+                Last activity: {new Date(lastActivity).toLocaleDateString()}
               </p>
             )}
           </div>
-          {latestBand && <SignalBadge band={latestBand} />}
+          {band && <SignalBadge band={band} />}
         </div>
       </Card>
     </Link>
