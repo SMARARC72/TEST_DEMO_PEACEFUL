@@ -7,6 +7,7 @@ import { organizationApi, type InviteValidation } from '@/api/organizations';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { HipaaBadge } from '@/components/ui/HipaaBadge';
+import { validatePassword, strengthColor, strengthPercent } from '@/utils/password-validation';
 
 export default function InviteAcceptPage() {
   const [searchParams] = useSearchParams();
@@ -49,8 +50,9 @@ export default function InviteAcceptPage() {
       setError('Passwords do not match.');
       return;
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+    const validation = validatePassword(password);
+    if (!validation.valid) {
+      setError(validation.errors[0] ?? 'Password does not meet requirements.');
       return;
     }
     setError(null);
@@ -204,11 +206,33 @@ export default function InviteAcceptPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 8 characters"
+              placeholder="Min. 12 chars, upper, lower, digit, special"
               className="w-full rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
               required
-              minLength={8}
+              minLength={12}
             />
+            {password.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 flex-1 rounded-full bg-neutral-200 dark:bg-neutral-700">
+                    <div
+                      className={`h-1.5 rounded-full transition-all ${strengthColor(validatePassword(password).strength)}`}
+                      style={{ width: `${strengthPercent(validatePassword(password).strength)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-neutral-500 capitalize">
+                    {validatePassword(password).strength.replace('-', ' ')}
+                  </span>
+                </div>
+                {!validatePassword(password).valid && (
+                  <ul className="mt-1 space-y-0.5">
+                    {validatePassword(password).errors.map((err, i) => (
+                      <li key={i} className="text-xs text-red-500">{err}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -221,7 +245,7 @@ export default function InviteAcceptPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
               required
-              minLength={8}
+              minLength={12}
             />
           </div>
 

@@ -1,0 +1,3 @@
+﻿8d79a18 docs(PRD): add extension v2 - Phases 5-9, Gates 4-7, 35 red team tests, clinical safety, compliance hardening, patient experience
+f4e6464 fix: resolve 3 critical platform bugs  email, login session, AI chat
+f46c165 feat: MVP v1 full hardening  Phase 1-4 implementation

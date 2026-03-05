@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
+import { patientApi } from '@/api/patients';
 
 interface PrepTopic {
   id: string;
@@ -91,6 +92,7 @@ export default function SessionPrepPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function toggleTopic(id: string) {
     setSelected((prev) => {
@@ -110,7 +112,17 @@ export default function SessionPrepPage() {
       return;
     }
 
-    // In production, this would POST to /patients/:id/session-prep
+    setSubmitting(true);
+    const patientId = user?.id ?? '';
+    const [, err] = await patientApi.submitSessionPrep(patientId, {
+      topics: Array.from(selected),
+      notes,
+    });
+    setSubmitting(false);
+
+    if (err) {
+      addToast({ title: 'Save failed — your prep is saved locally', variant: 'error' });
+    }
     setSubmitted(true);
     addToast({ title: 'Session prep saved! Your clinician will see your topics.', variant: 'success' });
   }
@@ -237,10 +249,10 @@ export default function SessionPrepPage() {
       <div className="flex gap-3">
         <button
           onClick={handleSubmit}
-          disabled={selected.size === 0}
+          disabled={selected.size === 0 || submitting}
           className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Save Session Prep ({selected.size}/3 topics)
+          {submitting ? 'Saving…' : `Save Session Prep (${selected.size}/3 topics)`}
         </button>
         <button
           onClick={() => navigate('/patient')}

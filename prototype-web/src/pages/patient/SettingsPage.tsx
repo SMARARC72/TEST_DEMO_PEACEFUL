@@ -2,7 +2,7 @@
 // Patient settings: notifications, privacy, display preferences.
 // Persists via API with optimistic UI updates.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { patientApi } from '@/api/patients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useUIStore } from '@/stores/ui';
 import { useThemeStore } from '@/hooks/useTheme';
-import type { PatientSettings as SettingsType } from '@/api/types';
+import type { PatientSettings as SettingsType, NotificationLog } from '@/api/types';
 
 const DEFAULT_SETTINGS: SettingsType = {
   notifications: {
@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: SettingsType = {
     journalPrompts: true,
     appointmentReminders: true,
     crisisAlerts: true,
+    medicationReminders: true,
   },
   privacy: {
     shareProgressWithClinician: true,
@@ -28,6 +29,8 @@ const DEFAULT_SETTINGS: SettingsType = {
     darkMode: false,
     fontSize: 'medium',
   },
+  checkinFrequency: 'daily',
+  checkinReminderTime: '09:00',
 };
 
 interface ToggleRowProps {
@@ -62,6 +65,194 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
         />
       </button>
     </div>
+  );
+}
+
+// ─── SMS Consent Card (TCPA – Phase 9.4) ─────────────────────────────
+function SmsConsentCard({ patientId }: { patientId: string }) {
+  const addToast = useUIStore((s) => s.addToast);
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [consentDate, setConsentDate] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [confirmRevoke, setConfirmRevoke] = useState(false);
+
+  // Load current SMS consent state
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [data] = await patientApi.getSmsConsent(patientId);
+        if (!cancelled && data) {
+          setSmsEnabled(data.consented);
+          setPhoneNumber(data.phoneNumber ?? '');
+          setConsentDate(data.consentDate ?? null);
+        }
+      } catch { /* first time — no consent yet */ }
+    })();
+    return () => { cancelled = true; };
+  }, [patientId]);
+
+  const handleToggle = useCallback(async (enabled: boolean) => {
+    if (!enabled && !confirmRevoke) {
+      setConfirmRevoke(true);
+      return;
+    }
+    setConfirmRevoke(false);
+    setSaving(true);
+    try {
+      await patientApi.updateSmsConsent(patientId, {
+        consented: enabled,
+        phoneNumber: enabled ? phoneNumber : undefined,
+      });
+      setSmsEnabled(enabled);
+      setConsentDate(enabled ? new Date().toISOString() : null);
+      addToast({ title: enabled ? 'SMS notifications enabled' : 'SMS consent revoked', variant: 'success' });
+    } catch {
+      addToast({ title: 'Failed to update SMS consent', variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  }, [patientId, phoneNumber, confirmRevoke, addToast]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>SMS Communications (TCPA)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          Manage your SMS notification preferences. You can opt out at any time. Message and data rates may apply.
+        </p>
+
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Receive SMS Notifications</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Appointment reminders, check-in nudges, and safety alerts
+            </p>
+          </div>
+          <button
+            onClick={() => handleToggle(!smsEnabled)}
+            disabled={saving}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              smsEnabled ? 'bg-brand-600' : 'bg-neutral-300 dark:bg-neutral-600'
+            } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            role="switch"
+            aria-checked={smsEnabled}
+          >
+            <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${smsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
+        {confirmRevoke && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-900/30">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Confirm SMS Opt-Out</p>
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+              You will no longer receive SMS notifications. You can re-enable at any time.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <Button size="sm" variant="danger" onClick={() => handleToggle(false)} disabled={saving}>
+                {saving ? 'Saving…' : 'Confirm Opt-Out'}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setConfirmRevoke(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {smsEnabled && (
+          <div className="py-2">
+            <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-200">Phone Number</label>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="+1 (555) 000-0000"
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700 dark:text-white"
+            />
+          </div>
+        )}
+
+        {consentDate && (
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            Consent {smsEnabled ? 'granted' : 'revoked'}: {new Date(consentDate).toLocaleDateString()}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Notification History Card (Phase 9.5) ───────────────────────────
+
+const CHANNEL_ICONS: Record<string, string> = {
+  EMAIL: '📧',
+  SMS: '💬',
+  PUSH: '🔔',
+  IN_APP: '📱',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  SENT: 'text-blue-600',
+  DELIVERED: 'text-green-600',
+  READ: 'text-green-700',
+  FAILED: 'text-red-600',
+  BOUNCED: 'text-amber-600',
+};
+
+function NotificationHistoryCard({ patientId }: { patientId: string }) {
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [data] = await patientApi.getNotificationHistory(patientId);
+        if (!cancelled && data) setLogs(data);
+      } catch { /* mock may return empty */ }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [patientId]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+          Recent notifications sent to you across all channels.
+        </p>
+        {loading ? (
+          <div className="flex justify-center py-4"><Spinner /></div>
+        ) : logs.length === 0 ? (
+          <p className="py-4 text-center text-sm text-neutral-400">No notifications yet</p>
+        ) : (
+          <ul className="divide-y divide-neutral-100 dark:divide-neutral-700">
+            {logs.slice(0, 20).map((log) => (
+              <li key={log.id} className="flex items-start gap-3 py-2">
+                <span className="mt-0.5 text-lg" title={log.channel}>{CHANNEL_ICONS[log.channel] ?? '📨'}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200 truncate">
+                    {log.subject ?? log.type}
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {new Date(log.sentAt).toLocaleString()} · <span className={STATUS_COLORS[log.status] ?? 'text-neutral-500'}>{log.status}</span>
+                  </p>
+                  {log.failureReason && (
+                    <p className="text-xs text-red-500 truncate">{log.failureReason}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -410,6 +601,139 @@ function AccountDeletionCard({ patientId }: { patientId: string }) {
     </Card>
   );
 }
+
+// ─── Consent Management & AI Opt-Out ─────────────────────────────────
+function ConsentManagementCard({ patientId }: { patientId: string }) {
+  const addToast = useUIStore((s) => s.addToast);
+  const [aiOptedOut, setAiOptedOut] = useState(false);
+  const [substanceConsentWithdrawn, setSubstanceConsentWithdrawn] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+
+  async function handleAIOptOut(optOut: boolean) {
+    setWithdrawing(true);
+    try {
+      if (optOut) {
+        await patientApi.withdrawConsent(patientId, 'ai-processing');
+        setAiOptedOut(true);
+        addToast({ title: 'AI processing consent withdrawn', description: 'AI features have been disabled for your account.', variant: 'success' });
+      } else {
+        await patientApi.submitConsent(patientId, {
+          consentType: 'ai-processing',
+          accepted: true,
+          version: '3.0',
+        });
+        setAiOptedOut(false);
+        addToast({ title: 'AI processing re-enabled', variant: 'success' });
+      }
+    } catch {
+      addToast({ title: 'Failed to update consent', variant: 'error' });
+    } finally {
+      setWithdrawing(false);
+    }
+  }
+
+  async function handleSubstanceConsentWithdraw() {
+    setWithdrawing(true);
+    try {
+      await patientApi.withdrawConsent(patientId, 'substance-use-42cfr');
+      setSubstanceConsentWithdrawn(true);
+      addToast({
+        title: '42 CFR Part 2 consent withdrawn',
+        description: 'Substance use data sharing has been revoked. Existing records remain protected.',
+        variant: 'success',
+      });
+    } catch {
+      addToast({ title: 'Failed to withdraw consent', variant: 'error' });
+    } finally {
+      setWithdrawing(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Consent & Privacy Controls</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          You have the right to withdraw specific consents at any time. Withdrawing consent does not affect
+          the lawfulness of processing performed before the withdrawal.
+        </p>
+
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
+          {/* AI Opt-Out */}
+          <div className="py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+                  AI-Assisted Processing
+                </p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {aiOptedOut
+                    ? 'AI features are disabled. Your data is not processed by AI.'
+                    : 'AI generates draft summaries and conversational support (reviewed by clinician).'}
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={!aiOptedOut}
+                aria-label="AI Processing Consent"
+                disabled={withdrawing}
+                onClick={() => handleAIOptOut(!aiOptedOut)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                  !aiOptedOut ? 'bg-brand-600' : 'bg-neutral-300 dark:bg-neutral-600'
+                } ${withdrawing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                    !aiOptedOut ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* 42 CFR Part 2 Substance Use Consent */}
+          <div className="py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+                  🛡️ Substance Use Data (42 CFR Part 2)
+                </p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {substanceConsentWithdrawn
+                    ? 'Consent withdrawn. Substance use data is no longer shared.'
+                    : 'Controls sharing of substance use information with your care team.'}
+                </p>
+              </div>
+              {!substanceConsentWithdrawn ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleSubstanceConsentWithdraw}
+                  disabled={withdrawing}
+                >
+                  Withdraw
+                </Button>
+              ) : (
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                  Withdrawn
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+          <strong>Note:</strong> Withdrawing consent for AI processing will disable AI-generated summaries,
+          signal analysis, and conversational features. Your clinician will be notified of the change.
+          Clinical care continues regardless of AI consent status.
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -553,6 +877,58 @@ export default function SettingsPage() {
             onChange={(v) => updateNotification('crisisAlerts', v)}
             disabled={saving}
           />
+          <ToggleRow
+            label="Medication Reminders"
+            description="Reminders to take your medications at configured times"
+            checked={settings.notifications.medicationReminders}
+            onChange={(v) => updateNotification('medicationReminders', v)}
+            disabled={saving}
+          />
+
+          {/* Check-in Frequency (Phase 8.1) */}
+          <div className="py-3">
+            <p className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-200">Check-in Frequency</p>
+            <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">How often you'd like to check in</p>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { key: 'daily' as const, label: 'Daily' },
+                { key: 'twice_daily' as const, label: 'Twice Daily' },
+                { key: 'weekly' as const, label: 'Weekly' },
+                { key: 'custom' as const, label: 'Custom' },
+              ]).map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    const updated = { ...settings, checkinFrequency: opt.key };
+                    saveSettings(updated);
+                  }}
+                  disabled={saving}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    settings.checkinFrequency === opt.key
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600'
+                  } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Check-in Reminder Time */}
+          <div className="py-3">
+            <p className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-200">Reminder Time</p>
+            <input
+              type="time"
+              value={settings.checkinReminderTime}
+              onChange={(e) => {
+                const updated = { ...settings, checkinReminderTime: e.target.value };
+                saveSettings(updated);
+              }}
+              disabled={saving}
+              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700 dark:text-white"
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -578,6 +954,12 @@ export default function SettingsPage() {
           />
         </CardContent>
       </Card>
+
+      {/* SMS Communications (TCPA – Phase 9.4) */}
+      <SmsConsentCard patientId={patientId} />
+
+      {/* Notification History (Phase 9.5) */}
+      <NotificationHistoryCard patientId={patientId} />
 
       {/* Display */}
       <Card>
@@ -616,6 +998,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Consent Management & AI Opt-Out */}
+      <ConsentManagementCard patientId={patientId} />
 
       {/* Data Export (HIPAA Right of Access) */}
       <DataExportCard patientId={patientId} />

@@ -1,8 +1,9 @@
 // ─── Safety Plan Page (M-10) ─────────────────────────────────────────
 // Stanley-Brown safety plan viewer with step-by-step expandable cards.
 // Read-only for patients — clinician manages the plan content.
+// Caches to localStorage for offline access (P0 patient safety).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { patientApi } from '@/api/patients';
@@ -13,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import type { SafetyPlan } from '@/api/types';
 
 const STEP_ICONS = ['⚠️', '🧘', '👥', '📞', '🏥', '🔒'];
+const SAFETY_PLAN_CACHE_KEY = 'peacefull-safety-plan-cache';
 
 const DEFAULT_STEPS = [
   {
@@ -82,6 +84,38 @@ export default function SafetyPlanPage() {
   const [plan, setPlan] = useState<SafetyPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedStep, setExpandedStep] = useState<number | null>(0);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  // Track online/offline status for offline indicator
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // Cache safety plan to localStorage for offline access
+  const cachePlan = useCallback((data: SafetyPlan) => {
+    try {
+      localStorage.setItem(SAFETY_PLAN_CACHE_KEY, JSON.stringify(data));
+    } catch {
+      // Storage full — non-critical
+    }
+  }, []);
+
+  const loadCachedPlan = useCallback((): SafetyPlan | null => {
+    try {
+      const cached = localStorage.getItem(SAFETY_PLAN_CACHE_KEY);
+      if (cached) return JSON.parse(cached) as SafetyPlan;
+    } catch {
+      // corrupt cache — ignore
+    }
+    return null;
+  }, []);
 
   useEffect(() => {
     if (!patientId) return;
@@ -89,16 +123,33 @@ export default function SafetyPlanPage() {
     (async () => {
       try {
         const [data, err] = await patientApi.getSafetyPlan(patientId);
-        if (!cancelled && err) addToast({ title: 'Using default safety plan', variant: 'info' });
-        if (!cancelled && data) setPlan(data);
+        if (cancelled) return;
+        if (err) {
+          addToast({ title: 'Using default safety plan', variant: 'info' });
+          // Try loading from cache if API fails
+          const cached = loadCachedPlan();
+          if (cached) {
+            setPlan(cached);
+            addToast({ title: 'Loaded cached safety plan', variant: 'info' });
+          }
+        }
+        if (data) {
+          setPlan(data);
+          cachePlan(data); // Cache for offline access
+        }
       } catch {
-        // Use default if API unavailable
+        // Use cached plan if API unavailable (offline mode)
+        const cached = loadCachedPlan();
+        if (cached) {
+          setPlan(cached);
+          addToast({ title: 'Offline: showing cached safety plan', variant: 'info' });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId, addToast]);
+  }, [patientId, addToast, cachePlan, loadCachedPlan]);
 
   const steps = plan?.steps ?? DEFAULT_STEPS;
 
@@ -112,6 +163,32 @@ export default function SafetyPlanPage() {
 
   return (
     <div className="space-y-6">
+      {/* ─── Offline Indicator ─── */}
+      {isOffline && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+          📴 You are offline — showing cached safety plan. Crisis hotlines still work via your phone.
+        </div>
+      )}
+
+      {/* ─── I'M IN CRISIS — Prominent one-tap button (P0) ─── */}
+      <div className="rounded-2xl border-2 border-red-400 bg-red-600 p-6 text-center shadow-lg">
+        <h2 className="mb-2 text-xl font-bold text-white">Need help right now?</h2>
+        <a
+          href="tel:988"
+          className="inline-flex items-center gap-3 rounded-xl bg-white px-8 py-4 text-xl font-bold text-red-700 shadow-md transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-white/50"
+          aria-label="I'm in crisis — tap to call 988 Suicide and Crisis Lifeline"
+        >
+          🆘 I'm in Crisis — Call 988
+        </a>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm font-medium text-red-100">
+          <a href="sms:988" className="underline hover:text-white">Text 988</a>
+          <span>•</span>
+          <a href="sms:741741&body=HOME" className="underline hover:text-white">Text HOME to 741741</a>
+          <span>•</span>
+          <a href="tel:911" className="underline hover:text-white">Call 911</a>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Safety Plan</h1>

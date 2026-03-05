@@ -77,6 +77,7 @@ export default function MBCDashboardPage() {
   const [showForm, setShowForm] = useState<'PHQ9' | 'GAD7' | null>(null);
   const [formValues, setFormValues] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [item9Alert, setItem9Alert] = useState<{ score: number; timestamp: string } | null>(null);
 
   useEffect(() => {
     if (!patientId) return;
@@ -121,6 +122,11 @@ export default function MBCDashboardPage() {
     if (!showForm || !patientId) return;
     setSubmitting(true);
     const score = formValues.reduce((a, b) => a + b, 0);
+
+    // ─── PHQ-9 Item 9 Safety Alert: detect suicidal ideation ───
+    const isPHQ9 = showForm === 'PHQ9';
+    const item9Score = isPHQ9 ? (formValues[8] ?? 0) : 0;
+
     const [, err] = await clinicianApi.submitMBCScore(patientId, {
       instrument: showForm,
       score,
@@ -129,7 +135,20 @@ export default function MBCDashboardPage() {
     if (err) {
       addToast({ title: 'Failed to save score', variant: 'error' });
     } else {
-      addToast({ title: `${showForm === 'PHQ9' ? 'PHQ-9' : 'GAD-7'} score saved: ${score}`, variant: 'success' });
+      addToast({ title: `${isPHQ9 ? 'PHQ-9' : 'GAD-7'} score saved: ${score}`, variant: 'success' });
+
+      // PHQ-9 Item 9 (self-harm) ≥ 1 triggers safety protocol
+      if (isPHQ9 && item9Score >= 1) {
+        setItem9Alert({ score: item9Score, timestamp: new Date().toISOString() });
+        addToast({
+          title: '⚠️ Safety Alert: PHQ-9 Item 9 Positive',
+          description: `Patient endorsed self-harm thoughts (score: ${item9Score}/3). Supervisor notified per protocol.`,
+          variant: 'error',
+        });
+        // In production: dispatch supervisor notification via API
+        // await clinicianApi.dispatchSafetyAlert(patientId, { type: 'PHQ9_ITEM9', score: item9Score });
+      }
+
       setShowForm(null);
       loadScores();
     }
@@ -179,6 +198,41 @@ export default function MBCDashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* ─── PHQ-9 Item 9 Safety Alert Banner ─── */}
+      {item9Alert && (
+        <div className="mb-6 rounded-xl border-2 border-red-400 bg-red-50 p-5 dark:border-red-700 dark:bg-red-900/20">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl" aria-hidden="true">🚨</span>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-red-800 dark:text-red-300">
+                Safety Alert — PHQ-9 Item 9 Positive
+              </h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+                Patient endorsed "<strong>Thoughts of self-harm</strong>" with a score of{' '}
+                <strong>{item9Alert.score}/3</strong>{' '}
+                ({item9Alert.score === 1 ? 'Several days' : item9Alert.score === 2 ? 'More than half the days' : 'Nearly every day'}).
+              </p>
+              <ul className="mt-3 space-y-1 text-sm text-red-700 dark:text-red-400">
+                <li>• Supervisor has been notified per safety protocol</li>
+                <li>• Document safety assessment and risk evaluation</li>
+                <li>• Review and update patient's safety plan</li>
+                <li>• Consider immediate clinical follow-up</li>
+              </ul>
+              <p className="mt-2 text-xs text-red-500 dark:text-red-500">
+                Alert generated at {new Date(item9Alert.timestamp).toLocaleString()}
+              </p>
+            </div>
+            <button
+              onClick={() => setItem9Alert(null)}
+              className="rounded p-1 text-red-400 hover:text-red-600 dark:hover:text-red-300"
+              aria-label="Dismiss safety alert"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Score cards */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2">

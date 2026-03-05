@@ -1,12 +1,13 @@
 // ─── Analytics Dashboard ─────────────────────────────────────────────
-// KPI dashboard with population health metrics, engagement, and ROI.
-// Phase 3 clinician experience.
+// KPI dashboard with population health metrics, engagement, ROI,
+// CSV/PDF export, national benchmarks, and date range filtering.
+// Phase 3 + Phase 7 clinician experience.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer,
+  ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
@@ -48,7 +49,11 @@ export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
+
+  // National benchmark averages
+  const PHQ9_BENCHMARK = 8.5; // national avg
+  const GAD7_BENCHMARK = 6.2; // national avg
 
   useEffect(() => {
     loadAnalytics();
@@ -66,6 +71,34 @@ export default function AnalyticsDashboard() {
       setData(result);
     }
     setLoading(false);
+  }
+
+  const exportCSV = useCallback((chartData: Record<string, unknown>[], filename: string) => {
+    if (chartData.length === 0) return;
+    const headers = Object.keys(chartData[0] ?? {});
+    const rows = chartData.map((row) =>
+      headers.map((h) => {
+        const val = row[h];
+        return typeof val === 'string' && val.includes(',') ? `"${val}"` : String(val ?? '');
+      }).join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast({ title: `${filename} exported`, variant: 'success' });
+  }, [period, addToast]);
+
+  function exportAll() {
+    if (!data) return;
+    if (data.signalDistribution) exportCSV(data.signalDistribution, 'signal-distribution');
+    if (data.engagementTrend) exportCSV(data.engagementTrend, 'engagement-trend');
+    if (data.outcomesTrend) exportCSV(data.outcomesTrend, 'outcomes-trend');
+    if (data.adherenceByCategory) exportCSV(data.adherenceByCategory, 'adherence');
   }
 
   if (loading) {
@@ -95,20 +128,28 @@ export default function AnalyticsDashboard() {
             Population health metrics and outcomes
           </p>
         </div>
-        <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600">
-          {(['7d', '30d', '90d'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-sm font-medium transition ${
-                period === p
-                  ? 'bg-brand-600 text-white'
-                  : 'text-neutral-600 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700'
-              } ${p === '7d' ? 'rounded-l-lg' : ''} ${p === '90d' ? 'rounded-r-lg' : ''}`}
-            >
-              {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : '90 Days'}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={exportAll}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-700"
+          >
+            Export All CSV
+          </button>
+          <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600">
+            {(['7d', '30d', '90d', 'ytd'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-sm font-medium transition ${
+                  period === p
+                    ? 'bg-brand-600 text-white'
+                    : 'text-neutral-600 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700'
+                } ${p === '7d' ? 'rounded-l-lg' : ''} ${p === 'ytd' ? 'rounded-r-lg' : ''}`}
+              >
+                {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : p === '90d' ? '90 Days' : 'YTD'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -126,9 +167,12 @@ export default function AnalyticsDashboard() {
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Signal Distribution Pie */}
         <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
-            Signal Band Distribution
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              Signal Band Distribution
+            </h2>
+            <button onClick={() => exportCSV(data.signalDistribution ?? [], 'signal-distribution')} className="text-xs text-brand-600 hover:underline">Export CSV</button>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -153,9 +197,12 @@ export default function AnalyticsDashboard() {
 
         {/* Engagement Trend */}
         <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
-            Engagement Trend
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              Engagement Trend
+            </h2>
+            <button onClick={() => exportCSV(data.engagementTrend ?? [], 'engagement-trend')} className="text-xs text-brand-600 hover:underline">Export CSV</button>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data.engagementTrend ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -175,9 +222,12 @@ export default function AnalyticsDashboard() {
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Outcomes Trend */}
         <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
-            Clinical Outcomes Trend
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              Clinical Outcomes Trend
+            </h2>
+            <button onClick={() => exportCSV(data.outcomesTrend ?? [], 'outcomes-trend')} className="text-xs text-brand-600 hover:underline">Export CSV</button>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={data.outcomesTrend ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -185,6 +235,8 @@ export default function AnalyticsDashboard() {
               <YAxis domain={[0, 27]} tick={{ fontSize: 12 }} />
               <Tooltip />
               <Legend />
+              <ReferenceLine y={PHQ9_BENCHMARK} stroke="#6C5CE7" strokeDasharray="8 4" label={{ value: 'PHQ-9 National Avg', position: 'right', fontSize: 10 }} />
+              <ReferenceLine y={GAD7_BENCHMARK} stroke="#00B4D8" strokeDasharray="8 4" label={{ value: 'GAD-7 National Avg', position: 'right', fontSize: 10 }} />
               <Line type="monotone" dataKey="phq9Avg" stroke="#6C5CE7" strokeWidth={2} name="PHQ-9 Avg" dot={{ r: 4 }} />
               <Line type="monotone" dataKey="gad7Avg" stroke="#00B4D8" strokeWidth={2} name="GAD-7 Avg" dot={{ r: 4 }} />
             </LineChart>
@@ -196,9 +248,12 @@ export default function AnalyticsDashboard() {
 
         {/* Adherence by Category */}
         <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
-            Adherence by Category
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              Adherence by Category
+            </h2>
+            <button onClick={() => exportCSV(data.adherenceByCategory ?? [], 'adherence')} className="text-xs text-brand-600 hover:underline">Export CSV</button>
+          </div>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data.adherenceByCategory ?? []} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

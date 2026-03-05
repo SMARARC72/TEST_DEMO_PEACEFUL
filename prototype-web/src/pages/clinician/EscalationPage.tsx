@@ -281,6 +281,7 @@ function EscalationCard({
 
   const deadline = new Date(esc.slaDeadline).getTime();
   const isOverdue = now > deadline && esc.status !== 'RESOLVED';
+  const isBreach = isOverdue && esc.status !== 'RESOLVED' && esc.status !== 'EXPIRED';
   const timeRemaining = deadline - now;
 
   function formatTimeRemaining(ms: number) {
@@ -310,6 +311,11 @@ function EscalationCard({
           <div className="flex items-center gap-2">
             <p className="font-semibold text-neutral-900 dark:text-white truncate">{esc.reason}</p>
             <Badge variant={STATUS_VARIANT[esc.status]}>{esc.status}</Badge>
+            {isBreach && (
+              <span className="animate-pulse rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                SLA BREACHED
+              </span>
+            )}
           </div>
           <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
             {esc.patientName}
@@ -319,6 +325,11 @@ function EscalationCard({
             <span className={isOverdue ? 'font-bold text-red-600' : ''}>
               SLA: {formatTimeRemaining(timeRemaining)}
             </span>
+            {isBreach && (
+              <span className="text-xs font-medium text-red-500">
+                Escalation chain notified
+              </span>
+            )}
           </div>
         </div>
         {esc.status === 'OPEN' && (

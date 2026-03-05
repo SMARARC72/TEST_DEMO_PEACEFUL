@@ -76,6 +76,16 @@ export interface CheckinData {
   focus: number;
   anxiety?: number;
   notes?: string;
+  /** PHQ-9 Item 9 equivalent: 0 = Not at all, 1 = Several days, 2 = More than half, 3 = Nearly every day */
+  suicidalIdeationScore?: number | null;
+  /** Social connection self-report (0–10) */
+  socialConnection?: number | null;
+  /** Substance use flag — gated by 42 CFR Part 2 consent */
+  substanceUse?: {
+    used: boolean;
+    types?: ('alcohol' | 'cannabis' | 'prescription_misuse' | 'other')[];
+    notes?: string;
+  } | null;
   createdAt: string;
 }
 
@@ -233,12 +243,15 @@ export interface CrisisResource {
 
 // ─── Patient Settings ─────────────────────────
 
+export type CheckinFrequency = 'daily' | 'twice_daily' | 'weekly' | 'custom';
+
 export interface PatientSettings {
   notifications: {
     checkinReminders: boolean;
     journalPrompts: boolean;
     appointmentReminders: boolean;
     crisisAlerts: boolean;
+    medicationReminders: boolean;
   };
   privacy: {
     shareProgressWithClinician: boolean;
@@ -248,6 +261,8 @@ export interface PatientSettings {
     darkMode: boolean;
     fontSize: 'small' | 'medium' | 'large';
   };
+  checkinFrequency: CheckinFrequency;
+  checkinReminderTime: string; // HH:mm format
 }
 
 // ─── Consent ──────────────────────────────────
@@ -304,7 +319,9 @@ export interface Memory {
 
 // ─── Treatment Plans ─────────────────────────────
 
-export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'REVIEWED' | 'HOLD';
+export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'REVIEWED' | 'HOLD' | 'COMPLETED' | 'DISCONTINUED';
+
+export type LinkedInstrument = 'PHQ-9' | 'GAD-7' | 'AUDIT-C' | 'PCL-5' | 'CSSRS';
 
 export interface TreatmentPlanItem {
   id: string;
@@ -319,6 +336,13 @@ export interface TreatmentPlanItem {
   auditTrail: string;
   createdAt: string;
   reviewedAt?: string;
+  linkedInstrument?: LinkedInstrument;
+  targetScore?: number;
+  currentScore?: number;
+  baselineScore?: number;
+  reviewDate?: string;
+  patientNotes?: string;
+  progressPercent?: number;
 }
 
 // ─── Restricted Notes ─────────────────────────────
@@ -485,4 +509,147 @@ export interface AnalyticsData {
     change: number;
     unit: string;
   }[];
+}
+
+// ─── Appointments ─────────────────────────────────
+
+export type AppointmentType = 'INTAKE' | 'FOLLOW_UP' | 'CRISIS' | 'GROUP' | 'MEDICATION_MANAGEMENT';
+export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+
+export interface Appointment {
+  id: string;
+  patientId: string;
+  clinicianId: string;
+  clinicianName?: string;
+  dateTime: string;
+  duration: number;
+  type: AppointmentType;
+  status: AppointmentStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+// ─── Demographics & Clinical Data ─────────────────
+
+export interface PatientDemographics {
+  dateOfBirth?: string;
+  gender?: string;
+  pronouns?: string;
+  race?: string;
+  ethnicity?: string;
+  primaryLanguage?: string;
+  insurance?: {
+    plan: string;
+    memberId: string;
+    groupNumber?: string;
+  };
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  isPrimary: boolean;
+}
+
+export interface Medication {
+  id: string;
+  name: string;
+  dose: string;
+  frequency: string;
+  prescriber?: string;
+  startDate: string;
+  endDate?: string;
+  status: 'ACTIVE' | 'DISCONTINUED' | 'ON_HOLD';
+  adherenceRate?: number;
+}
+
+export interface Allergy {
+  id: string;
+  allergen: string;
+  severity: 'MILD' | 'MODERATE' | 'SEVERE' | 'LIFE_THREATENING';
+  reaction: string;
+}
+
+export interface Diagnosis {
+  id: string;
+  icd10Code: string;
+  description: string;
+  status: 'ACTIVE' | 'RESOLVED' | 'IN_REMISSION';
+  diagnosedDate: string;
+  diagnosedBy?: string;
+}
+
+// ─── Session Prep ─────────────────────────────────
+
+export interface SessionPrep {
+  id: string;
+  patientId: string;
+  appointmentId?: string;
+  topics: string[];
+  notes?: string;
+  submittedAt: string;
+}
+
+// ─── Patient Assessment (Self-Administered MBC) ───
+
+export type InstrumentType = 'PHQ9' | 'GAD7' | 'CSSRS' | 'PCL5' | 'AUDIT' | 'DAST10';
+
+export interface PatientAssessment {
+  id: string;
+  patientId: string;
+  instrument: InstrumentType;
+  score: number;
+  items: number[];
+  source: 'PATIENT_SELF' | 'CLINICIAN_ADMINISTERED';
+  completedAt: string;
+  flagged?: boolean;
+  flagReason?: string;
+}
+
+// ─── Audit Log ────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: string;
+  userId: string;
+  action: string;
+  resource: string;
+  resourceType: string;
+  resourceId?: string;
+  details?: string | Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  timestamp: string;
+  hash?: string;
+  previousHash?: string;
+  createdAt?: string;
+}
+
+// ─── SMS Consent (TCPA – Phase 9.4) ──────────────
+
+export interface SmsConsent {
+  patientId: string;
+  consented: boolean;
+  phoneNumber?: string;
+  consentDate?: string;
+  revokedDate?: string;
+}
+
+// ─── Notification Audit Trail (Phase 9.5) ─────────
+
+export type NotificationChannel = 'EMAIL' | 'SMS' | 'PUSH' | 'IN_APP';
+export type NotificationDeliveryStatus = 'SENT' | 'DELIVERED' | 'READ' | 'FAILED' | 'BOUNCED';
+
+export interface NotificationLog {
+  id: string;
+  recipientId: string;
+  channel: NotificationChannel;
+  type: string;
+  subject?: string;
+  sentAt: string;
+  deliveredAt?: string;
+  readAt?: string;
+  status: NotificationDeliveryStatus;
+  failureReason?: string;
 }

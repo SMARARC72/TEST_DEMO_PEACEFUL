@@ -164,6 +164,11 @@ export const router = createBrowserRouter([
             path: '/patient/session-prep',
             element: lazyPage(() => import('@/pages/patient/SessionPrepPage')),
           },
+          // Phase 5-8 patient routes
+          {
+            path: '/patient/assessments',
+            element: lazyPage(() => import('@/pages/patient/AssessmentPage')),
+          },
         ],
       },
     ],
@@ -248,6 +253,11 @@ export const router = createBrowserRouter([
           {
             path: '/clinician/organization',
             element: lazyPage(() => import('@/pages/clinician/OrgManagementPage')),
+          },
+          // Phase 5-8 clinician routes
+          {
+            path: '/clinician/audit-log',
+            element: lazyPage(() => import('@/pages/clinician/AuditLogPage')),
           },
         ],
       },

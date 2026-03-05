@@ -187,6 +187,7 @@ const mockSettings: PatientSettings = {
     journalPrompts: true,
     appointmentReminders: true,
     crisisAlerts: true,
+    medicationReminders: true,
   },
   privacy: {
     shareProgressWithClinician: true,
@@ -196,6 +197,8 @@ const mockSettings: PatientSettings = {
     darkMode: false,
     fontSize: 'medium',
   },
+  checkinFrequency: 'daily',
+  checkinReminderTime: '09:00',
 };
 
 // ─── Handlers ────────────────────────────────
@@ -373,6 +376,8 @@ export const handlers = [
       sleep: body.sleep as number,
       focus: body.focus as number,
       anxiety: (body.anxiety as number) ?? undefined,
+      socialConnection: (body.socialConnection as number) ?? undefined,
+      suicidalIdeationScore: (body.suicidalIdeationScore as number) ?? null,
       notes: body.notes as string | undefined,
       createdAt: new Date().toISOString(),
     };
@@ -1467,5 +1472,292 @@ export const handlers = [
         { id: 'tenant-003', slug: 'behavioral-health', name: 'Behavioral Health Associates', primaryColor: '#10B981' },
       ],
     });
+  }),
+
+  // ─── Phase 5-8 Mock Handlers ──────────────────────────────────────
+
+  // Patient - Self-Administered Assessments
+  http.get(`${BASE}/patients/:id/assessments`, () => {
+    return mockJson([
+      {
+        id: 'assessment-001',
+        patientId: 'patient-001',
+        instrument: 'PHQ9',
+        score: 12,
+        items: [1, 2, 1, 2, 1, 1, 1, 2, 1],
+        administeredAt: new Date(Date.now() - 7 * 86400000).toISOString(),
+        administeredBy: 'patient-001',
+        status: 'COMPLETED' as const,
+      },
+      {
+        id: 'assessment-002',
+        patientId: 'patient-001',
+        instrument: 'GAD7',
+        score: 8,
+        items: [1, 2, 1, 1, 1, 1, 1],
+        administeredAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+        administeredBy: 'patient-001',
+        status: 'COMPLETED' as const,
+      },
+    ]);
+  }),
+
+  http.post(`${BASE}/patients/:id/assessments`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return mockJson({
+      id: `assessment-${Date.now()}`,
+      patientId: 'patient-001',
+      instrument: body.instrument as string,
+      score: body.score as number,
+      items: body.items as number[],
+      administeredAt: new Date().toISOString(),
+      administeredBy: 'patient-001',
+      status: 'COMPLETED',
+    }, 201);
+  }),
+
+  // Patient - Appointments
+  http.get(`${BASE}/patients/:id/appointments`, () => {
+    const now = Date.now();
+    return mockJson([
+      {
+        id: 'apt-001',
+        patientId: 'patient-001',
+        clinicianId: 'clinician-001',
+        clinicianName: 'Dr. Sarah Chen',
+        type: 'THERAPY' as const,
+        status: 'SCHEDULED' as const,
+        scheduledAt: new Date(now + 3 * 86400000).toISOString(),
+        duration: 50,
+        location: 'Telehealth — Zoom Link',
+        notes: 'Follow-up session',
+      },
+      {
+        id: 'apt-002',
+        patientId: 'patient-001',
+        clinicianId: 'clinician-001',
+        clinicianName: 'Dr. Sarah Chen',
+        type: 'MBC_REVIEW' as const,
+        status: 'COMPLETED' as const,
+        scheduledAt: new Date(now - 7 * 86400000).toISOString(),
+        duration: 30,
+        location: 'In-person — Room 204',
+        notes: 'PHQ-9 and GAD-7 review',
+      },
+    ]);
+  }),
+
+  // Patient - Demographics
+  http.get(`${BASE}/patients/:id/demographics`, () => {
+    return mockJson({
+      dateOfBirth: '1990-03-15',
+      gender: 'Non-binary',
+      pronouns: 'they/them',
+      race: 'Multiracial',
+      ethnicity: 'Hispanic/Latino',
+      preferredLanguage: 'en',
+      address: {
+        street: '123 Wellness Ave',
+        city: 'San Francisco',
+        state: 'CA',
+        zip: '94102',
+      },
+      phone: '+1-555-0123',
+      emergencyContacts: [
+        {
+          id: 'ec-001',
+          name: 'Maria Rivera',
+          relationship: 'Mother',
+          phone: '+1-555-0456',
+          isPrimary: true,
+        },
+      ],
+    });
+  }),
+
+  http.patch(`${BASE}/patients/:id/demographics`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return mockJson({ ...body, updatedAt: new Date().toISOString() });
+  }),
+
+  // Patient - Emergency Contacts
+  http.get(`${BASE}/patients/:id/emergency-contacts`, () => {
+    return mockJson([
+      {
+        id: 'ec-001',
+        name: 'Maria Rivera',
+        relationship: 'Mother',
+        phone: '+1-555-0456',
+        isPrimary: true,
+      },
+    ]);
+  }),
+
+  http.post(`${BASE}/patients/:id/emergency-contacts`, async ({ request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return mockJson({
+      id: `ec-${Date.now()}`,
+      ...body,
+    }, 201);
+  }),
+
+  // Patient - Medications
+  http.get(`${BASE}/patients/:id/medications`, () => {
+    return mockJson([
+      {
+        id: 'med-001',
+        name: 'Sertraline',
+        dosage: '100mg',
+        frequency: 'Daily',
+        prescribedBy: 'Dr. Sarah Chen',
+        startDate: '2025-01-20',
+        active: true,
+      },
+    ]);
+  }),
+
+  // Patient - Allergies
+  http.get(`${BASE}/patients/:id/allergies`, () => {
+    return mockJson([
+      {
+        id: 'allergy-001',
+        allergen: 'Penicillin',
+        reaction: 'Rash',
+        severity: 'MODERATE' as const,
+        reportedAt: '2025-01-15T00:00:00Z',
+      },
+    ]);
+  }),
+
+  // Patient - Diagnoses
+  http.get(`${BASE}/patients/:id/diagnoses`, () => {
+    return mockJson([
+      {
+        id: 'dx-001',
+        icd10Code: 'F32.1',
+        description: 'Major depressive disorder, single episode, moderate',
+        diagnosedBy: 'Dr. Sarah Chen',
+        diagnosedAt: '2025-01-20T00:00:00Z',
+        status: 'ACTIVE' as const,
+      },
+      {
+        id: 'dx-002',
+        icd10Code: 'F41.1',
+        description: 'Generalized anxiety disorder',
+        diagnosedBy: 'Dr. Sarah Chen',
+        diagnosedAt: '2025-01-20T00:00:00Z',
+        status: 'ACTIVE' as const,
+      },
+    ]);
+  }),
+
+  // Patient - Consent withdrawal
+  http.post(`${BASE}/patients/:id/consent/:type/withdraw`, () => {
+    return mockJson({ withdrawn: true });
+  }),
+
+  // Clinician - Audit log export
+  http.get(`${BASE}/clinician/audit-log`, () => {
+    return mockJson([
+      {
+        id: 'log-001',
+        userId: 'clinician-001',
+        action: 'VIEW_PATIENT_RECORD',
+        resourceType: 'Patient',
+        resourceId: 'patient-001',
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        details: { section: 'demographics' },
+      },
+      {
+        id: 'log-002',
+        userId: 'clinician-001',
+        action: 'SUBMIT_MBC_SCORE',
+        resourceType: 'MBCScore',
+        resourceId: 'mbc-001',
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        details: { instrument: 'PHQ9', score: 14 },
+      },
+    ]);
+  }),
+
+  // ─── SMS Consent (TCPA – Phase 9.4) ─────────────────────────────────
+  http.get(`${BASE}/patients/:id/sms-consent`, () => {
+    return mockJson({
+      patientId: 'patient-001',
+      consented: false,
+      phoneNumber: '',
+      consentDate: null,
+      revokedDate: null,
+    });
+  }),
+
+  http.patch(`${BASE}/patients/:id/sms-consent`, async ({ request }) => {
+    const body = await request.json() as { consented: boolean; phoneNumber?: string };
+    return mockJson({
+      patientId: 'patient-001',
+      consented: body.consented,
+      phoneNumber: body.phoneNumber ?? '',
+      consentDate: body.consented ? new Date().toISOString() : null,
+      revokedDate: body.consented ? null : new Date().toISOString(),
+    });
+  }),
+
+  // ─── Notification History (Phase 9.5) ───────────────────────────────
+  http.get(`${BASE}/patients/:id/notifications`, () => {
+    const now = Date.now();
+    return mockJson([
+      {
+        id: 'notif-001',
+        recipientId: 'patient-001',
+        channel: 'EMAIL',
+        type: 'APPOINTMENT_REMINDER',
+        subject: 'Appointment tomorrow at 3:00 PM',
+        sentAt: new Date(now - 86400000).toISOString(),
+        deliveredAt: new Date(now - 86400000 + 5000).toISOString(),
+        readAt: new Date(now - 86000000).toISOString(),
+        status: 'READ',
+        failureReason: null,
+      },
+      {
+        id: 'notif-002',
+        recipientId: 'patient-001',
+        channel: 'PUSH',
+        type: 'CHECKIN_REMINDER',
+        subject: 'Time for your daily check-in',
+        sentAt: new Date(now - 43200000).toISOString(),
+        deliveredAt: new Date(now - 43200000 + 2000).toISOString(),
+        readAt: null,
+        status: 'DELIVERED',
+        failureReason: null,
+      },
+      {
+        id: 'notif-003',
+        recipientId: 'patient-001',
+        channel: 'SMS',
+        type: 'SAFETY_ALERT',
+        subject: 'Crisis resources available 24/7',
+        sentAt: new Date(now - 172800000).toISOString(),
+        deliveredAt: new Date(now - 172800000 + 3000).toISOString(),
+        readAt: null,
+        status: 'DELIVERED',
+        failureReason: null,
+      },
+      {
+        id: 'notif-004',
+        recipientId: 'patient-001',
+        channel: 'IN_APP',
+        type: 'JOURNAL_PROMPT',
+        subject: 'New journal prompt from your therapist',
+        sentAt: new Date(now - 259200000).toISOString(),
+        deliveredAt: new Date(now - 259200000).toISOString(),
+        readAt: new Date(now - 250000000).toISOString(),
+        status: 'READ',
+        failureReason: null,
+      },
+    ]);
   }),
 ];
