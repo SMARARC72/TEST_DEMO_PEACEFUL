@@ -7,6 +7,16 @@
 
 ## 🟢 ACTIVE PRD: PRD-MVP-STABILIZE-2026-001 (MVP Stabilization + Demo Environment)
 
+### Continued Changes & Improvements (2026-03-05)
+- Fixed AI Companion SSE mock to read `messages` array (prevents offline-mode fallback) and emit `sessionId` on first chunk for continuity.
+- Made patient profile endpoints session-aware so real patient logins no longer see the hardcoded demo profile.
+- Aligned consent mocks and AuthGuard to canonical `ConsentRecord` (`consentType`/`accepted`), eliminating data-shape drift.
+- Added missing org/voice mock handlers and corrected submission source to `VOICE_MEMO`; patient responses now include `tenantId` and optional `summary` field.
+- Validation gates remain green: `tsc --noEmit`, tests (92/92), and build/bundle budget.
+
+### Process Rule (Mandatory)
+- Every change must update both this README and the baseline log in `3.4.26PT1.md`, and both must be read before starting new work to maintain continuity and avoid drift.
+
 **Scope:** Frontend (Netlify), Backend (ECS/API), Infra, Data, Security  
 **Goal:** Fully working, pilot-ready MVP plus a separate demo environment with synthetic data; hardened against abuse; fast, reliable builds; guardrails against drift.  
 **Model:** GPT-5.1-Codex-Max (GitHub Copilot)  
