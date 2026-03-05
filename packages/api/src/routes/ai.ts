@@ -128,6 +128,18 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
     if (!patient) {
       throw new AppError("Patient not found", 404);
     }
+    // SEC-011: Tenant isolation — ensure patient belongs to the same tenant as the requester
+    if (patient.tenantId !== req.user!.tid) {
+      aiLogger.warn(
+        {
+          userId: req.user!.sub,
+          patientTenant: patient.tenantId,
+          userTenant: req.user!.tid,
+        },
+        "Cross-tenant AI chat attempt blocked",
+      );
+      throw new AppError("Access denied", 403);
+    }
     // Use resolved patient.id for all downstream queries
     const resolvedPatientId = patient.id;
     // SEC: Patient can only chat as themselves

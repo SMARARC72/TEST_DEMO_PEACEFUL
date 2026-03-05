@@ -278,6 +278,124 @@ organizationRouter.delete(
   },
 );
 
+// ─── PATCH /organizations/:id/members/:userId/approve — PRD-2.3 ─────
+
+organizationRouter.patch(
+  "/:id/members/:userId/approve",
+  authenticate,
+  requireRole(UserRole.SUPERVISOR, UserRole.ADMIN),
+  async (req, res, next) => {
+    try {
+      const requesterId = req.user!.sub;
+      const orgId = req.params.id as string;
+      const targetUserId = req.params.userId as string;
+
+      // Verify requester is OWNER or ADMIN of the org
+      await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
+
+      // Find the target user and verify they are SUSPENDED
+      const targetUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          status: true,
+          role: true,
+        },
+      });
+      if (!targetUser) throw new AppError("User not found", 404);
+      if (targetUser.status !== "SUSPENDED") {
+        throw new AppError("User is not pending approval", 400);
+      }
+
+      // Activate the user
+      await prisma.user.update({
+        where: { id: targetUserId },
+        data: { status: "ACTIVE" },
+      });
+
+      // Send activation email (fire-and-forget)
+      sendEmail(
+        targetUser.email,
+        "Peacefull.ai — Your Account Has Been Approved",
+        "account-approved",
+        { firstName: targetUser.firstName },
+      ).catch((err) =>
+        apiLogger.error(
+          { err, email: targetUser.email },
+          "Failed to send approval email",
+        ),
+      );
+
+      apiLogger.info(
+        { orgId, approvedUserId: targetUserId, approvedBy: requesterId },
+        "Organization member approved",
+      );
+
+      sendSuccess(res, req, {
+        message: "User approved successfully",
+        userId: targetUserId,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── PATCH /organizations/:id/members/:userId/reject — PRD-2.3 ──────
+
+organizationRouter.patch(
+  "/:id/members/:userId/reject",
+  authenticate,
+  requireRole(UserRole.SUPERVISOR, UserRole.ADMIN),
+  async (req, res, next) => {
+    try {
+      const requesterId = req.user!.sub;
+      const orgId = req.params.id as string;
+      const targetUserId = req.params.userId as string;
+
+      await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
+
+      const targetUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, email: true, firstName: true, status: true },
+      });
+      if (!targetUser) throw new AppError("User not found", 404);
+      if (targetUser.status !== "SUSPENDED") {
+        throw new AppError("User is not pending approval", 400);
+      }
+
+      await prisma.user.update({
+        where: { id: targetUserId },
+        data: { status: "DEACTIVATED" },
+      });
+
+      // Send rejection email (fire-and-forget)
+      sendEmail(
+        targetUser.email,
+        "Peacefull.ai — Registration Update",
+        "account-rejected",
+        { firstName: targetUser.firstName },
+      ).catch((err) =>
+        apiLogger.error(
+          { err, email: targetUser.email },
+          "Failed to send rejection email",
+        ),
+      );
+
+      apiLogger.info(
+        { orgId, rejectedUserId: targetUserId, rejectedBy: requesterId },
+        "Organization member rejected",
+      );
+
+      sendSuccess(res, req, { message: "User rejected", userId: targetUserId });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ─── POST /organizations/:id/invite — Send invitation ───────────────
 
 const inviteSchema = z.object({
@@ -449,7 +567,21 @@ organizationRouter.get("/invitations/:token", async (req, res, next) => {
 const acceptInviteSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  password: z.string().min(8),
+  // PRD-2.5: Password policy alignment — 12-char min + complexity
+  password: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(128)
+    .refine(
+      (val) =>
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/.test(
+          val,
+        ),
+      {
+        message:
+          "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
+      },
+    ),
 });
 
 organizationRouter.post(
@@ -533,6 +665,39 @@ organizationRouter.post(
           data: { status: "ACCEPTED" },
         });
 
+        // PRD-2.1: Create CareTeamAssignment — link patient to org's clinician
+        const patient = await tx.patient.findUnique({
+          where: { userId: user!.id },
+          select: { id: true },
+        });
+        if (patient) {
+          // Find the org owner's clinician profile (the inviting clinician)
+          const ownerMembership = await tx.orgMembership.findFirst({
+            where: { orgId: invitation.orgId, role: "OWNER" },
+            select: { userId: true },
+          });
+          const clinicianUserId =
+            ownerMembership?.userId ?? invitation.invitedBy;
+          const clinician = await tx.clinician.findFirst({
+            where: { userId: clinicianUserId },
+            select: { id: true },
+          });
+          if (clinician) {
+            await tx.careTeamAssignment.create({
+              data: {
+                patientId: patient.id,
+                clinicianId: clinician.id,
+                role: "Primary Therapist",
+              },
+            });
+            // Increment clinician caseload
+            await tx.clinician.update({
+              where: { id: clinician.id },
+              data: { caseloadSize: { increment: 1 } },
+            });
+          }
+        }
+
         return user;
       });
 
@@ -602,11 +767,13 @@ organizationRouter.get("/", authenticate, async (req, res, next) => {
       orderBy: { joinedAt: "asc" },
     });
 
-    const organizations = memberships.map((m: typeof memberships[number]) => ({
-      ...m.organization,
-      role: m.role,
-      joinedAt: m.joinedAt,
-    }));
+    const organizations = memberships.map(
+      (m: (typeof memberships)[number]) => ({
+        ...m.organization,
+        role: m.role,
+        joinedAt: m.joinedAt,
+      }),
+    );
 
     sendSuccess(res, req, { organizations });
   } catch (err) {

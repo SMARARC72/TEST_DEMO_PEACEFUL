@@ -89,6 +89,14 @@ authRouter.post("/register", async (req, res, next) => {
   try {
     const body = registerBodySchema.parse(req.body);
 
+    // PRD-2.4: Patients must register through clinic invitation links
+    if (body.role === "PATIENT") {
+      throw new AppError(
+        "Patients must register through a clinic invitation link. Ask your provider for an invite.",
+        400,
+      );
+    }
+
     // Validate password complexity first (before any DB queries)
     const complexityRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
@@ -138,13 +146,17 @@ authRouter.post("/register", async (req, res, next) => {
       },
     });
 
-    // If patient, also create a Patient record
-    if (body.role === "PATIENT") {
-      await prisma.patient.create({
+    // NOTE: Patient record creation is handled through invite acceptance flow (organizations.ts).
+    // Self-registration as PATIENT is blocked above (PRD-2.4).
+
+    // PRD-2.2: Create Clinician profile row for clinician registrations
+    if (body.role === "CLINICIAN") {
+      await prisma.clinician.create({
         data: {
-          tenantId: tenant.id,
           userId: user.id,
-          age: 0, // will be updated in onboarding
+          credentials: "",
+          specialty: "General",
+          caseloadSize: 0,
         },
       });
     }
@@ -614,81 +626,72 @@ const changePasswordSchema = z.object({
     .max(128),
 });
 
-authRouter.post(
-  "/change-password",
-  authenticate,
-  async (req, res, next) => {
-    try {
-      const body = changePasswordSchema.parse(req.body);
-      const userId = req.user!.sub;
+authRouter.post("/change-password", authenticate, async (req, res, next) => {
+  try {
+    const body = changePasswordSchema.parse(req.body);
+    const userId = req.user!.sub;
 
-      // Validate password complexity
-      const complexityRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
-      if (!complexityRegex.test(body.newPassword)) {
-        throw new AppError(
-          "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
-          400,
-        );
-      }
-
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) throw new AppError("User not found", 404);
-
-      // Verify current password
-      const valid = await verifyPassword(
-        body.currentPassword,
-        user.passwordHash,
+    // Validate password complexity
+    const complexityRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+    if (!complexityRegex.test(body.newPassword)) {
+      throw new AppError(
+        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
+        400,
       );
-      if (!valid) {
-        throw new AppError("Current password is incorrect", 401);
-      }
-
-      // Prevent setting the same password
-      const sameAsOld = await verifyPassword(
-        body.newPassword,
-        user.passwordHash,
-      );
-      if (sameAsOld) {
-        throw new AppError(
-          "New password must be different from your current password",
-          400,
-        );
-      }
-
-      // Hash and save new password
-      const newHash = await hashPassword(body.newPassword);
-      await prisma.user.update({
-        where: { id: userId },
-        data: { passwordHash: newHash },
-      });
-
-      // Phase 5.4: Invalidate ALL refresh tokens except the current session
-      // Delete all refresh tokens for this user
-      await prisma.refreshToken.deleteMany({ where: { userId } });
-
-      authLogger.info(
-        { userId },
-        "Password changed; all other sessions invalidated",
-      );
-
-      // Generate new tokens for the current session so user stays logged in
-      const newTokens = generateTokens({
-        id: user.id,
-        tenantId: user.tenantId,
-        role: user.role as unknown as import("@peacefull/shared").UserRole,
-      });
-
-      sendSuccess(res, req, {
-        success: true,
-        message: "Password changed successfully. All other sessions have been signed out.",
-        ...newTokens,
-      });
-    } catch (err) {
-      next(err);
     }
-  },
-);
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError("User not found", 404);
+
+    // Verify current password
+    const valid = await verifyPassword(body.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new AppError("Current password is incorrect", 401);
+    }
+
+    // Prevent setting the same password
+    const sameAsOld = await verifyPassword(body.newPassword, user.passwordHash);
+    if (sameAsOld) {
+      throw new AppError(
+        "New password must be different from your current password",
+        400,
+      );
+    }
+
+    // Hash and save new password
+    const newHash = await hashPassword(body.newPassword);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash },
+    });
+
+    // Phase 5.4: Invalidate ALL refresh tokens except the current session
+    // Delete all refresh tokens for this user
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+
+    authLogger.info(
+      { userId },
+      "Password changed; all other sessions invalidated",
+    );
+
+    // Generate new tokens for the current session so user stays logged in
+    const newTokens = generateTokens({
+      id: user.id,
+      tenantId: user.tenantId,
+      role: user.role as unknown as import("@peacefull/shared").UserRole,
+    });
+
+    sendSuccess(res, req, {
+      success: true,
+      message:
+        "Password changed successfully. All other sessions have been signed out.",
+      ...newTokens,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ─── POST /step-up/verify ──────────────────────────────────────────
 // Frontend calls /step-up/verify (separate from the original /step-up)
@@ -912,86 +915,80 @@ const mfaConfirmSetupSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post(
-  "/mfa-confirm-setup",
-  authenticate,
-  async (req, res, next) => {
-    try {
-      const body = mfaConfirmSetupSchema.parse(req.body);
-      const userId = req.user!.sub;
+authRouter.post("/mfa-confirm-setup", authenticate, async (req, res, next) => {
+  try {
+    const body = mfaConfirmSetupSchema.parse(req.body);
+    const userId = req.user!.sub;
 
-      const pendingSecret = await redisGet(`mfa-setup:${userId}`);
-      if (!pendingSecret) {
-        throw new AppError(
-          "No pending MFA setup. Please start the setup process again.",
-          400,
-        );
-      }
-
-      // Verify the TOTP code against the pending secret
-      // Simple TOTP verification: generate expected code from secret and compare
-      const crypto = await import("crypto");
-      const timeStep = Math.floor(Date.now() / 30000);
-      let validCode = false;
-
-      // Check current and adjacent time steps (±1 for clock drift)
-      for (const offset of [-1, 0, 1]) {
-        const t = timeStep + offset;
-        const hmac = crypto.createHmac("sha1", pendingSecret);
-        hmac.update(Buffer.from(t.toString(16).padStart(16, "0"), "hex"));
-        const hash = hmac.digest();
-        const offsetByte = hash[hash.length - 1] & 0x0f;
-        const binary =
-          ((hash[offsetByte] & 0x7f) << 24) |
-          ((hash[offsetByte + 1] & 0xff) << 16) |
-          ((hash[offsetByte + 2] & 0xff) << 8) |
-          (hash[offsetByte + 3] & 0xff);
-        const otp = (binary % 1000000).toString().padStart(6, "0");
-        if (otp === body.code) {
-          validCode = true;
-          break;
-        }
-      }
-
-      if (!validCode) {
-        throw new AppError("Invalid verification code. Please try again.", 401);
-      }
-
-      // Enable MFA on the user record
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          mfaEnabled: true,
-          mfaMethod: "TOTP",
-          mfaSecret: pendingSecret, // In production: encrypt this with ENCRYPTION_KEY
-        },
-      });
-
-      // Clean up the pending secret
-      await redisDel(`mfa-setup:${userId}`);
-
-      // Generate backup codes
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 10; i++) {
-        backupCodes.push(
-          crypto.randomBytes(4).toString("hex").toUpperCase(),
-        );
-      }
-
-      // Store backup codes in Redis with long TTL (or in DB in production)
-      await redisSet(
-        `mfa-backup:${userId}`,
-        JSON.stringify(backupCodes),
-        365 * 24 * 3600,
+    const pendingSecret = await redisGet(`mfa-setup:${userId}`);
+    if (!pendingSecret) {
+      throw new AppError(
+        "No pending MFA setup. Please start the setup process again.",
+        400,
       );
-
-      authLogger.info({ userId }, "MFA enabled via TOTP");
-      sendSuccess(res, req, { backupCodes });
-    } catch (err) {
-      next(err);
     }
-  },
-);
+
+    // Verify the TOTP code against the pending secret
+    // Simple TOTP verification: generate expected code from secret and compare
+    const crypto = await import("crypto");
+    const timeStep = Math.floor(Date.now() / 30000);
+    let validCode = false;
+
+    // Check current and adjacent time steps (±1 for clock drift)
+    for (const offset of [-1, 0, 1]) {
+      const t = timeStep + offset;
+      const hmac = crypto.createHmac("sha1", pendingSecret);
+      hmac.update(Buffer.from(t.toString(16).padStart(16, "0"), "hex"));
+      const hash = hmac.digest();
+      const offsetByte = hash[hash.length - 1] & 0x0f;
+      const binary =
+        ((hash[offsetByte] & 0x7f) << 24) |
+        ((hash[offsetByte + 1] & 0xff) << 16) |
+        ((hash[offsetByte + 2] & 0xff) << 8) |
+        (hash[offsetByte + 3] & 0xff);
+      const otp = (binary % 1000000).toString().padStart(6, "0");
+      if (otp === body.code) {
+        validCode = true;
+        break;
+      }
+    }
+
+    if (!validCode) {
+      throw new AppError("Invalid verification code. Please try again.", 401);
+    }
+
+    // Enable MFA on the user record
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        mfaEnabled: true,
+        mfaMethod: "TOTP",
+        mfaSecret: pendingSecret, // In production: encrypt this with ENCRYPTION_KEY
+      },
+    });
+
+    // Clean up the pending secret
+    await redisDel(`mfa-setup:${userId}`);
+
+    // Generate backup codes
+    const backupCodes: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      backupCodes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
+    }
+
+    // Store backup codes in Redis with long TTL (or in DB in production)
+    await redisSet(
+      `mfa-backup:${userId}`,
+      JSON.stringify(backupCodes),
+      365 * 24 * 3600,
+    );
+
+    authLogger.info({ userId }, "MFA enabled via TOTP");
+    sendSuccess(res, req, { backupCodes });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ─── GET /tenants ────────────────────────────────────────────────────
 

@@ -8,7 +8,13 @@ import { v4 as uuidv4 } from "uuid";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { AppError } from "../middleware/error.js";
 import { sendSuccess } from "../utils/response.js";
-import { crisisLimiter, exportLimiter } from "../middleware/rate-limit.js";
+import {
+  crisisLimiter,
+  exportLimiter,
+  checkinLimiter,
+  journalLimiter,
+  voiceLimiter,
+} from "../middleware/rate-limit.js";
 import { hashChain } from "../middleware/audit.js";
 import { prisma } from "../models/index.js";
 import { processSubmission } from "../services/submission-pipeline.js";
@@ -753,7 +759,7 @@ const checkinSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-patientRouter.post("/:id/checkin", async (req, res, next) => {
+patientRouter.post("/:id/checkin", checkinLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
     const patient = await resolvePatient(req.params.id, req.user!.tid);
@@ -800,7 +806,7 @@ const journalSchema = z.object({
   category: z.string().default("free-form"),
 });
 
-patientRouter.post("/:id/journal", async (req, res, next) => {
+patientRouter.post("/:id/journal", journalLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
     const patient = await resolvePatient(req.params.id, req.user!.tid);
@@ -845,44 +851,17 @@ const voiceMemoSchema = z
   })
   .strict();
 
-patientRouter.post("/:id/voice", async (req, res, next) => {
-  try {
-    const body = voiceMemoSchema.parse(req.body);
-    // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const patient = await resolvePatient(req.params.id, req.user!.tid);
-    const audioKey = uuidv4();
-    const audioUrl = `https://s3.amazonaws.com/peacefull-uploads/voice/${audioKey}.webm`;
-
-    const row = await prisma.submission.create({
-      data: {
-        patientId: patient.id,
-        source: "VOICE_MEMO",
-        status: "PENDING",
-        rawContent: "Transcription pending…",
-        audioUrl,
-        audioDuration: 0,
-        patientTone: "pending",
-        patientSummary: "Processing voice memo…",
-        patientNextStep: "",
-        clinicianSignalBand: "LOW",
-        clinicianSummary: "Pending AI analysis",
-        clinicianEvidence: [],
-        clinicianUnknowns: [],
-      },
-    });
-
-    const memo: VoiceMemo = {
-      id: row.id,
-      patientId: patient.id,
-      audioUrl,
-      transcription: "Transcription pending…",
-      duration: 0,
-      createdAt: row.createdAt.toISOString(),
-    };
-    sendSuccess(res, req, memo, 201);
-  } catch (err) {
-    next(err);
-  }
+patientRouter.post("/:id/voice", voiceLimiter, async (_req, res, _next) => {
+  // PRD-4: Voice upload disabled for MVP — stub generates fake S3 URLs that never persist.
+  // Ship "Coming Soon" response until real S3 presigned upload is implemented.
+  res.status(501).json({
+    ok: false,
+    error: {
+      code: "FEATURE_COMING_SOON",
+      message:
+        "Voice memo upload is coming soon. This feature is under active development.",
+    },
+  });
 });
 
 // ─── GET /:id/checkin/history ────────────────────────────────────────

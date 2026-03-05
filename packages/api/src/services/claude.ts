@@ -2,10 +2,10 @@
 // Wraps the Anthropic SDK for all AI operations: summarization, chat,
 // risk assessment, memory extraction, session prep, and SDOH analysis.
 
-import Anthropic from '@anthropic-ai/sdk';
-import { v4 as uuidv4 } from 'uuid';
-import { env } from '../config/index.js';
-import { aiLogger } from '../utils/logger.js';
+import Anthropic from "@anthropic-ai/sdk";
+import { v4 as uuidv4 } from "uuid";
+import { env } from "../config/index.js";
+import { aiLogger } from "../utils/logger.js";
 import {
   CLAUDE_MODEL,
   CLAUDE_TEMPERATURE,
@@ -15,7 +15,7 @@ import {
   AIRequestType,
   type SignalBand,
   type ChatMessage,
-} from '@peacefull/shared';
+} from "@peacefull/shared";
 
 // ─── Client ──────────────────────────────────────────────────────────
 
@@ -40,12 +40,35 @@ const OUTPUT_COST_PER_TOKEN = 0.015 / 1000;
 
 function calculateCost(inputTokens: number, outputTokens: number): number {
   return (
-    inputTokens * INPUT_COST_PER_TOKEN +
-    outputTokens * OUTPUT_COST_PER_TOKEN
+    inputTokens * INPUT_COST_PER_TOKEN + outputTokens * OUTPUT_COST_PER_TOKEN
   );
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * PRD-5: PII minimization — strips names, phones, emails, SSN/DOB patterns
+ * before sending to Claude. Reduces risk surface if model leaks context.
+ */
+function sanitizeForAI(text: string): string {
+  return (
+    text
+      // Email addresses
+      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
+      // Phone numbers (US formats)
+      .replace(
+        /(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+        "[PHONE]",
+      )
+      // SSN patterns
+      .replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[SSN]")
+      // Date of birth patterns (MM/DD/YYYY, YYYY-MM-DD)
+      .replace(
+        /\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2})\b/g,
+        "[DATE]",
+      )
+  );
+}
 
 interface ClaudeCallResult {
   content: string;
@@ -70,12 +93,12 @@ async function callClaude(
       max_tokens: options?.maxTokens ?? MAX_CLAUDE_TOKENS,
       temperature: options?.temperature ?? CLAUDE_TEMPERATURE,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [{ role: "user", content: userMessage }],
     });
 
     const latency = Date.now() - start;
-    const textBlock = response.content.find((b) => b.type === 'text');
-    const content = textBlock ? textBlock.text : '';
+    const textBlock = response.content.find((b) => b.type === "text");
+    const content = textBlock ? textBlock.text : "";
 
     return {
       content,
@@ -84,7 +107,7 @@ async function callClaude(
       latency,
     };
   } catch (err) {
-    aiLogger.error({ err }, 'Claude API call failed');
+    aiLogger.error({ err }, "Claude API call failed");
     throw err;
   }
 }
@@ -95,7 +118,11 @@ async function callClaude(
 function buildResponse(
   type: AIRequestType,
   result: ClaudeCallResult,
-  extra?: { signalBand?: SignalBand; confidence?: number; structured?: Record<string, unknown> },
+  extra?: {
+    signalBand?: SignalBand;
+    confidence?: number;
+    structured?: Record<string, unknown>;
+  },
 ): AIResponse {
   const cost = calculateCost(result.inputTokens, result.outputTokens);
 
@@ -107,7 +134,7 @@ function buildResponse(
       cost: cost.toFixed(6),
       latencyMs: result.latency,
     },
-    'Claude call completed',
+    "Claude call completed",
   );
 
   return {
@@ -157,13 +184,16 @@ Output a JSON object with:
 - "signalBand": one of LOW, GUARDED, MODERATE, ELEVATED
 - "evidence": array of key quotes or observations
 - "unknowns": array of things you're uncertain about
-${context ? `\nPatient context: ${JSON.stringify(context)}` : ''}`;
+${context ? `\nPatient context: ${JSON.stringify(context)}` : ""}`;
 
     try {
-      const result = await callClaude(systemPrompt, content);
+      const result = await callClaude(systemPrompt, sanitizeForAI(content));
       return buildResponse(AIRequestType.SUMMARIZE, result);
     } catch {
-      return fallbackResponse(AIRequestType.SUMMARIZE, 'Summarization temporarily unavailable');
+      return fallbackResponse(
+        AIRequestType.SUMMARIZE,
+        "Summarization temporarily unavailable",
+      );
     }
   },
 
@@ -175,7 +205,7 @@ ${context ? `\nPatient context: ${JSON.stringify(context)}` : ''}`;
    * @param patientContext - Memory and clinical context for personalization.
    */
   async chat(
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    messages: Array<{ role: "user" | "assistant"; content: string }>,
     patientContext?: Record<string, unknown>,
   ): Promise<AIResponse> {
     const systemPrompt = `${CSP_SYSTEM_PROMPT}
@@ -185,7 +215,7 @@ You are having a supportive conversation with a patient between therapy sessions
 - Guide them through reflection and coping strategies
 - NEVER provide diagnoses, medication advice, or treatment changes
 - If they express crisis indicators, gently encourage contacting their crisis line
-${patientContext ? `\nApproved patient context: ${JSON.stringify(patientContext)}` : ''}`;
+${patientContext ? `\nApproved patient context: ${JSON.stringify(patientContext)}` : ""}`;
 
     try {
       const start = Date.now();
@@ -198,10 +228,10 @@ ${patientContext ? `\nApproved patient context: ${JSON.stringify(patientContext)
       });
 
       const latency = Date.now() - start;
-      const textBlock = response.content.find((b) => b.type === 'text');
+      const textBlock = response.content.find((b) => b.type === "text");
 
       const result: ClaudeCallResult = {
-        content: textBlock?.text ?? '',
+        content: textBlock?.text ?? "",
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
         latency,
@@ -209,7 +239,10 @@ ${patientContext ? `\nApproved patient context: ${JSON.stringify(patientContext)
 
       return buildResponse(AIRequestType.CHAT, result);
     } catch {
-      return fallbackResponse(AIRequestType.CHAT, 'I\'m having trouble responding right now. Please try again in a moment, or reach out to your care team if you need immediate support.');
+      return fallbackResponse(
+        AIRequestType.CHAT,
+        "I'm having trouble responding right now. Please try again in a moment, or reach out to your care team if you need immediate support.",
+      );
     }
   },
 
@@ -221,7 +254,12 @@ ${patientContext ? `\nApproved patient context: ${JSON.stringify(patientContext)
    */
   async assessRisk(
     content: string,
-    checkinData?: { mood: number; stress: number; sleep: number; focus: number },
+    checkinData?: {
+      mood: number;
+      stress: number;
+      sleep: number;
+      focus: number;
+    },
   ): Promise<AIResponse> {
     const systemPrompt = `${CSP_SYSTEM_PROMPT}
 
@@ -232,7 +270,7 @@ Output a JSON object with:
 - "reasoning": detailed clinical reasoning for the classification
 - "keyIndicators": array of specific phrases or data points that informed the assessment
 - "recommendations": array of suggested clinician actions
-${checkinData ? `\nCheck-in scores: mood=${checkinData.mood}/10, stress=${checkinData.stress}/10, sleep=${checkinData.sleep}/10, focus=${checkinData.focus}/10` : ''}`;
+${checkinData ? `\nCheck-in scores: mood=${checkinData.mood}/10, stress=${checkinData.stress}/10, sleep=${checkinData.sleep}/10, focus=${checkinData.focus}/10` : ""}`;
 
     try {
       const result = await callClaude(systemPrompt, content);
@@ -240,7 +278,10 @@ ${checkinData ? `\nCheck-in scores: mood=${checkinData.mood}/10, stress=${checki
         confidence: 0.85, // Parsed from response in production
       });
     } catch {
-      return fallbackResponse(AIRequestType.RISK_ASSESS, 'Risk assessment temporarily unavailable — manual review required');
+      return fallbackResponse(
+        AIRequestType.RISK_ASSESS,
+        "Risk assessment temporarily unavailable — manual review required",
+      );
     }
   },
 
@@ -267,7 +308,10 @@ IMPORTANT: These are PROPOSALS only. They will be reviewed by a clinician before
       const result = await callClaude(systemPrompt, content);
       return buildResponse(AIRequestType.MEMORY_EXTRACT, result);
     } catch {
-      return fallbackResponse(AIRequestType.MEMORY_EXTRACT, 'Memory extraction temporarily unavailable');
+      return fallbackResponse(
+        AIRequestType.MEMORY_EXTRACT,
+        "Memory extraction temporarily unavailable",
+      );
     }
   },
 
@@ -297,7 +341,10 @@ Output a JSON object with:
       const result = await callClaude(systemPrompt, userMessage);
       return buildResponse(AIRequestType.SESSION_PREP, result);
     } catch {
-      return fallbackResponse(AIRequestType.SESSION_PREP, 'Session prep generation temporarily unavailable');
+      return fallbackResponse(
+        AIRequestType.SESSION_PREP,
+        "Session prep generation temporarily unavailable",
+      );
     }
   },
 
@@ -324,13 +371,122 @@ Output a JSON object with categories:
 This is a DRAFT assessment requiring clinician review.`;
 
     try {
-      const result = await callClaude(
-        systemPrompt,
-        JSON.stringify(intakeData),
-      );
+      const result = await callClaude(systemPrompt, JSON.stringify(intakeData));
       return buildResponse(AIRequestType.SDOH_ANALYZE, result);
     } catch {
-      return fallbackResponse(AIRequestType.SDOH_ANALYZE, 'SDOH analysis temporarily unavailable');
+      return fallbackResponse(
+        AIRequestType.SDOH_ANALYZE,
+        "SDOH analysis temporarily unavailable",
+      );
+    }
+  },
+
+  /**
+   * PRD-1.4: Generates a structured Clinical AI Summary from a chat session transcript.
+   * Produces evidence-cited recommendations, pattern flags, risk indicators, and unknowns.
+   * Output is ALWAYS a DRAFT requiring clinician review before any clinical use.
+   *
+   * @param transcript - Full chat transcript (timestamped, role-labeled lines).
+   * @param context - Approved memories, recent signals, treatment goals, demographics.
+   */
+  async generateChatSummary(
+    transcript: string,
+    context?: {
+      patient?: {
+        age?: number;
+        pronouns?: string | null;
+        diagnosisPrimary?: string | null;
+        diagnosisCode?: string | null;
+        treatmentStart?: Date | null;
+      };
+      approvedMemories?: Array<{ category: string; statement: string }>;
+      recentSignals?: Array<{
+        band: string | null;
+        date: string;
+        source: string;
+      }>;
+      treatmentGoals?: Array<{ goal: string; intervention: string }>;
+    },
+  ): Promise<AIResponse> {
+    const systemPrompt = `${CSP_SYSTEM_PROMPT}
+
+You are generating a CLINICAL AI SUMMARY of a patient-AI chat session for clinician review.
+
+ABSOLUTE GUARDRAILS:
+- You NEVER diagnose. Every observation is a recommendation for clinician consideration.
+- You NEVER name specific medications or dosages.
+- You MUST state uncertainty where evidence is insufficient.
+- If crisis indicators are present, flag them in riskIndicators with ELEVATED signal band.
+- All outputs are DRAFTS. The clinician must approve before any clinical action.
+
+CITATION REQUIREMENTS:
+- Cite peer-reviewed publications where applicable (APA guidelines, NICE guidelines, DSM-5-TR criteria, Cochrane reviews).
+- Every citation must include: publication name, year, and an evidence grade (A = strong RCT, B = moderate evidence, C = expert consensus, N = no direct evidence).
+- If no citation exists for a pattern, use grade N and state "based on clinical observation patterns."
+
+OUTPUT FORMAT — respond with ONLY a valid JSON object:
+{
+  "clinicianSummary": "Structured clinical observation summary (SOAP-style). Include: presenting concerns, emotional state observed, coping strategies mentioned, engagement quality.",
+  "recommendations": [
+    {
+      "title": "Short recommendation title",
+      "description": "Detailed clinical recommendation",
+      "reasoning": "Why this recommendation is made based on the transcript",
+      "evidenceCitations": [
+        { "publication": "Source name", "year": 2024, "grade": "A|B|C|N", "excerpt": "Relevant finding" }
+      ],
+      "signalBand": "LOW|GUARDED|MODERATE|ELEVATED",
+      "category": "COPING|RISK|ENGAGEMENT|THERAPEUTIC_ALLIANCE|PROGRESS|CRISIS"
+    }
+  ],
+  "evidenceLog": [
+    {
+      "patientStatement": "Direct quote from transcript",
+      "clinicalPattern": "Identified clinical pattern",
+      "citedPublication": "Source name or null",
+      "publicationYear": 2024,
+      "evidenceGrade": "A|B|C|N",
+      "relevantExcerpt": "Excerpt from cited publication"
+    }
+  ],
+  "patternFlags": [
+    {
+      "pattern": "Identified behavioral or emotional pattern",
+      "frequency": "How often observed in transcript",
+      "severity": "LOW|MODERATE|HIGH",
+      "suggestedIntervention": "Brief intervention suggestion"
+    }
+  ],
+  "riskIndicators": [
+    {
+      "indicator": "Risk factor identified",
+      "contextQuote": "Supporting quote from transcript",
+      "signalBand": "LOW|GUARDED|MODERATE|ELEVATED"
+    }
+  ],
+  "unknowns": ["Things the AI could NOT determine from the transcript"]
+}
+
+${context?.patient ? `\nPatient demographics: age ${context.patient.age}, pronouns ${context.patient.pronouns ?? "not specified"}, primary diagnosis ${context.patient.diagnosisPrimary ?? "not disclosed"} (${context.patient.diagnosisCode ?? "no code"}), treatment started ${context.patient.treatmentStart?.toISOString?.() ?? "unknown"}` : ""}
+${context?.approvedMemories?.length ? `\nApproved memories:\n${context.approvedMemories.map((m) => `- [${m.category}] ${m.statement}`).join("\n")}` : ""}
+${context?.recentSignals?.length ? `\nRecent signal history:\n${context.recentSignals.map((s) => `- ${s.date}: ${s.band} (${s.source})`).join("\n")}` : ""}
+${context?.treatmentGoals?.length ? `\nActive treatment goals:\n${context.treatmentGoals.map((g) => `- Goal: ${g.goal} | Intervention: ${g.intervention}`).join("\n")}` : ""}`;
+
+    try {
+      const result = await callClaude(
+        systemPrompt,
+        `CHAT TRANSCRIPT:\n${sanitizeForAI(transcript)}`,
+        {
+          maxTokens: 4096,
+          temperature: 0.3,
+        },
+      );
+      return buildResponse(AIRequestType.SUMMARIZE, result);
+    } catch {
+      return fallbackResponse(
+        AIRequestType.SUMMARIZE,
+        "Clinical AI Summary generation temporarily unavailable — manual review required",
+      );
     }
   },
 };

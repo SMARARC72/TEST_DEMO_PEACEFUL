@@ -120,3 +120,33 @@ export const exportLimiter: ReturnType<typeof rateLimit> = createLimiter({
   windowMs: 60 * 60 * 1000,
   max: 3,
 });
+
+// ─── Patient Write Rate Limiters (PRD-5) ──────────────────────────────
+
+/**
+ * Check-in rate limiter — 1 check-in per 60 seconds per user.
+ * Prevents accidental double submissions.
+ */
+export const checkinLimiter: ReturnType<typeof rateLimit> = createLimiter({
+  windowMs: 60 * 1000,
+  max: 1,
+  keyGenerator: (req) => `checkin:${(req as any).user?.sub ?? req.ip}`,
+});
+
+/**
+ * Journal rate limiter — 5 submissions per 60 seconds per user.
+ */
+export const journalLimiter: ReturnType<typeof rateLimit> = createLimiter({
+  windowMs: 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => `journal:${(req as any).user?.sub ?? req.ip}`,
+});
+
+/**
+ * Voice memo rate limiter — 3 uploads per 60 seconds per user.
+ */
+export const voiceLimiter: ReturnType<typeof rateLimit> = createLimiter({
+  windowMs: 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => `voice:${(req as any).user?.sub ?? req.ip}`,
+});

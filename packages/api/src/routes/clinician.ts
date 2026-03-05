@@ -12,6 +12,7 @@ import { crisisLimiter, exportLimiter } from "../middleware/rate-limit.js";
 import { UserRole } from "@peacefull/shared";
 import { prisma } from "../models/index.js";
 import { sendSuccess } from "../utils/response.js";
+import { claudeService } from "../services/claude.js";
 
 export const clinicianRouter = Router();
 
@@ -259,13 +260,39 @@ clinicianRouter.get("/patients/:id", async (req, res, next) => {
         user: { select: { firstName: true, lastName: true } },
         submissions: {
           orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { createdAt: true },
+          take: 10,
+          select: {
+            id: true,
+            source: true,
+            status: true,
+            clinicianSignalBand: true,
+            patientSummary: true,
+            createdAt: true,
+          },
         },
         triageItems: {
           orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { signalBand: true },
+          take: 10,
+          select: {
+            id: true,
+            signalBand: true,
+            summary: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        aiDrafts: {
+          where: { status: "DRAFT" },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: {
+            id: true,
+            content: true,
+            format: true,
+            status: true,
+            modelVersion: true,
+            createdAt: true,
+          },
         },
       },
     });
@@ -274,6 +301,33 @@ clinicianRouter.get("/patients/:id", async (req, res, next) => {
     const submissionCount = await prisma.submission.count({
       where: { patientId: patient.id },
     });
+
+    // PRD-3.1: Enriched response — recentCheckins, recentJournals, signalHistory
+    const recentCheckins = patient.submissions
+      .filter((s) => s.source === "CHECKIN")
+      .slice(0, 5)
+      .map((s) => ({
+        id: s.id,
+        signalBand: s.clinicianSignalBand,
+        summary: s.patientSummary,
+        createdAt: s.createdAt,
+      }));
+    const recentJournals = patient.submissions
+      .filter((s) => s.source === "JOURNAL")
+      .slice(0, 5)
+      .map((s) => ({
+        id: s.id,
+        signalBand: s.clinicianSignalBand,
+        summary: s.patientSummary,
+        createdAt: s.createdAt,
+      }));
+    const signalHistory = patient.submissions
+      .filter((s) => s.clinicianSignalBand)
+      .slice(0, 10)
+      .map((s) => ({
+        date: s.createdAt,
+        signalBand: s.clinicianSignalBand,
+      }));
 
     sendSuccess(res, req, {
       id: patient.id,
@@ -291,6 +345,11 @@ clinicianRouter.get("/patients/:id", async (req, res, next) => {
       recentSignalBand: patient.triageItems[0]?.signalBand ?? null,
       submissionCount,
       lastSubmission: patient.submissions[0]?.createdAt ?? null,
+      recentCheckins,
+      recentJournals,
+      triageItems: patient.triageItems,
+      drafts: patient.aiDrafts,
+      signalHistory,
     });
   } catch (err) {
     next(err);
@@ -1277,6 +1336,10 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
       pendingDrafts,
       openEscalations,
       avgMBC,
+      totalChatSessions,
+      pendingSummaries,
+      approvedSummaries,
+      recentTriageElevated,
     ] = await Promise.all([
       prisma.careTeamAssignment.count({
         where: { clinicianId: clinician.id, active: true },
@@ -1294,6 +1357,22 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         where: { patientId: { in: patientIds }, date: { gte: since } },
         _avg: { score: true },
       }),
+      prisma.chatSession.count({
+        where: { patientId: { in: patientIds }, createdAt: { gte: since } },
+      }),
+      prisma.chatSessionSummary.count({
+        where: { patientId: { in: patientIds }, status: "DRAFT" },
+      }),
+      prisma.chatSessionSummary.count({
+        where: { patientId: { in: patientIds }, status: "APPROVED" },
+      }),
+      prisma.triageItem.count({
+        where: {
+          patientId: { in: patientIds },
+          signalBand: "ELEVATED",
+          createdAt: { gte: since },
+        },
+      }),
     ]);
 
     sendSuccess(res, req, {
@@ -1308,8 +1387,380 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
           ? Math.round((totalSubmissions / (totalPatients * daysBack)) * 100) /
             100
           : 0,
+      totalChatSessions,
+      pendingSummaries,
+      approvedSummaries,
+      recentTriageElevated,
     });
   } catch (err) {
     next(err);
   }
 });
+
+// ─── CHAT TRANSCRIPT ACCESS ──────────────────────────────────────────
+// PRD-3.2: Clinicians can view patient chat sessions and full transcripts.
+
+// GET /patients/:id/chat-sessions — list sessions with message count & duration
+clinicianRouter.get("/patients/:id/chat-sessions", async (req, res, next) => {
+  try {
+    const patientId = req.params.id!;
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+    const sessions = await prisma.chatSession.findMany({
+      where: { patientId },
+      include: {
+        _count: { select: { messages: true } },
+        messages: {
+          orderBy: { createdAt: "asc" },
+          select: { createdAt: true },
+          take: 1,
+        },
+        summaries: {
+          select: { id: true, status: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const result = sessions.map((s) => {
+      const firstMsg = s.messages[0];
+      const durationMs = firstMsg
+        ? s.updatedAt.getTime() - firstMsg.createdAt.getTime()
+        : 0;
+      return {
+        id: s.id,
+        patientId: s.patientId,
+        active: s.active,
+        messageCount: s._count.messages,
+        durationMinutes: Math.round(durationMs / 60000),
+        latestSummary: s.summaries[0] ?? null,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+      };
+    });
+
+    sendSuccess(res, req, result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /patients/:id/chat-sessions/:sessionId — full chat transcript
+clinicianRouter.get(
+  "/patients/:id/chat-sessions/:sessionId",
+  async (req, res, next) => {
+    try {
+      const patientId = req.params.id!;
+      const sessionId = req.params.sessionId!;
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+      const session = await prisma.chatSession.findFirst({
+        where: { id: sessionId, patientId },
+        include: {
+          messages: { orderBy: { createdAt: "asc" } },
+          summaries: {
+            select: { id: true, status: true, createdAt: true },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+
+      if (!session) throw new AppError("Chat session not found", 404);
+
+      sendSuccess(res, req, {
+        id: session.id,
+        patientId: session.patientId,
+        active: session.active,
+        messages: session.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          memoryRef: m.memoryRef,
+          createdAt: m.createdAt.toISOString(),
+        })),
+        summaries: session.summaries,
+        createdAt: session.createdAt.toISOString(),
+        updatedAt: session.updatedAt.toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── CLINICAL AI SUMMARY SYSTEM ──────────────────────────────────────
+// PRD-3.3: Generate, list, view, and review AI chat summaries.
+
+// POST /patients/:id/chat-sessions/:sessionId/summarize — trigger AI summary
+clinicianRouter.post(
+  "/patients/:id/chat-sessions/:sessionId/summarize",
+  async (req, res, next) => {
+    try {
+      const patientId = req.params.id!;
+      const sessionId = req.params.sessionId!;
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+      // Verify session exists and belongs to patient
+      const session = await prisma.chatSession.findFirst({
+        where: { id: sessionId, patientId },
+        include: { messages: { orderBy: { createdAt: "asc" } } },
+      });
+      if (!session) throw new AppError("Chat session not found", 404);
+      if (session.messages.length === 0)
+        throw new AppError("Cannot summarize an empty session", 400);
+
+      // Gather patient context for richer summary
+      const [patient, approvedMemories, recentSignals, treatmentGoals] =
+        await Promise.all([
+          prisma.patient.findUnique({
+            where: { id: patientId },
+            select: {
+              age: true,
+              pronouns: true,
+              diagnosisPrimary: true,
+              diagnosisCode: true,
+              treatmentStart: true,
+            },
+          }),
+          prisma.memoryProposal.findMany({
+            where: { patientId, status: "APPROVED" },
+            select: { category: true, statement: true },
+            take: 20,
+          }),
+          prisma.submission.findMany({
+            where: { patientId, clinicianSignalBand: { not: null } },
+            orderBy: { createdAt: "desc" },
+            select: {
+              clinicianSignalBand: true,
+              createdAt: true,
+              source: true,
+            },
+            take: 10,
+          }),
+          prisma.treatmentPlan.findMany({
+            where: { patientId, status: "ACTIVE" },
+            select: { goal: true, intervention: true },
+            take: 5,
+          }),
+        ]);
+
+      // Build transcript string
+      const transcript = session.messages
+        .map(
+          (m) =>
+            `[${m.createdAt.toISOString()}] ${m.role === "USER" ? "Patient" : m.role === "ASSISTANT" ? "AI" : "System"}: ${m.content}`,
+        )
+        .join("\n");
+
+      // Call Claude for structured summary
+      const aiResult = await claudeService.generateChatSummary(transcript, {
+        patient: patient ?? undefined,
+        approvedMemories,
+        recentSignals: recentSignals.map((s) => ({
+          band: s.clinicianSignalBand,
+          date: s.createdAt.toISOString(),
+          source: s.source,
+        })),
+        treatmentGoals: treatmentGoals.map((t) => ({
+          goal: t.goal,
+          intervention: t.intervention,
+        })),
+      });
+
+      // Parse structured output from AI
+      let parsed: Record<string, unknown> = {};
+      try {
+        parsed = JSON.parse(aiResult.output.content);
+      } catch {
+        // If not valid JSON, store the raw content as clinicianSummary
+        parsed = { clinicianSummary: aiResult.output.content };
+      }
+
+      // Persist to database
+      const summary = await prisma.chatSessionSummary.create({
+        data: {
+          sessionId,
+          patientId,
+          clinicianSummary:
+            (parsed.clinicianSummary as string) ?? aiResult.output.content,
+          recommendations: (parsed.recommendations as object) ?? [],
+          evidenceLog: (parsed.evidenceLog as object) ?? [],
+          patternFlags: (parsed.patternFlags as object) ?? [],
+          riskIndicators: (parsed.riskIndicators as object) ?? [],
+          unknowns: (parsed.unknowns as object) ?? [],
+          modelVersion: aiResult.model,
+          tokenUsage: aiResult.usage as object,
+          status: "DRAFT",
+        },
+      });
+
+      sendSuccess(res, req, { id: summary.id, status: summary.status }, 201);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /patients/:id/chat-summaries — list all summaries for a patient
+clinicianRouter.get("/patients/:id/chat-summaries", async (req, res, next) => {
+  try {
+    const patientId = req.params.id!;
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+    const statusFilter = req.query.status?.toString();
+    const where: Record<string, unknown> = { patientId };
+    if (
+      statusFilter &&
+      ["DRAFT", "REVIEWED", "APPROVED", "REJECTED", "ESCALATED"].includes(
+        statusFilter,
+      )
+    ) {
+      where.status = statusFilter;
+    }
+
+    const summaries = await prisma.chatSessionSummary.findMany({
+      where,
+      include: {
+        session: { select: { createdAt: true, active: true } },
+        reviewedBy: {
+          select: { id: true, firstName: true, lastName: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    sendSuccess(
+      res,
+      req,
+      summaries.map((s) => ({
+        id: s.id,
+        sessionId: s.sessionId,
+        status: s.status,
+        modelVersion: s.modelVersion,
+        reviewedBy: s.reviewedBy
+          ? {
+              id: s.reviewedBy.id,
+              name: `${s.reviewedBy.firstName} ${s.reviewedBy.lastName}`,
+            }
+          : null,
+        reviewedAt: s.reviewedAt?.toISOString() ?? null,
+        sessionCreatedAt: s.session.createdAt.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+      })),
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /patients/:id/chat-summaries/:summaryId — full summary detail
+clinicianRouter.get(
+  "/patients/:id/chat-summaries/:summaryId",
+  async (req, res, next) => {
+    try {
+      const patientId = req.params.id!;
+      const summaryId = req.params.summaryId!;
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+      const summary = await prisma.chatSessionSummary.findFirst({
+        where: { id: summaryId, patientId },
+        include: {
+          session: {
+            select: {
+              createdAt: true,
+              active: true,
+              _count: { select: { messages: true } },
+            },
+          },
+          reviewedBy: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
+      });
+
+      if (!summary) throw new AppError("Summary not found", 404);
+
+      sendSuccess(res, req, {
+        id: summary.id,
+        sessionId: summary.sessionId,
+        patientId: summary.patientId,
+        clinicianSummary: summary.clinicianSummary,
+        recommendations: summary.recommendations,
+        evidenceLog: summary.evidenceLog,
+        patternFlags: summary.patternFlags,
+        riskIndicators: summary.riskIndicators,
+        unknowns: summary.unknowns,
+        modelVersion: summary.modelVersion,
+        tokenUsage: summary.tokenUsage,
+        status: summary.status,
+        reviewedBy: summary.reviewedBy
+          ? {
+              id: summary.reviewedBy.id,
+              name: `${summary.reviewedBy.firstName} ${summary.reviewedBy.lastName}`,
+            }
+          : null,
+        reviewedAt: summary.reviewedAt?.toISOString() ?? null,
+        reviewNotes: summary.reviewNotes,
+        session: {
+          createdAt: summary.session.createdAt.toISOString(),
+          active: summary.session.active,
+          messageCount: summary.session._count.messages,
+        },
+        createdAt: summary.createdAt.toISOString(),
+        updatedAt: summary.updatedAt.toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /patients/:id/chat-summaries/:summaryId — clinician review (approve/reject)
+const reviewSummarySchema = z.object({
+  action: z.enum(["APPROVED", "REJECTED", "ESCALATED"]),
+  notes: z.string().max(2000).optional(),
+});
+
+clinicianRouter.patch(
+  "/patients/:id/chat-summaries/:summaryId",
+  async (req, res, next) => {
+    try {
+      const patientId = req.params.id!;
+      const summaryId = req.params.summaryId!;
+      await requireCaseloadAccess(req.user!.sub, req.user!.tid, patientId);
+
+      const body = reviewSummarySchema.parse(req.body);
+
+      const existing = await prisma.chatSessionSummary.findFirst({
+        where: { id: summaryId, patientId },
+      });
+      if (!existing) throw new AppError("Summary not found", 404);
+      if (existing.status !== "DRAFT" && existing.status !== "REVIEWED") {
+        throw new AppError(
+          `Cannot review a summary with status ${existing.status}`,
+          400,
+        );
+      }
+
+      const updated = await prisma.chatSessionSummary.update({
+        where: { id: summaryId },
+        data: {
+          status: body.action,
+          reviewedById: req.user!.sub,
+          reviewedAt: new Date(),
+          reviewNotes: body.notes ?? null,
+        },
+      });
+
+      sendSuccess(res, req, {
+        id: updated.id,
+        status: updated.status,
+        reviewedAt: updated.reviewedAt?.toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

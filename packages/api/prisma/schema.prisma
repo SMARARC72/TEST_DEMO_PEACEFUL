@@ -62,6 +62,7 @@ model User {
   auditLogs   AuditLog[]
   draftReviews AIDraft[]   @relation("ReviewedDrafts")
   memoryReviews MemoryProposal[] @relation("ReviewedMemories")
+  summaryReviews ChatSessionSummary[] @relation("ReviewedSummaries")
   orgMemberships OrgMembership[]
   sentInvitations OrgInvitation[] @relation("InvitedBy")
 
@@ -145,6 +146,7 @@ model Patient {
   progressData    ProgressData?
   sdohAssessments SDOHAssessment[]
   chatSessions    ChatSession[]
+  chatSessionSummaries ChatSessionSummary[]
   consentRecords  ConsentRecord[]
 
   @@index([tenantId])
@@ -525,8 +527,9 @@ model ChatSession {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  patient  Patient       @relation(fields: [patientId], references: [id])
-  messages ChatMessage[]
+  patient   Patient              @relation(fields: [patientId], references: [id])
+  messages  ChatMessage[]
+  summaries ChatSessionSummary[]
 
   @@index([patientId])
   @@map("chat_sessions")
@@ -544,6 +547,36 @@ model ChatMessage {
 
   @@index([sessionId])
   @@map("chat_messages")
+}
+
+// PRD-1.3: Clinical AI Chat Session Summary — evidence-cited recommendations for clinicians
+model ChatSessionSummary {
+  id               String      @id @default(uuid())
+  sessionId        String
+  patientId        String
+  clinicianSummary String      // encrypted PHI — structured clinical observations
+  recommendations  Json        @default("[]") // [{title, description, reasoning, evidenceCitations[], signalBand, category}]
+  evidenceLog      Json        @default("[]") // [{patientStatement, clinicalPattern, citedPublication, publicationYear, evidenceGrade, relevantExcerpt}]
+  patternFlags     Json        @default("[]") // [{pattern, frequency, severity, suggestedIntervention}]
+  riskIndicators   Json        @default("[]") // [{indicator, contextQuote, signalBand}]
+  unknowns         Json        @default("[]") // string[] — what the AI could NOT determine
+  modelVersion     String      @default("claude-sonnet-4-20250514")
+  tokenUsage       Json        @default("{}")
+  status           DraftStatus @default(DRAFT)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  session    ChatSession @relation(fields: [sessionId], references: [id])
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  reviewedBy User?       @relation("ReviewedSummaries", fields: [reviewedById], references: [id])
+
+  @@index([patientId])
+  @@index([sessionId])
+  @@index([status])
+  @@map("chat_session_summaries")
 }
 
 enum ChatRole {
