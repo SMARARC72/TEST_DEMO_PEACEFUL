@@ -98,7 +98,16 @@ export default function RegistrationSuccessPage() {
 
           <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
             <p>📧 A confirmation email has been sent to <span className="font-medium">{email || 'your email'}</span></p>
+            <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+              Please check your inbox and spam folder. The email may take a few minutes to arrive.
+            </p>
           </div>
+
+          {(import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.VITE_ENV === 'demo') && (
+            <div className="mt-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
+              <p><strong>Demo mode:</strong> Emails are simulated — no actual email will be delivered. Your account is ready to use.</p>
+            </div>
+          )}
 
           <Button className="mt-8 w-full" onClick={handleContinue}>
             {isPending ? 'Back to Sign In' : 'Continue'}

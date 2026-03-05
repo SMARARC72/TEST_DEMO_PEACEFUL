@@ -9,6 +9,12 @@ import type { EscalationItem } from "@peacefull/shared";
 
 const isProduction = env.NODE_ENV === "production";
 
+// Allow email sending when SES credentials are explicitly configured, even in non-production
+// This enables staging/development environments to test real email delivery.
+const sesCredentialsConfigured = !!(
+  process.env.SES_FROM_EMAIL || process.env.AWS_ACCESS_KEY_ID
+);
+
 // ─── SES Client (lazy-initialized) ──────────────────────────────────
 
 let sesClient: import("@aws-sdk/client-ses").SESClient | null = null;
@@ -16,7 +22,7 @@ let sesClient: import("@aws-sdk/client-ses").SESClient | null = null;
 async function getSESClient(): Promise<
   import("@aws-sdk/client-ses").SESClient | null
 > {
-  if (!isProduction) return null;
+  if (!isProduction && !sesCredentialsConfigured) return null;
   if (sesClient) return sesClient;
   try {
     const { SESClient } = await import("@aws-sdk/client-ses");
@@ -46,10 +52,10 @@ export async function sendEmail(
   template: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  if (!isProduction) {
+  if (!isProduction && !sesCredentialsConfigured) {
     apiLogger.info(
       { to, subject, template, data },
-      "[DEV] Email notification (logged, not sent)",
+      "[DEV] Email notification (logged, not sent — set SES_FROM_EMAIL to enable)",
     );
     return;
   }

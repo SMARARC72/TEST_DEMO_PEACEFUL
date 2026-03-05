@@ -39,8 +39,50 @@ const FALLBACK_RESPONSES = [
   "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
 ];
 
+/** Contextual AI responses that reference user input — used in demo/mock mode */
+function getDemoResponse(userMessage: string): string {
+  const snippet = userMessage.slice(0, 60);
+  const contextual = [
+    `I hear you, and I appreciate you sharing that. You mentioned "${snippet}" — let's unpack that together. What feels most important about this right now?`,
+    `Thank you for opening up about that. When you say "${snippet}", I notice there might be some strong feelings there. Can you tell me more about what's behind those words?`,
+    `That's a really thoughtful observation. You brought up "${snippet}" — between sessions, it can help to notice patterns in how we're feeling. Would you like to explore that further?`,
+    `I'm glad you reached out. You mentioned "${snippet}". Remember, every step — even a small one — counts. What's one thing that's helped you feel better recently?`,
+    `I understand. "${snippet}" is something worth exploring together. Let's take a moment to reflect — what do you think is the strongest emotion right now?`,
+  ];
+  return contextual[Math.floor(Math.random() * contextual.length)] ?? contextual[0] ?? '';
+}
+
 function getRandomFallback(): string {
   return FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)] ?? FALLBACK_RESPONSES[0] ?? '';
+}
+
+/** Whether we're running in demo/mock mode (MSW active) */
+const IS_DEMO_MODE = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.VITE_ENV === 'demo';
+
+/** Simulate word-by-word streaming in demo mode (bypasses MSW service worker SSE issues) */
+async function simulateDemoStream(
+  userMessage: string,
+  assistantId: string,
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
+  setSessionId: React.Dispatch<React.SetStateAction<string | null>>,
+  signal: AbortSignal,
+): Promise<void> {
+  const reply = getDemoResponse(userMessage);
+  const words = reply.split(' ');
+  const mockSid = `session-${Date.now()}`;
+  setSessionId((prev) => prev ?? mockSid);
+
+  let accumulated = '';
+  for (let i = 0; i < words.length; i++) {
+    if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+    const word = (words[i] ?? '') + (i < words.length - 1 ? ' ' : '');
+    accumulated += word;
+    const snapshot = accumulated;
+    setMessages((prev) =>
+      prev.map((m) => (m.id === assistantId ? { ...m, content: snapshot } : m)),
+    );
+    await new Promise((r) => setTimeout(r, 40 + Math.random() * 30));
+  }
 }
 
 export default function ChatPage() {
@@ -122,6 +164,13 @@ export default function ChatPage() {
         abortControllerRef.current?.abort();
       }, CHAT_TIMEOUT_MS);
 
+      // ─── Demo mode: simulate streaming locally (avoids MSW service-worker SSE issues) ───
+      if (IS_DEMO_MODE) {
+        await simulateDemoStream(text, assistantId, setMessages, setSessionId, abortControllerRef.current.signal);
+        return; // finally block still runs
+      }
+
+      // ─── Production: real SSE streaming to backend AI ───
       const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
       const token = useAuthStore.getState().accessToken;
       const patientId = resolvedPatientId ?? user?.id ?? '';
@@ -188,6 +237,14 @@ export default function ChatPage() {
         }
 
         if (streamDone) break;
+      }
+
+      // Safety net: if SSE ended with no content, use a fallback
+      if (!accumulated.trim()) {
+        const fallback = getDemoResponse(text);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: fallback } : m)),
+        );
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {

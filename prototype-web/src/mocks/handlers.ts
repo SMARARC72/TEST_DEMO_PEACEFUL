@@ -31,8 +31,29 @@ function mockJson<T>(payload: T, status = 200) {
 // ─── Seed data ───────────────────────────────
 
 // Session-aware user tracking: stores the currently logged-in user
-// so auth/me returns the correct user (patient vs clinician vs supervisor)
-let currentSessionUser: User | null = null;
+// so auth/me returns the correct user (patient vs clinician vs supervisor).
+// CRITICAL: persist to sessionStorage so page refreshes don't lose the session.
+const SESSION_USER_KEY = 'peacefull-mock-session-user';
+
+function loadSessionUser(): User | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_USER_KEY);
+    if (raw) return JSON.parse(raw) as User;
+  } catch { /* ignore parse errors */ }
+  return null;
+}
+
+function persistSessionUser(user: User | null): void {
+  try {
+    if (user) {
+      sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+    } else {
+      sessionStorage.removeItem(SESSION_USER_KEY);
+    }
+  } catch { /* quota or private-mode errors */ }
+}
+
+let currentSessionUser: User | null = loadSessionUser();
 
 // Track consented types per session so GET /consent reflects POST /consent state
 const mockGrantedConsentTypes: string[] = [];
@@ -184,8 +205,9 @@ export const handlers = [
   http.post(`${BASE}/auth/login`, async ({ request }) => {
     const body = await request.json() as { email: string; password: string };
     const user = resolveUserByEmail(body.email);
-    // Track the session so auth/me returns the right user
+    // Track the session so auth/me returns the right user (persisted across refreshes)
     currentSessionUser = user;
+    persistSessionUser(user);
     const response: LoginResponse = {
       accessToken: 'mock-access-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
@@ -206,8 +228,9 @@ export const handlers = [
       mfaEnabled: false,  // New registrations always start without MFA
       profile: { firstName: body.firstName, lastName: body.lastName },
     };
-    // Track session for auth/me
+    // Track session for auth/me (persisted across refreshes)
     currentSessionUser = user;
+    persistSessionUser(user);
     // Clinicians require admin approval — return user but no tokens
     if (isClinician) {
       return mockJson({
@@ -235,6 +258,7 @@ export const handlers = [
 
   http.post(`${BASE}/auth/logout`, () => {
     currentSessionUser = null;
+    persistSessionUser(null);
     return mockJson({ success: true });
   }),
 
@@ -251,6 +275,7 @@ export const handlers = [
         ? mockClinician
         : mockUser;
     currentSessionUser = user;
+    persistSessionUser(user);
     return mockJson({
       accessToken: 'mock-mfa-token-' + Date.now(),
       refreshToken: 'mock-refresh-token-' + Date.now(),
@@ -263,6 +288,21 @@ export const handlers = [
     const user = currentSessionUser ?? mockUser;
     return mockJson({
       id: user.id,
+      userId: user.id,
+      tenantId: user.tenantId ?? 'tenant-001',
+      firstName: user.profile.firstName,
+      lastName: user.profile.lastName,
+      dateOfBirth: '1990-03-15',
+      createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
+    });
+  }),
+
+  // Patient - GET by ID (used by ChatPage to resolve patient record from user ID)
+  http.get(`${BASE}/patients/:id`, ({ params }) => {
+    const user = currentSessionUser ?? mockUser;
+    const id = typeof params.id === 'string' ? params.id : 'patient-001';
+    return mockJson({
+      id,
       userId: user.id,
       tenantId: user.tenantId ?? 'tenant-001',
       firstName: user.profile.firstName,
@@ -940,6 +980,7 @@ export const handlers = [
   http.post(`${BASE}/auth/auth0-sync`, async ({ request }) => {
     const body = await request.json() as { auth0Id: string; email: string };
     currentSessionUser = { ...mockUser, email: body.email };
+    persistSessionUser(currentSessionUser);
     const response: LoginResponse = {
       accessToken: 'mock-auth0-token-' + Date.now(),
       refreshToken: 'mock-auth0-refresh-' + Date.now(),
@@ -1248,6 +1289,7 @@ export const handlers = [
     // Mark user as MFA-enrolled so subsequent auth/me calls reflect it
     if (currentSessionUser) {
       currentSessionUser = { ...currentSessionUser, mfaEnabled: true };
+      persistSessionUser(currentSessionUser);
     }
     return mockJson({
       backupCodes: ['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890'],
