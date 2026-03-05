@@ -3,14 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
 import { apiGet } from '@/api/client';
-import type { UserRole } from '@/api/types';
+import type { UserRole, ConsentRecord } from '@/api/types';
 import { Spinner } from '@/components/ui/Spinner';
-
-interface ConsentRecord {
-  id: string;
-  type: string;
-  granted: boolean;
-}
 
 const REQUIRED_CONSENT_TYPES = ['data-collection', 'ai-processing', 'not-emergency'];
 
@@ -59,7 +53,7 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
           return;
         }
         const grantedTypes = new Set(
-          records.filter((r) => r.granted).map((r) => r.type),
+          records.filter((r) => r.accepted).map((r) => r.consentType),
         );
         const allGranted = REQUIRED_CONSENT_TYPES.every((t) => grantedTypes.has(t));
         setApiConsentResult({ hasConsent: allGranted });

@@ -262,8 +262,9 @@ export const handlers = [
   http.get(`${BASE}/patients/me`, () => {
     const user = currentSessionUser ?? mockUser;
     return mockJson({
-      id: 'patient-001',
+      id: user.id,
       userId: user.id,
+      tenantId: user.tenantId ?? 'tenant-001',
       firstName: user.profile.firstName,
       lastName: user.profile.lastName,
       dateOfBirth: '1990-03-15',
@@ -438,7 +439,7 @@ export const handlers = [
       {
         id: 'sub-004',
         patientId: 'patient-001',
-        source: 'VOICE',
+        source: 'VOICE_MEMO',
         rawContent: '',
         status: 'PROCESSED',
         summary: 'Voice memo about anxiety management techniques. Patient feels coping skills are improving.',
@@ -493,8 +494,15 @@ export const handlers = [
 
   // Patient - Data Export (HIPAA Right of Access)
   http.get(`${BASE}/patients/:id/data-export`, ({ params }) => {
+    const user = currentSessionUser ?? mockUser;
+    const isCurrentUser = params.id === user.id || params.id === 'me';
     return mockJson({
-      profile: { id: params.id, firstName: 'Alex', lastName: 'Rivera', dateOfBirth: '1990-03-15' },
+      profile: {
+        id: params.id,
+        firstName: isCurrentUser ? user.profile.firstName : 'Alex',
+        lastName: isCurrentUser ? user.profile.lastName : 'Rivera',
+        dateOfBirth: '1990-03-15',
+      },
       checkins: [
         { date: new Date(Date.now() - 2 * 86400000).toISOString(), mood: 7, stress: 4, anxiety: 3, sleep: 8, focus: 6 },
         { date: new Date(Date.now() - 86400000).toISOString(), mood: 8, stress: 3, anxiety: 2, sleep: 7, focus: 7 },
@@ -517,32 +525,36 @@ export const handlers = [
 
   // Patient - Consent
   // Track granted consent types per session so AuthGuard sees accepted consents
-  http.get(`${BASE}/patients/:id/consent`, () => {
+  http.get(`${BASE}/patients/:id/consent`, ({ params }) => {
+    const user = currentSessionUser ?? mockUser;
+    const patientId = (params.id === 'me' ? user.id : params.id) as string;
     return mockJson(
-      mockGrantedConsentTypes.map((type, i) => ({
+      mockGrantedConsentTypes.map((ct, i) => ({
         id: `consent-${i + 1}`,
-        patientId: 'patient-001',
-        type,
-        granted: true,
+        patientId,
+        consentType: ct,
+        accepted: true,
         version: '2.0',
         acceptedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
       })),
     );
   }),
 
-  http.post(`${BASE}/patients/:id/consent`, async ({ request }) => {
+  http.post(`${BASE}/patients/:id/consent`, async ({ params, request }) => {
     const body = await request.json() as Record<string, unknown>;
+    const user = currentSessionUser ?? mockUser;
+    const patientId = (params.id === 'me' ? user.id : params.id) as string;
     // Track that this consent type has been granted
-    const consentType = body.consentType as string | undefined;
+    const consentType = (body.consentType ?? body.type) as string | undefined;
     if (consentType && !mockGrantedConsentTypes.includes(consentType)) {
       mockGrantedConsentTypes.push(consentType);
     }
     return mockJson({
       id: `consent-${Date.now()}`,
-      patientId: 'patient-001',
-      type: consentType ?? body.type,
-      granted: true,
-      ...body,
+      patientId,
+      consentType: consentType ?? 'unknown',
+      accepted: true,
+      version: '2.0',
       acceptedAt: new Date().toISOString(),
     });
   }),
@@ -1157,20 +1169,29 @@ export const handlers = [
 
   // AI Chat — SSE streaming mock
   http.post(`${BASE}/ai/chat`, async ({ request }) => {
-    const body = await request.json() as { message: string };
+    const body = await request.json() as { messages?: Array<{ role: string; content: string }>; message?: string; patientId?: string; sessionId?: string };
+    // Support both formats: body.messages (array from ChatPage) and body.message (legacy string)
+    const lastUserMessage = Array.isArray(body.messages)
+      ? (body.messages.filter((m) => m.role === 'user').pop()?.content ?? '')
+      : (body.message ?? '');
+    const snippet = lastUserMessage.slice(0, 50);
     const replies = [
       "I hear you, and I appreciate you sharing that with me. Let's take a moment to reflect on what you're feeling. What do you think is the strongest emotion right now?",
       "Thank you for opening up. It takes courage to express your thoughts. Can you tell me more about what's been on your mind?",
       "That's a really thoughtful observation. Between sessions, it can help to notice patterns in how we're feeling. Would you like to explore that further?",
       "I'm glad you reached out. Remember, every step — even a small one — counts. What's one thing that helped you feel better recently?",
-      `I understand. You mentioned: "${body.message.slice(0, 50)}" — let's unpack that together. What feels most important about this right now?`,
+      `I understand. You mentioned: "${snippet}" — let's unpack that together. What feels most important about this right now?`,
     ];
     const reply = replies[Math.floor(Math.random() * replies.length)] ?? replies[0] ?? '';
     const words = reply.split(' ');
     const encoder = new TextEncoder();
+    const mockSessionId = body.sessionId ?? `session-${Date.now()}`;
     const stream = new ReadableStream({
       async start(controller) {
-        for (let i = 0; i < words.length; i++) {
+        // Send sessionId in the first chunk
+        const firstChunk = JSON.stringify({ content: words[0] + (words.length > 1 ? ' ' : ''), sessionId: mockSessionId });
+        controller.enqueue(encoder.encode(`data: ${firstChunk}\n\n`));
+        for (let i = 1; i < words.length; i++) {
           const chunk = JSON.stringify({ content: words[i] + (i < words.length - 1 ? ' ' : '') });
           controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
           await new Promise((r) => setTimeout(r, 50));
@@ -1344,13 +1365,52 @@ export const handlers = [
     return mockJson({ success: true, redirectTo: '/clinician/caseload' });
   }),
 
+  // ── Missing Org handlers ──────────────────
+  http.patch(`${BASE}/organizations/:orgId`, async ({ params, request }) => {
+    const body = await request.json() as Record<string, unknown>;
+    return mockJson({
+      id: params.orgId,
+      tenantId: 'tenant-001',
+      name: body.name ?? 'Demo Clinic',
+      slug: String(body.name ?? 'demo-clinic').toLowerCase().replace(/\s+/g, '-'),
+      settings: body.settings ?? {},
+      updatedAt: new Date().toISOString(),
+      ...body,
+    });
+  }),
+
+  http.delete(`${BASE}/organizations/:orgId/members/:userId`, ({ params }) => {
+    return mockJson({ success: true, removedUserId: params.userId });
+  }),
+
+  http.delete(`${BASE}/organizations/:orgId/invitations/:inviteId`, ({ params }) => {
+    return mockJson({ success: true, deletedInvitationId: params.inviteId });
+  }),
+
+  // ── Patient Voice Memo by ID ──────────────
+  http.get(`${BASE}/patients/:id/voice/:memoId`, ({ params }) => {
+    return mockJson({
+      id: params.memoId,
+      patientId: params.id,
+      audioUrl: '/mock-audio.webm',
+      transcription: 'I\'ve been feeling a lot better this week. The breathing exercises are really helping me manage my anxiety during work meetings.',
+      duration: 45,
+      status: 'COMPLETE' as const,
+      createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    });
+  }),
+
   // ── Patient by ID ─────────────────────────
   http.get(`${BASE}/patients/:id`, ({ params }) => {
+    // Return session-aware data if the requested ID matches the logged-in user
+    const user = currentSessionUser ?? mockUser;
+    const isCurrentUser = params.id === user.id || params.id === 'me';
     return mockJson({
-      id: params.id,
-      userId: params.id,
-      firstName: 'Alex',
-      lastName: 'Rivera',
+      id: params.id as string,
+      userId: isCurrentUser ? user.id : (params.id as string),
+      tenantId: user.tenantId ?? 'tenant-001',
+      firstName: isCurrentUser ? user.profile.firstName : 'Alex',
+      lastName: isCurrentUser ? user.profile.lastName : 'Rivera',
       dateOfBirth: '1990-03-15',
       createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
     });

@@ -94,6 +94,7 @@ export interface PatientSubmission {
   source: SubmissionSource;
   rawContent: string;
   status: string;
+  summary?: string;
   createdAt: string;
   aiDraft?: AIDraft;
 }
