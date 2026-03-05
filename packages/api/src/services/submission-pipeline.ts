@@ -158,6 +158,8 @@ export async function processSubmission(
       });
 
       // Create triage item
+      // HIGH-003 FIX: ELEVATED starts as OPEN for immediate review;
+      // all others start as ACK (acknowledged, queued for review).
       const triageItem = await tx.triageItem.create({
         data: {
           submissionId,
@@ -165,7 +167,7 @@ export async function processSubmission(
           clinicianId: primaryClinicianId,
           signalBand: signalBand as "LOW" | "GUARDED" | "MODERATE" | "ELEVATED",
           summary: clinicianSummary,
-          status: signalBand === "ELEVATED" ? "ACK" : "ACK",
+          status: signalBand === "ELEVATED" ? "OPEN" : "ACK",
         },
       });
 

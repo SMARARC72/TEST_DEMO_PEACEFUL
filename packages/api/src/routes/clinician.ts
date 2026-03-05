@@ -687,15 +687,19 @@ clinicianRouter.patch(
       });
       if (!note) throw new AppError("Session note not found", 404);
 
-      // CLIN-003: Only the note author or a SUPERVISOR can sign
-      if (
-        note.clinicianId !== req.user!.sub &&
-        req.user!.role !== "SUPERVISOR"
-      ) {
+      // MED-004 FIX: Prevent self-cosign — the note author cannot sign
+      // their own note. A different clinician or SUPERVISOR must sign.
+      if (note.clinicianId === req.user!.sub) {
         throw new AppError(
-          "Only the note author or a supervisor may sign this note",
+          "You cannot sign your own note — a different clinician or supervisor must co-sign",
           403,
         );
+      }
+
+      // Only a supervisor or another clinician on the same caseload can sign
+      if (req.user!.role !== "SUPERVISOR") {
+        // Verify the signing clinician has access to this patient
+        await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
       }
 
       const updated = await prisma.sessionNote.update({

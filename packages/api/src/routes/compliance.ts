@@ -36,8 +36,8 @@ complianceRouter.get('/posture', async (req, res, next) => {
     ] = await Promise.all([
       prisma.user.count({ where: { tenantId } }),
       prisma.user.count({ where: { tenantId, status: 'ACTIVE' } }),
-      prisma.consentRecord.count(),
-      prisma.consentRecord.count({ where: { granted: true, revokedAt: null } }),
+      prisma.consentRecord.count({ where: { patient: { tenantId } } }),
+      prisma.consentRecord.count({ where: { granted: true, revokedAt: null, patient: { tenantId } } }),
       prisma.auditLog.count({ where: { tenantId } }),
     ]);
 
@@ -134,6 +134,18 @@ complianceRouter.get('/audit-log', async (req, res, next) => {
 complianceRouter.get('/consent/:patientId', async (req, res, next) => {
   try {
     const { patientId } = req.params;
+    const tenantId = req.user!.tid;
+
+    // HIGH-002 FIX: Verify the patient belongs to the requester's tenant
+    // before returning consent records (prevents cross-tenant data leak).
+    const patient = await prisma.patient.findFirst({
+      where: { id: patientId, tenantId },
+      select: { id: true },
+    });
+    if (!patient) {
+      sendSuccess(res, req, { data: [], total: 0 });
+      return;
+    }
 
     const records = await prisma.consentRecord.findMany({
       where: { patientId },
@@ -236,22 +248,69 @@ complianceRouter.post('/audit-log/export', exportLimiter, stepUpAuth, async (req
     const format = body.format;
     const dateRange = body.dateRange ?? { start: null, end: null };
 
-    // Compute approximate export size from entry count
-    const count = await prisma.auditLog.count({ where: { tenantId } });
-    const estimatedSizeKB = Math.round(count * 0.5); // ~0.5 KB per entry
+    // HIGH-008 FIX: Actually fetch and stream the audit log entries
+    // instead of returning a stub "GENERATING" response.
+    const where: Record<string, unknown> = { tenantId };
+    if (dateRange.start || dateRange.end) {
+      const ts: Record<string, unknown> = {};
+      if (dateRange.start) ts.gte = new Date(dateRange.start);
+      if (dateRange.end) ts.lte = new Date(dateRange.end);
+      where.timestamp = ts;
+    }
 
-    sendSuccess(res, req, {
+    const entries = await prisma.auditLog.findMany({
+      where,
+      orderBy: { timestamp: 'desc' },
+      take: 10_000, // Cap at 10 K entries per export
+    });
+
+    if (format === 'csv') {
+      const header = 'id,timestamp,userId,action,resource,resourceId,ipAddress,userAgent,hash,previousHash\n';
+      const rows = entries.map((e) =>
+        [
+          e.id,
+          e.timestamp.toISOString(),
+          e.userId ?? '',
+          `"${(e.action ?? '').replace(/"/g, '""')}"`,
+          `"${(e.resource ?? '').replace(/"/g, '""')}"`,
+          e.resourceId ?? '',
+          e.ipAddress ?? '',
+          `"${(e.userAgent ?? '').replace(/"/g, '""')}"`,
+          e.hash,
+          e.previousHash ?? '',
+        ].join(','),
+      ).join('\n');
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="audit-log-${tenantId}-${Date.now()}.csv"`);
+      res.send(header + rows);
+      return;
+    }
+
+    // JSON format
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="audit-log-${tenantId}-${Date.now()}.json"`);
+    res.json({
       exportId: uuidv4(),
-      format,
+      tenantId,
+      format: 'json',
       dateRange,
-      status: 'GENERATING',
-      totalEntries: count,
+      totalEntries: entries.length,
+      exportedAt: new Date().toISOString(),
       requestedBy: req.user!.sub,
-      requestedAt: new Date().toISOString(),
-      estimatedSize: estimatedSizeKB > 1024
-        ? `${(estimatedSizeKB / 1024).toFixed(1)} MB`
-        : `${estimatedSizeKB} KB`,
-      message: 'Audit log export is being generated. Download link will be sent to your email.',
+      entries: entries.map((e) => ({
+        id: e.id,
+        timestamp: e.timestamp.toISOString(),
+        userId: e.userId,
+        action: e.action,
+        resource: e.resource,
+        resourceId: e.resourceId,
+        details: e.details,
+        ipAddress: e.ipAddress,
+        userAgent: e.userAgent,
+        hash: e.hash,
+        previousHash: e.previousHash,
+      })),
     });
   } catch (err) {
     next(err);

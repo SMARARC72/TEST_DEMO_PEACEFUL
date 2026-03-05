@@ -77,7 +77,12 @@ function encryptFields(
       } catch (err) {
         apiLogger.error(
           { model: modelName, field, err },
-          'PHI encryption failed — field left as plaintext',
+          'PHI encryption failed — aborting write to prevent plaintext storage',
+        );
+        // CRIT-001 FIX: Never allow plaintext PHI to reach the database.
+        // Re-throw so the Prisma query fails instead of silently storing unencrypted data.
+        throw new Error(
+          `PHI encryption failed for ${modelName}.${field} — write aborted to protect patient data`,
         );
       }
     }

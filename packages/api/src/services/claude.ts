@@ -19,7 +19,13 @@ import {
 
 // ─── Client ──────────────────────────────────────────────────────────
 
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+// MED-003 FIX: Explicit timeout prevents hung requests from blocking the server.
+const CLAUDE_TIMEOUT_MS = 60_000; // 60 seconds max per API call
+
+const client = new Anthropic({
+  apiKey: env.ANTHROPIC_API_KEY,
+  timeout: CLAUDE_TIMEOUT_MS,
+});
 
 /** Base system prompt enforcing Clinical Safety Policies. */
 const CSP_SYSTEM_PROMPT = `You are a clinical support AI assistant for the Peacefull.ai platform.
@@ -274,8 +280,20 @@ ${checkinData ? `\nCheck-in scores: mood=${checkinData.mood}/10, stress=${checki
 
     try {
       const result = await callClaude(systemPrompt, content);
+
+      // MED-002 FIX: Parse confidence from Claude's JSON response instead of hardcoding.
+      let parsedConfidence = 0.5; // Conservative default if parsing fails
+      try {
+        const parsed = JSON.parse(result.content);
+        if (typeof parsed.confidence === 'number' && parsed.confidence >= 0 && parsed.confidence <= 1) {
+          parsedConfidence = parsed.confidence;
+        }
+      } catch {
+        // Claude returned non-JSON; use conservative default
+      }
+
       return buildResponse(AIRequestType.RISK_ASSESS, result, {
-        confidence: 0.85, // Parsed from response in production
+        confidence: parsedConfidence,
       });
     } catch {
       return fallbackResponse(

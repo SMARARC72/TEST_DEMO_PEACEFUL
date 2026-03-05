@@ -14,15 +14,6 @@ import type { AuditLogEntry } from "@peacefull/shared";
 /** Unique identifier for this ECS task / process instance. */
 const TASK_INSTANCE_ID = randomUUID().slice(0, 8);
 
-/** In-memory cached last hash — refreshed from DB periodically. */
-let lastHash = "0".repeat(64); // genesis hash
-
-/** Timestamp of last DB hash refresh. */
-let lastHashRefreshedAt = 0;
-
-/** Minimum interval between DB hash refreshes (ms). */
-const HASH_REFRESH_INTERVAL_MS = 5_000;
-
 // ─── Hash Chain ──────────────────────────────────────────────────────
 
 /**
@@ -55,32 +46,6 @@ function maskBody(body: unknown): Record<string, unknown> {
   return result;
 }
 
-// ─── Chain Initialization ────────────────────────────────────────────
-
-/**
- * Loads the most recent audit log hash from the database.
- * Called periodically (not just at startup) so that multiple ECS tasks
- * share a consistent chain even though they don't share memory.
- * PRD §3.7: Multi-instance hash chain consistency.
- */
-async function refreshChainHash(): Promise<void> {
-  const now = Date.now();
-  if (now - lastHashRefreshedAt < HASH_REFRESH_INTERVAL_MS) return;
-
-  try {
-    const latest = await prisma.auditLog.findFirst({
-      orderBy: { timestamp: "desc" },
-      select: { hash: true },
-    });
-    if (latest) {
-      lastHash = latest.hash;
-    }
-    lastHashRefreshedAt = now;
-  } catch (err) {
-    auditLogger.warn({ err }, "Failed to refresh audit chain hash");
-  }
-}
-
 // ─── Middleware ───────────────────────────────────────────────────────
 
 /**
@@ -104,12 +69,12 @@ export function auditLog(
 
 /**
  * Builds and persists a single audit log entry to the database.
+ * CRIT-006 FIX: Uses a serializable transaction to atomically read the
+ * latest hash and write the new entry, eliminating race conditions
+ * where concurrent requests could chain to the same previous hash.
  */
 async function persistAuditEntry(req: Request, res: Response): Promise<void> {
   try {
-    // PRD §3.7: Refresh chain hash from DB for multi-instance consistency
-    await refreshChainHash();
-
     const userId = req.user?.sub ?? null;
     const tenantId = req.user?.tid ?? null;
 
@@ -143,45 +108,58 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
       taskInstanceId: TASK_INSTANCE_ID,
     };
 
-    const entryForHash: Omit<AuditLogEntry, "hash"> = {
-      id: "", // placeholder — not used in hash computation
-      tenantId,
-      userId: userId ?? "anonymous",
-      action,
-      resource,
-      resourceId: resourceId ?? "",
-      details,
-      ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
-      userAgent: req.headers["user-agent"] ?? "unknown",
-      timestamp: new Date().toISOString(),
-      previousHash: lastHash,
-    };
+    // CRIT-006 FIX: Atomic read-then-write inside a serializable transaction.
+    // This guarantees that no two concurrent requests can read the same
+    // previousHash, even across multiple ECS tasks sharing the same DB.
+    await prisma.$transaction(async (tx) => {
+      const latest = await tx.auditLog.findFirst({
+        orderBy: { timestamp: "desc" },
+        select: { hash: true },
+      });
+      const previousHash = latest?.hash ?? "0".repeat(64);
 
-    const hash = hashChain(entryForHash);
-    lastHash = hash;
-
-    await prisma.auditLog.create({
-      data: {
+      const entryForHash: Omit<AuditLogEntry, "hash"> = {
+        id: "",
         tenantId,
-        userId,
+        userId: userId ?? "anonymous",
         action,
         resource,
-        resourceId,
-        details: details as unknown as Record<
-          string,
-          string | number | boolean | null
-        >,
-        ipAddress: entryForHash.ipAddress,
-        userAgent: entryForHash.userAgent,
-        previousHash: entryForHash.previousHash,
-        hash,
-      },
-    });
+        resourceId: resourceId ?? "",
+        details,
+        ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
+        userAgent: req.headers["user-agent"] ?? "unknown",
+        timestamp: new Date().toISOString(),
+        previousHash,
+      };
 
-    auditLogger.info(
-      { userId: userId ?? "anonymous", action, resource, resourceId },
-      "Audit log entry persisted",
-    );
+      const hash = hashChain(entryForHash);
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action,
+          resource,
+          resourceId,
+          details: details as unknown as Record<
+            string,
+            string | number | boolean | null
+          >,
+          ipAddress: entryForHash.ipAddress,
+          userAgent: entryForHash.userAgent,
+          previousHash,
+          hash,
+        },
+      });
+
+      auditLogger.info(
+        { userId: userId ?? "anonymous", action, resource, resourceId },
+        "Audit log entry persisted",
+      );
+    }, {
+      isolationLevel: 'Serializable',
+      timeout: 10_000,
+    });
   } catch (err) {
     // Never let audit failures crash the server
     auditLogger.error({ err }, "Failed to persist audit log entry");
