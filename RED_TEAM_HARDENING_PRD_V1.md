@@ -83,6 +83,13 @@ Primary goals:
 3. Added a dedicated clinician chat review page and linked it from the patient profile so transcripts and summaries are reachable in the live product.
 4. Added targeted frontend regression coverage for transcript loading and summary approval.
 
+### Batch 5 Completed
+
+1. Replaced the connection-only websocket layer with tenant-scoped realtime event broadcasting for clinician-facing notifications.
+2. Broadcast live `submission:new`, `triage:new`, `draft:ready`, and `escalation:new` events from patient submissions, the asynchronous submission pipeline, and crisis alerts.
+3. Registered websocket clients with tenant and role metadata so broadcasts stay scoped to the correct organization and clinician-facing roles.
+4. Added targeted backend coverage for realtime tenant/role filtering and check-in-triggered broadcast emission.
+
 ---
 
 ## 4. Remaining Execution Phases

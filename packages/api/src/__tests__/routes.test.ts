@@ -6,8 +6,16 @@ import { describe, it, expect, vi, type Mock } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+
+vi.mock('../services/realtime.js', () => ({
+  broadcastClinicianEvent: vi.fn(),
+  registerWsClient: vi.fn(),
+  unregisterWsClient: vi.fn(),
+}));
+
 import { app } from '../server.js';
 import { prisma } from '../models/index.js';
+import { broadcastClinicianEvent } from '../services/realtime.js';
 
 // ─── Token Helpers ───────────────────────────────────────────────────
 
@@ -337,6 +345,32 @@ describe('Clinician routes', () => {
         expect.objectContaining({ label: 'Submissions', value: '1' }),
       ]),
     );
+  });
+
+  it('POST /api/v1/patients/:id/checkin broadcasts a clinician submission event', async () => {
+    (prisma.patient.findUnique as unknown as Mock)
+      .mockResolvedValueOnce({ id: PATIENT_ID, tenantId: TENANT_ID, userId: USER_ID })
+      .mockResolvedValueOnce({ id: PATIENT_ID, tenantId: TENANT_ID, userId: USER_ID });
+    (prisma.submission.create as unknown as Mock).mockResolvedValueOnce({
+      id: 'submission-001',
+      patientId: PATIENT_ID,
+      createdAt: new Date('2026-03-06T15:00:00.000Z'),
+    });
+
+    const res = await request(app)
+      .post(`/api/v1/patients/${PATIENT_ID}/checkin`)
+      .set('Authorization', `Bearer ${patientToken()}`)
+      .send({ mood: 6, stress: 7, sleep: 5, focus: 4, notes: 'Hard day' });
+
+    expect(res.status).toBe(201);
+    expect(broadcastClinicianEvent).toHaveBeenCalledWith(TENANT_ID, {
+      type: 'submission:new',
+      patientId: PATIENT_ID,
+      submissionId: 'submission-001',
+      source: 'CHECKIN',
+      timestamp: '2026-03-06T15:00:00.000Z',
+      message: 'A new patient check-in is ready for review.',
+    });
   });
 });
 

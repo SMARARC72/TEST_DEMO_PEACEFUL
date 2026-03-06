@@ -11,6 +11,7 @@ import { crisisLimiter } from '../middleware/rate-limit.js';
 import { hashChain } from '../middleware/audit.js';
 import { prisma } from '../models/index.js';
 import { escalationCascade } from '../services/notification.js';
+import { broadcastClinicianEvent } from '../services/realtime.js';
 import { apiLogger } from '../utils/logger.js';
 import { sendSuccess } from '../utils/response.js';
 import { AppError } from '../middleware/error.js';
@@ -164,6 +165,14 @@ crisisRouter.post('/alert', crisisLimiter, async (req, res, next) => {
         note: string;
       }>,
     };
+
+    broadcastClinicianEvent(tenantId, {
+      type: 'escalation:new',
+      escalationId: escalation.id,
+      patientId: escalation.patientId,
+      timestamp: escalation.detectedAt.toISOString(),
+      message: body.context ?? 'A patient-initiated crisis alert requires immediate attention.',
+    });
 
     escalationCascade(escalationPayload).catch((err: unknown) => {
       apiLogger.error(

@@ -9,6 +9,7 @@ import { prisma } from "../models/index.js";
 import { claudeService } from "./claude.js";
 import { apiLogger } from "../utils/logger.js";
 import { escalationCascade, sendEmail } from "./notification.js";
+import { broadcastClinicianEvent } from "./realtime.js";
 import { EscalationTier, EscalationStatus } from "@peacefull/shared";
 import type { EscalationItem } from "@peacefull/shared";
 
@@ -239,6 +240,25 @@ export async function processSubmission(
       { submissionId, signalBand, ...result },
       "Submission processing complete",
     );
+
+    const timestamp = new Date().toISOString();
+
+    broadcastClinicianEvent(submission.patient.tenantId, {
+      type: "triage:new",
+      triageId: result.triageItemId,
+      patientId: submission.patientId,
+      signal: signalBand,
+      timestamp,
+      message: `A ${signalBand.toLowerCase()} signal submission requires clinician review.`,
+    });
+
+    broadcastClinicianEvent(submission.patient.tenantId, {
+      type: "draft:ready",
+      draftId: result.aiDraftId,
+      patientId: submission.patientId,
+      timestamp,
+      message: "An AI draft is ready for clinician review.",
+    });
 
     // If signal is ELEVATED, trigger escalation cascade (T2)
     // MED-012: Deduplicate — skip if OPEN/ACK T2 already exists within 60min

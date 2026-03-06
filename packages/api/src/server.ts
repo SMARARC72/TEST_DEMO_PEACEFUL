@@ -38,6 +38,7 @@ import { prisma } from "./models/index.js";
 import { startWorker, getQueueHealth, shutdownQueue } from "./services/job-queue.js";
 import { WebSocketServer, WebSocket } from "ws";
 import { verifyTokenForWs } from "./middleware/auth.js";
+import { registerWsClient, unregisterWsClient } from "./services/realtime.js";
 
 // ─── Create App ──────────────────────────────────────────────────────
 
@@ -215,9 +216,6 @@ app.use(errorHandler);
 
 let server: ReturnType<typeof app.listen> | undefined;
 
-// Track connected WebSocket clients (minimal state for broadcast later)
-const wsClients = new Set<WebSocket>();
-
 /**
  * Gracefully shuts down the server, closing HTTP connections,
  * database pools, and Redis clients.
@@ -292,9 +290,10 @@ if (server) {
     }
 
     let userId = "unknown";
+    let payload: Awaited<ReturnType<typeof verifyTokenForWs>> | null = null;
 
     try {
-      const payload = await verifyTokenForWs(token);
+      payload = await verifyTokenForWs(token);
       userId = payload.sub;
     } catch (err) {
       apiLogger.warn({ err }, "WS auth failed");
@@ -302,11 +301,23 @@ if (server) {
       return;
     }
 
+    if (!payload) {
+      socket.close(4401, "Invalid or expired token");
+      return;
+    }
+
     apiLogger.info({ userId }, "WS connection established");
-    wsClients.add(socket);
+    registerWsClient({
+      socket,
+      userId,
+      tenantId: payload.tid,
+      role: payload.role,
+    });
 
     // Send initial ack
-    socket.send(JSON.stringify({ type: "connected", userId }));
+    socket.send(
+      JSON.stringify({ type: "connected", userId, tenantId: payload.tid }),
+    );
 
     // Keepalive pings so Netlify/ALB doesn’t idle-timeout the socket
     const keepalive = setInterval(() => {
@@ -327,11 +338,12 @@ if (server) {
 
     socket.on("close", () => {
       clearInterval(keepalive);
-      wsClients.delete(socket);
+      unregisterWsClient(socket);
       apiLogger.info({ userId }, "WS connection closed");
     });
 
     socket.on("error", (err) => {
+      unregisterWsClient(socket);
       apiLogger.warn({ err, userId }, "WS error");
     });
   });

@@ -18,6 +18,7 @@ import {
 import { hashChain } from "../middleware/audit.js";
 import { prisma } from "../models/index.js";
 import { enqueueSubmission } from "../services/job-queue.js";
+import { broadcastClinicianEvent } from "../services/realtime.js";
 import type {
   Patient,
   PatientSubmission,
@@ -364,6 +365,15 @@ patientRouter.post("/:id/submissions", async (req, res, next) => {
 
     // UGO-1.1: Enqueue for async processing via BullMQ (falls back to inline if no Redis)
     const { jobId, queued } = await enqueueSubmission(row.id);
+
+    broadcastClinicianEvent(req.user!.tid, {
+      type: "submission:new",
+      patientId: patient.id,
+      submissionId: row.id,
+      source: body.source,
+      timestamp: row.createdAt.toISOString(),
+      message: `New ${body.source.toLowerCase().replace(/_/g, " ")} submission received.`,
+    });
 
     sendSuccess(
       res,
@@ -822,6 +832,16 @@ patientRouter.post("/:id/checkin", checkinLimiter, async (req, res, next) => {
       patientId: patient.id,
       createdAt: row.createdAt.toISOString(),
     };
+
+    broadcastClinicianEvent(req.user!.tid, {
+      type: "submission:new",
+      patientId: patient.id,
+      submissionId: row.id,
+      source: "CHECKIN",
+      timestamp: row.createdAt.toISOString(),
+      message: "A new patient check-in is ready for review.",
+    });
+
     sendSuccess(res, req, checkin, 201);
   } catch (err) {
     next(err);
@@ -869,6 +889,16 @@ patientRouter.post("/:id/journal", journalLimiter, async (req, res, next) => {
       category: body.category,
       createdAt: row.createdAt.toISOString(),
     };
+
+    broadcastClinicianEvent(req.user!.tid, {
+      type: "submission:new",
+      patientId: patient.id,
+      submissionId: row.id,
+      source: "JOURNAL",
+      timestamp: row.createdAt.toISOString(),
+      message: "A new patient journal entry is ready for review.",
+    });
+
     sendSuccess(res, req, entry, 201);
   } catch (err) {
     next(err);
