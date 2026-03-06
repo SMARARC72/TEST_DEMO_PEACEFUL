@@ -9,7 +9,7 @@
 import { Queue, Worker, type Job, type ConnectionOptions } from "bullmq";
 import { env } from "../config/index.js";
 import { apiLogger } from "../utils/logger.js";
-import { processSubmission, type ProcessingResult } from "./submission-pipeline.js";
+import type { ProcessingResult } from "./submission-pipeline.js";
 
 const logger = apiLogger.child({ service: "job-queue" });
 
@@ -43,8 +43,8 @@ export function getQueue(): Queue | null {
     defaultJobOptions: {
       attempts: 3,
       backoff: { type: "exponential", delay: 5_000 },
-      removeOnComplete: { count: 500, age: 86_400 },   // keep 500 or 24h
-      removeOnFail: { count: 1_000, age: 604_800 },    // keep 1000 or 7d
+      removeOnComplete: { count: 500, age: 86_400 }, // keep 500 or 24h
+      removeOnFail: { count: 1_000, age: 604_800 }, // keep 1000 or 7d
     },
   });
   logger.info("BullMQ queue initialised: %s", QUEUE_NAME);
@@ -54,6 +54,13 @@ export function getQueue(): Queue | null {
 // ─── Worker ──────────────────────────────────────────────────────────
 
 let _worker: Worker | null = null;
+
+async function runSubmissionPipeline(
+  submissionId: string,
+): Promise<ProcessingResult> {
+  const { processSubmission } = await import("./submission-pipeline.js");
+  return processSubmission(submissionId);
+}
 
 /**
  * Starts the BullMQ worker that processes submission-pipeline jobs.
@@ -68,15 +75,19 @@ export function startWorker(): Worker | null {
     QUEUE_NAME,
     async (job: Job<{ submissionId: string }>) => {
       logger.info(
-        { jobId: job.id, submissionId: job.data.submissionId, attempt: job.attemptsMade + 1 },
+        {
+          jobId: job.id,
+          submissionId: job.data.submissionId,
+          attempt: job.attemptsMade + 1,
+        },
         "Processing submission job",
       );
-      return processSubmission(job.data.submissionId);
+      return runSubmissionPipeline(job.data.submissionId);
     },
     {
       connection: conn,
       concurrency: 3,
-      limiter: { max: 10, duration: 60_000 },  // max 10 jobs / minute
+      limiter: { max: 10, duration: 60_000 }, // max 10 jobs / minute
     },
   );
 
@@ -113,18 +124,27 @@ export async function enqueueSubmission(
   const queue = getQueue();
 
   if (queue) {
-    const job = await queue.add("process", { submissionId }, {
-      jobId: `sub-${submissionId}`,   // idempotent: same submission → same job
-    });
+    const job = await queue.add(
+      "process",
+      { submissionId },
+      {
+        jobId: `sub-${submissionId}`, // idempotent: same submission → same job
+      },
+    );
     logger.info({ jobId: job.id, submissionId }, "Submission enqueued");
     return { jobId: job.id ?? `sub-${submissionId}`, queued: true };
   }
 
   // Fallback: run inline (same as V1 behaviour)
-  logger.info({ submissionId }, "Running submission pipeline inline (no Redis)");
-  processSubmission(submissionId).catch((err) => {
-    // Errors handled inside processSubmission (resets to PENDING)
-    void err;
+  logger.info(
+    { submissionId },
+    "Running submission pipeline inline (no Redis)",
+  );
+  queueMicrotask(() => {
+    void runSubmissionPipeline(submissionId).catch((err) => {
+      // Errors handled inside processSubmission (resets to PENDING)
+      void err;
+    });
   });
   return { jobId: `inline-${submissionId}`, queued: false };
 }
@@ -146,10 +166,23 @@ export interface QueueHealth {
 export async function getQueueHealth(): Promise<QueueHealth> {
   const queue = getQueue();
   if (!queue) {
-    return { available: false, waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
+    return {
+      available: false,
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+    };
   }
   try {
-    const counts = await queue.getJobCounts("waiting", "active", "completed", "failed", "delayed");
+    const counts = await queue.getJobCounts(
+      "waiting",
+      "active",
+      "completed",
+      "failed",
+      "delayed",
+    );
     return {
       available: true,
       waiting: counts.waiting ?? 0,
@@ -159,7 +192,14 @@ export async function getQueueHealth(): Promise<QueueHealth> {
       delayed: counts.delayed ?? 0,
     };
   } catch {
-    return { available: false, waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
+    return {
+      available: false,
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+    };
   }
 }
 
