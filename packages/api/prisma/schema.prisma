@@ -63,6 +63,7 @@ model User {
   draftReviews AIDraft[]   @relation("ReviewedDrafts")
   memoryReviews MemoryProposal[] @relation("ReviewedMemories")
   summaryReviews ChatSessionSummary[] @relation("ReviewedSummaries")
+  mfaBackupCodes MfaBackupCode[]
   orgMemberships OrgMembership[]
   sentInvitations OrgInvitation[] @relation("InvitedBy")
 
@@ -89,6 +90,20 @@ enum MfaMethod {
   TOTP
   SMS
   FIDO2
+}
+
+model MfaBackupCode {
+  id        String   @id @default(uuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, usedAt])
+  @@map("mfa_backup_codes")
 }
 
 // ─── CLINICAL PROFILES ───────────────────────────────

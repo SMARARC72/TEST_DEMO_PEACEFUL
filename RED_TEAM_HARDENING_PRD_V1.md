@@ -90,6 +90,19 @@ Primary goals:
 3. Registered websocket clients with tenant and role metadata so broadcasts stay scoped to the correct organization and clinician-facing roles.
 4. Added targeted backend coverage for realtime tenant/role filtering and check-in-triggered broadcast emission.
 
+### Batch 6 Completed
+
+1. Hardened `POST /auth0-sync` so it only links the currently authenticated Auth0 subject to an already pre-provisioned internal account and no longer creates new patient-shaped records on first sign-in.
+2. Added a persisted `MfaBackupCode` Prisma model and migration, then switched MFA confirmation to rotate and store hashed backup codes in Postgres instead of Redis.
+3. Re-verified that the active CSP path, AI tenant checks, PHI minimization, and per-user patient write throttles were already present so this batch stayed focused on the two remaining real security gaps.
+4. Added targeted backend regressions for unprovisioned Auth0 identity rejection and DB-backed MFA backup-code persistence.
+
+### Batch 6 Validation
+
+1. `npx prisma generate`: pass.
+2. `npx tsc --noEmit`: pass.
+3. `npx vitest run src/__tests__/routes.test.ts -t "auth0-sync|mfa-confirm-setup"`: pass.
+
 ---
 
 ## 4. Remaining Execution Phases

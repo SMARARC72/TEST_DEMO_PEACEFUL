@@ -2,19 +2,21 @@
 // Global setup for API tests. Sets environment variables and mocks
 // that are shared across all test files.
 
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Set test environment variables before any imports
-process.env.NODE_ENV = 'test';
-process.env.PORT = '0'; // random port
-process.env.JWT_SECRET = 'test-jwt-secret-minimum-thirty-two-characters-long-for-hs256';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-minimum-thirty-two-characters-long';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-process.env.ANTHROPIC_API_KEY = 'sk-ant-test-placeholder-for-unit-tests';
-process.env.CORS_ORIGIN = '*';
+process.env.NODE_ENV = "test";
+process.env.PORT = "0"; // random port
+process.env.JWT_SECRET =
+  "test-jwt-secret-minimum-thirty-two-characters-long-for-hs256";
+process.env.JWT_REFRESH_SECRET =
+  "test-refresh-secret-minimum-thirty-two-characters-long";
+process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
+process.env.ANTHROPIC_API_KEY = "sk-ant-test-placeholder-for-unit-tests";
+process.env.CORS_ORIGIN = "*";
 
 // Mock the Prisma client (all tests use this mock)
-vi.mock('../models/index.js', () => {
+vi.mock("../models/index.js", () => {
   const mockPrisma = {
     user: {
       findUnique: vi.fn(),
@@ -76,6 +78,11 @@ vi.mock('../models/index.js', () => {
       findFirst: vi.fn(),
       count: vi.fn(),
     },
+    mfaBackupCode: {
+      findMany: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
     chatSession: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -133,69 +140,74 @@ vi.mock('../models/index.js', () => {
       findMany: vi.fn(),
       create: vi.fn(),
     },
-    $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(mockPrisma)),
+    $transaction: vi.fn((input: unknown) => {
+      if (Array.isArray(input)) {
+        return Promise.all(input);
+      }
+      return (input as (tx: unknown) => unknown)(mockPrisma);
+    }),
     $disconnect: vi.fn(),
-    $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
+    $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
   };
 
   return { prisma: mockPrisma, default: mockPrisma };
 });
 
 // Mock Claude service
-vi.mock('../services/claude.js', () => ({
+vi.mock("../services/claude.js", () => ({
   claudeService: {
     summarize: vi.fn().mockResolvedValue({
-      id: 'mock-id',
-      requestId: 'mock-req',
-      type: 'SUMMARIZE',
+      id: "mock-id",
+      requestId: "mock-req",
+      type: "SUMMARIZE",
       output: {
         content: JSON.stringify({
-          patientSummary: 'Test summary',
-          clinicianSummary: 'Test clinical summary',
-          signalBand: 'LOW',
+          patientSummary: "Test summary",
+          clinicianSummary: "Test clinical summary",
+          signalBand: "LOW",
           evidence: [],
           unknowns: [],
         }),
       },
-      model: 'claude-test',
+      model: "claude-test",
       usage: { inputTokens: 100, outputTokens: 50, cost: 0.001 },
       metadata: { latency: 200, cached: false },
       createdAt: new Date().toISOString(),
     }),
     assessRisk: vi.fn().mockResolvedValue({
-      id: 'mock-id',
-      requestId: 'mock-req',
-      type: 'RISK_ASSESS',
+      id: "mock-id",
+      requestId: "mock-req",
+      type: "RISK_ASSESS",
       output: {
         content: JSON.stringify({
-          signalBand: 'LOW',
+          signalBand: "LOW",
           confidence: 0.85,
-          reasoning: 'Test reasoning',
+          reasoning: "Test reasoning",
           keyIndicators: [],
           recommendations: [],
         }),
       },
-      model: 'claude-test',
+      model: "claude-test",
       usage: { inputTokens: 100, outputTokens: 50, cost: 0.001 },
       metadata: { latency: 200, cached: false },
       createdAt: new Date().toISOString(),
     }),
     extractMemories: vi.fn().mockResolvedValue({
-      id: 'mock-id',
-      requestId: 'mock-req',
-      type: 'MEMORY_EXTRACT',
-      output: { content: '[]' },
-      model: 'claude-test',
+      id: "mock-id",
+      requestId: "mock-req",
+      type: "MEMORY_EXTRACT",
+      output: { content: "[]" },
+      model: "claude-test",
       usage: { inputTokens: 100, outputTokens: 50, cost: 0.001 },
       metadata: { latency: 200, cached: false },
       createdAt: new Date().toISOString(),
     }),
     chat: vi.fn().mockResolvedValue({
-      id: 'mock-id',
-      requestId: 'mock-req',
-      type: 'CHAT',
-      output: { content: 'Test response' },
-      model: 'claude-test',
+      id: "mock-id",
+      requestId: "mock-req",
+      type: "CHAT",
+      output: { content: "Test response" },
+      model: "claude-test",
       usage: { inputTokens: 100, outputTokens: 50, cost: 0.001 },
       metadata: { latency: 200, cached: false },
       createdAt: new Date().toISOString(),

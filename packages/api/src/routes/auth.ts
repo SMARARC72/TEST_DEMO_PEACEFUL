@@ -4,6 +4,7 @@
 
 import { Router } from "express";
 import { z } from "zod";
+import crypto from "node:crypto";
 import { authenticate } from "../middleware/auth.js";
 import { authLimiter } from "../middleware/rate-limit.js";
 import { AppError } from "../middleware/error.js";
@@ -59,10 +60,7 @@ function toUserResponse(u: PrismaUser) {
   };
 }
 
-function assertUserCanAuthenticate(user: {
-  status: string;
-  role: string;
-}) {
+function assertUserCanAuthenticate(user: { status: string; role: string }) {
   if (user.status === "ACTIVE") {
     return;
   }
@@ -78,6 +76,10 @@ function assertUserCanAuthenticate(user: {
     `Your account is ${user.status.toLowerCase()}. Contact support if this is unexpected.`,
     403,
   );
+}
+
+function hashBackupCode(userId: string, code: string) {
+  return crypto.createHash("sha256").update(`${userId}:${code}`).digest("hex");
 }
 
 // ─── Distributed stores (Redis-backed, in-memory fallback) ──────────
@@ -808,6 +810,10 @@ authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
   try {
     const body = auth0SyncSchema.parse(req.body);
 
+    if (req.user!.sub !== body.auth0Sub) {
+      throw new AppError("Auth0 identity mismatch", 403);
+    }
+
     // req.user.sub is the Auth0 sub (e.g., "auth0|abc123") from the verified token.
     // The email in the body comes from Auth0's ID token on the frontend.
     authLogger.info(
@@ -815,57 +821,44 @@ authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
       "Auth0 sync initiated",
     );
 
-    // Find default tenant (pilot: single-tenant)
-    const tenant = await prisma.tenant.findFirst({
+    const matchingUsers = await prisma.user.findMany({
+      where: { email: body.email },
       orderBy: { createdAt: "asc" },
     });
-    if (!tenant) {
-      throw new AppError("No organization configured. Contact admin.", 500);
+
+    if (matchingUsers.length === 0) {
+      throw new AppError(
+        "No pre-provisioned account matches this Auth0 identity. Use your clinic invitation or contact an administrator.",
+        403,
+      );
     }
 
-    // Look up existing user by email within the tenant
-    let user = await prisma.user.findFirst({
-      where: { tenantId: tenant.id, email: body.email },
+    const tenantScopedUser = matchingUsers.find(
+      (candidate) => candidate.tenantId === req.user!.tid,
+    );
+
+    if (matchingUsers.length > 1 && !tenantScopedUser) {
+      throw new AppError(
+        "This Auth0 identity matches multiple organizations and cannot be linked automatically. Contact support.",
+        409,
+      );
+    }
+
+    const resolvedUser = tenantScopedUser ?? matchingUsers[0]!;
+    const user = await prisma.user.update({
+      where: { id: resolvedUser.id },
+      data: { lastLogin: new Date() },
     });
 
-    if (user) {
-      // Existing user — update lastLogin
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { lastLogin: new Date() },
-      });
-      authLogger.info(
-        { userId: user.id, auth0Sub: body.auth0Sub },
-        "Auth0 sync: existing user logged in",
-      );
-    } else {
-      // JIT provisioning: create a new PATIENT user
-      user = await prisma.user.create({
-        data: {
-          tenantId: tenant.id,
-          email: body.email,
-          passwordHash: "", // Auth0-managed user, no local password
-          role: "PATIENT",
-          firstName: body.firstName || body.email.split("@")[0],
-          lastName: body.lastName || "",
-          status: "ACTIVE",
-          mfaEnabled: false,
-          lastLogin: new Date(),
-        },
-      });
+    authLogger.info(
+      { userId: user.id, auth0Sub: body.auth0Sub },
+      "Auth0 sync: existing user linked",
+    );
 
-      // Create companion Patient record
-      await prisma.patient.create({
-        data: {
-          tenantId: tenant.id,
-          userId: user.id,
-          age: 0, // updated during onboarding
-        },
-      });
-
-      authLogger.info(
-        { userId: user.id, auth0Sub: body.auth0Sub },
-        "Auth0 sync: JIT user provisioned",
+    if (user.passwordHash && user.passwordHash.trim().length > 0) {
+      authLogger.warn(
+        { userId: user.id },
+        "Auth0 sync linked an account that also has a local password",
       );
     }
 
@@ -994,12 +987,15 @@ authRouter.post("/mfa-confirm-setup", authenticate, async (req, res, next) => {
       backupCodes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
     }
 
-    // Store backup codes in Redis with long TTL (or in DB in production)
-    await redisSet(
-      `mfa-backup:${userId}`,
-      JSON.stringify(backupCodes),
-      365 * 24 * 3600,
-    );
+    await prisma.$transaction([
+      prisma.mfaBackupCode.deleteMany({ where: { userId } }),
+      prisma.mfaBackupCode.createMany({
+        data: backupCodes.map((code) => ({
+          userId,
+          codeHash: hashBackupCode(userId, code),
+        })),
+      }),
+    ]);
 
     authLogger.info({ userId }, "MFA enabled via TOTP");
     sendSuccess(res, req, { backupCodes });
