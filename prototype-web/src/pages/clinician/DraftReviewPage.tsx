@@ -1,6 +1,6 @@
 // ─── Draft Review Page ───────────────────────────────────────────────
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router';
+import { useNavigate, useParams, Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -11,6 +11,7 @@ import type { AIDraft, DraftStatus } from '@/api/types';
 
 export default function DraftReviewPage() {
   const { patientId } = useParams<{ patientId: string }>();
+  const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
 
   const [drafts, setDrafts] = useState<AIDraft[]>([]);
@@ -50,7 +51,20 @@ export default function DraftReviewPage() {
         title: `Draft ${status.toLowerCase()}`,
         variant: status === 'APPROVED' ? 'success' : status === 'REJECTED' ? 'error' : 'info',
       });
+
+      if (status === 'APPROVED' && updated.sessionNoteSeed) {
+        navigate(`/clinician/patients/${patientId}/session-notes`, {
+          state: { draftSeed: updated.sessionNoteSeed },
+        });
+      }
     }
+  };
+
+  const handleCreateSessionNote = (draft: AIDraft) => {
+    if (!patientId || !draft.sessionNoteSeed) return;
+    navigate(`/clinician/patients/${patientId}/session-notes`, {
+      state: { draftSeed: draft.sessionNoteSeed },
+    });
   };
 
   if (loading) {
@@ -90,6 +104,7 @@ export default function DraftReviewPage() {
               key={draft.id}
               draft={draft}
               onAction={handleAction}
+              onCreateSessionNote={handleCreateSessionNote}
               loading={loadingDraftId === draft.id}
             />
           ))}

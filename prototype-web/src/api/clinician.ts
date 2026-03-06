@@ -242,7 +242,7 @@ export const clinicianApi = {
 
   /** POST /clinician/patients/:patientId/session-notes/:noteId/sign */
   signSessionNote(patientId: string, noteId: string) {
-    return apiPost<SessionNote>(
+    return apiPatch<SessionNote>(
       `clinician/patients/${patientId}/session-notes/${noteId}/sign`,
       {},
     );

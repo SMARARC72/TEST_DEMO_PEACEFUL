@@ -183,7 +183,16 @@ export interface AIDraft {
   };
   reviewNotes?: string;
   suppressedItems?: string[];
+  sessionNoteSeed?: SessionNoteSeed;
   createdAt: string;
+}
+
+export interface SessionNoteSeed {
+  sourceDraftId: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
 }
 
 export interface DashboardResponse {

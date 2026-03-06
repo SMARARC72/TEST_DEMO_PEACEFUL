@@ -3,12 +3,13 @@
 // Supports Draft → Signed → Co-Signed lifecycle, note templates,
 // addendums, AI pre-fill, co-signature workflow, and E/M code suggestion.
 
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useLocation } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { clinicianApi } from '@/api/clinician';
+import type { SessionNoteSeed } from '@/api/types';
 import { useUIStore } from '@/stores/ui';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
@@ -140,7 +141,9 @@ function suggestEMCode(duration: number, hasHighComplexity: boolean): string {
 
 export default function SessionNotesPage() {
   const { patientId } = useParams<{ patientId: string }>();
+  const location = useLocation();
   const addToast = useUIStore((s) => s.addToast);
+  const importedDraftIdRef = useRef<string | null>(null);
   const [notes, setNotes] = useState<SessionNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -191,6 +194,26 @@ export default function SessionNotesPage() {
     loadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
+
+  useEffect(() => {
+    const state = location.state as { draftSeed?: SessionNoteSeed } | null;
+    const draftSeed = state?.draftSeed;
+    if (!draftSeed || importedDraftIdRef.current === draftSeed.sourceDraftId) return;
+
+    importedDraftIdRef.current = draftSeed.sourceDraftId;
+    setSelectedNote(null);
+    setSelectedTemplate(null);
+    setShowForm(true);
+    reset({
+      sessionDate: new Date().toISOString().split('T')[0],
+      subjective: draftSeed.subjective,
+      objective: draftSeed.objective,
+      assessment: draftSeed.assessment,
+      plan: draftSeed.plan,
+      duration: 50,
+    });
+    addToast({ title: 'Approved draft loaded into session note', variant: 'success' });
+  }, [addToast, location.state, reset]);
 
   async function loadNotes() {
     if (!patientId) return;

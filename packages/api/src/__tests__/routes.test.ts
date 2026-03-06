@@ -534,6 +534,112 @@ describe("Clinician routes", () => {
     );
   });
 
+  it("PATCH /api/v1/clinician/patients/:id/drafts/:draftId returns a session note seed when approving a draft", async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({
+      id: "clinician-001",
+      userId: USER_ID,
+    });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
+      tenantId: TENANT_ID,
+    });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([
+      { patientId: PATIENT_ID },
+    ]);
+    (prisma.aIDraft.findFirst as Mock).mockResolvedValueOnce({
+      id: "draft-001",
+      patientId: PATIENT_ID,
+      submissionId: "submission-001",
+      content:
+        "Subjective: Patient reports lower anxiety.\nObjective: Affect is calmer and engagement is improved.\nAssessment: Symptoms appear to be stabilizing.\nPlan: Continue CBT homework and follow up next week.",
+      format: "SOAP",
+      status: "DRAFT",
+      reviewNotes: null,
+      suppressedItems: [],
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+    });
+    (prisma.aIDraft.update as Mock).mockResolvedValueOnce({
+      id: "draft-001",
+      patientId: PATIENT_ID,
+      submissionId: "submission-001",
+      content:
+        "Subjective: Patient reports lower anxiety.\nObjective: Affect is calmer and engagement is improved.\nAssessment: Symptoms appear to be stabilizing.\nPlan: Continue CBT homework and follow up next week.",
+      format: "SOAP",
+      status: "APPROVED",
+      reviewNotes: "Approved for clinician editing",
+      suppressedItems: [],
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+    });
+
+    const res = await request(app)
+      .patch(`/api/v1/clinician/patients/${PATIENT_ID}/drafts/draft-001`)
+      .set("Authorization", `Bearer ${clinicianToken()}`)
+      .send({
+        status: "APPROVED",
+        reviewNotes: "Approved for clinician editing",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      id: "draft-001",
+      status: "APPROVED",
+      output: {
+        content: expect.stringContaining("Subjective:"),
+      },
+      sessionNoteSeed: {
+        sourceDraftId: "draft-001",
+        subjective: "Patient reports lower anxiety.",
+        objective: "Affect is calmer and engagement is improved.",
+        assessment: "Symptoms appear to be stabilizing.",
+        plan: "Continue CBT homework and follow up next week.",
+      },
+    });
+  });
+
+  it("GET /api/v1/clinician/patients/:id/session-notes returns frontend-ready note fields", async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({
+      id: "clinician-001",
+      userId: USER_ID,
+    });
+    (prisma.patient.findUnique as Mock).mockResolvedValueOnce({
+      tenantId: TENANT_ID,
+    });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([
+      { patientId: PATIENT_ID },
+    ]);
+    (prisma.sessionNote.findMany as Mock).mockResolvedValueOnce([
+      {
+        id: "note-001",
+        patientId: PATIENT_ID,
+        date: new Date("2026-03-06T09:00:00.000Z"),
+        subjective: "Patient reports better sleep.",
+        objective: "Observed calmer affect.",
+        assessment: "Improvement continues.",
+        plan: "Maintain coping practice.",
+        signed: false,
+        signedAt: null,
+        coSignedAt: null,
+        createdAt: new Date("2026-03-06T09:05:00.000Z"),
+        updatedAt: new Date("2026-03-06T09:10:00.000Z"),
+      },
+    ]);
+
+    const res = await request(app)
+      .get(`/api/v1/clinician/patients/${PATIENT_ID}/session-notes`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        id: "note-001",
+        patientId: PATIENT_ID,
+        sessionDate: "2026-03-06T09:00:00.000Z",
+        status: "DRAFT",
+        subjective: "Patient reports better sleep.",
+        duration: 50,
+      }),
+    ]);
+  });
+
   it("POST /api/v1/patients/:id/checkin broadcasts a clinician submission event", async () => {
     (prisma.patient.findUnique as unknown as Mock)
       .mockResolvedValueOnce({

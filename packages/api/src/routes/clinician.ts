@@ -104,32 +104,30 @@ function formatDurationMinutes(minutes: number): string {
   }
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = Math.round(minutes % 60);
-  return remainingMinutes > 0
-    ? `${hours}h ${remainingMinutes}m`
-    : `${hours}h`;
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
 function categorizeAdherenceTask(task: string): string {
   const normalized = task.toLowerCase();
   if (normalized.includes("med")) return "Medication";
   if (
-    normalized.includes("exercise")
-    || normalized.includes("walk")
-    || normalized.includes("workout")
+    normalized.includes("exercise") ||
+    normalized.includes("walk") ||
+    normalized.includes("workout")
   ) {
     return "Exercise";
   }
   if (
-    normalized.includes("homework")
-    || normalized.includes("worksheet")
-    || normalized.includes("journal")
+    normalized.includes("homework") ||
+    normalized.includes("worksheet") ||
+    normalized.includes("journal")
   ) {
     return "Homework";
   }
   if (
-    normalized.includes("appointment")
-    || normalized.includes("session")
-    || normalized.includes("visit")
+    normalized.includes("appointment") ||
+    normalized.includes("session") ||
+    normalized.includes("visit")
   ) {
     return "Appointment";
   }
@@ -162,12 +160,18 @@ function buildEngagementTrend(
       return date.toLocaleDateString("en-US", { month: "short" });
     }
     if (useDailyBuckets) {
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
     }
     return `Week of ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
   };
 
-  const buckets = new Map<string, { label: string; checkins: number; journals: number; voice: number }>();
+  const buckets = new Map<
+    string,
+    { label: string; checkins: number; journals: number; voice: number }
+  >();
 
   let cursor = bucketStart(since);
   const end = new Date();
@@ -181,7 +185,9 @@ function buildEngagementTrend(
     });
     cursor = useMonthlyBuckets
       ? new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
-      : new Date(cursor.getTime() + (useDailyBuckets ? 86400000 : 7 * 86400000));
+      : new Date(
+          cursor.getTime() + (useDailyBuckets ? 86400000 : 7 * 86400000),
+        );
   }
 
   for (const submission of submissions) {
@@ -205,7 +211,10 @@ function buildOutcomesTrend(
   scores: Array<{ instrument: string; score: number; date: Date }>,
   since: Date,
 ): Array<{ month: string; phq9Avg: number; gad7Avg: number }> {
-  const buckets = new Map<string, { month: string; phq9: number[]; gad7: number[] }>();
+  const buckets = new Map<
+    string,
+    { month: string; phq9: number[]; gad7: number[] }
+  >();
 
   let cursor = startOfMonth(since);
   const end = new Date();
@@ -230,16 +239,29 @@ function buildOutcomesTrend(
   return Array.from(buckets.values()).map((bucket) => ({
     month: bucket.month,
     phq9Avg: bucket.phq9.length
-      ? Math.round((bucket.phq9.reduce((sum, value) => sum + value, 0) / bucket.phq9.length) * 10) / 10
+      ? Math.round(
+          (bucket.phq9.reduce((sum, value) => sum + value, 0) /
+            bucket.phq9.length) *
+            10,
+        ) / 10
       : 0,
     gad7Avg: bucket.gad7.length
-      ? Math.round((bucket.gad7.reduce((sum, value) => sum + value, 0) / bucket.gad7.length) * 10) / 10
+      ? Math.round(
+          (bucket.gad7.reduce((sum, value) => sum + value, 0) /
+            bucket.gad7.length) *
+            10,
+        ) / 10
       : 0,
   }));
 }
 
 function computeSignalImprovement(
-  scores: Array<{ patientId: string; instrument: string; score: number; date: Date }>,
+  scores: Array<{
+    patientId: string;
+    instrument: string;
+    score: number;
+    date: Date;
+  }>,
 ): number {
   const phq9ByPatient = new Map<string, { first: number; last: number }>();
 
@@ -248,7 +270,10 @@ function computeSignalImprovement(
     .sort((left, right) => left.date.getTime() - right.date.getTime())) {
     const existing = phq9ByPatient.get(score.patientId);
     if (!existing) {
-      phq9ByPatient.set(score.patientId, { first: score.score, last: score.score });
+      phq9ByPatient.set(score.patientId, {
+        first: score.score,
+        last: score.score,
+      });
       continue;
     }
     existing.last = score.score;
@@ -265,6 +290,164 @@ function computeSignalImprovement(
   return improvementCount > 0
     ? Math.round(improvementTotal / improvementCount)
     : 0;
+}
+
+type DraftSeed = {
+  sourceDraftId: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+};
+
+type DraftRecord = {
+  id: string;
+  patientId: string;
+  submissionId: string;
+  format: string;
+  status: "DRAFT" | "REVIEWED" | "APPROVED" | "REJECTED" | "ESCALATED";
+  content: string;
+  reviewNotes: string | null;
+  suppressedItems: unknown;
+  createdAt: Date;
+};
+
+type SessionNoteRecord = {
+  id: string;
+  patientId: string;
+  date: Date;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  signed: boolean;
+  signedAt: Date | null;
+  coSignedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+function normalizeSoapSection(value: string | undefined): string {
+  return value?.replace(/^[-*\s]+/, "").trim() || "";
+}
+
+function buildDraftSessionNoteSeed(draft: DraftRecord): DraftSeed {
+  const content = draft.content.replace(/\r\n/g, "\n").trim();
+  const linePatterns: Record<keyof Omit<DraftSeed, "sourceDraftId">, RegExp> = {
+    subjective: /^(subjective|s)\s*[:\-]\s*(.*)$/i,
+    objective: /^(objective|o)\s*[:\-]\s*(.*)$/i,
+    assessment: /^(assessment|a)\s*[:\-]\s*(.*)$/i,
+    plan: /^(plan|p)\s*[:\-]\s*(.*)$/i,
+  };
+  const sections: Record<keyof Omit<DraftSeed, "sourceDraftId">, string[]> = {
+    subjective: [],
+    objective: [],
+    assessment: [],
+    plan: [],
+  };
+  let currentSection: keyof Omit<DraftSeed, "sourceDraftId"> | null = null;
+
+  for (const rawLine of content.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      if (currentSection) sections[currentSection].push("");
+      continue;
+    }
+
+    let matchedSection: keyof Omit<DraftSeed, "sourceDraftId"> | null = null;
+    for (const [sectionName, pattern] of Object.entries(linePatterns) as Array<
+      [keyof Omit<DraftSeed, "sourceDraftId">, RegExp]
+    >) {
+      const match = line.match(pattern);
+      if (!match) continue;
+      matchedSection = sectionName;
+      currentSection = sectionName;
+      const inlineValue = normalizeSoapSection(match[2]);
+      if (inlineValue) sections[sectionName].push(inlineValue);
+      break;
+    }
+
+    if (!matchedSection && currentSection) {
+      sections[currentSection].push(line);
+    }
+  }
+
+  const extracted = {
+    subjective: normalizeSoapSection(sections.subjective.join("\n")),
+    objective: normalizeSoapSection(sections.objective.join("\n")),
+    assessment: normalizeSoapSection(sections.assessment.join("\n")),
+    plan: normalizeSoapSection(sections.plan.join("\n")),
+  };
+
+  const extractedCount = Object.values(extracted).filter(Boolean).length;
+  if (extractedCount === 4) {
+    return {
+      sourceDraftId: draft.id,
+      ...extracted,
+    };
+  }
+
+  const paragraphs = content
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  return {
+    sourceDraftId: draft.id,
+    subjective: extracted.subjective || paragraphs[0] || content,
+    objective:
+      extracted.objective ||
+      paragraphs[1] ||
+      "Observed content captured from the approved AI draft. Review and refine objective findings before finalizing.",
+    assessment:
+      extracted.assessment ||
+      paragraphs[2] ||
+      "Clinical assessment requires clinician confirmation based on the approved AI draft.",
+    plan:
+      extracted.plan ||
+      paragraphs[3] ||
+      "Finalize follow-up interventions, homework, and safety considerations before signing.",
+  };
+}
+
+function serializeDraft(draft: DraftRecord) {
+  return {
+    id: draft.id,
+    patientId: draft.patientId,
+    submissionId: draft.submissionId,
+    format: draft.format,
+    status: draft.status,
+    output: {
+      content: draft.content,
+    },
+    reviewNotes: draft.reviewNotes ?? undefined,
+    suppressedItems: Array.isArray(draft.suppressedItems)
+      ? draft.suppressedItems
+      : [],
+    createdAt: draft.createdAt.toISOString(),
+    sessionNoteSeed:
+      draft.status === "APPROVED"
+        ? buildDraftSessionNoteSeed(draft)
+        : undefined,
+  };
+}
+
+function serializeSessionNote(note: SessionNoteRecord) {
+  return {
+    id: note.id,
+    patientId: note.patientId,
+    sessionDate: note.date.toISOString(),
+    status: note.coSignedAt ? "CO_SIGNED" : note.signed ? "SIGNED" : "DRAFT",
+    subjective: note.subjective,
+    objective: note.objective,
+    assessment: note.assessment,
+    plan: note.plan,
+    duration: 50,
+    signedAt: note.signedAt?.toISOString(),
+    coSignedAt: note.coSignedAt?.toISOString(),
+    createdAt: note.createdAt.toISOString(),
+    updatedAt: note.updatedAt.toISOString(),
+  };
 }
 
 // ─── GET /dashboard ──────────────────────────────────────────────────
@@ -587,7 +770,11 @@ clinicianRouter.get("/patients/:id/drafts", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { createdAt: "desc" },
     });
-    sendSuccess(res, req, drafts);
+    sendSuccess(
+      res,
+      req,
+      drafts.map((draft) => serializeDraft(draft as DraftRecord)),
+    );
   } catch (err) {
     next(err);
   }
@@ -630,7 +817,7 @@ clinicianRouter.patch(
         },
       });
 
-      sendSuccess(res, req, updated);
+      sendSuccess(res, req, serializeDraft(updated as DraftRecord));
     } catch (err) {
       next(err);
     }
@@ -856,7 +1043,11 @@ clinicianRouter.get("/patients/:id/session-notes", async (req, res, next) => {
       where: { patientId: req.params.id },
       orderBy: { date: "desc" },
     });
-    sendSuccess(res, req, notes);
+    sendSuccess(
+      res,
+      req,
+      notes.map((note) => serializeSessionNote(note as SessionNoteRecord)),
+    );
   } catch (err) {
     next(err);
   }
@@ -890,7 +1081,7 @@ clinicianRouter.post("/patients/:id/session-notes", async (req, res, next) => {
       },
     });
 
-    sendSuccess(res, req, note, 201);
+    sendSuccess(res, req, serializeSessionNote(note as SessionNoteRecord), 201);
   } catch (err) {
     next(err);
   }
@@ -935,7 +1126,7 @@ clinicianRouter.patch(
         },
       });
 
-      sendSuccess(res, req, updated);
+      sendSuccess(res, req, serializeSessionNote(updated as SessionNoteRecord));
     } catch (err) {
       next(err);
     }
@@ -1597,7 +1788,10 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         where: { patientId: { in: patientIds }, status: "APPROVED" },
       }),
       prisma.submission.findMany({
-        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        where: {
+          patientId: { in: patientIds },
+          createdAt: { gte: previousSince },
+        },
         select: { patientId: true, source: true, createdAt: true },
       }),
       prisma.mBCScore.findMany({
@@ -1606,11 +1800,17 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         orderBy: { date: "asc" },
       }),
       prisma.chatSession.findMany({
-        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        where: {
+          patientId: { in: patientIds },
+          createdAt: { gte: previousSince },
+        },
         select: { createdAt: true },
       }),
       prisma.triageItem.findMany({
-        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        where: {
+          patientId: { in: patientIds },
+          createdAt: { gte: previousSince },
+        },
         select: { signalBand: true, createdAt: true },
       }),
       prisma.adherenceItem.findMany({
@@ -1631,28 +1831,35 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
       (submission: { createdAt: Date }) => submission.createdAt >= since,
     );
     const previousSubmissions = submissions.filter(
-      (submission: { createdAt: Date }) => submission.createdAt >= previousSince && submission.createdAt < since,
+      (submission: { createdAt: Date }) =>
+        submission.createdAt >= previousSince && submission.createdAt < since,
     );
 
     const activePatients = new Set(
-      currentSubmissions.map((submission: { patientId: string }) => submission.patientId),
+      currentSubmissions.map(
+        (submission: { patientId: string }) => submission.patientId,
+      ),
     ).size;
     const previousActivePatients = new Set(
-      previousSubmissions.map((submission: { patientId: string }) => submission.patientId),
+      previousSubmissions.map(
+        (submission: { patientId: string }) => submission.patientId,
+      ),
     ).size;
 
     const currentChatSessions = chatSessions.filter(
       (session: { createdAt: Date }) => session.createdAt >= since,
     ).length;
     const previousChatSessions = chatSessions.filter(
-      (session: { createdAt: Date }) => session.createdAt >= previousSince && session.createdAt < since,
+      (session: { createdAt: Date }) =>
+        session.createdAt >= previousSince && session.createdAt < since,
     ).length;
 
     const currentTriageItems = triageItems.filter(
       (item: { createdAt: Date }) => item.createdAt >= since,
     );
     const previousTriageItems = triageItems.filter(
-      (item: { createdAt: Date }) => item.createdAt >= previousSince && item.createdAt < since,
+      (item: { createdAt: Date }) =>
+        item.createdAt >= previousSince && item.createdAt < since,
     );
 
     const signalDistribution = ["LOW", "GUARDED", "MODERATE", "ELEVATED"].map(
@@ -1667,7 +1874,10 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
     const adherenceByCategory = Array.from(
       adherenceItems.reduce(
         (
-          categories: Map<string, { totalCompleted: number; totalTarget: number }>,
+          categories: Map<
+            string,
+            { totalCompleted: number; totalTarget: number }
+          >,
           item: { task: string; completed: number; target: number },
         ) => {
           const category = categorizeAdherenceTask(item.task);
@@ -1689,25 +1899,36 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
       ];
 
       return {
-      category,
-      rate: totals.totalTarget > 0
-        ? Math.round((totals.totalCompleted / totals.totalTarget) * 100)
-        : 0,
+        category,
+        rate:
+          totals.totalTarget > 0
+            ? Math.round((totals.totalCompleted / totals.totalTarget) * 100)
+            : 0,
       };
     });
 
-    const avgResponseTimeMinutes = acknowledgedEscalations.length > 0
-      ? acknowledgedEscalations.reduce(
-          (
-            total: number,
-            item: { detectedAt: Date; acknowledgedAt: Date | null },
-          ) => total + (((item.acknowledgedAt?.getTime() ?? item.detectedAt.getTime()) - item.detectedAt.getTime()) / 60000),
-          0,
-        ) / acknowledgedEscalations.length
-      : 0;
+    const avgResponseTimeMinutes =
+      acknowledgedEscalations.length > 0
+        ? acknowledgedEscalations.reduce(
+            (
+              total: number,
+              item: { detectedAt: Date; acknowledgedAt: Date | null },
+            ) =>
+              total +
+              ((item.acknowledgedAt?.getTime() ?? item.detectedAt.getTime()) -
+                item.detectedAt.getTime()) /
+                60000,
+            0,
+          ) / acknowledgedEscalations.length
+        : 0;
 
     const avgSignalImprovement = computeSignalImprovement(
-      mbcScores as Array<{ patientId: string; instrument: string; score: number; date: Date }>,
+      mbcScores as Array<{
+        patientId: string;
+        instrument: string;
+        score: number;
+        date: Date;
+      }>,
     );
     const recentTriageElevated = currentTriageItems.filter(
       (item: { signalBand: string }) => item.signalBand === "ELEVATED",
@@ -1718,7 +1939,9 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         totalPatients,
         activePatients,
         avgEngagementRate:
-          totalPatients > 0 ? Math.round((activePatients / totalPatients) * 100) : 0,
+          totalPatients > 0
+            ? Math.round((activePatients / totalPatients) * 100)
+            : 0,
         avgSignalImprovement,
         pendingEscalations: openEscalations,
         avgResponseTime: formatDurationMinutes(avgResponseTimeMinutes),
@@ -1730,7 +1953,9 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         since,
       ),
       outcomesTrend: buildOutcomesTrend(
-        mbcScores.filter((score: { date: Date }) => score.date >= since) as Array<{
+        mbcScores.filter(
+          (score: { date: Date }) => score.date >= since,
+        ) as Array<{
           instrument: string;
           score: number;
           date: Date;
@@ -1742,7 +1967,10 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
         {
           label: "Submissions",
           value: String(currentSubmissions.length),
-          change: percentChange(currentSubmissions.length, previousSubmissions.length),
+          change: percentChange(
+            currentSubmissions.length,
+            previousSubmissions.length,
+          ),
           unit: "items",
         },
         {

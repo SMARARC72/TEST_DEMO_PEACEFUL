@@ -17,10 +17,11 @@ const statusVariant: Record<DraftStatus, 'default' | 'info' | 'warning' | 'dange
 export interface DraftViewerProps {
   draft: AIDraft;
   onAction?: (draftId: string, status: DraftStatus, notes?: string) => void;
+  onCreateSessionNote?: (draft: AIDraft) => void;
   loading?: boolean;
 }
 
-export function DraftViewer({ draft, onAction, loading }: DraftViewerProps) {
+export function DraftViewer({ draft, onAction, onCreateSessionNote, loading }: DraftViewerProps) {
   const [notes, setNotes] = useState('');
 
   const handleAction = (status: DraftStatus) => {
@@ -79,6 +80,18 @@ export function DraftViewer({ draft, onAction, loading }: DraftViewerProps) {
                 Escalate
               </Button>
             </div>
+          </div>
+        )}
+
+        {draft.status === 'APPROVED' && draft.sessionNoteSeed && onCreateSessionNote && (
+          <div className="mt-4 flex justify-end">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onCreateSessionNote(draft)}
+            >
+              Open in Session Note
+            </Button>
           </div>
         )}
       </CardContent>
