@@ -21,6 +21,8 @@ yarn-error.log*
 # Node
 node_modules/
 dist/
+!packages/shared/dist/
+!packages/shared/dist/**
 build/
 .next/
 coverage/
