@@ -23,9 +23,6 @@ export default function MfaEnrollmentPage() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Demo mode: mock environment auto-fills verification for ease of presentation
-  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
-  const DEMO_CODE = '123456';
 
   // Build TOTP URI for QR code rendering
   const totpUri = useMemo(() => {
@@ -39,11 +36,6 @@ export default function MfaEnrollmentPage() {
     (async () => {
       setLoading(true);
       try {
-        // Demo mode: use hardcoded TOTP secret — no backend/MSW dependency
-        if (isDemoMode) {
-          setSecret('JBSWY3DPEHPK3PXP');
-          return;
-        }
         const [data, err] = await authApi.mfaSetup();
         if (err) {
           setError(err.message ?? 'Failed to initialize MFA setup');
@@ -53,12 +45,7 @@ export default function MfaEnrollmentPage() {
           setSecret(data.secret ?? '');
         }
       } catch {
-        // Fallback for demo mode or if MSW isn't intercepting
-        if (isDemoMode) {
-          setSecret('JBSWY3DPEHPK3PXP');
-        } else {
-          setError('Failed to initialize MFA setup');
-        }
+        setError('Failed to initialize MFA setup');
       } finally {
         setLoading(false);
       }
@@ -74,12 +61,6 @@ export default function MfaEnrollmentPage() {
     setError('');
     setLoading(true);
     try {
-      // Demo mode: skip API call, return mock backup codes
-      if (isDemoMode) {
-        setBackupCodes(['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890']);
-        setStep('backup');
-        return;
-      }
       const [data, err] = await authApi.mfaConfirmSetup(verifyCode);
       if (err) {
         setError(err.message ?? 'Invalid code. Please try again.');
@@ -90,13 +71,7 @@ export default function MfaEnrollmentPage() {
       }
       setStep('backup');
     } catch {
-      // Fallback for demo mode
-      if (isDemoMode) {
-        setBackupCodes(['ABCD-1234', 'EFGH-5678', 'IJKL-9012', 'MNOP-3456', 'QRST-7890']);
-        setStep('backup');
-      } else {
-        setError('Verification failed');
-      }
+      setError('Verification failed');
     } finally {
       setLoading(false);
     }
@@ -178,17 +153,6 @@ export default function MfaEnrollmentPage() {
               <Button onClick={() => setStep('verify')} className="w-full">
                 I've scanned the QR code →
               </Button>
-              {isDemoMode && (
-                <button
-                  onClick={() => {
-                    setVerifyCode(DEMO_CODE);
-                    setStep('verify');
-                  }}
-                  className="w-full text-sm text-brand-600 hover:underline dark:text-brand-400"
-                >
-                  Demo: Skip to verification →
-                </button>
-              )}
             </div>
           )}
 
@@ -205,17 +169,6 @@ export default function MfaEnrollmentPage() {
                 inputMode="numeric"
                 autoFocus
               />
-              {isDemoMode && (
-                <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800 dark:bg-brand-900/20">
-                  <p className="text-xs text-brand-700 dark:text-brand-300">
-                    <span className="font-semibold">Demo Mode:</span> Enter any 6-digit code (e.g. <button
-                      type="button"
-                      onClick={() => setVerifyCode(DEMO_CODE)}
-                      className="font-mono font-bold underline hover:text-brand-900 dark:hover:text-brand-200"
-                    >{DEMO_CODE}</button>) to proceed.
-                  </p>
-                </div>
-              )}
               <Button onClick={handleVerify} className="w-full" loading={loading}>
                 Verify & Enable MFA
               </Button>

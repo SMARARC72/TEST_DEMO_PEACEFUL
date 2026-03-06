@@ -124,39 +124,15 @@ enableMocking().then(() => {
     }
   });
 
-  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true';
-
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
         <Auth0ProviderWithNavigate>
-          {isDemoMode && (
-            <div
-              role="status"
-              aria-label="Demo mode active"
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 99999,
-                background: '#f59e0b',
-                color: '#000',
-                textAlign: 'center',
-                padding: '4px 8px',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-              }}
-            >
-              DEMO MODE — Synthetic data only. Not connected to production backend.
-            </div>
-          )}
           <RouterProvider router={router} />
+          <ToastContainer />
           <SessionTimeoutWarning />
           <CrisisButton />
           <FeedbackWidget />
-          <ToastContainer />
         </Auth0ProviderWithNavigate>
       </ErrorBoundary>
     </StrictMode>,

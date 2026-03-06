@@ -78,12 +78,11 @@ export default function ConsentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isReConsent, setIsReConsent] = useState(false);
 
-  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
 
   // Check if user has already consented to current version
   // In demo mode: skip API call entirely — consent is tracked via localStorage only
   useEffect(() => {
-    if (!patientId || isDemoMode) return;
+    if (!patientId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -102,7 +101,7 @@ export default function ConsentPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [patientId, isDemoMode]);
+  }, [patientId]);
 
   const allAccepted = consentItems.every((c) => accepted[c.id]);
 
@@ -115,13 +114,6 @@ export default function ConsentPage() {
     setSubmitting(true);
 
     try {
-      if (isDemoMode) {
-        // Demo mode: skip ALL API calls — consent is tracked via localStorage only.
-        localStorage.setItem('peacefull-consent-accepted', 'true');
-        addToast({ variant: 'success', title: 'Consent recorded. Welcome to Peacefull.ai!' });
-        navigate('/patient', { replace: true });
-        return;
-      }
 
       // Production: submit each consent record via API
       const results = await Promise.all(
