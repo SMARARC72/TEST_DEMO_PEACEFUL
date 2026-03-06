@@ -142,6 +142,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Remove checked-in API dotenv for CI
+        run: rm -f packages/api/.env
       - name: Install shared dependencies
         run: cd packages/shared && npm ci
       - name: Install API dependencies

@@ -27,11 +27,6 @@ jobs:
         run: npm run build
         working-directory: ./prototype-web
 
-      - name: Serve built site
-        run: |
-          npx http-server ./prototype-web/dist -p 5173 &
-          sleep 2
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: ./prototype-web

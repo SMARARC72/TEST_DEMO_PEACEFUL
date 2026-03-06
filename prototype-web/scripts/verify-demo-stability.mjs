@@ -4,7 +4,7 @@
  * 
  * Checks:
  * 1. No unresolved merge markers in source files
- * 2. Critical React entry points exist (main.tsx, App.tsx, router.tsx)
+ * 2. Critical React entry points exist (main.tsx, router.tsx)
  * 3. All page components exist
  * 4. Netlify / deploy config is correct
  * 5. package-lock.json is present and valid
@@ -26,7 +26,6 @@ const checks = [];
 const filesToScan = [
   'index.html',
   'src/main.tsx',
-  'src/App.tsx',
   'src/router.tsx',
   'src/api/client.ts',
   'src/stores/auth.ts',
@@ -49,7 +48,6 @@ for (const relPath of filesToScan) {
 // ─── 2. Critical React entry points exist ───
 const requiredFiles = [
   'src/main.tsx',
-  'src/App.tsx',
   'src/router.tsx',
   'src/api/client.ts',
   'src/api/types.ts',
