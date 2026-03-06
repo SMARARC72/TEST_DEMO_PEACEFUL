@@ -24,6 +24,8 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [step, setStep] = useState<'password' | 'mfa'>('password');
+  const [mfaMethod, setMfaMethod] = useState<'TOTP' | 'EMAIL'>('TOTP');
+  const [mfaMessage, setMfaMessage] = useState('Enter the 6-digit code from your authenticator app.');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const userEmail = useAuthStore((s) => s.user?.email ?? '');
@@ -41,6 +43,13 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
         return;
       }
       if (data?.mfaRequired) {
+        setMfaMethod(data.method === 'EMAIL' ? 'EMAIL' : 'TOTP');
+        setMfaMessage(
+          data.message ??
+            (data.method === 'EMAIL'
+              ? 'A verification code has been sent to your email. Enter it below.'
+              : 'Enter the 6-digit code from your authenticator app.'),
+        );
         setStep('mfa');
         setLoading(false);
         return;
@@ -83,6 +92,8 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
     setPassword('');
     setMfaCode('');
     setStep('password');
+    setMfaMethod('TOTP');
+    setMfaMessage('Enter the 6-digit code from your authenticator app.');
     setError('');
     setLoading(false);
   }
@@ -136,11 +147,11 @@ export function StepUpAuth({ open, onSuccess, onCancel, reason }: StepUpAuthProp
         ) : (
           <form onSubmit={handleMfaSubmit} className="space-y-4">
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Enter the 6-digit code from your authenticator app.
+              {mfaMessage}
             </p>
             <div>
               <label htmlFor="stepup-mfa" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                MFA Code
+                {mfaMethod === 'EMAIL' ? 'Verification Code' : 'Authenticator Code'}
               </label>
               <Input
                 id="stepup-mfa"
