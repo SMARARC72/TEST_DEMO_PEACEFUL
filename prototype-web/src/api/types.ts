@@ -7,6 +7,7 @@ export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'PENDING_APPROVAL'
 export type SignalBand = 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED';
 export type TriageStatus = 'NEW' | 'ACK' | 'IN_REVIEW' | 'ESCALATED' | 'RESOLVED';
 export type DraftStatus = 'DRAFT' | 'REVIEWED' | 'APPROVED' | 'REJECTED' | 'ESCALATED';
+export type ChatSummaryStatus = 'DRAFT' | 'REVIEWED' | 'APPROVED' | 'REJECTED' | 'ESCALATED';
 export type SubmissionSource = 'JOURNAL' | 'CHECKIN' | 'VOICE_MEMO';
 
 // ─── Auth ─────────────────────────────────────
@@ -411,6 +412,114 @@ export interface PatientProfile {
   triageItems: TriageItem[];
   drafts: AIDraft[];
   signalHistory: { band: SignalBand; date: string }[];
+}
+
+export interface ChatSessionSummaryRef {
+  id: string;
+  status: ChatSummaryStatus;
+  createdAt: string;
+}
+
+export interface ChatSessionListItem {
+  id: string;
+  patientId: string;
+  active: boolean;
+  messageCount: number;
+  durationMinutes: number;
+  latestSummary: ChatSessionSummaryRef | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatSessionMessage {
+  id: string;
+  role: string;
+  content: string;
+  memoryRef?: string | null;
+  createdAt: string;
+}
+
+export interface ChatSessionDetail {
+  id: string;
+  patientId: string;
+  active: boolean;
+  messages: ChatSessionMessage[];
+  summaries: ChatSessionSummaryRef[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatSummaryRecommendation {
+  title?: string;
+  description?: string;
+  reasoning?: string;
+  evidenceCitations?: string[];
+  signalBand?: SignalBand | string;
+  category?: string;
+}
+
+export interface ChatSummaryEvidenceLog {
+  patientStatement?: string;
+  clinicalPattern?: string;
+  citedPublication?: string;
+  publicationYear?: number;
+  evidenceGrade?: string;
+  relevantExcerpt?: string;
+}
+
+export interface ChatSummaryPatternFlag {
+  pattern?: string;
+  frequency?: string;
+  severity?: string;
+  suggestedIntervention?: string;
+}
+
+export interface ChatSummaryRiskIndicator {
+  indicator?: string;
+  contextQuote?: string;
+  signalBand?: SignalBand | string;
+}
+
+export interface ChatSummaryListItem {
+  id: string;
+  sessionId: string;
+  status: ChatSummaryStatus;
+  modelVersion: string;
+  reviewedBy: {
+    id: string;
+    name: string;
+  } | null;
+  reviewedAt: string | null;
+  sessionCreatedAt: string;
+  createdAt: string;
+}
+
+export interface ChatSummaryDetail {
+  id: string;
+  sessionId: string;
+  patientId: string;
+  clinicianSummary: string;
+  recommendations: ChatSummaryRecommendation[];
+  evidenceLog: ChatSummaryEvidenceLog[];
+  patternFlags: ChatSummaryPatternFlag[];
+  riskIndicators: ChatSummaryRiskIndicator[];
+  unknowns: string[];
+  modelVersion: string;
+  tokenUsage?: Record<string, unknown>;
+  status: ChatSummaryStatus;
+  reviewedBy: {
+    id: string;
+    name: string;
+  } | null;
+  reviewedAt: string | null;
+  reviewNotes?: string | null;
+  session: {
+    createdAt: string;
+    active: boolean;
+    messageCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── MBC (Measurement-Based Care) ─────────────

@@ -76,6 +76,13 @@ Primary goals:
 3. Added a clinician analytics route regression that asserts the dashboard-ready contract shape.
 4. Extended the shared API Prisma test mock to include `chatSessionSummary`, which is required by both analytics and chat-summary route coverage.
 
+### Batch 4 Completed
+
+1. Wired the existing clinician chat-session and chat-summary endpoints into the frontend clinician workflow.
+2. Added typed frontend API methods for transcript retrieval, summary generation, summary listing, and clinician review actions.
+3. Added a dedicated clinician chat review page and linked it from the patient profile so transcripts and summaries are reachable in the live product.
+4. Added targeted frontend regression coverage for transcript loading and summary approval.
+
 ---
 
 ## 4. Remaining Execution Phases

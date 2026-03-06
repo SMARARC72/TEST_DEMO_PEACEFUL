@@ -22,6 +22,11 @@ import type {
   AdherenceItem,
   Escalation,
   AnalyticsData,
+  ChatSessionListItem,
+  ChatSessionDetail,
+  ChatSummaryListItem,
+  ChatSummaryDetail,
+  ChatSummaryStatus,
 } from './types';
 
 export const clinicianApi = {
@@ -91,6 +96,48 @@ export const clinicianApi = {
   /** GET /clinician/patients/:patientId/journals */
   getPatientJournals(patientId: string) {
     return apiGet<JournalEntry[]>(`clinician/patients/${patientId}/journal`);
+  },
+
+  // ── Chat Review ───────────────────────────
+  /** GET /clinician/patients/:patientId/chat-sessions */
+  getChatSessions(patientId: string) {
+    return apiGet<ChatSessionListItem[]>(`clinician/patients/${patientId}/chat-sessions`);
+  },
+
+  /** GET /clinician/patients/:patientId/chat-sessions/:sessionId */
+  getChatSession(patientId: string, sessionId: string) {
+    return apiGet<ChatSessionDetail>(`clinician/patients/${patientId}/chat-sessions/${sessionId}`);
+  },
+
+  /** POST /clinician/patients/:patientId/chat-sessions/:sessionId/summarize */
+  summarizeChatSession(patientId: string, sessionId: string) {
+    return apiPost<{ id: string; status: ChatSummaryStatus }>(
+      `clinician/patients/${patientId}/chat-sessions/${sessionId}/summarize`,
+      {},
+    );
+  },
+
+  /** GET /clinician/patients/:patientId/chat-summaries */
+  getChatSummaries(patientId: string, status?: ChatSummaryStatus) {
+    const query = status ? `?status=${status}` : '';
+    return apiGet<ChatSummaryListItem[]>(`clinician/patients/${patientId}/chat-summaries${query}`);
+  },
+
+  /** GET /clinician/patients/:patientId/chat-summaries/:summaryId */
+  getChatSummary(patientId: string, summaryId: string) {
+    return apiGet<ChatSummaryDetail>(`clinician/patients/${patientId}/chat-summaries/${summaryId}`);
+  },
+
+  /** PATCH /clinician/patients/:patientId/chat-summaries/:summaryId */
+  reviewChatSummary(
+    patientId: string,
+    summaryId: string,
+    data: { action: Extract<ChatSummaryStatus, 'APPROVED' | 'REJECTED' | 'ESCALATED'>; notes?: string },
+  ) {
+    return apiPatch<{ id: string; status: ChatSummaryStatus; reviewedAt?: string }>(
+      `clinician/patients/${patientId}/chat-summaries/${summaryId}`,
+      data,
+    );
   },
 
   // ── Recommendations ───────────────────────

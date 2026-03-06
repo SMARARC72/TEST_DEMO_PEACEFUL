@@ -341,6 +341,18 @@ export default function PatientProfilePage() {
           </Card>
         </Link>
 
+        <Link to={`/clinician/patients/${patientId}/chat-review`}>
+          <Card className="transition-shadow hover:shadow-md cursor-pointer">
+            <CardContent className="flex items-center gap-3">
+              <span className="text-2xl" aria-hidden="true">💬</span>
+              <div>
+                <p className="font-semibold text-neutral-900 dark:text-white">Chat Review</p>
+                <p className="text-xs text-neutral-500">Transcripts & AI summaries</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
         <Link to={`/clinician/patients/${patientId}/memories`}>
           <Card className="transition-shadow hover:shadow-md cursor-pointer">
             <CardContent className="flex items-center gap-3">

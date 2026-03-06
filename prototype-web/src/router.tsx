@@ -206,6 +206,10 @@ export const router = createBrowserRouter([
             element: lazyPage(() => import('@/pages/clinician/PatientProfilePage')),
           },
           {
+            path: '/clinician/patients/:patientId/chat-review',
+            element: lazyPage(() => import('@/pages/clinician/ChatReviewPage')),
+          },
+          {
             path: '/clinician/patients/:patientId/recommendations',
             element: lazyPage(() => import('@/pages/clinician/RecommendationsPage')),
           },
