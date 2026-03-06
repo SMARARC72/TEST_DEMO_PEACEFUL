@@ -16,6 +16,7 @@ import {
   hashPassword,
   generateMFACode,
   verifyMFACode,
+  verifyTotpCode,
 } from "../services/auth.js";
 import { authLogger } from "../utils/logger.js";
 import { sendSuccess } from "../utils/response.js";
@@ -84,6 +85,38 @@ function assertUserCanAuthenticate(user: { status: string; role: string }) {
 
 function hashBackupCode(userId: string, code: string) {
   return crypto.createHash("sha256").update(`${userId}:${code}`).digest("hex");
+}
+
+function resolveMfaChallenge(user: {
+  id: string;
+  email: string;
+  mfaEnabled: boolean;
+  mfaMethod: string | null;
+  mfaSecret: string | null;
+}) {
+  if (!user.mfaEnabled) {
+    return null;
+  }
+
+  if (user.mfaMethod === "TOTP" && user.mfaSecret) {
+    return {
+      method: "TOTP" as const,
+      message: "Enter the 6-digit code from your authenticator app.",
+    };
+  }
+
+  return {
+    method: "EMAIL" as const,
+    message: "MFA code sent to your email address",
+  };
+}
+
+async function prepareEmailMfaChallenge(user: { id: string; email: string }) {
+  const code = generateMFACode();
+  await redisSet(MFA_KEY(user.id), code, MFA_TTL);
+  await sendEmail(user.email, "Your Peacefull verification code", "mfa-code", {
+    code,
+  });
 }
 
 // ─── Distributed stores (Redis-backed, in-memory fallback) ──────────
@@ -336,29 +369,23 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       data: { lastLogin: new Date() },
     });
 
-    // If MFA is enabled, generate code, store in Redis, deliver via SES
-    if (user.mfaEnabled) {
-      const code = generateMFACode();
-      await redisSet(MFA_KEY(user.id), code, MFA_TTL);
+    const mfaChallenge = resolveMfaChallenge(user);
+    if (mfaChallenge) {
+      if (mfaChallenge.method === "EMAIL") {
+        await prepareEmailMfaChallenge(user);
+        authLogger.info(
+          { userId: user.id },
+          "MFA code generated and sent via email",
+        );
+      } else {
+        authLogger.info({ userId: user.id }, "TOTP MFA challenge requested");
+      }
 
-      // C1/C7: Actually deliver the MFA code via email
-      await sendEmail(
-        user.email,
-        "Your Peacefull verification code",
-        "mfa-code",
-        {
-          code,
-        },
-      );
-
-      authLogger.info(
-        { userId: user.id },
-        "MFA code generated and sent via email",
-      );
       sendSuccess(res, req, {
         mfaRequired: true,
         userId: user.id,
-        message: "MFA code sent to your email address",
+        method: mfaChallenge.method,
+        message: mfaChallenge.message,
       });
       return;
     }
@@ -388,25 +415,30 @@ const mfaBodySchema = z.object({
 authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
   try {
     const body = mfaBodySchema.parse(req.body);
-    const expectedCode = await redisGet(MFA_KEY(body.userId));
-
-    if (!expectedCode) {
-      throw new AppError("No pending MFA challenge", 400);
-    }
-
-    if (!verifyMFACode(body.code, expectedCode)) {
-      throw new AppError("Invalid MFA code", 401);
-    }
-
-    await redisDel(MFA_KEY(body.userId));
-
-    // Fetch user from DB
     const user = await prisma.user.findUnique({ where: { id: body.userId } });
     if (!user) {
       throw new AppError("User not found", 404);
     }
 
     assertUserCanAuthenticate(user);
+
+    if (user.mfaMethod === "TOTP" && user.mfaSecret) {
+      if (!verifyTotpCode(body.code, user.mfaSecret)) {
+        throw new AppError("Invalid MFA code", 401);
+      }
+    } else {
+      const expectedCode = await redisGet(MFA_KEY(body.userId));
+
+      if (!expectedCode) {
+        throw new AppError("No pending MFA challenge", 400);
+      }
+
+      if (!verifyMFACode(body.code, expectedCode)) {
+        throw new AppError("Invalid MFA code", 401);
+      }
+
+      await redisDel(MFA_KEY(body.userId));
+    }
 
     const tokens = generateTokens({
       id: user.id,
@@ -415,16 +447,7 @@ authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
     });
     sendSuccess(res, req, {
       ...tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        profile: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phone: user.phone,
-        },
-      },
+      user: toUserResponse(user),
     });
   } catch (err) {
     next(err);
@@ -715,19 +738,23 @@ authRouter.post("/step-up/verify", authenticate, async (req, res, next) => {
     const valid = await verifyPassword(body.password, user.passwordHash);
     if (!valid) throw new AppError("Invalid credentials", 401);
 
-    if (user.mfaEnabled) {
-      const code = generateMFACode();
-      await redisSet(MFA_KEY(user.id), code, MFA_TTL);
-      await sendEmail(
-        user.email,
-        "Your Peacefull verification code",
-        "mfa-code",
-        {
-          code,
-        },
-      );
-      authLogger.info({ userId: user.id }, "Step-up MFA code sent via email");
-      sendSuccess(res, req, { mfaRequired: true });
+    const mfaChallenge = resolveMfaChallenge(user);
+    if (mfaChallenge) {
+      if (mfaChallenge.method === "EMAIL") {
+        await prepareEmailMfaChallenge(user);
+        authLogger.info({ userId: user.id }, "Step-up MFA code sent via email");
+      } else {
+        authLogger.info(
+          { userId: user.id },
+          "Step-up TOTP challenge requested",
+        );
+      }
+
+      sendSuccess(res, req, {
+        mfaRequired: true,
+        method: mfaChallenge.method,
+        message: mfaChallenge.message,
+      });
       return;
     }
 
@@ -757,16 +784,23 @@ authRouter.post(
     try {
       const body = stepUpMfaSchema.parse(req.body);
       const userId = req.user!.sub;
-      const expectedCode = await redisGet(MFA_KEY(userId));
-
-      if (!expectedCode) throw new AppError("No pending MFA challenge", 400);
-      if (!verifyMFACode(body.code, expectedCode))
-        throw new AppError("Invalid MFA code", 401);
-
-      await redisDel(MFA_KEY(userId));
 
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user) throw new AppError("User not found", 404);
+
+      if (user.mfaMethod === "TOTP" && user.mfaSecret) {
+        if (!verifyTotpCode(body.code, user.mfaSecret)) {
+          throw new AppError("Invalid MFA code", 401);
+        }
+      } else {
+        const expectedCode = await redisGet(MFA_KEY(userId));
+
+        if (!expectedCode) throw new AppError("No pending MFA challenge", 400);
+        if (!verifyMFACode(body.code, expectedCode))
+          throw new AppError("Invalid MFA code", 401);
+
+        await redisDel(MFA_KEY(userId));
+      }
 
       const stepUpTokens = generateStepUpToken({
         id: user.id,
@@ -928,32 +962,7 @@ authRouter.post("/mfa-confirm-setup", authenticate, async (req, res, next) => {
       );
     }
 
-    // Verify the TOTP code against the pending secret
-    // Simple TOTP verification: generate expected code from secret and compare
-    const crypto = await import("crypto");
-    const timeStep = Math.floor(Date.now() / 30000);
-    let validCode = false;
-
-    // Check current and adjacent time steps (±1 for clock drift)
-    for (const offset of [-1, 0, 1]) {
-      const t = timeStep + offset;
-      const hmac = crypto.createHmac("sha1", pendingSecret);
-      hmac.update(Buffer.from(t.toString(16).padStart(16, "0"), "hex"));
-      const hash = hmac.digest();
-      const offsetByte = hash[hash.length - 1] & 0x0f;
-      const binary =
-        ((hash[offsetByte] & 0x7f) << 24) |
-        ((hash[offsetByte + 1] & 0xff) << 16) |
-        ((hash[offsetByte + 2] & 0xff) << 8) |
-        (hash[offsetByte + 3] & 0xff);
-      const otp = (binary % 1000000).toString().padStart(6, "0");
-      if (otp === body.code) {
-        validCode = true;
-        break;
-      }
-    }
-
-    if (!validCode) {
+    if (!verifyTotpCode(body.code, pendingSecret)) {
       throw new AppError("Invalid verification code. Please try again.", 401);
     }
 

@@ -20,7 +20,7 @@ interface AuthState {
   isAuth0Session: boolean;
 
   // actions
-  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; userId?: string }>;
+  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; userId?: string; method?: 'TOTP' | 'EMAIL' }>;
   register: (data: {
     email: string;
     password: string;
@@ -108,7 +108,7 @@ export const useAuthStore = create<AuthState>()(
         // MFA required?
         if (data && 'mfaRequired' in data && data.mfaRequired) {
           set({ isLoading: false });
-          return { mfaRequired: true, userId: data.userId };
+          return { mfaRequired: true, userId: data.userId, method: data.method };
         }
 
         const loginData = data as { accessToken: string; refreshToken: string; user: User };

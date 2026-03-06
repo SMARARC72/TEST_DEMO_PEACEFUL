@@ -33,7 +33,7 @@ export default function LoginPage() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const user = useAuthStore((s) => s.user);
 
-  const [mfaState, setMfaState] = useState<{ required: boolean; userId: string } | null>(null);
+  const [mfaState, setMfaState] = useState<{ required: boolean; userId: string; method?: 'TOTP' | 'EMAIL' } | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
 
@@ -50,7 +50,7 @@ export default function LoginPage() {
     try {
       const result = await login(data.email, data.password);
       if (result.mfaRequired && result.userId) {
-        setMfaState({ required: true, userId: result.userId });
+        setMfaState({ required: true, userId: result.userId, method: result.method });
       } else {
         const currentUser = useAuthStore.getState().user;
         const role = currentUser?.role;
@@ -152,10 +152,12 @@ export default function LoginPage() {
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-neutral-600 dark:text-neutral-300">
-                A verification code has been sent to your email. Enter it below.
+                {mfaState?.method === 'TOTP'
+                  ? 'Enter the 6-digit code from your authenticator app.'
+                  : 'A verification code has been sent to your email. Enter it below.'}
               </p>
               <Input
-                label="Verification Code"
+                label={mfaState?.method === 'TOTP' ? 'Authenticator code' : 'Verification Code'}
                 value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value)}
                 placeholder="000000"

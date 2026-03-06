@@ -66,7 +66,7 @@ export const authApi = {
 
   /** Step-up auth: re-verify password before sensitive actions */
   stepUpVerify(password: string) {
-    return apiPost<{ elevatedToken?: string; mfaRequired?: boolean }>(
+    return apiPost<{ elevatedToken?: string; mfaRequired?: boolean; method?: 'TOTP' | 'EMAIL'; message?: string }>(
       'auth/step-up/verify',
       { password },
     );

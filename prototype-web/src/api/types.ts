@@ -24,6 +24,7 @@ export interface User {
     phone?: string;
   };
   mfaEnabled: boolean;
+  mfaMethod?: 'TOTP' | 'SMS' | 'FIDO2' | null;
   lastLogin?: string;
   createdAt: string;
 }
@@ -37,6 +38,8 @@ export interface LoginResponse {
 export interface MfaRequiredResponse {
   mfaRequired: true;
   userId: string;
+  method?: 'TOTP' | 'EMAIL';
+  message?: string;
 }
 
 export interface RegisterResponse {

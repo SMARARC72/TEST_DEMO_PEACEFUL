@@ -15,6 +15,7 @@ import { HipaaBadge } from '@/components/ui/HipaaBadge';
 export default function MfaEnrollmentPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const [step, setStep] = useState<'setup' | 'verify' | 'backup'>('setup');
   const [secret, setSecret] = useState<string>('');
   const [verifyCode, setVerifyCode] = useState('');
@@ -32,6 +33,21 @@ export default function MfaEnrollmentPage() {
   }, [secret, user?.email]);
 
   useEffect(() => {
+    if (!accessToken || !user) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    if (user.role !== 'CLINICIAN' && user.role !== 'SUPERVISOR' && user.role !== 'ADMIN') {
+      navigate('/', { replace: true });
+      return;
+    }
+
+    if (user.mfaEnabled) {
+      navigate('/clinician', { replace: true });
+      return;
+    }
+
     // Fetch MFA setup data from backend
     (async () => {
       setLoading(true);
@@ -50,8 +66,8 @@ export default function MfaEnrollmentPage() {
         setLoading(false);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+   
+  }, [accessToken, navigate, user]);
 
   async function handleVerify() {
     if (verifyCode.length !== 6) {

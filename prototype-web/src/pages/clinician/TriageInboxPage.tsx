@@ -45,6 +45,7 @@ export default function TriageInboxPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<TriageStatus | 'ALL'>('ALL');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<'ACK' | 'ESCALATED' | null>(null);
 
   const fetchTriage = useCallback(async (filter: TriageStatus | 'ALL' = statusFilter) => {
     const params = filter === 'ALL' ? undefined : { status: filter };
@@ -117,22 +118,54 @@ export default function TriageInboxPage() {
     });
   }
 
-  function handleBulkAcknowledge() {
-    for (const id of selectedItems) {
-      clinicianApi.patchTriage(id, { status: 'ACK' });
+  async function runBulkAction(status: 'ACK' | 'ESCALATED') {
+    const selectedIds = Array.from(selectedItems);
+    if (selectedIds.length === 0) return;
+
+    setBulkAction(status);
+    const results = await Promise.allSettled(
+      selectedIds.map((id) =>
+        clinicianApi.patchTriage(
+          id,
+          status === 'ACK'
+            ? { status: 'ACK' }
+            : { status: 'ESCALATED', notes: 'Bulk escalated to supervisor' },
+        ),
+      ),
+    );
+
+    const successes = results.filter(
+      (result) => result.status === 'fulfilled' && result.value[1] === null,
+    ).length;
+    const failures = selectedIds.length - successes;
+
+    if (successes > 0) {
+      addToast({
+        title:
+          status === 'ACK'
+            ? `${successes} item${successes === 1 ? '' : 's'} acknowledged`
+            : `${successes} item${successes === 1 ? '' : 's'} escalated to supervisor`,
+        description: failures > 0 ? `${failures} item${failures === 1 ? '' : 's'} failed to update.` : undefined,
+        variant: failures > 0 ? 'warning' : 'success',
+      });
+    } else {
+      addToast({
+        title: status === 'ACK' ? 'Bulk acknowledge failed' : 'Bulk escalate failed',
+        variant: 'error',
+      });
     }
-    addToast({ title: `${selectedItems.size} items acknowledged`, variant: 'success' });
+
     setSelectedItems(new Set());
-    setTimeout(fetchTriage, 500);
+    setBulkAction(null);
+    await fetchTriage();
+  }
+
+  function handleBulkAcknowledge() {
+    void runBulkAction('ACK');
   }
 
   function handleBulkEscalate() {
-    for (const id of selectedItems) {
-      clinicianApi.patchTriage(id, { status: 'ESCALATED', notes: 'Bulk escalated to supervisor' });
-    }
-    addToast({ title: `${selectedItems.size} items escalated to supervisor`, variant: 'success' });
-    setSelectedItems(new Set());
-    setTimeout(fetchTriage, 500);
+    void runBulkAction('ESCALATED');
   }
 
   return (
@@ -175,18 +208,21 @@ export default function TriageInboxPage() {
           </span>
           <button
             onClick={handleBulkAcknowledge}
+            disabled={bulkAction !== null}
             className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
           >
-            Bulk Acknowledge
+            {bulkAction === 'ACK' ? 'Acknowledging…' : 'Bulk Acknowledge'}
           </button>
           <button
             onClick={handleBulkEscalate}
+            disabled={bulkAction !== null}
             className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
           >
-            Bulk Escalate
+            {bulkAction === 'ESCALATED' ? 'Escalating…' : 'Bulk Escalate'}
           </button>
           <button
             onClick={() => setSelectedItems(new Set())}
+            disabled={bulkAction !== null}
             className="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
           >
             Clear selection

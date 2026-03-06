@@ -1,16 +1,13 @@
 // ─── Auth Service ────────────────────────────────────────────────────
 // JWT token generation/verification, password hashing, and MFA support.
 
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import { randomInt, timingSafeEqual } from 'node:crypto';
-import { env } from '../config/index.js';
-import { authLogger } from '../utils/logger.js';
-import {
-  ACCESS_TOKEN_EXPIRY,
-  REFRESH_TOKEN_EXPIRY,
-} from '@peacefull/shared';
-import type { AuthTokenPayload, User } from '@peacefull/shared';
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { env } from "../config/index.js";
+import { authLogger } from "../utils/logger.js";
+import { ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "@peacefull/shared";
+import type { AuthTokenPayload, User } from "@peacefull/shared";
 
 const BCRYPT_ROUNDS = 12;
 
@@ -22,8 +19,8 @@ const BCRYPT_ROUNDS = 12;
  * @returns `{ accessToken, refreshToken, expiresIn }` where
  * `expiresIn` is in seconds.
  */
-export function generateTokens(user: Pick<User, 'id' | 'tenantId' | 'role'>) {
-  const payload: Omit<AuthTokenPayload, 'iat' | 'exp'> = {
+export function generateTokens(user: Pick<User, "id" | "tenantId" | "role">) {
+  const payload: Omit<AuthTokenPayload, "iat" | "exp"> = {
     sub: user.id,
     tid: user.tenantId,
     role: user.role,
@@ -35,12 +32,12 @@ export function generateTokens(user: Pick<User, 'id' | 'tenantId' | 'role'>) {
   });
 
   const refreshToken = jwt.sign(
-    { sub: user.id, tid: user.tenantId, type: 'refresh' },
+    { sub: user.id, tid: user.tenantId, type: "refresh" },
     env.JWT_REFRESH_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY },
   );
 
-  authLogger.info({ userId: user.id }, 'Tokens generated');
+  authLogger.info({ userId: user.id }, "Tokens generated");
 
   return {
     accessToken,
@@ -53,7 +50,7 @@ export function generateTokens(user: Pick<User, 'id' | 'tenantId' | 'role'>) {
  * Generates a step-up authenticated access token with a `stepUpAt` claim.
  */
 export function generateStepUpToken(
-  user: Pick<User, 'id' | 'tenantId' | 'role'>,
+  user: Pick<User, "id" | "tenantId" | "role">,
 ) {
   const payload = {
     sub: user.id,
@@ -84,9 +81,11 @@ export function verifyAccessToken(token: string): AuthTokenPayload {
  * Verifies a refresh token and returns the decoded payload.
  * Throws on invalid or expired tokens.
  */
-export function verifyRefreshToken(
-  token: string,
-): { sub: string; tid: string; type: string } {
+export function verifyRefreshToken(token: string): {
+  sub: string;
+  tid: string;
+  type: string;
+} {
   return jwt.verify(token, env.JWT_REFRESH_SECRET) as {
     sub: string;
     tid: string;
@@ -122,6 +121,45 @@ export function generateMFACode(): string {
   return randomInt(100_000, 999_999).toString();
 }
 
+export function generateTotpCode(
+  secret: string,
+  timestamp = Date.now(),
+): string {
+  const timeStep = Math.floor(timestamp / 30000);
+  const hmac = createHmac("sha1", secret);
+
+  hmac.update(Buffer.from(timeStep.toString(16).padStart(16, "0"), "hex"));
+  const hash = hmac.digest();
+  const offset = hash[hash.length - 1] & 0x0f;
+  const binary =
+    ((hash[offset] & 0x7f) << 24) |
+    ((hash[offset + 1] & 0xff) << 16) |
+    ((hash[offset + 2] & 0xff) << 8) |
+    (hash[offset + 3] & 0xff);
+
+  return (binary % 1000000).toString().padStart(6, "0");
+}
+
+export function verifyTotpCode(
+  code: string,
+  secret: string,
+  timestamp = Date.now(),
+  allowedClockDriftSteps = 1,
+): boolean {
+  for (
+    let stepOffset = -allowedClockDriftSteps;
+    stepOffset <= allowedClockDriftSteps;
+    stepOffset += 1
+  ) {
+    const candidate = generateTotpCode(secret, timestamp + stepOffset * 30000);
+    if (candidate === code) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Verifies a 6-digit MFA code against the expected value.
  * In production this would validate a TOTP using the user's secret.
@@ -143,18 +181,23 @@ export function verifyMFACode(code: string, secret: string): boolean {
  */
 function derivePermissions(role: string): string[] {
   const perms: Record<string, string[]> = {
-    PATIENT: ['read:own', 'write:own'],
-    CLINICIAN: ['read:patients', 'write:clinical', 'read:triage', 'write:triage'],
-    SUPERVISOR: [
-      'read:patients',
-      'write:clinical',
-      'read:triage',
-      'write:triage',
-      'sign:notes',
-      'cosign:notes',
+    PATIENT: ["read:own", "write:own"],
+    CLINICIAN: [
+      "read:patients",
+      "write:clinical",
+      "read:triage",
+      "write:triage",
     ],
-    ADMIN: ['admin:all'],
-    COMPLIANCE_OFFICER: ['read:audit', 'read:compliance', 'export:audit'],
+    SUPERVISOR: [
+      "read:patients",
+      "write:clinical",
+      "read:triage",
+      "write:triage",
+      "sign:notes",
+      "cosign:notes",
+    ],
+    ADMIN: ["admin:all"],
+    COMPLIANCE_OFFICER: ["read:audit", "read:compliance", "export:audit"],
   };
   return perms[role] ?? [];
 }

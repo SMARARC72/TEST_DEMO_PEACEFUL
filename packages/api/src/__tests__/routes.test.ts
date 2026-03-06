@@ -145,6 +145,46 @@ describe("Auth routes", () => {
     expect(res.body.error.message).toMatch(/pending supervisor approval/i);
   });
 
+  it("POST /api/v1/auth/login returns a TOTP MFA challenge for enrolled clinicians", async () => {
+    const passwordHash = await bcrypt.hash("DemoPassword2026!", 10);
+
+    (prisma.tenant.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: TENANT_ID,
+      slug: "default",
+    });
+    (prisma.user.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: "11111111-1111-4111-8111-111111111111",
+      tenantId: TENANT_ID,
+      email: "totp.clinician@example.com",
+      passwordHash,
+      firstName: "Toto",
+      lastName: "Provider",
+      phone: null,
+      role: "CLINICIAN",
+      status: "ACTIVE",
+      mfaEnabled: true,
+      mfaMethod: "TOTP",
+      mfaSecret: "12345678901234567890123456789012",
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+      lastLogin: null,
+    });
+    (prisma.user.update as unknown as Mock).mockResolvedValueOnce({
+      id: "11111111-1111-4111-8111-111111111111",
+    });
+
+    const res = await request(app).post("/api/v1/auth/login").send({
+      email: "totp.clinician@example.com",
+      password: "DemoPassword2026!",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      mfaRequired: true,
+      userId: "11111111-1111-4111-8111-111111111111",
+      method: "TOTP",
+    });
+  });
+
   it("POST /api/v1/auth/auth0-sync rejects identities without a pre-provisioned account", async () => {
     const auth0Token = makeToken("PATIENT", {
       sub: "auth0|abc123",
@@ -205,6 +245,41 @@ describe("Auth routes", () => {
       expect(entry.codeHash).toMatch(/^[a-f0-9]{64}$/);
       expect(entry.codeHash).not.toBe(res.body.data.backupCodes[index]);
     }
+  });
+
+  it("POST /api/v1/auth/mfa-verify accepts authenticator codes for TOTP-enrolled clinicians", async () => {
+    const totpUserId = "22222222-2222-4222-8222-222222222222";
+    const secret = "12345678901234567890123456789012";
+
+    (prisma.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+      id: totpUserId,
+      tenantId: TENANT_ID,
+      email: "totp.clinician@example.com",
+      role: "CLINICIAN",
+      firstName: "Toto",
+      lastName: "Provider",
+      phone: null,
+      status: "ACTIVE",
+      mfaEnabled: true,
+      mfaMethod: "TOTP",
+      mfaSecret: secret,
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+      lastLogin: null,
+    });
+
+    const res = await request(app)
+      .post("/api/v1/auth/mfa-verify")
+      .send({
+        userId: totpUserId,
+        code: generateTotp(secret),
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.email).toBe("totp.clinician@example.com");
+    expect(res.body.data.user.mfaEnabled).toBe(true);
+    expect(res.body.data.user.mfaMethod).toBe("TOTP");
+    expect(res.body.data.accessToken).toBeTruthy();
+    expect(res.body.data.refreshToken).toBeTruthy();
   });
 
   it("POST /api/v1/auth/reset-password enforces the shared password policy", async () => {

@@ -1,6 +1,6 @@
 // ─── Exports Center Page (C-13) ──────────────────────────────────────
 // Export profiles, BLOCKED_POLICY state, manifest cards, confirmations.
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { clinicianApi } from '@/api/clinician';
 import { useUIStore } from '@/stores/ui';
@@ -26,6 +26,9 @@ const profileDescriptions: Record<ExportProfile, string> = {
   RESTRICTED: 'Full export including restricted notes. Requires step-up authentication and supervisor approval.',
 };
 
+const ACTIVE_EXPORT_STATUSES: ExportStatus[] = ['QUEUED', 'GENERATING'];
+const EXPORT_POLL_INTERVAL_MS = 5000;
+
 export default function ExportsCenterPage() {
   const { patientId } = useParams<{ patientId: string }>();
   const addToast = useUIStore((s) => s.addToast);
@@ -33,6 +36,28 @@ export default function ExportsCenterPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [confirmModal, setConfirmModal] = useState<ExportProfile | null>(null);
+  const [polling, setPolling] = useState(false);
+
+  const loadExports = useCallback(async (showErrorToast = true) => {
+    if (!patientId) return [] as ExportJob[];
+
+    const [data, err] = await clinicianApi.getExports(patientId);
+    if (err) {
+      if (showErrorToast) {
+        addToast({ title: 'Failed to load exports', variant: 'error' });
+      }
+      return [] as ExportJob[];
+    }
+
+    const jobs = data ?? [];
+    setExports(jobs);
+    return jobs;
+  }, [patientId, addToast]);
+
+  const hasActiveExports = useMemo(
+    () => exports.some((job) => ACTIVE_EXPORT_STATUSES.includes(job.status)),
+    [exports],
+  );
 
   useEffect(() => {
     if (!patientId) return;
@@ -46,6 +71,23 @@ export default function ExportsCenterPage() {
     })();
     return () => { cancelled = true; };
   }, [patientId, addToast]);
+
+  useEffect(() => {
+    if (!patientId || !hasActiveExports) {
+      setPolling(false);
+      return;
+    }
+
+    setPolling(true);
+    const intervalId = window.setInterval(() => {
+      void loadExports(false);
+    }, EXPORT_POLL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+      setPolling(false);
+    };
+  }, [patientId, hasActiveExports, loadExports]);
 
   const [exportFormat, setExportFormat] = useState<'JSON' | 'PDF'>('JSON');
 
@@ -88,6 +130,9 @@ export default function ExportsCenterPage() {
     if (job) {
       setExports((prev) => [job, ...prev]);
       addToast({ title: `Export ${job.status === 'BLOCKED_POLICY' ? 'blocked by policy' : 'created'}`, variant: job.status === 'BLOCKED_POLICY' ? 'warning' : 'success' });
+      if (ACTIVE_EXPORT_STATUSES.includes(job.status)) {
+        void loadExports(false);
+      }
     }
   };
 
@@ -166,6 +211,11 @@ export default function ExportsCenterPage() {
       <Card>
         <CardHeader><CardTitle>Export History</CardTitle></CardHeader>
         <CardContent>
+          {polling && (
+            <p className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+              Refreshing export statuses automatically while jobs are still running.
+            </p>
+          )}
           {exports.length === 0 ? (
             <p className="py-4 text-center text-sm text-neutral-500">No exports yet.</p>
           ) : (
