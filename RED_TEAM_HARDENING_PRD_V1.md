@@ -103,6 +103,18 @@ Primary goals:
 2. `npx tsc --noEmit`: pass.
 3. `npx vitest run src/__tests__/routes.test.ts -t "auth0-sync|mfa-confirm-setup"`: pass.
 
+### Batch 7 Completed
+
+1. Re-verified the remaining Phase 2 launch-integrity items and confirmed patient self-registration blocking, invite-backed care-team assignment, clinician profile creation, and clinician approval-state handling were already live.
+2. Identified the actual remaining gap as password-policy drift between registration/invite acceptance and reset/change-password flows.
+3. Added a shared API password-policy utility and switched all four auth entry points to the same complexity rule and error message.
+4. Added targeted backend regressions proving reset-password and change-password now enforce the same stricter password policy already used by registration and invite acceptance.
+
+### Batch 7 Validation
+
+1. `npx tsc --noEmit`: pass.
+2. `npx vitest run src/__tests__/routes.test.ts -t "reset-password|change-password|auth0-sync|mfa-confirm-setup"`: pass.
+
 ---
 
 ## 4. Remaining Execution Phases

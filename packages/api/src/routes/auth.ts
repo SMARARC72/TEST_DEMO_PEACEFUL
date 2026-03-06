@@ -27,6 +27,10 @@ import {
   redisExists,
 } from "../services/redis.js";
 import { sendEmail } from "../services/notification.js";
+import {
+  isStrongPassword,
+  PASSWORD_COMPLEXITY_MESSAGE,
+} from "../utils/password-policy.js";
 
 // Infer the User row type from the Prisma client's return type
 type PrismaUser = NonNullable<
@@ -121,13 +125,8 @@ authRouter.post("/register", async (req, res, next) => {
     }
 
     // Validate password complexity first (before any DB queries)
-    const complexityRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/;
-    if (!complexityRegex.test(body.password)) {
-      throw new AppError(
-        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
-        400,
-      );
+    if (!isStrongPassword(body.password)) {
+      throw new AppError(PASSWORD_COMPLEXITY_MESSAGE, 400);
     }
 
     // Find or use default tenant
@@ -596,13 +595,8 @@ authRouter.post("/reset-password", loginLimiter, async (req, res, next) => {
     const body = resetPasswordSchema.parse(req.body);
 
     // Validate password complexity
-    const complexityRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
-    if (!complexityRegex.test(body.newPassword)) {
-      throw new AppError(
-        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
-        400,
-      );
+    if (!isStrongPassword(body.newPassword)) {
+      throw new AppError(PASSWORD_COMPLEXITY_MESSAGE, 400);
     }
 
     // Verify the reset code from Redis
@@ -656,13 +650,8 @@ authRouter.post("/change-password", authenticate, async (req, res, next) => {
     const userId = req.user!.sub;
 
     // Validate password complexity
-    const complexityRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
-    if (!complexityRegex.test(body.newPassword)) {
-      throw new AppError(
-        "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
-        400,
-      );
+    if (!isStrongPassword(body.newPassword)) {
+      throw new AppError(PASSWORD_COMPLEXITY_MESSAGE, 400);
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });

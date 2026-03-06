@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { redisSet } from "../services/redis.js";
+import { PASSWORD_COMPLEXITY_MESSAGE } from "../utils/password-policy.js";
 
 vi.mock("../services/realtime.js", () => ({
   broadcastClinicianEvent: vi.fn(),
@@ -25,6 +26,7 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 const TENANT_ID = "tenant-001";
 const USER_ID = "user-001";
 const PATIENT_ID = "patient-001";
+const RESET_USER_ID = "11111111-1111-4111-8111-111111111111";
 
 function makeToken(role: string, extra: Record<string, unknown> = {}): string {
   return jwt.sign(
@@ -203,6 +205,38 @@ describe("Auth routes", () => {
       expect(entry.codeHash).toMatch(/^[a-f0-9]{64}$/);
       expect(entry.codeHash).not.toBe(res.body.data.backupCodes[index]);
     }
+  });
+
+  it("POST /api/v1/auth/reset-password enforces the shared password policy", async () => {
+    (prisma.user.update as unknown as Mock).mockClear();
+
+    const res = await request(app).post("/api/v1/auth/reset-password").send({
+      userId: RESET_USER_ID,
+      code: "reset-code-123",
+      newPassword: "ValidPass2026€",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe(PASSWORD_COMPLEXITY_MESSAGE);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("POST /api/v1/auth/change-password enforces the shared password policy", async () => {
+    (prisma.user.findUnique as unknown as Mock).mockClear();
+    (prisma.user.update as unknown as Mock).mockClear();
+
+    const res = await request(app)
+      .post("/api/v1/auth/change-password")
+      .set("Authorization", `Bearer ${patientToken()}`)
+      .send({
+        currentPassword: "DemoPassword2026!",
+        newPassword: "AnotherPass2026€",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe(PASSWORD_COMPLEXITY_MESSAGE);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
   it("POST /api/v1/auth/refresh returns 401 without token", async () => {
@@ -521,13 +555,11 @@ describe("Upload routes", () => {
   });
 
   it("POST /api/v1/uploads/presign returns 401 without auth", async () => {
-    const res = await request(app)
-      .post("/api/v1/uploads/presign")
-      .send({
-        filename: "test.pdf",
-        contentType: "application/pdf",
-        category: "document",
-      });
+    const res = await request(app).post("/api/v1/uploads/presign").send({
+      filename: "test.pdf",
+      contentType: "application/pdf",
+      category: "document",
+    });
 
     expect(res.status).toBe(401);
   });

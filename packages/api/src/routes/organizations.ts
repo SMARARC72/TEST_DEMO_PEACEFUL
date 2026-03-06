@@ -12,6 +12,10 @@ import { prisma } from "../models/index.js";
 import { sendSuccess } from "../utils/response.js";
 import { apiLogger } from "../utils/logger.js";
 import { sendEmail } from "../services/notification.js";
+import {
+  isStrongPassword,
+  PASSWORD_COMPLEXITY_MESSAGE,
+} from "../utils/password-policy.js";
 
 export const organizationRouter = Router();
 
@@ -575,16 +579,9 @@ const acceptInviteSchema = z.object({
     .string()
     .min(12, "Password must be at least 12 characters")
     .max(128)
-    .refine(
-      (val) =>
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).+$/.test(
-          val,
-        ),
-      {
-        message:
-          "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
-      },
-    ),
+    .refine((val) => isStrongPassword(val), {
+      message: PASSWORD_COMPLEXITY_MESSAGE,
+    }),
 });
 
 organizationRouter.post(
