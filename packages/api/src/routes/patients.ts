@@ -39,6 +39,32 @@ import {
 
 export const patientRouter = Router();
 
+function toConsentRecordResponse(record: {
+  id: string;
+  patientId: string;
+  type: string;
+  version: number;
+  granted: boolean;
+  grantedAt: Date;
+  revokedAt: Date | null;
+}) {
+  const acceptedAt = record.grantedAt.toISOString();
+  const revokedAt = record.revokedAt?.toISOString() ?? null;
+
+  return {
+    id: record.id,
+    patientId: record.patientId,
+    consentType: record.type,
+    accepted: record.granted,
+    acceptedAt,
+    revokedAt,
+    version: String(record.version),
+    type: record.type,
+    granted: record.granted,
+    grantedAt: acceptedAt,
+  };
+}
+
 // All patient routes require authentication
 patientRouter.use(authenticate);
 patientRouter.use(
@@ -1147,12 +1173,7 @@ patientRouter.get("/:id/consent", async (req, res, next) => {
       res,
       req,
       records.map((r: any) => ({
-        id: r.id,
-        type: r.type,
-        version: r.version,
-        granted: r.granted,
-        grantedAt: r.grantedAt.toISOString(),
-        revokedAt: r.revokedAt?.toISOString() ?? null,
+        ...toConsentRecordResponse(r),
         createdAt: r.createdAt.toISOString(),
       })),
     );
@@ -1234,13 +1255,7 @@ patientRouter.post("/:id/consent", async (req, res, next) => {
     sendSuccess(
       res,
       req,
-      {
-        id: record.id,
-        type: record.type,
-        version: record.version,
-        granted: record.granted,
-        grantedAt: record.grantedAt.toISOString(),
-      },
+      toConsentRecordResponse(record),
       201,
     );
   } catch (err) {

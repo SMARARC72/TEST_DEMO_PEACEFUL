@@ -2,11 +2,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/stores/auth';
-import { apiGet } from '@/api/client';
-import type { UserRole, ConsentRecord } from '@/api/types';
+import { patientApi } from '@/api/patients';
+import type { UserRole } from '@/api/types';
+import { hasRequiredConsent } from '@/lib/consent';
 import { Spinner } from '@/components/ui/Spinner';
-
-const REQUIRED_CONSENT_TYPES = ['data-collection', 'ai-processing', 'not-emergency'];
 
 const IS_DEMO_MODE = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
 
@@ -46,17 +45,13 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
     let cancelled = false;
     (async () => {
       try {
-        const [records, err] = await apiGet<ConsentRecord[]>(`patients/${userId}/consent`);
+        const [records, err] = await patientApi.getConsents(userId);
         if (cancelled) return;
         if (err || !records) {
           setApiConsentResult({ hasConsent: false });
           return;
         }
-        const grantedTypes = new Set(
-          records.filter((r) => r.accepted).map((r) => r.consentType),
-        );
-        const allGranted = REQUIRED_CONSENT_TYPES.every((t) => grantedTypes.has(t));
-        setApiConsentResult({ hasConsent: allGranted });
+        setApiConsentResult({ hasConsent: hasRequiredConsent(records) });
       } catch {
         setApiConsentResult({ hasConsent: false });
       }

@@ -1,5 +1,6 @@
 // ─── Patient API ─────────────────────────────────────────────────────
 import { apiGet, apiPost, apiPatch } from './client';
+import { normalizeConsentRecord, type RawConsentRecord } from '@/lib/consent';
 import type {
   Patient,
   CheckinData,
@@ -10,7 +11,6 @@ import type {
   SafetyPlan,
   CrisisResource,
   PatientSettings,
-  ConsentRecord,
   Appointment,
   PatientDemographics,
   Medication,
@@ -132,13 +132,21 @@ export const patientApi = {
 
   // ── Consent ───────────────────────────────
   /** GET /patients/:id/consent */
-  getConsents(patientId: string) {
-    return apiGet<ConsentRecord[]>(`patients/${patientId}/consent`);
+  async getConsents(patientId: string) {
+    const [records, err] = await apiGet<RawConsentRecord[]>(`patients/${patientId}/consent`);
+    if (err || !records) {
+      return [null, err] as const;
+    }
+    return [records.map(normalizeConsentRecord), null] as const;
   },
 
   /** POST /patients/:id/consent */
-  submitConsent(patientId: string, data: { consentType: string; accepted: boolean; version: string }) {
-    return apiPost<ConsentRecord>(`patients/${patientId}/consent`, data);
+  async submitConsent(patientId: string, data: { consentType: string; accepted: boolean; version: string }) {
+    const [record, err] = await apiPost<RawConsentRecord>(`patients/${patientId}/consent`, data);
+    if (err || !record) {
+      return [null, err] as const;
+    }
+    return [normalizeConsentRecord(record), null] as const;
   },
 
   /** DELETE /patients/:id/consent/:type — withdraw specific consent */

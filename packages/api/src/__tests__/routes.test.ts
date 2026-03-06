@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, type Mock } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { app } from '../server.js';
 import { prisma } from '../models/index.js';
 
@@ -91,6 +92,34 @@ describe('Auth routes', () => {
     expect(res.status).toBe(401);
   });
 
+  it('POST /api/v1/auth/login returns 403 for suspended clinicians', async () => {
+    const passwordHash = await bcrypt.hash('DemoPassword2026!', 10);
+
+    (prisma.tenant.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: TENANT_ID,
+      slug: 'default',
+    });
+    (prisma.user.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: USER_ID,
+      tenantId: TENANT_ID,
+      email: 'pending.clinician@example.com',
+      passwordHash,
+      role: 'CLINICIAN',
+      status: 'SUSPENDED',
+      mfaEnabled: false,
+    });
+
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .send({
+        email: 'pending.clinician@example.com',
+        password: 'DemoPassword2026!',
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.message).toMatch(/pending supervisor approval/i);
+  });
+
   it('POST /api/v1/auth/refresh returns 401 without token', async () => {
     const res = await request(app)
       .post('/api/v1/auth/refresh')
@@ -164,6 +193,38 @@ describe('Patient routes', () => {
       .set('Authorization', `Bearer ${clinicianToken()}`);
 
     expect(res.status).toBe(404);
+  });
+
+  it('GET /api/v1/patients/:id/consent returns canonical consent fields', async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({ id: PATIENT_ID, tenantId: TENANT_ID, userId: USER_ID });
+    (prisma.consentRecord.findMany as Mock).mockResolvedValueOnce([
+      {
+        id: 'consent-001',
+        patientId: PATIENT_ID,
+        type: 'data-collection',
+        version: 3,
+        granted: true,
+        grantedAt: new Date('2026-03-06T00:00:00.000Z'),
+        revokedAt: null,
+        createdAt: new Date('2026-03-06T00:00:00.000Z'),
+      },
+    ]);
+
+    const res = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/consent`)
+      .set('Authorization', `Bearer ${patientToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0]).toMatchObject({
+      id: 'consent-001',
+      patientId: PATIENT_ID,
+      consentType: 'data-collection',
+      accepted: true,
+      version: '3',
+      type: 'data-collection',
+      granted: true,
+    });
   });
 });
 

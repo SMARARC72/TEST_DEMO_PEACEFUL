@@ -59,6 +59,27 @@ function toUserResponse(u: PrismaUser) {
   };
 }
 
+function assertUserCanAuthenticate(user: {
+  status: string;
+  role: string;
+}) {
+  if (user.status === "ACTIVE") {
+    return;
+  }
+
+  if (user.status === "SUSPENDED" && user.role === "CLINICIAN") {
+    throw new AppError(
+      "Your clinician account is pending supervisor approval.",
+      403,
+    );
+  }
+
+  throw new AppError(
+    `Your account is ${user.status.toLowerCase()}. Contact support if this is unexpected.`,
+    403,
+  );
+}
+
 // ─── Distributed stores (Redis-backed, in-memory fallback) ──────────
 
 // Key prefixes for Redis
@@ -306,6 +327,8 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       throw new AppError("Invalid credentials", 401);
     }
 
+    assertUserCanAuthenticate(user);
+
     // Update lastLogin timestamp
     await prisma.user.update({
       where: { id: user.id },
@@ -382,6 +405,8 @@ authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
       throw new AppError("User not found", 404);
     }
 
+    assertUserCanAuthenticate(user);
+
     const tokens = generateTokens({
       id: user.id,
       tenantId: user.tenantId,
@@ -430,6 +455,8 @@ authRouter.post("/refresh", async (req, res, next) => {
     if (!user) {
       throw new AppError("User not found", 404);
     }
+
+    assertUserCanAuthenticate(user);
 
     const tokens = generateTokens({
       id: user.id,

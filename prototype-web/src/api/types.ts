@@ -273,6 +273,7 @@ export interface ConsentRecord {
   consentType: string;
   accepted: boolean;
   acceptedAt?: string;
+  revokedAt?: string | null;
   version: string;
 }
 
