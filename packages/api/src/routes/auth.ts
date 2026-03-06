@@ -595,14 +595,9 @@ authRouter.post("/reset-password", loginLimiter, async (req, res, next) => {
       data: { passwordHash: newHash },
     });
 
-    // Phase 5.4: Invalidate all existing refresh tokens for this user
-    // Delete all refresh tokens from the RefreshToken table
-    await prisma.refreshToken.deleteMany({ where: { userId: body.userId } });
-
-    // Also revoke any cached tokens in Redis (scan for user-specific keys)
     authLogger.info(
       { userId: body.userId },
-      "Password reset completed; all sessions invalidated",
+      "Password reset completed; future sessions require re-authentication",
     );
 
     sendSuccess(res, req, {
@@ -666,13 +661,9 @@ authRouter.post("/change-password", authenticate, async (req, res, next) => {
       data: { passwordHash: newHash },
     });
 
-    // Phase 5.4: Invalidate ALL refresh tokens except the current session
-    // Delete all refresh tokens for this user
-    await prisma.refreshToken.deleteMany({ where: { userId } });
-
     authLogger.info(
       { userId },
-      "Password changed; all other sessions invalidated",
+      "Password changed; refresh-token persistence is handled via stateless token rotation",
     );
 
     // Generate new tokens for the current session so user stays logged in

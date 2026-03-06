@@ -20,9 +20,8 @@ export default defineConfig({
     pool: 'threads',
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/mocks/**', 'src/**/*.d.ts'],
-      // Note: Coverage targets are documented in PRD Phase 3.
+      // Coverage thresholds apply to files exercised by the unit suite.
       thresholds: {
         'src/api/**': { lines: 80, branches: 70 },
         'src/stores/**': { lines: 80, branches: 70 },

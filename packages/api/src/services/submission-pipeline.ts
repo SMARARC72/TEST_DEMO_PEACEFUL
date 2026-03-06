@@ -4,6 +4,7 @@
 // V2: Invoked by BullMQ worker (job-queue.ts) with retry + dead-letter.
 // Falls back to inline execution when Redis is unavailable.
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "../models/index.js";
 import { claudeService } from "./claude.js";
 import { apiLogger } from "../utils/logger.js";
@@ -152,8 +153,8 @@ export async function processSubmission(
             | "MODERATE"
             | "ELEVATED",
           clinicianSummary,
-          clinicianEvidence: evidence,
-          clinicianUnknowns: unknowns,
+          clinicianEvidence: evidence as Prisma.InputJsonValue,
+          clinicianUnknowns: unknowns as Prisma.InputJsonValue,
           processedAt: new Date(),
         },
       });
@@ -168,7 +169,7 @@ export async function processSubmission(
           clinicianId: primaryClinicianId,
           signalBand: signalBand as "LOW" | "GUARDED" | "MODERATE" | "ELEVATED",
           summary: clinicianSummary,
-          status: signalBand === "ELEVATED" ? "OPEN" : "ACK",
+          status: signalBand === "ELEVATED" ? "IN_REVIEW" : "ACK",
         },
       });
 

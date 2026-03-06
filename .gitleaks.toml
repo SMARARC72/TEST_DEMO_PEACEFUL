@@ -1,0 +1,8 @@
+[allowlist]
+description = "Known public identifiers and development placeholders"
+regexTarget = "line"
+regexes = [
+  '''VITE_AUTH0_CLIENT_ID = "1sYhiLWVUjrqwAgqT9SRwfGmz4Jjyd9X"''',
+  '''ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef''',
+  '''\{selected\.linkedInstrument\}''',
+]

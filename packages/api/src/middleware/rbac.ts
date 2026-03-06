@@ -24,7 +24,7 @@ export function requireRole(...roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     // Deny-by-default: if no user is attached, block immediately
     if (!req.user) {
-      next(new AppError(401, "Authentication required"));
+      next(new AppError("Authentication required", 401));
       return;
     }
 
@@ -38,8 +38,8 @@ export function requireRole(...roles: UserRole[]) {
 
       next(
         new AppError(
-          403,
           `Access denied. Required roles: ${roles.join(", ")}. Your role: ${userRole}`,
+          403,
         ),
       );
       return;
@@ -61,7 +61,7 @@ export function requireOwnerOrRole(
 ) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      next(new AppError(401, "Authentication required"));
+      next(new AppError("Authentication required", 401));
       return;
     }
 
@@ -70,7 +70,12 @@ export function requireOwnerOrRole(
     const hasRole = roles.includes(req.user.role as UserRole);
 
     if (!isOwner && !hasRole) {
-      next(new AppError(403, "Access denied. You are not the resource owner and lack required role."));
+      next(
+        new AppError(
+          "Access denied. You are not the resource owner and lack required role.",
+          403,
+        ),
+      );
       return;
     }
 

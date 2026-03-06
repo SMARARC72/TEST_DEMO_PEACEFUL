@@ -4,6 +4,7 @@
 // All queries hit Neon Postgres via Prisma — no mock data.
 
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { authenticate, requireRole, stepUpAuth } from "../middleware/auth.js";
@@ -515,7 +516,7 @@ clinicianRouter.post("/patients/:id/plans", async (req, res, next) => {
         owner: body.owner,
         target: body.target,
         status: body.status as "DRAFT" | "REVIEWED" | "HOLD" | "ACTIVE",
-        evidence: body.evidence,
+        evidence: body.evidence as Prisma.InputJsonValue,
         uncertainty: body.uncertainty,
       },
     });
@@ -699,7 +700,11 @@ clinicianRouter.patch(
       // Only a supervisor or another clinician on the same caseload can sign
       if (req.user!.role !== "SUPERVISOR") {
         // Verify the signing clinician has access to this patient
-        await requireCaseloadAccess(req.user!.sub, req.user!.tid, req.params.id);
+        await requireCaseloadAccess(
+          req.user!.sub,
+          req.user!.tid,
+          req.params.id,
+        );
       }
 
       const updated = await prisma.sessionNote.update({

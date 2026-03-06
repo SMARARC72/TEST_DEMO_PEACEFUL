@@ -339,7 +339,12 @@ patientRouter.post("/:id/submissions", async (req, res, next) => {
     // UGO-1.1: Enqueue for async processing via BullMQ (falls back to inline if no Redis)
     const { jobId, queued } = await enqueueSubmission(row.id);
 
-    sendSuccess(res, req, { ...toSubmissionResponse(row), jobId, queued }, queued ? 202 : 201);
+    sendSuccess(
+      res,
+      req,
+      { ...toSubmissionResponse(row), jobId, queued },
+      queued ? 202 : 201,
+    );
   } catch (err) {
     next(err);
   }
@@ -758,7 +763,10 @@ const checkinSchema = z.object({
 patientRouter.post("/:id/checkin", checkinLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const patientId = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+    const patient = await resolvePatient(patientId, req.user!.tid);
     const body = checkinSchema.parse(req.body);
     const rawContent = JSON.stringify(body);
 
@@ -805,7 +813,10 @@ const journalSchema = z.object({
 patientRouter.post("/:id/journal", journalLimiter, async (req, res, next) => {
   try {
     // SEC-003: Resolve patient by id or userId, with tenant isolation
-    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const patientId = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+    const patient = await resolvePatient(patientId, req.user!.tid);
     const body = journalSchema.parse(req.body);
 
     const row = await prisma.submission.create({
