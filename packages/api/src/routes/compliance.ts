@@ -1,15 +1,15 @@
 // ─── Compliance Routes ───────────────────────────────────────────────
 // Compliance posture, audit log access, regulatory status, and exports.
 
-import { Router } from 'express';
-import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
-import { authenticate, requireRole, stepUpAuth } from '../middleware/auth.js';
-import { exportLimiter } from '../middleware/rate-limit.js';
-import { prisma } from '../models/index.js';
-import { UserRole } from '@peacefull/shared';
-import type { CompliancePosture, RegulatoryStatus } from '@peacefull/shared';
-import { sendSuccess } from '../utils/response.js';
+import { Router } from "express";
+import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
+import { authenticate, requireRole, stepUpAuth } from "../middleware/auth.js";
+import { exportLimiter } from "../middleware/rate-limit.js";
+import { prisma } from "../models/index.js";
+import { UserRole } from "@peacefull/shared";
+import type { CompliancePosture, RegulatoryStatus } from "@peacefull/shared";
+import { sendSuccess } from "../utils/response.js";
 
 export const complianceRouter = Router();
 
@@ -23,7 +23,7 @@ complianceRouter.use(requireRole(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER));
  * SOC 2, FDA SaMD, and accessibility frameworks.
  * Builds metrics from live database counts.
  */
-complianceRouter.get('/posture', async (req, res, next) => {
+complianceRouter.get("/posture", async (req, res, next) => {
   try {
     const tenantId = req.user!.tid;
 
@@ -35,33 +35,36 @@ complianceRouter.get('/posture', async (req, res, next) => {
       auditLogCount,
     ] = await Promise.all([
       prisma.user.count({ where: { tenantId } }),
-      prisma.user.count({ where: { tenantId, status: 'ACTIVE' } }),
+      prisma.user.count({ where: { tenantId, status: "ACTIVE" } }),
       prisma.consentRecord.count({ where: { patient: { tenantId } } }),
-      prisma.consentRecord.count({ where: { granted: true, revokedAt: null, patient: { tenantId } } }),
+      prisma.consentRecord.count({
+        where: { granted: true, revokedAt: null, patient: { tenantId } },
+      }),
       prisma.auditLog.count({ where: { tenantId } }),
     ]);
 
-    const consentRate = totalConsents > 0
-      ? Math.round((grantedConsents / totalConsents) * 100)
-      : 0;
+    const consentRate =
+      totalConsents > 0
+        ? Math.round((grantedConsents / totalConsents) * 100)
+        : 0;
 
     const posture: CompliancePosture = {
       tenantId,
       hipaa: {
-        status: 'IMPLEMENTED',
+        status: "IMPLEMENTED",
         controls: 54,
         implemented: 51,
       },
       soc2: {
-        status: 'IN_PROGRESS',
-        targetDate: '2026-06-30',
+        status: "IN_PROGRESS",
+        targetDate: "2026-06-30",
       },
       fda: {
-        pathway: 'De Novo (Class II SaMD)',
-        status: 'PRE_SUBMISSION',
+        pathway: "De Novo (Class II SaMD)",
+        status: "PRE_SUBMISSION",
       },
       accessibility: {
-        wcag: 'AA',
+        wcag: "AA",
         score: 94,
       },
       lastAssessed: new Date().toISOString(),
@@ -74,7 +77,7 @@ complianceRouter.get('/posture', async (req, res, next) => {
         activeUsers,
         consentRate,
         auditLogEntries: auditLogCount,
-        encryptionStatus: 'AES-256-GCM',
+        encryptionStatus: "AES-256-GCM",
       },
     });
   } catch (err) {
@@ -95,20 +98,22 @@ const auditQuerySchema = z.object({
 /**
  * Returns the hash-chained audit log with search, filter, and pagination.
  */
-complianceRouter.get('/audit-log', async (req, res, next) => {
+complianceRouter.get("/audit-log", async (req, res, next) => {
   try {
     const query = auditQuerySchema.parse(req.query);
     const tenantId = req.user!.tid;
 
     const where: Record<string, unknown> = { tenantId };
     if (query.userId) where.userId = query.userId;
-    if (query.action) where.action = { contains: query.action, mode: 'insensitive' };
-    if (query.resource) where.resource = { contains: query.resource, mode: 'insensitive' };
+    if (query.action)
+      where.action = { contains: query.action, mode: "insensitive" };
+    if (query.resource)
+      where.resource = { contains: query.resource, mode: "insensitive" };
 
     const [entries, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
-        orderBy: { timestamp: 'desc' },
+        orderBy: { timestamp: "desc" },
         take: query.limit,
         skip: query.offset,
       }),
@@ -131,7 +136,7 @@ complianceRouter.get('/audit-log', async (req, res, next) => {
 /**
  * Returns all consent records for a given patient.
  */
-complianceRouter.get('/consent/:patientId', async (req, res, next) => {
+complianceRouter.get("/consent/:patientId", async (req, res, next) => {
   try {
     const { patientId } = req.params;
     const tenantId = req.user!.tid;
@@ -149,7 +154,7 @@ complianceRouter.get('/consent/:patientId', async (req, res, next) => {
 
     const records = await prisma.consentRecord.findMany({
       where: { patientId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     sendSuccess(res, req, { data: records, total: records.length });
@@ -170,7 +175,7 @@ const consentCreateSchema = z.object({
 /**
  * Creates a new consent record for a patient. Requires step-up auth.
  */
-complianceRouter.post('/consent', stepUpAuth, async (req, res, next) => {
+complianceRouter.post("/consent", stepUpAuth, async (req, res, next) => {
   try {
     const body = consentCreateSchema.parse(req.body);
 
@@ -181,7 +186,7 @@ complianceRouter.post('/consent', stepUpAuth, async (req, res, next) => {
         version: body.version,
         granted: body.granted,
         grantedAt: new Date(),
-        ipAddress: String(req.ip ?? req.socket.remoteAddress ?? 'unknown'),
+        ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
       },
     });
 
@@ -196,29 +201,29 @@ complianceRouter.post('/consent', stepUpAuth, async (req, res, next) => {
 /**
  * Returns comprehensive regulatory status across all tracked frameworks.
  */
-complianceRouter.get('/regulatory', (req, res) => {
+complianceRouter.get("/regulatory", (req, res) => {
   const status: RegulatoryStatus = {
     fdaSamd: {
-      pathway: 'De Novo Classification (Class II SaMD)',
-      status: 'Pre-Submission',
-      preSubDate: '2026-Q2',
+      pathway: "De Novo Classification (Class II SaMD)",
+      status: "Pre-Submission",
+      preSubDate: "2026-Q2",
     },
     hipaa: {
-      status: 'Compliant',
+      status: "Compliant",
       baaCount: 12,
       controls: 54,
     },
     cfr42: {
-      status: 'Implemented',
+      status: "Implemented",
       consentTracking: true,
     },
     soc2: {
-      status: 'In Progress',
-      auditor: 'Deloitte',
-      targetDate: '2026-06-30',
+      status: "In Progress",
+      auditor: "Deloitte",
+      targetDate: "2026-06-30",
     },
     accessibility: {
-      wcagLevel: 'AA',
+      wcagLevel: "AA",
       automatedScore: 96,
       manualScore: 92,
     },
@@ -233,86 +238,130 @@ complianceRouter.get('/regulatory', (req, res) => {
  * Exports audit log data. Requires step-up authentication for
  * data sensitivity compliance.
  */
-const auditExportSchema = z.object({
-  format: z.enum(['json', 'csv']).default('json'),
-  dateRange: z.object({
-    start: z.string().datetime().nullable().optional(),
-    end: z.string().datetime().nullable().optional(),
-  }).optional(),
-}).strict();
+const auditExportSchema = z
+  .object({
+    format: z.enum(["json", "csv"]).default("json"),
+    dateRange: z
+      .object({
+        start: z.string().datetime().nullable().optional(),
+        end: z.string().datetime().nullable().optional(),
+      })
+      .optional(),
+  })
+  .strict();
 
-complianceRouter.post('/audit-log/export', exportLimiter, stepUpAuth, async (req, res, next) => {
-  try {
-    const body = auditExportSchema.parse(req.body);
-    const tenantId = req.user!.tid;
-    const format = body.format;
-    const dateRange = body.dateRange ?? { start: null, end: null };
+complianceRouter.post(
+  "/audit-log/export",
+  exportLimiter,
+  stepUpAuth,
+  async (req, res, next) => {
+    try {
+      const body = auditExportSchema.parse(req.body);
+      const tenantId = req.user!.tid;
+      const format = body.format;
+      const dateRange = body.dateRange ?? { start: null, end: null };
 
-    // HIGH-008 FIX: Actually fetch and stream the audit log entries
-    // instead of returning a stub "GENERATING" response.
-    const where: Record<string, unknown> = { tenantId };
-    if (dateRange.start || dateRange.end) {
-      const ts: Record<string, unknown> = {};
-      if (dateRange.start) ts.gte = new Date(dateRange.start);
-      if (dateRange.end) ts.lte = new Date(dateRange.end);
-      where.timestamp = ts;
+      // HIGH-008 FIX: Actually fetch and stream the audit log entries
+      // instead of returning a stub "GENERATING" response.
+      const where: Record<string, unknown> = { tenantId };
+      if (dateRange.start || dateRange.end) {
+        const ts: Record<string, unknown> = {};
+        if (dateRange.start) ts.gte = new Date(dateRange.start);
+        if (dateRange.end) ts.lte = new Date(dateRange.end);
+        where.timestamp = ts;
+      }
+
+      const entries = await prisma.auditLog.findMany({
+        where,
+        orderBy: { timestamp: "desc" },
+        take: 10_000, // Cap at 10 K entries per export
+      });
+
+      if (format === "csv") {
+        const header =
+          "id,timestamp,userId,action,resource,resourceId,ipAddress,userAgent,hash,previousHash\n";
+        const rows = entries
+          .map(
+            (e: {
+              id: string;
+              timestamp: Date;
+              userId: string | null;
+              action: string;
+              resource: string;
+              resourceId: string | null;
+              ipAddress: string | null;
+              userAgent: string | null;
+              hash: string;
+              previousHash: string | null;
+            }) =>
+              [
+                e.id,
+                e.timestamp.toISOString(),
+                e.userId ?? "",
+                `"${(e.action ?? "").replace(/"/g, '""')}"`,
+                `"${(e.resource ?? "").replace(/"/g, '""')}"`,
+                e.resourceId ?? "",
+                e.ipAddress ?? "",
+                `"${(e.userAgent ?? "").replace(/"/g, '""')}"`,
+                e.hash,
+                e.previousHash ?? "",
+              ].join(","),
+          )
+          .join("\n");
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="audit-log-${tenantId}-${Date.now()}.csv"`,
+        );
+        res.send(header + rows);
+        return;
+      }
+
+      // JSON format
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="audit-log-${tenantId}-${Date.now()}.json"`,
+      );
+      res.json({
+        exportId: uuidv4(),
+        tenantId,
+        format: "json",
+        dateRange,
+        totalEntries: entries.length,
+        exportedAt: new Date().toISOString(),
+        requestedBy: req.user!.sub,
+        entries: entries.map(
+          (e: {
+            id: string;
+            timestamp: Date;
+            userId: string | null;
+            action: string;
+            resource: string;
+            resourceId: string | null;
+            details: unknown;
+            ipAddress: string | null;
+            userAgent: string | null;
+            hash: string;
+            previousHash: string | null;
+          }) => ({
+            id: e.id,
+            timestamp: e.timestamp.toISOString(),
+            userId: e.userId,
+            action: e.action,
+            resource: e.resource,
+            resourceId: e.resourceId,
+            details: e.details,
+            ipAddress: e.ipAddress,
+            userAgent: e.userAgent,
+            hash: e.hash,
+            previousHash: e.previousHash,
+          }),
+        ),
+      });
+    } catch (err) {
+      next(err);
     }
-
-    const entries = await prisma.auditLog.findMany({
-      where,
-      orderBy: { timestamp: 'desc' },
-      take: 10_000, // Cap at 10 K entries per export
-    });
-
-    if (format === 'csv') {
-      const header = 'id,timestamp,userId,action,resource,resourceId,ipAddress,userAgent,hash,previousHash\n';
-      const rows = entries.map((e) =>
-        [
-          e.id,
-          e.timestamp.toISOString(),
-          e.userId ?? '',
-          `"${(e.action ?? '').replace(/"/g, '""')}"`,
-          `"${(e.resource ?? '').replace(/"/g, '""')}"`,
-          e.resourceId ?? '',
-          e.ipAddress ?? '',
-          `"${(e.userAgent ?? '').replace(/"/g, '""')}"`,
-          e.hash,
-          e.previousHash ?? '',
-        ].join(','),
-      ).join('\n');
-
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="audit-log-${tenantId}-${Date.now()}.csv"`);
-      res.send(header + rows);
-      return;
-    }
-
-    // JSON format
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="audit-log-${tenantId}-${Date.now()}.json"`);
-    res.json({
-      exportId: uuidv4(),
-      tenantId,
-      format: 'json',
-      dateRange,
-      totalEntries: entries.length,
-      exportedAt: new Date().toISOString(),
-      requestedBy: req.user!.sub,
-      entries: entries.map((e) => ({
-        id: e.id,
-        timestamp: e.timestamp.toISOString(),
-        userId: e.userId,
-        action: e.action,
-        resource: e.resource,
-        resourceId: e.resourceId,
-        details: e.details,
-        ipAddress: e.ipAddress,
-        userAgent: e.userAgent,
-        hash: e.hash,
-        previousHash: e.previousHash,
-      })),
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);

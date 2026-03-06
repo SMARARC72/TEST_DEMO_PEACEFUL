@@ -140,8 +140,12 @@ export async function enqueueSubmission(
     { submissionId },
     "Running submission pipeline inline (no Redis)",
   );
+  if (env.NODE_ENV === "test") {
+    return { jobId: `inline-${submissionId}`, queued: false };
+  }
+
   queueMicrotask(() => {
-    void runSubmissionPipeline(submissionId).catch((err) => {
+    void runSubmissionPipeline(submissionId).catch((err: unknown) => {
       // Errors handled inside processSubmission (resets to PENDING)
       void err;
     });

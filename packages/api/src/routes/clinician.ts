@@ -15,6 +15,15 @@ import { prisma } from "../models/index.js";
 import { sendSuccess } from "../utils/response.js";
 import { claudeService } from "../services/claude.js";
 
+type JsonInput =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonInput | null }
+  | Array<JsonInput | null>;
+type JsonInputArray = Array<JsonInput | null>;
+
 export const clinicianRouter = Router();
 
 // All clinician routes require authentication + appropriate role
@@ -305,27 +314,43 @@ clinicianRouter.get("/patients/:id", async (req, res, next) => {
 
     // PRD-3.1: Enriched response — recentCheckins, recentJournals, signalHistory
     const recentCheckins = patient.submissions
-      .filter((s) => s.source === "CHECKIN")
+      .filter((s: { source: string }) => s.source === "CHECKIN")
       .slice(0, 5)
-      .map((s) => ({
-        id: s.id,
-        signalBand: s.clinicianSignalBand,
-        summary: s.patientSummary,
-        createdAt: s.createdAt,
-      }));
+      .map(
+        (s: {
+          id: string;
+          clinicianSignalBand: string | null;
+          patientSummary: string | null;
+          createdAt: Date;
+        }) => ({
+          id: s.id,
+          signalBand: s.clinicianSignalBand,
+          summary: s.patientSummary,
+          createdAt: s.createdAt,
+        }),
+      );
     const recentJournals = patient.submissions
-      .filter((s) => s.source === "JOURNAL")
+      .filter((s: { source: string }) => s.source === "JOURNAL")
       .slice(0, 5)
-      .map((s) => ({
-        id: s.id,
-        signalBand: s.clinicianSignalBand,
-        summary: s.patientSummary,
-        createdAt: s.createdAt,
-      }));
+      .map(
+        (s: {
+          id: string;
+          clinicianSignalBand: string | null;
+          patientSummary: string | null;
+          createdAt: Date;
+        }) => ({
+          id: s.id,
+          signalBand: s.clinicianSignalBand,
+          summary: s.patientSummary,
+          createdAt: s.createdAt,
+        }),
+      );
     const signalHistory = patient.submissions
-      .filter((s) => s.clinicianSignalBand)
+      .filter(
+        (s: { clinicianSignalBand: string | null }) => s.clinicianSignalBand,
+      )
       .slice(0, 10)
-      .map((s) => ({
+      .map((s: { createdAt: Date; clinicianSignalBand: string | null }) => ({
         date: s.createdAt,
         signalBand: s.clinicianSignalBand,
       }));
@@ -516,7 +541,7 @@ clinicianRouter.post("/patients/:id/plans", async (req, res, next) => {
         owner: body.owner,
         target: body.target,
         status: body.status as "DRAFT" | "REVIEWED" | "HOLD" | "ACTIVE",
-        evidence: body.evidence as Prisma.InputJsonValue,
+        evidence: body.evidence as JsonInputArray,
         uncertainty: body.uncertainty,
       },
     });
@@ -1207,13 +1232,21 @@ clinicianRouter.get(
         },
       });
 
-      const exports = exportLogs.map((log) => ({
-        id: log.id,
-        action: log.action,
-        requestedBy: log.userId,
-        requestedAt: log.timestamp.toISOString(),
-        details: log.details,
-      }));
+      const exports = exportLogs.map(
+        (log: {
+          id: string;
+          action: string;
+          details: unknown;
+          timestamp: Date;
+          userId: string | null;
+        }) => ({
+          id: log.id,
+          action: log.action,
+          requestedBy: log.userId,
+          requestedAt: log.timestamp.toISOString(),
+          details: log.details,
+        }),
+      );
 
       sendSuccess(res, req, exports);
     } catch (err) {
@@ -1433,22 +1466,33 @@ clinicianRouter.get("/patients/:id/chat-sessions", async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
 
-    const result = sessions.map((s) => {
-      const firstMsg = s.messages[0];
-      const durationMs = firstMsg
-        ? s.updatedAt.getTime() - firstMsg.createdAt.getTime()
-        : 0;
-      return {
-        id: s.id,
-        patientId: s.patientId,
-        active: s.active,
-        messageCount: s._count.messages,
-        durationMinutes: Math.round(durationMs / 60000),
-        latestSummary: s.summaries[0] ?? null,
-        createdAt: s.createdAt.toISOString(),
-        updatedAt: s.updatedAt.toISOString(),
-      };
-    });
+    const result = sessions.map(
+      (s: {
+        id: string;
+        patientId: string;
+        active: boolean;
+        _count: { messages: number };
+        messages: Array<{ createdAt: Date }>;
+        summaries: Array<{ id: string; status: string; createdAt: Date }>;
+        createdAt: Date;
+        updatedAt: Date;
+      }) => {
+        const firstMsg = s.messages[0];
+        const durationMs = firstMsg
+          ? s.updatedAt.getTime() - firstMsg.createdAt.getTime()
+          : 0;
+        return {
+          id: s.id,
+          patientId: s.patientId,
+          active: s.active,
+          messageCount: s._count.messages,
+          durationMinutes: Math.round(durationMs / 60000),
+          latestSummary: s.summaries[0] ?? null,
+          createdAt: s.createdAt.toISOString(),
+          updatedAt: s.updatedAt.toISOString(),
+        };
+      },
+    );
 
     sendSuccess(res, req, result);
   } catch (err) {
@@ -1482,13 +1526,21 @@ clinicianRouter.get(
         id: session.id,
         patientId: session.patientId,
         active: session.active,
-        messages: session.messages.map((m) => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          memoryRef: m.memoryRef,
-          createdAt: m.createdAt.toISOString(),
-        })),
+        messages: session.messages.map(
+          (m: {
+            id: string;
+            role: string;
+            content: string;
+            memoryRef: string | null;
+            createdAt: Date;
+          }) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            memoryRef: m.memoryRef,
+            createdAt: m.createdAt.toISOString(),
+          }),
+        ),
         summaries: session.summaries,
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.updatedAt.toISOString(),
@@ -1558,7 +1610,7 @@ clinicianRouter.post(
       // Build transcript string
       const transcript = session.messages
         .map(
-          (m) =>
+          (m: { createdAt: Date; role: string; content: string }) =>
             `[${m.createdAt.toISOString()}] ${m.role === "USER" ? "Patient" : m.role === "ASSISTANT" ? "AI" : "System"}: ${m.content}`,
         )
         .join("\n");
@@ -1567,15 +1619,23 @@ clinicianRouter.post(
       const aiResult = await claudeService.generateChatSummary(transcript, {
         patient: patient ?? undefined,
         approvedMemories,
-        recentSignals: recentSignals.map((s) => ({
-          band: s.clinicianSignalBand,
-          date: s.createdAt.toISOString(),
-          source: s.source,
-        })),
-        treatmentGoals: treatmentGoals.map((t) => ({
-          goal: t.goal,
-          intervention: t.intervention,
-        })),
+        recentSignals: recentSignals.map(
+          (s: {
+            clinicianSignalBand: string | null;
+            createdAt: Date;
+            source: string;
+          }) => ({
+            band: s.clinicianSignalBand,
+            date: s.createdAt.toISOString(),
+            source: s.source,
+          }),
+        ),
+        treatmentGoals: treatmentGoals.map(
+          (t: { goal: string; intervention: string }) => ({
+            goal: t.goal,
+            intervention: t.intervention,
+          }),
+        ),
       });
 
       // Parse structured output from AI
@@ -1643,21 +1703,36 @@ clinicianRouter.get("/patients/:id/chat-summaries", async (req, res, next) => {
     sendSuccess(
       res,
       req,
-      summaries.map((s) => ({
-        id: s.id,
-        sessionId: s.sessionId,
-        status: s.status,
-        modelVersion: s.modelVersion,
-        reviewedBy: s.reviewedBy
-          ? {
-              id: s.reviewedBy.id,
-              name: `${s.reviewedBy.firstName} ${s.reviewedBy.lastName}`,
-            }
-          : null,
-        reviewedAt: s.reviewedAt?.toISOString() ?? null,
-        sessionCreatedAt: s.session.createdAt.toISOString(),
-        createdAt: s.createdAt.toISOString(),
-      })),
+      summaries.map(
+        (s: {
+          id: string;
+          sessionId: string;
+          status: string;
+          modelVersion: string;
+          reviewedBy: {
+            id: string;
+            firstName: string;
+            lastName: string;
+          } | null;
+          reviewedAt: Date | null;
+          session: { createdAt: Date };
+          createdAt: Date;
+        }) => ({
+          id: s.id,
+          sessionId: s.sessionId,
+          status: s.status,
+          modelVersion: s.modelVersion,
+          reviewedBy: s.reviewedBy
+            ? {
+                id: s.reviewedBy.id,
+                name: `${s.reviewedBy.firstName} ${s.reviewedBy.lastName}`,
+              }
+            : null,
+          reviewedAt: s.reviewedAt?.toISOString() ?? null,
+          sessionCreatedAt: s.session.createdAt.toISOString(),
+          createdAt: s.createdAt.toISOString(),
+        }),
+      ),
     );
   } catch (err) {
     next(err);

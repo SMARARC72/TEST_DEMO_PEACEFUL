@@ -191,7 +191,7 @@ authRouter.post("/register", async (req, res, next) => {
           where: { tenantId: tenant.id, role: "SUPERVISOR", status: "ACTIVE" },
           select: { email: true },
         })
-        .then((supervisors) => {
+        .then((supervisors: Array<{ email: string }>) => {
           for (const sup of supervisors) {
             sendEmail(
               sup.email,
@@ -202,7 +202,7 @@ authRouter.post("/register", async (req, res, next) => {
                 lastName: body.lastName,
                 email: body.email,
               },
-            ).catch((err) =>
+            ).catch((err: unknown) =>
               authLogger.error(
                 { err, supervisorEmail: sup.email },
                 "Failed to send supervisor notification",
@@ -210,7 +210,7 @@ authRouter.post("/register", async (req, res, next) => {
             );
           }
         })
-        .catch((err) =>
+        .catch((err: unknown) =>
           authLogger.error(
             { err },
             "Failed to query supervisors for clinician approval",
@@ -997,7 +997,7 @@ authRouter.get("/tenants", async (req, res, next) => {
     });
 
     sendSuccess(res, req, {
-      tenants: tenants.map((t) => ({
+      tenants: tenants.map((t: { id: string; slug: string; name: string }) => ({
         id: t.id,
         slug: t.slug,
         name: t.name,

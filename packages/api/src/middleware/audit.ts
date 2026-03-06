@@ -6,6 +6,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
+import type { Prisma } from "@prisma/client";
 import { PHI_FIELDS } from "../config/index.js";
 import { auditLogger } from "../utils/logger.js";
 import { prisma } from "../models/index.js";
@@ -13,6 +14,7 @@ import type { AuditLogEntry } from "@peacefull/shared";
 
 /** Unique identifier for this ECS task / process instance. */
 const TASK_INSTANCE_ID = randomUUID().slice(0, 8);
+type AuditLogRow = Awaited<ReturnType<typeof prisma.auditLog.findMany>>[number];
 
 // ─── Hash Chain ──────────────────────────────────────────────────────
 
@@ -111,55 +113,58 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
     // CRIT-006 FIX: Atomic read-then-write inside a serializable transaction.
     // This guarantees that no two concurrent requests can read the same
     // previousHash, even across multiple ECS tasks sharing the same DB.
-    await prisma.$transaction(async (tx) => {
-      const latest = await tx.auditLog.findFirst({
-        orderBy: { timestamp: "desc" },
-        select: { hash: true },
-      });
-      const previousHash = latest?.hash ?? "0".repeat(64);
+    await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const latest = await tx.auditLog.findFirst({
+          orderBy: { timestamp: "desc" },
+          select: { hash: true },
+        });
+        const previousHash = latest?.hash ?? "0".repeat(64);
 
-      const entryForHash: Omit<AuditLogEntry, "hash"> = {
-        id: "",
-        tenantId,
-        userId: userId ?? "anonymous",
-        action,
-        resource,
-        resourceId: resourceId ?? "",
-        details,
-        ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
-        userAgent: req.headers["user-agent"] ?? "unknown",
-        timestamp: new Date().toISOString(),
-        previousHash,
-      };
-
-      const hash = hashChain(entryForHash);
-
-      await tx.auditLog.create({
-        data: {
+        const entryForHash: Omit<AuditLogEntry, "hash"> = {
+          id: "",
           tenantId,
-          userId,
+          userId: userId ?? "anonymous",
           action,
           resource,
-          resourceId,
-          details: details as unknown as Record<
-            string,
-            string | number | boolean | null
-          >,
-          ipAddress: entryForHash.ipAddress,
-          userAgent: entryForHash.userAgent,
+          resourceId: resourceId ?? "",
+          details,
+          ipAddress: String(req.ip ?? req.socket.remoteAddress ?? "unknown"),
+          userAgent: req.headers["user-agent"] ?? "unknown",
+          timestamp: new Date().toISOString(),
           previousHash,
-          hash,
-        },
-      });
+        };
 
-      auditLogger.info(
-        { userId: userId ?? "anonymous", action, resource, resourceId },
-        "Audit log entry persisted",
-      );
-    }, {
-      isolationLevel: 'Serializable',
-      timeout: 10_000,
-    });
+        const hash = hashChain(entryForHash);
+
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            userId,
+            action,
+            resource,
+            resourceId,
+            details: details as unknown as Record<
+              string,
+              string | number | boolean | null
+            >,
+            ipAddress: entryForHash.ipAddress,
+            userAgent: entryForHash.userAgent,
+            previousHash,
+            hash,
+          },
+        });
+
+        auditLogger.info(
+          { userId: userId ?? "anonymous", action, resource, resourceId },
+          "Audit log entry persisted",
+        );
+      },
+      {
+        isolationLevel: "Serializable",
+        timeout: 10_000,
+      },
+    );
   } catch (err) {
     // Never let audit failures crash the server
     auditLogger.error({ err }, "Failed to persist audit log entry");
@@ -218,7 +223,7 @@ export async function getAuditEntries(options?: {
     prisma.auditLog.count({ where }),
   ]);
 
-  const entries: AuditLogEntry[] = rows.map((r) => ({
+  const entries: AuditLogEntry[] = rows.map((r: AuditLogRow) => ({
     id: r.id,
     tenantId: r.tenantId,
     userId: r.userId ?? "anonymous",

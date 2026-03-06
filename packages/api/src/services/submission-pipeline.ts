@@ -14,6 +14,15 @@ import type { EscalationItem } from "@peacefull/shared";
 
 const logger = apiLogger.child({ service: "submission-pipeline" });
 
+type JsonInput =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonInput | null }
+  | Array<JsonInput | null>;
+type JsonInputArray = Array<JsonInput | null>;
+
 export interface ProcessingResult {
   submissionId: string;
   status: "READY" | "PROCESSING";
@@ -135,87 +144,96 @@ export async function processSubmission(
     }
 
     // Step 5–7: Database writes in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Update submission with AI results
-      await tx.submission.update({
-        where: { id: submissionId },
-        data: {
-          status: "READY",
-          patientSummary,
-          patientTone: signalBand === "ELEVATED" ? "concerned" : "processed",
-          patientNextStep:
-            signalBand === "ELEVATED"
-              ? "Your care team has been notified and will follow up soon."
-              : "Your submission has been reviewed. Check back for updates.",
-          clinicianSignalBand: signalBand as
-            | "LOW"
-            | "GUARDED"
-            | "MODERATE"
-            | "ELEVATED",
-          clinicianSummary,
-          clinicianEvidence: evidence as Prisma.InputJsonValue,
-          clinicianUnknowns: unknowns as Prisma.InputJsonValue,
-          processedAt: new Date(),
-        },
-      });
-
-      // Create triage item
-      // HIGH-003 FIX: ELEVATED starts as OPEN for immediate review;
-      // all others start as ACK (acknowledged, queued for review).
-      const triageItem = await tx.triageItem.create({
-        data: {
-          submissionId,
-          patientId: submission.patientId,
-          clinicianId: primaryClinicianId,
-          signalBand: signalBand as "LOW" | "GUARDED" | "MODERATE" | "ELEVATED",
-          summary: clinicianSummary,
-          status: signalBand === "ELEVATED" ? "IN_REVIEW" : "ACK",
-        },
-      });
-
-      // Create AI draft
-      const aiDraft = await tx.aIDraft.create({
-        data: {
-          submissionId,
-          patientId: submission.patientId,
-          content: clinicianSummary,
-          format: "STRUCTURED",
-          status: "DRAFT",
-          modelVersion: summaryResponse.model,
-          tokenUsage: {
-            summarize: summaryResponse.usage,
-            risk: riskResponse.usage,
-            memory: memoryResponse.usage,
+    const result = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // Update submission with AI results
+        await tx.submission.update({
+          where: { id: submissionId },
+          data: {
+            status: "READY",
+            patientSummary,
+            patientTone: signalBand === "ELEVATED" ? "concerned" : "processed",
+            patientNextStep:
+              signalBand === "ELEVATED"
+                ? "Your care team has been notified and will follow up soon."
+                : "Your submission has been reviewed. Check back for updates.",
+            clinicianSignalBand: signalBand as
+              | "LOW"
+              | "GUARDED"
+              | "MODERATE"
+              | "ELEVATED",
+            clinicianSummary,
+            clinicianEvidence: evidence as JsonInputArray,
+            clinicianUnknowns: unknowns as JsonInputArray,
+            processedAt: new Date(),
           },
-        },
-      });
+        });
 
-      // Create memory proposals
-      let memoriesCreated = 0;
-      for (const mem of memories) {
-        try {
-          await tx.memoryProposal.create({
-            data: {
-              patientId: submission.patientId,
-              category: mem.category ?? "GENERAL",
-              statement: mem.statement,
-              confidence: Math.max(0, Math.min(1, mem.confidence ?? 0.5)),
-              status: "PROPOSED",
-              evidence: mem.evidence ? [mem.evidence] : [],
+        // Create triage item
+        // HIGH-003 FIX: ELEVATED starts as OPEN for immediate review;
+        // all others start as ACK (acknowledged, queued for review).
+        const triageItem = await tx.triageItem.create({
+          data: {
+            submissionId,
+            patientId: submission.patientId,
+            clinicianId: primaryClinicianId,
+            signalBand: signalBand as
+              | "LOW"
+              | "GUARDED"
+              | "MODERATE"
+              | "ELEVATED",
+            summary: clinicianSummary,
+            status: signalBand === "ELEVATED" ? "IN_REVIEW" : "ACK",
+          },
+        });
+
+        // Create AI draft
+        const aiDraft = await tx.aIDraft.create({
+          data: {
+            submissionId,
+            patientId: submission.patientId,
+            content: clinicianSummary,
+            format: "STRUCTURED",
+            status: "DRAFT",
+            modelVersion: summaryResponse.model,
+            tokenUsage: {
+              summarize: summaryResponse.usage,
+              risk: riskResponse.usage,
+              memory: memoryResponse.usage,
             },
-          });
-          memoriesCreated++;
-        } catch (err) {
-          logger.warn({ err, memory: mem }, "Failed to create memory proposal");
-        }
-      }
+          },
+        });
 
-      return {
-        triageItemId: triageItem.id,
-        aiDraftId: aiDraft.id,
-        memoriesProposed: memoriesCreated,
-      };
-    });
+        // Create memory proposals
+        let memoriesCreated = 0;
+        for (const mem of memories) {
+          try {
+            await tx.memoryProposal.create({
+              data: {
+                patientId: submission.patientId,
+                category: mem.category ?? "GENERAL",
+                statement: mem.statement,
+                confidence: Math.max(0, Math.min(1, mem.confidence ?? 0.5)),
+                status: "PROPOSED",
+                evidence: mem.evidence ? [mem.evidence] : [],
+              },
+            });
+            memoriesCreated++;
+          } catch (err) {
+            logger.warn(
+              { err, memory: mem },
+              "Failed to create memory proposal",
+            );
+          }
+        }
+
+        return {
+          triageItemId: triageItem.id,
+          aiDraftId: aiDraft.id,
+          memoriesProposed: memoriesCreated,
+        };
+      },
+    );
 
     logger.info(
       { submissionId, signalBand, ...result },

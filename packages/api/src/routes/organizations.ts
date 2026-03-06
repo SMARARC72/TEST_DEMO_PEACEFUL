@@ -3,6 +3,7 @@
 // Clinicians create practices; patients join via invite tokens.
 
 import { Router } from "express";
+import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { AppError } from "../middleware/error.js";
@@ -80,31 +81,33 @@ organizationRouter.post(
         slug = `${slug}-${Date.now().toString(36)}`;
       }
 
-      const org = await prisma.$transaction(async (tx) => {
-        const newOrg = await tx.organization.create({
-          data: {
-            tenantId,
-            name: data.name,
-            slug,
-            npi: data.npi ?? null,
-            taxId: data.taxId ?? null,
-            address: data.address ?? undefined,
-            phone: data.phone ?? null,
-            website: data.website ?? null,
-          },
-        });
+      const org = await prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const newOrg = await tx.organization.create({
+            data: {
+              tenantId,
+              name: data.name,
+              slug,
+              npi: data.npi ?? null,
+              taxId: data.taxId ?? null,
+              address: data.address ?? undefined,
+              phone: data.phone ?? null,
+              website: data.website ?? null,
+            },
+          });
 
-        // Creator becomes OWNER
-        await tx.orgMembership.create({
-          data: {
-            orgId: newOrg.id,
-            userId,
-            role: "OWNER",
-          },
-        });
+          // Creator becomes OWNER
+          await tx.orgMembership.create({
+            data: {
+              orgId: newOrg.id,
+              userId,
+              role: "OWNER",
+            },
+          });
 
-        return newOrg;
-      });
+          return newOrg;
+        },
+      );
 
       apiLogger.info({ orgId: org.id, userId }, "Organization created");
 
@@ -625,81 +628,83 @@ organizationRouter.post(
         },
       });
 
-      const result = await prisma.$transaction(async (tx) => {
-        if (!user) {
-          // Create new user
-          user = await tx.user.create({
-            data: {
-              tenantId: invitation.organization.tenantId,
-              email: invitation.email,
-              passwordHash,
-              role: "PATIENT",
-              firstName: data.firstName,
-              lastName: data.lastName,
-              status: "ACTIVE",
-            },
-          });
-
-          // Create patient profile
-          await tx.patient.create({
-            data: {
-              userId: user.id,
-              tenantId: invitation.organization.tenantId,
-              age: 0,
-            },
-          });
-        }
-
-        // Add org membership
-        await tx.orgMembership.create({
-          data: {
-            orgId: invitation.orgId,
-            userId: user!.id,
-            role: invitation.role,
-          },
-        });
-
-        // Mark invitation as accepted
-        await tx.orgInvitation.update({
-          where: { id: invitation.id },
-          data: { status: "ACCEPTED" },
-        });
-
-        // PRD-2.1: Create CareTeamAssignment — link patient to org's clinician
-        const patient = await tx.patient.findUnique({
-          where: { userId: user!.id },
-          select: { id: true },
-        });
-        if (patient) {
-          // Find the org owner's clinician profile (the inviting clinician)
-          const ownerMembership = await tx.orgMembership.findFirst({
-            where: { orgId: invitation.orgId, role: "OWNER" },
-            select: { userId: true },
-          });
-          const clinicianUserId =
-            ownerMembership?.userId ?? invitation.invitedBy;
-          const clinician = await tx.clinician.findFirst({
-            where: { userId: clinicianUserId },
-            select: { id: true },
-          });
-          if (clinician) {
-            await tx.careTeamAssignment.create({
+      const result = await prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          if (!user) {
+            // Create new user
+            user = await tx.user.create({
               data: {
-                patientId: patient.id,
-                clinicianId: clinician.id,
-                role: "Primary Therapist",
+                tenantId: invitation.organization.tenantId,
+                email: invitation.email,
+                passwordHash,
+                role: "PATIENT",
+                firstName: data.firstName,
+                lastName: data.lastName,
+                status: "ACTIVE",
               },
             });
-            // Increment clinician caseload
-            await tx.clinician.update({
-              where: { id: clinician.id },
-              data: { caseloadSize: { increment: 1 } },
+
+            // Create patient profile
+            await tx.patient.create({
+              data: {
+                userId: user.id,
+                tenantId: invitation.organization.tenantId,
+                age: 0,
+              },
             });
           }
-        }
 
-        return user;
-      });
+          // Add org membership
+          await tx.orgMembership.create({
+            data: {
+              orgId: invitation.orgId,
+              userId: user!.id,
+              role: invitation.role,
+            },
+          });
+
+          // Mark invitation as accepted
+          await tx.orgInvitation.update({
+            where: { id: invitation.id },
+            data: { status: "ACCEPTED" },
+          });
+
+          // PRD-2.1: Create CareTeamAssignment — link patient to org's clinician
+          const patient = await tx.patient.findUnique({
+            where: { userId: user!.id },
+            select: { id: true },
+          });
+          if (patient) {
+            // Find the org owner's clinician profile (the inviting clinician)
+            const ownerMembership = await tx.orgMembership.findFirst({
+              where: { orgId: invitation.orgId, role: "OWNER" },
+              select: { userId: true },
+            });
+            const clinicianUserId =
+              ownerMembership?.userId ?? invitation.invitedBy;
+            const clinician = await tx.clinician.findFirst({
+              where: { userId: clinicianUserId },
+              select: { id: true },
+            });
+            if (clinician) {
+              await tx.careTeamAssignment.create({
+                data: {
+                  patientId: patient.id,
+                  clinicianId: clinician.id,
+                  role: "Primary Therapist",
+                },
+              });
+              // Increment clinician caseload
+              await tx.clinician.update({
+                where: { id: clinician.id },
+                data: { caseloadSize: { increment: 1 } },
+              });
+            }
+          }
+
+          return user;
+        },
+      );
 
       // Send welcome email (fire-and-forget)
       sendEmail(

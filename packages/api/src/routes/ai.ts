@@ -183,7 +183,7 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
             ],
           },
         })
-        .catch((err) =>
+        .catch((err: unknown) =>
           aiLogger.error({ err }, "Failed to create crisis escalation"),
         );
     }
@@ -254,10 +254,13 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
     const enrichedContext: Record<string, unknown> = {
       ...body.patientContext,
       approvedMemories: approvedMemories.map(
-        (m) => `[${m.category}] ${m.statement}`,
+        (m: { category: string; statement: string }) =>
+          `[${m.category}] ${m.statement}`,
       ),
       safetyPlanSteps: safetyPlan?.steps ?? [],
-      recentMood: recentSubmissions.map((s) => s.patientTone).filter(Boolean),
+      recentMood: recentSubmissions
+        .map((s: { patientTone: string | null }) => s.patientTone)
+        .filter((tone: string | null): tone is string => Boolean(tone)),
       crisisDetected,
     };
 
