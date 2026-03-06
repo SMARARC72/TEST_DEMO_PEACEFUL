@@ -35,6 +35,7 @@ interface AuthState {
   clearAuth: () => void;
   /** Called after Auth0 callback to set session from Auth0 tokens */
   setAuth0Session: (accessToken: string, user: User) => void;
+  refreshSession: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -72,6 +73,28 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           isAuth0Session: true,
         });
+      },
+
+      refreshSession: async () => {
+        const { refreshToken } = get();
+        if (!refreshToken) {
+          get().clearAuth();
+          return false;
+        }
+
+        const [data, err] = await authApi.refresh(refreshToken);
+        if (err || !data) {
+          get().clearAuth();
+          return false;
+        }
+
+        set({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          isAuthenticated: true,
+          error: null,
+        });
+        return true;
       },
 
       login: async (email, password) => {

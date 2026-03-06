@@ -259,6 +259,46 @@ describe('Auth Store — MFA and profile refresh', () => {
     useAuthStore.setState(defaultState);
   });
 
+  it('refreshes the session and rotates tokens', async () => {
+    useAuthStore.setState({
+      ...defaultState,
+      accessToken: 'stale-access',
+      refreshToken: 'refresh-123',
+      isAuthenticated: true,
+    });
+
+    (authApi.refresh as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      { accessToken: 'fresh-access', refreshToken: 'fresh-refresh' },
+      null,
+    ]);
+
+    await expect(useAuthStore.getState().refreshSession()).resolves.toBe(true);
+    expect(authApi.refresh).toHaveBeenCalledWith('refresh-123');
+    expect(useAuthStore.getState()).toMatchObject({
+      accessToken: 'fresh-access',
+      refreshToken: 'fresh-refresh',
+      isAuthenticated: true,
+    });
+  });
+
+  it('clears auth when session refresh fails', async () => {
+    useAuthStore.setState({
+      ...defaultState,
+      user: { id: 'u1' } as any,
+      accessToken: 'stale-access',
+      refreshToken: 'refresh-123',
+      isAuthenticated: true,
+    });
+
+    (authApi.refresh as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      null,
+      { status: 401, code: 'UNAUTHORIZED', message: 'Expired refresh token' },
+    ]);
+
+    await expect(useAuthStore.getState().refreshSession()).resolves.toBe(false);
+    expect(useAuthStore.getState()).toMatchObject(defaultState);
+  });
+
   it('stores session data after MFA verification', async () => {
     const mockUser = {
       id: 'u-mfa',

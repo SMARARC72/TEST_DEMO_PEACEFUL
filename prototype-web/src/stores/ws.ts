@@ -3,6 +3,7 @@
 // new submissions, and system broadcasts.
 
 import { create } from 'zustand';
+import { useAuthStore } from '@/stores/auth';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ const WS_BASE = import.meta.env.VITE_WS_URL ?? (
 
 const MAX_RECONNECT_DELAY = 30_000;
 const INITIAL_RECONNECT_DELAY = 1_000;
+const TOKEN_REFRESH_LEEWAY_MS = 120_000;
 
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -76,57 +78,10 @@ export const useWsStore = create<WsState>()((set, get) => ({
   unreadCount: 0,
 
   connect: (token: string | null) => {
-    // Clean up existing connection
     get().disconnect();
     intentionalClose = false;
 
-    const url = token ? `${WS_BASE}?token=${encodeURIComponent(token)}` : WS_BASE;
-    set({ status: 'connecting' });
-
-    try {
-      socket = new WebSocket(url);
-    } catch {
-      set({ status: 'error' });
-      scheduleReconnect(token);
-      return;
-    }
-
-    socket.onopen = () => {
-      set({ status: 'connected' });
-      reconnectDelay = INITIAL_RECONNECT_DELAY;
-    };
-
-    socket.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-
-        // Server ping/pong keepalive
-        if (payload.type === 'ping') {
-          socket?.send(JSON.stringify({ type: 'pong' }));
-          return;
-        }
-
-        // Map server event to WsNotification
-        const notification = mapServerEvent(payload);
-        if (notification) {
-          get()._addNotification(notification);
-        }
-      } catch {
-        // Ignore malformed messages
-      }
-    };
-
-    socket.onerror = () => {
-      set({ status: 'error' });
-    };
-
-    socket.onclose = () => {
-      set({ status: 'disconnected' });
-      socket = null;
-      if (!intentionalClose) {
-        scheduleReconnect(token);
-      }
-    };
+    void openSocket(token);
   },
 
   disconnect: () => {
@@ -165,12 +120,97 @@ export const useWsStore = create<WsState>()((set, get) => ({
     }),
 }));
 
+async function openSocket(token: string | null) {
+  const resolvedToken = await getValidSocketToken(token);
+  if (!resolvedToken) {
+    useWsStore.setState({ status: 'error' });
+    return;
+  }
+
+  const url = `${WS_BASE}?token=${encodeURIComponent(resolvedToken)}`;
+  useWsStore.setState({ status: 'connecting' });
+
+  try {
+    socket = new WebSocket(url);
+  } catch {
+    useWsStore.setState({ status: 'error' });
+    scheduleReconnect();
+    return;
+  }
+
+  socket.onopen = () => {
+    useWsStore.setState({ status: 'connected' });
+    reconnectDelay = INITIAL_RECONNECT_DELAY;
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+
+      if (payload.type === 'ping') {
+        socket?.send(JSON.stringify({ type: 'pong' }));
+        return;
+      }
+
+      const notification = mapServerEvent(payload);
+      if (notification) {
+        useWsStore.getState()._addNotification(notification);
+      }
+    } catch {
+      // Ignore malformed messages
+    }
+  };
+
+  socket.onerror = () => {
+    useWsStore.setState({ status: 'error' });
+  };
+
+  socket.onclose = () => {
+    useWsStore.setState({ status: 'disconnected' });
+    socket = null;
+    if (!intentionalClose) {
+      scheduleReconnect();
+    }
+  };
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function scheduleReconnect(token: string | null) {
+function decodeJwtExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(normalized)) as { exp?: number };
+    return typeof decoded.exp === 'number' ? decoded.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+async function getValidSocketToken(token: string | null) {
+  const currentToken = token ?? useAuthStore.getState().accessToken;
+  if (!currentToken) {
+    return null;
+  }
+
+  const expiresAt = decodeJwtExpiry(currentToken);
+  if (!expiresAt || expiresAt - Date.now() > TOKEN_REFRESH_LEEWAY_MS) {
+    return currentToken;
+  }
+
+  const refreshed = await useAuthStore.getState().refreshSession();
+  if (!refreshed) {
+    return null;
+  }
+
+  return useAuthStore.getState().accessToken;
+}
+
+function scheduleReconnect() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
-    useWsStore.getState().connect(token);
+    useWsStore.getState().connect(useAuthStore.getState().accessToken);
   }, reconnectDelay);
   reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
 }

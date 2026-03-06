@@ -115,6 +115,18 @@ Primary goals:
 1. `npx tsc --noEmit`: pass.
 2. `npx vitest run src/__tests__/routes.test.ts -t "reset-password|change-password|auth0-sync|mfa-confirm-setup"`: pass.
 
+### Batch 8 Completed
+
+1. Hardened frontend websocket behavior so stale access tokens are refreshed before socket connect/reconnect attempts, preventing repeated reconnect loops on expired auth.
+2. Kept reconnect behavior exponential-backoff based, but made failure deterministic by stopping the socket path when session refresh fails instead of retrying forever with invalid credentials.
+3. Removed the patient chat page's silent production fallback that replaced failed or empty live AI responses with canned supportive text, so production outages are surfaced explicitly to users while demo mode remains explicit and opt-in.
+4. Added targeted frontend regression coverage for auth-store token refresh and websocket reconnect behavior with expiring tokens.
+
+### Batch 8 Validation
+
+1. `npx tsc --noEmit -p tsconfig.app.json`: pass.
+2. `npm run test -- --run tests/auth-store.test.ts tests/ws-store.test.ts`: pass.
+
 ---
 
 ## 4. Remaining Execution Phases

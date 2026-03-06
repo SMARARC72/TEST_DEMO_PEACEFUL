@@ -239,23 +239,45 @@ export default function ChatPage() {
         if (streamDone) break;
       }
 
-      // Safety net: if SSE ended with no content, use a fallback
+      // In demo mode we can synthesize a reply; in production an empty stream is an error.
       if (!accumulated.trim()) {
-        const fallback = getDemoResponse(text);
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fallback } : m)),
-        );
+        if (IS_DEMO_MODE) {
+          const fallback = getDemoResponse(text);
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: fallback } : m)),
+          );
+        } else {
+          throw new Error('The AI companion did not return a response.');
+        }
       }
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        // Fallback: provide a canned supportive response when API is unavailable
-        const fallback = getRandomFallback();
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: fallback } : m,
-          ),
-        );
-        addToast({ title: 'Using offline mode — responses are pre-generated', variant: 'info' });
+        if (IS_DEMO_MODE) {
+          const fallback = getRandomFallback();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, content: fallback } : m,
+            ),
+          );
+          addToast({ title: 'Using offline mode — responses are pre-generated', variant: 'info' });
+        } else {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    content:
+                      "I'm having trouble reaching the Peacefull service right now. Please try again in a moment. If you need immediate support, contact your care team or call 988.",
+                  }
+                : m,
+            ),
+          );
+          addToast({
+            title: 'AI companion unavailable',
+            description: (err as Error).message,
+            variant: 'error',
+          });
+        }
       } else {
         // Timed out or user stopped — show a timeout-specific fallback
         setMessages((prev) =>
