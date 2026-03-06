@@ -1,7 +1,8 @@
 // ─── Submission Processing Pipeline ──────────────────────────────────
 // Orchestrates AI analysis when a new submission is created.
 // Steps: summarize → risk assess → extract memories → create triage item.
-// Runs synchronously in V1 (async job queue planned for V2).
+// V2: Invoked by BullMQ worker (job-queue.ts) with retry + dead-letter.
+// Falls back to inline execution when Redis is unavailable.
 
 import { prisma } from "../models/index.js";
 import { claudeService } from "./claude.js";

@@ -239,3 +239,53 @@ resource "aws_cloudwatch_metric_alarm" "redis_memory" {
     HIPAA = "true"
   }
 }
+
+# ------------------------------------------------------------------------------
+# Route53 Health Check — Uptime Monitoring (UGO-6.3)
+# Checks the /health endpoint every 30 seconds from multiple AWS regions.
+# Alarm fires after 2 consecutive failures → SNS alert.
+# ------------------------------------------------------------------------------
+
+resource "aws_route53_health_check" "api_health" {
+  count = var.api_domain != "" ? 1 : 0
+
+  fqdn              = var.api_domain
+  port               = 443
+  type               = "HTTPS"
+  resource_path      = "/health"
+  failure_threshold  = 2
+  request_interval   = 30
+  measure_latency    = true
+
+  tags = {
+    Name  = "${var.app_name}-${var.environment}-api-health-check"
+    HIPAA = "true"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "api_uptime" {
+  count = var.api_domain != "" ? 1 : 0
+
+  alarm_name          = "${var.app_name}-${var.environment}-api-uptime"
+  alarm_description   = "API health endpoint is unreachable (2+ consecutive failures)"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "HealthCheckStatus"
+  namespace           = "AWS/Route53"
+  period              = 60
+  statistic           = "Minimum"
+  threshold           = 1
+  treat_missing_data  = "breaching"
+
+  dimensions = {
+    HealthCheckId = aws_route53_health_check.api_health[0].id
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
+
+  tags = {
+    Name  = "${var.app_name}-${var.environment}-api-uptime-alarm"
+    HIPAA = "true"
+  }
+}

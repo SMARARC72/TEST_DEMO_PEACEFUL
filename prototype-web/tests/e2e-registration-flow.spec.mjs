@@ -13,14 +13,36 @@ import { test, expect } from '@playwright/test';
 const PATIENT = { email: 'test.patient.1@peacefull.cloud', password: 'Demo2026!' };
 const CLINICIAN = { email: 'pilot.clinician.1@peacefull.cloud', password: 'Demo2026!' };
 
+// ─── Helper: Firefox-safe navigation (retries on NS_BINDING_ABORTED) ────
+async function safeGoto(page, url, retries = 4) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await page.goto(url, { waitUntil: 'commit', timeout: 15_000 });
+      await page.waitForTimeout(300);
+      return;
+    } catch (err) {
+      const msg = err?.message || '';
+      const isRetryable = msg.includes('NS_BINDING_ABORTED')
+        || msg.includes('NS_ERROR')
+        || msg.includes('interrupted by another navigation');
+      if (isRetryable && i < retries - 1) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 // ── Helper: login via email/password form ──
 async function loginAs(page, creds) {
-  await page.goto('/login');
+  await safeGoto(page, '/login');
   await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 15_000 });
   await page.fill('input[type="email"]', creds.email);
   await page.fill('input[type="password"]', creds.password);
   await page.locator('button[type="submit"]:has-text("Sign in with email")').click();
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await page.waitForLoadState('networkidle').catch(() => {});
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -30,7 +52,7 @@ async function loginAs(page, creds) {
 test.describe('Registration Flow', () => {
   test('register page has password strength indicator', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Clinician Registration' })).toBeVisible({ timeout: 15_000 });
 
     // Type a weak password
     const passwordInput = page.locator('input[type="password"]').first();
@@ -53,14 +75,14 @@ test.describe('Registration Flow', () => {
 
   test('duplicate registration shows error with sign-in link', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Clinician Registration' })).toBeVisible({ timeout: 15_000 });
 
-    // Fill in existing patient credentials
-    await page.fill('input[name="firstName"], input:below(:text("First Name"))', 'Test');
-    await page.fill('input[name="lastName"], input:below(:text("Last Name"))', 'Patient');
-    await page.locator('input[type="email"]').fill('test.patient.1@peacefull.cloud');
-    await page.locator('input[type="password"]').first().fill('AnotherP@ss2026!');
-    await page.locator('input[type="password"]').last().fill('AnotherP@ss2026!');
+    // Fill in existing patient credentials (use role-based locators for reliability)
+    await page.getByRole('textbox', { name: 'First Name' }).fill('Test');
+    await page.getByRole('textbox', { name: 'Last Name' }).fill('Patient');
+    await page.getByRole('textbox', { name: 'Email' }).fill('test.patient.1@peacefull.cloud');
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('AnotherP@ss2026!');
+    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('AnotherP@ss2026!');
 
     // Submit
     await page.locator('button[type="submit"]').click();
@@ -73,13 +95,14 @@ test.describe('Registration Flow', () => {
     await page.screenshot({ path: 'test-results/prod-screenshots/31-register-duplicate-error.png', fullPage: true });
   });
 
-  test('register page has role selector with patient and clinician', async ({ page }) => {
+  test('register page has patient invitation callout and clinician form', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Clinician Registration' })).toBeVisible({ timeout: 15_000 });
 
-    // Should show both role options
-    await expect(page.locator('text=🧑 Patient')).toBeVisible();
-    await expect(page.locator('text=👩‍⚕️ Clinician')).toBeVisible();
+    // Should show patient invitation callout (patients register via invite)
+    await expect(page.locator('text=/Are you a patient/i')).toBeVisible();
+    // Should have the clinician registration form
+    await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 
   test('register page has terms and privacy links', async ({ page }) => {
@@ -96,7 +119,7 @@ test.describe('Registration Flow', () => {
 test.describe('Clinician Caseload', () => {
   test('caseload shows patient cards with names', async ({ page }) => {
     await loginAs(page, CLINICIAN);
-    await page.goto('/clinician/caseload');
+    await safeGoto(page, '/clinician/caseload');
     await expect(page).toHaveURL(/\/clinician/, { timeout: 15_000 });
 
     // Wait for loading to complete
@@ -151,7 +174,7 @@ test.describe('Console Error Monitoring', () => {
     const routes = ['/patient', '/patient/checkin', '/patient/journal', '/patient/settings'];
 
     for (const route of routes) {
-      await page.goto(route);
+      await safeGoto(page, route);
       await page.waitForTimeout(2000);
     }
 
@@ -178,7 +201,7 @@ test.describe('Console Error Monitoring', () => {
     const routes = ['/clinician/caseload', '/clinician/triage', '/clinician/analytics', '/clinician/settings'];
 
     for (const route of routes) {
-      await page.goto(route);
+      await safeGoto(page, route);
       await page.waitForTimeout(2000);
     }
 

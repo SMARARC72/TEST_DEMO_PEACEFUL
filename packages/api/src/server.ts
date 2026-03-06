@@ -2,6 +2,7 @@
 // Express 5 + TypeScript entry point with HIPAA-grade middleware stack.
 
 import "dotenv/config";
+import * as Sentry from "@sentry/node";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -9,6 +10,24 @@ import compression from "compression";
 import morgan from "morgan";
 
 import { env, API_VERSION } from "./config/index.js";
+
+// ─── Sentry Initialization (UGO-6.2 — must be before all other middleware) ───
+if (env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    environment: env.NODE_ENV,
+    tracesSampleRate: env.NODE_ENV === "production" ? 0.1 : 1.0,
+    // Never send PHI in breadcrumbs/events
+    beforeSend(event) {
+      // Strip request body to prevent PHI leakage to Sentry
+      if (event.request?.data) {
+        event.request.data = "[REDACTED — PHI protection]";
+      }
+      return event;
+    },
+  });
+}
+
 import { requestId } from "./middleware/request-id.js";
 import { globalLimiter } from "./middleware/rate-limit.js";
 import routes from "./routes/index.js";
@@ -16,6 +35,7 @@ import { auditLog } from "./middleware/audit.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 import { apiLogger } from "./utils/logger.js";
 import { prisma } from "./models/index.js";
+import { startWorker, getQueueHealth, shutdownQueue } from "./services/job-queue.js";
 import { WebSocketServer, WebSocket } from "ws";
 import { verifyTokenForWs } from "./middleware/auth.js";
 
@@ -157,7 +177,8 @@ app.get("/health", (_req, res) => {
 app.get("/ready", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: "ready", database: "connected" });
+    const queue = await getQueueHealth();
+    res.json({ status: "ready", database: "connected", queue });
   } catch {
     res.status(503).json({ status: "not-ready", database: "disconnected" });
   }
@@ -182,6 +203,12 @@ app.use(`/api/${API_VERSION}`, routes);
 // ─── Error Handling ──────────────────────────────────────────────────
 
 app.use(notFound);
+
+// Sentry error handler — captures unhandled errors before our handler formats them
+if (env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 app.use(errorHandler);
 
 // ─── Graceful Shutdown ───────────────────────────────────────────────
@@ -202,6 +229,13 @@ async function shutdown(signal: string) {
     server.close(() => {
       apiLogger.info("HTTP server closed");
     });
+  }
+
+  // Close BullMQ worker + queue
+  try {
+    await shutdownQueue();
+  } catch (err) {
+    apiLogger.error({ err }, "Error shutting down BullMQ");
   }
 
   // Close Prisma connection pool
@@ -225,6 +259,9 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 // ─── Start Server ────────────────────────────────────────────────────
 
 server = app.listen(env.PORT, () => {
+  // Start BullMQ worker for async submission processing (UGO-1.1)
+  startWorker();
+
   apiLogger.info(
     {
       port: env.PORT,

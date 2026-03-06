@@ -53,6 +53,14 @@ async function initRedisStore(): Promise<void> {
 // Fire-and-forget init — non-blocking
 void initRedisStore();
 
+// ─── Load-Test Bypass (non-production only) ─────────────────────────
+// When the `X-Load-Test` header is present and NODE_ENV is not
+// production, the rate limiter assigns a unique key per request so
+// the per-IP window is never exhausted.  This allows k6 to run at
+// realistic concurrency from a single machine without being throttled.
+const LOAD_TEST_HEADER = "x-load-test";
+const isLoadTestBypassEnabled = env.NODE_ENV !== "production";
+
 /**
  * Shared options factory — all limiters use standard headers
  * and return structured JSON error bodies.
@@ -69,6 +77,13 @@ function createLimiter(
         code: "RATE_LIMIT_EXCEEDED",
         message: "Too many requests — please try again later",
       },
+    },
+    // UGO-4: Skip rate-limit counting for load-test traffic in dev/staging
+    skip: (req) => {
+      if (isLoadTestBypassEnabled && req.headers[LOAD_TEST_HEADER]) {
+        return true;
+      }
+      return false;
     },
     ...overrides,
   });

@@ -37,3 +37,9 @@ variable "redis_cluster_id" {
   description = "ElastiCache Redis cluster ID"
   type        = string
 }
+
+variable "api_domain" {
+  description = "Public API domain for health check (e.g. api.peacefull.ai)"
+  type        = string
+  default     = ""
+}

@@ -64,6 +64,9 @@ const envSchema = z.object({
 
   /** Redis URL for distributed rate limiting, MFA codes, and token blacklisting. */
   REDIS_URL: z.string().optional(),
+
+  /** Sentry DSN for error tracking (UGO-6.2). */
+  SENTRY_DSN: z.string().optional(),
 });
 
 /**

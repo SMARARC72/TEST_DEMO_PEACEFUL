@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
+import * as Sentry from '@sentry/react';
 import { router } from './router';
 import './styles/globals.css';
 import './styles/accessibility.css';
@@ -21,6 +22,17 @@ import { initWebVitals } from './hooks/useWebVitals';
 import { useWsStore } from './stores/ws';
 import { useAuthStore } from './stores/auth';
 import { useFeatureFlagStore } from './hooks/useFeatureFlags';
+
+// ─── Sentry Initialization (UGO-6.2) ────────────────────────────────
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+    replaysSessionSampleRate: 0,      // No session replay (PHI risk)
+    replaysOnErrorSampleRate: 0,      // No error replay (PHI risk)
+  });
+}
 
 // ─── Production runtime guard ────────────────────────────────────────
 // PRD: API client MUST fail loudly if VITE_API_URL is not set in production
@@ -112,10 +124,34 @@ enableMocking().then(() => {
     }
   });
 
+  const isDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true';
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
         <Auth0ProviderWithNavigate>
+          {isDemoMode && (
+            <div
+              role="status"
+              aria-label="Demo mode active"
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 99999,
+                background: '#f59e0b',
+                color: '#000',
+                textAlign: 'center',
+                padding: '4px 8px',
+                fontSize: '12px',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}
+            >
+              DEMO MODE — Synthetic data only. Not connected to production backend.
+            </div>
+          )}
           <RouterProvider router={router} />
           <SessionTimeoutWarning />
           <CrisisButton />

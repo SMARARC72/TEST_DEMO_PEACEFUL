@@ -58,22 +58,15 @@ export interface VoiceProcessingResult {
  * 4. Return the structured result
  */
 export async function processVoiceMemo(
-  input: VoiceProcessingInput,
+  _input: VoiceProcessingInput,
 ): Promise<VoiceProcessingResult> {
-  // TODO: Integrate Whisper API
-  // For now, return stub indicating the pipeline structure
-  console.log(
-    `[voice-pipeline] Processing audio: ${input.audioUrl} (${input.duration}s, ${input.format})`,
+  // UGO-1.2: Voice transcription is a documented MVP limitation.
+  // This function MUST throw to prevent any code path from silently
+  // consuming stub data. Whisper integration is planned for Q3 2026.
+  throw new Error(
+    'Voice transcription not available — Whisper ASR integration pending (planned Q3 2026). '
+    + 'API returns 501. See packages/ml-pipeline/src/processors/voice.ts for architecture notes.',
   );
-
-  return {
-    transcription:
-      '[Voice transcription will be processed by Whisper ASR pipeline]',
-    confidence: 0,
-    language: 'en',
-    duration: input.duration,
-    wordCount: 0,
-  };
 }
 
 /**

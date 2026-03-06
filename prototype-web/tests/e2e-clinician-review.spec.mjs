@@ -2,10 +2,31 @@
 // Critical path: Login → View triage inbox → Review/approve AI draft
 import { test, expect } from '@playwright/test';
 
+// ─── Helper: Firefox-safe navigation (retries on NS_BINDING_ABORTED) ───
+async function safeGoto(page, url, retries = 4) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await page.goto(url, { waitUntil: 'commit', timeout: 15_000 });
+      await page.waitForTimeout(300);
+      return;
+    } catch (err) {
+      const msg = err?.message || '';
+      const isRetryable = msg.includes('NS_BINDING_ABORTED')
+        || msg.includes('NS_ERROR')
+        || msg.includes('interrupted by another navigation');
+      if (isRetryable && i < retries - 1) {
+        await page.waitForTimeout(1000);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 test.describe('Clinician triage review flow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await safeGoto(page, '/login');
+    await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 15_000 });
   });
 
   test('clinician can login, view triage, and review a draft', async ({ page }) => {
@@ -56,7 +77,7 @@ test.describe('Clinician triage review flow', () => {
     ];
 
     for (const route of routes) {
-      await page.goto(route);
+      await safeGoto(page, route);
       // Should not show error boundary
       const errorBoundary = page.locator('text=Something went wrong');
       await expect(errorBoundary).not.toBeVisible({ timeout: 5_000 });

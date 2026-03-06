@@ -27,6 +27,7 @@
     "@auth0/auth0-react": "^2.15.0",
     "@hookform/resolvers": "^5.2.2",
     "@huggingface/transformers": "^3.8.1",
+    "@sentry/react": "^10.42.0",
     "@testing-library/dom": "^10.4.1",
     "i18next": "^25.8.13",
     "ky": "^1.14.3",

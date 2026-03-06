@@ -17,7 +17,7 @@ import {
 } from "../middleware/rate-limit.js";
 import { hashChain } from "../middleware/audit.js";
 import { prisma } from "../models/index.js";
-import { processSubmission } from "../services/submission-pipeline.js";
+import { enqueueSubmission } from "../services/job-queue.js";
 import type {
   Patient,
   PatientSubmission,
@@ -336,14 +336,10 @@ patientRouter.post("/:id/submissions", async (req, res, next) => {
       include: submissionInclude,
     });
 
-    // Fire-and-forget: trigger AI processing pipeline asynchronously
-    processSubmission(row.id).catch((err) => {
-      // Errors are already handled inside processSubmission
-      // (submission gets reset to PENDING for retry)
-      void err;
-    });
+    // UGO-1.1: Enqueue for async processing via BullMQ (falls back to inline if no Redis)
+    const { jobId, queued } = await enqueueSubmission(row.id);
 
-    sendSuccess(res, req, toSubmissionResponse(row), 201);
+    sendSuccess(res, req, { ...toSubmissionResponse(row), jobId, queued }, queued ? 202 : 201);
   } catch (err) {
     next(err);
   }

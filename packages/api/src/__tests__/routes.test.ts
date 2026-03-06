@@ -80,6 +80,8 @@ describe('Auth routes', () => {
   });
 
   it('POST /api/v1/auth/login returns 401 on invalid credentials', async () => {
+    // Login first resolves tenant, then looks up user
+    (prisma.tenant.findFirst as unknown as Mock).mockResolvedValueOnce({ id: 'tenant-001', slug: 'default' });
     (prisma.user.findFirst as unknown as Mock).mockResolvedValueOnce(null);
 
     const res = await request(app)

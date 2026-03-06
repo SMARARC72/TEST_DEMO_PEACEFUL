@@ -221,6 +221,16 @@ export const handlers = [
 
   http.post(`${BASE}/auth/register`, async ({ request }) => {
     const body = await request.json() as { firstName: string; lastName: string; email: string; role: string; password: string };
+
+    // Simulate duplicate detection for known demo emails
+    const KNOWN_EMAILS = ['test.patient.1@peacefull.cloud', 'dr.chen@peacefull.cloud', 'admin@peacefull.cloud'];
+    if (KNOWN_EMAILS.includes(body.email.toLowerCase())) {
+      return HttpResponse.json(
+        { error: { code: 'CONFLICT', message: 'An account with this email already exists' } },
+        { status: 409 },
+      );
+    }
+
     const isClinician = body.role === 'CLINICIAN';
     const user: User = {
       ...mockUser,
