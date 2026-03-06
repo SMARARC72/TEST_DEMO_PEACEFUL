@@ -72,6 +72,201 @@ async function requireCaseloadAccess(
   return clinician;
 }
 
+function getDaysBack(period: string): number {
+  if (period === "7d") return 7;
+  if (period === "90d") return 90;
+  if (period === "ytd") return 365;
+  return 30;
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfWeek(date: Date): Date {
+  const result = startOfDay(date);
+  const day = result.getDay();
+  const delta = (day + 6) % 7;
+  result.setDate(result.getDate() - delta);
+  return result;
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function formatDurationMinutes(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    return "0m";
+  }
+  if (minutes < 60) {
+    return `${Math.round(minutes)}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.round(minutes % 60);
+  return remainingMinutes > 0
+    ? `${hours}h ${remainingMinutes}m`
+    : `${hours}h`;
+}
+
+function categorizeAdherenceTask(task: string): string {
+  const normalized = task.toLowerCase();
+  if (normalized.includes("med")) return "Medication";
+  if (
+    normalized.includes("exercise")
+    || normalized.includes("walk")
+    || normalized.includes("workout")
+  ) {
+    return "Exercise";
+  }
+  if (
+    normalized.includes("homework")
+    || normalized.includes("worksheet")
+    || normalized.includes("journal")
+  ) {
+    return "Homework";
+  }
+  if (
+    normalized.includes("appointment")
+    || normalized.includes("session")
+    || normalized.includes("visit")
+  ) {
+    return "Appointment";
+  }
+  return "Other";
+}
+
+function percentChange(current: number, previous: number): number {
+  if (previous <= 0) {
+    return current > 0 ? 100 : 0;
+  }
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function buildEngagementTrend(
+  submissions: Array<{ source: string; createdAt: Date }>,
+  period: string,
+  since: Date,
+): Array<{ week: string; checkins: number; journals: number; voice: number }> {
+  const useMonthlyBuckets = period === "ytd";
+  const useDailyBuckets = period === "7d";
+
+  const bucketStart = (date: Date) => {
+    if (useMonthlyBuckets) return startOfMonth(date);
+    if (useDailyBuckets) return startOfDay(date);
+    return startOfWeek(date);
+  };
+
+  const formatLabel = (date: Date) => {
+    if (useMonthlyBuckets) {
+      return date.toLocaleDateString("en-US", { month: "short" });
+    }
+    if (useDailyBuckets) {
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+    return `Week of ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  };
+
+  const buckets = new Map<string, { label: string; checkins: number; journals: number; voice: number }>();
+
+  let cursor = bucketStart(since);
+  const end = new Date();
+  while (cursor <= end) {
+    const key = cursor.toISOString();
+    buckets.set(key, {
+      label: formatLabel(cursor),
+      checkins: 0,
+      journals: 0,
+      voice: 0,
+    });
+    cursor = useMonthlyBuckets
+      ? new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+      : new Date(cursor.getTime() + (useDailyBuckets ? 86400000 : 7 * 86400000));
+  }
+
+  for (const submission of submissions) {
+    const key = bucketStart(submission.createdAt).toISOString();
+    const bucket = buckets.get(key);
+    if (!bucket) continue;
+    if (submission.source === "CHECKIN") bucket.checkins += 1;
+    if (submission.source === "JOURNAL") bucket.journals += 1;
+    if (submission.source === "VOICE_MEMO") bucket.voice += 1;
+  }
+
+  return Array.from(buckets.values()).map((bucket) => ({
+    week: bucket.label,
+    checkins: bucket.checkins,
+    journals: bucket.journals,
+    voice: bucket.voice,
+  }));
+}
+
+function buildOutcomesTrend(
+  scores: Array<{ instrument: string; score: number; date: Date }>,
+  since: Date,
+): Array<{ month: string; phq9Avg: number; gad7Avg: number }> {
+  const buckets = new Map<string, { month: string; phq9: number[]; gad7: number[] }>();
+
+  let cursor = startOfMonth(since);
+  const end = new Date();
+  while (cursor <= end) {
+    const key = cursor.toISOString();
+    buckets.set(key, {
+      month: cursor.toLocaleDateString("en-US", { month: "short" }),
+      phq9: [],
+      gad7: [],
+    });
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+
+  for (const score of scores) {
+    const key = startOfMonth(score.date).toISOString();
+    const bucket = buckets.get(key);
+    if (!bucket) continue;
+    if (score.instrument === "PHQ9") bucket.phq9.push(score.score);
+    if (score.instrument === "GAD7") bucket.gad7.push(score.score);
+  }
+
+  return Array.from(buckets.values()).map((bucket) => ({
+    month: bucket.month,
+    phq9Avg: bucket.phq9.length
+      ? Math.round((bucket.phq9.reduce((sum, value) => sum + value, 0) / bucket.phq9.length) * 10) / 10
+      : 0,
+    gad7Avg: bucket.gad7.length
+      ? Math.round((bucket.gad7.reduce((sum, value) => sum + value, 0) / bucket.gad7.length) * 10) / 10
+      : 0,
+  }));
+}
+
+function computeSignalImprovement(
+  scores: Array<{ patientId: string; instrument: string; score: number; date: Date }>,
+): number {
+  const phq9ByPatient = new Map<string, { first: number; last: number }>();
+
+  for (const score of scores
+    .filter((entry) => entry.instrument === "PHQ9")
+    .sort((left, right) => left.date.getTime() - right.date.getTime())) {
+    const existing = phq9ByPatient.get(score.patientId);
+    if (!existing) {
+      phq9ByPatient.set(score.patientId, { first: score.score, last: score.score });
+      continue;
+    }
+    existing.last = score.score;
+  }
+
+  let improvementTotal = 0;
+  let improvementCount = 0;
+  for (const { first, last } of phq9ByPatient.values()) {
+    if (first <= 0) continue;
+    improvementTotal += ((first - last) / first) * 100;
+    improvementCount += 1;
+  }
+
+  return improvementCount > 0
+    ? Math.round(improvementTotal / improvementCount)
+    : 0;
+}
+
 // ─── GET /dashboard ──────────────────────────────────────────────────
 
 clinicianRouter.get("/dashboard", async (req, res, next) => {
@@ -1369,25 +1564,25 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
     const patientIds = await getClinicianPatientIds(clinician.id);
     const period = req.query.period?.toString() ?? "30d";
 
-    const daysBack = period === "7d" ? 7 : period === "90d" ? 90 : 30;
+    const daysBack = getDaysBack(period);
     const since = new Date(Date.now() - daysBack * 86400000);
+    const previousSince = new Date(since.getTime() - daysBack * 86400000);
 
     const [
       totalPatients,
-      totalSubmissions,
       pendingDrafts,
       openEscalations,
-      avgMBC,
-      totalChatSessions,
       pendingSummaries,
       approvedSummaries,
-      recentTriageElevated,
+      submissions,
+      mbcScores,
+      chatSessions,
+      triageItems,
+      adherenceItems,
+      acknowledgedEscalations,
     ] = await Promise.all([
       prisma.careTeamAssignment.count({
         where: { clinicianId: clinician.id, active: true },
-      }),
-      prisma.submission.count({
-        where: { patientId: { in: patientIds }, createdAt: { gte: since } },
       }),
       prisma.aIDraft.count({
         where: { patientId: { in: patientIds }, status: "DRAFT" },
@@ -1395,44 +1590,197 @@ clinicianRouter.get("/analytics", async (req, res, next) => {
       prisma.escalationItem.count({
         where: { patientId: { in: patientIds }, status: "OPEN" },
       }),
-      prisma.mBCScore.aggregate({
-        where: { patientId: { in: patientIds }, date: { gte: since } },
-        _avg: { score: true },
-      }),
-      prisma.chatSession.count({
-        where: { patientId: { in: patientIds }, createdAt: { gte: since } },
-      }),
       prisma.chatSessionSummary.count({
         where: { patientId: { in: patientIds }, status: "DRAFT" },
       }),
       prisma.chatSessionSummary.count({
         where: { patientId: { in: patientIds }, status: "APPROVED" },
       }),
-      prisma.triageItem.count({
+      prisma.submission.findMany({
+        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        select: { patientId: true, source: true, createdAt: true },
+      }),
+      prisma.mBCScore.findMany({
+        where: { patientId: { in: patientIds }, date: { gte: previousSince } },
+        select: { patientId: true, instrument: true, score: true, date: true },
+        orderBy: { date: "asc" },
+      }),
+      prisma.chatSession.findMany({
+        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        select: { createdAt: true },
+      }),
+      prisma.triageItem.findMany({
+        where: { patientId: { in: patientIds }, createdAt: { gte: previousSince } },
+        select: { signalBand: true, createdAt: true },
+      }),
+      prisma.adherenceItem.findMany({
+        where: { patientId: { in: patientIds } },
+        select: { task: true, completed: true, target: true },
+      }),
+      prisma.escalationItem.findMany({
         where: {
           patientId: { in: patientIds },
-          signalBand: "ELEVATED",
-          createdAt: { gte: since },
+          acknowledgedAt: { not: null },
+          detectedAt: { gte: since },
         },
+        select: { detectedAt: true, acknowledgedAt: true },
       }),
     ]);
 
+    const currentSubmissions = submissions.filter(
+      (submission: { createdAt: Date }) => submission.createdAt >= since,
+    );
+    const previousSubmissions = submissions.filter(
+      (submission: { createdAt: Date }) => submission.createdAt >= previousSince && submission.createdAt < since,
+    );
+
+    const activePatients = new Set(
+      currentSubmissions.map((submission: { patientId: string }) => submission.patientId),
+    ).size;
+    const previousActivePatients = new Set(
+      previousSubmissions.map((submission: { patientId: string }) => submission.patientId),
+    ).size;
+
+    const currentChatSessions = chatSessions.filter(
+      (session: { createdAt: Date }) => session.createdAt >= since,
+    ).length;
+    const previousChatSessions = chatSessions.filter(
+      (session: { createdAt: Date }) => session.createdAt >= previousSince && session.createdAt < since,
+    ).length;
+
+    const currentTriageItems = triageItems.filter(
+      (item: { createdAt: Date }) => item.createdAt >= since,
+    );
+    const previousTriageItems = triageItems.filter(
+      (item: { createdAt: Date }) => item.createdAt >= previousSince && item.createdAt < since,
+    );
+
+    const signalDistribution = ["LOW", "GUARDED", "MODERATE", "ELEVATED"].map(
+      (band) => ({
+        band,
+        count: currentTriageItems.filter(
+          (item: { signalBand: string }) => item.signalBand === band,
+        ).length,
+      }),
+    );
+
+    const adherenceByCategory = Array.from(
+      adherenceItems.reduce(
+        (
+          categories: Map<string, { totalCompleted: number; totalTarget: number }>,
+          item: { task: string; completed: number; target: number },
+        ) => {
+          const category = categorizeAdherenceTask(item.task);
+          const existing = categories.get(category) ?? {
+            totalCompleted: 0,
+            totalTarget: 0,
+          };
+          existing.totalCompleted += item.completed;
+          existing.totalTarget += item.target;
+          categories.set(category, existing);
+          return categories;
+        },
+        new Map<string, { totalCompleted: number; totalTarget: number }>(),
+      ),
+    ).map((entry) => {
+      const [category, totals] = entry as [
+        string,
+        { totalCompleted: number; totalTarget: number },
+      ];
+
+      return {
+      category,
+      rate: totals.totalTarget > 0
+        ? Math.round((totals.totalCompleted / totals.totalTarget) * 100)
+        : 0,
+      };
+    });
+
+    const avgResponseTimeMinutes = acknowledgedEscalations.length > 0
+      ? acknowledgedEscalations.reduce(
+          (
+            total: number,
+            item: { detectedAt: Date; acknowledgedAt: Date | null },
+          ) => total + (((item.acknowledgedAt?.getTime() ?? item.detectedAt.getTime()) - item.detectedAt.getTime()) / 60000),
+          0,
+        ) / acknowledgedEscalations.length
+      : 0;
+
+    const avgSignalImprovement = computeSignalImprovement(
+      mbcScores as Array<{ patientId: string; instrument: string; score: number; date: Date }>,
+    );
+    const recentTriageElevated = currentTriageItems.filter(
+      (item: { signalBand: string }) => item.signalBand === "ELEVATED",
+    ).length;
+
     sendSuccess(res, req, {
-      period,
-      totalPatients,
-      totalSubmissions,
-      pendingDrafts,
-      openEscalations,
-      averageMBCScore: avgMBC._avg.score ?? 0,
-      engagementRate:
-        totalPatients > 0
-          ? Math.round((totalSubmissions / (totalPatients * daysBack)) * 100) /
-            100
-          : 0,
-      totalChatSessions,
-      pendingSummaries,
-      approvedSummaries,
-      recentTriageElevated,
+      overview: {
+        totalPatients,
+        activePatients,
+        avgEngagementRate:
+          totalPatients > 0 ? Math.round((activePatients / totalPatients) * 100) : 0,
+        avgSignalImprovement,
+        pendingEscalations: openEscalations,
+        avgResponseTime: formatDurationMinutes(avgResponseTimeMinutes),
+      },
+      signalDistribution,
+      engagementTrend: buildEngagementTrend(
+        currentSubmissions as Array<{ source: string; createdAt: Date }>,
+        period,
+        since,
+      ),
+      outcomesTrend: buildOutcomesTrend(
+        mbcScores.filter((score: { date: Date }) => score.date >= since) as Array<{
+          instrument: string;
+          score: number;
+          date: Date;
+        }>,
+        since,
+      ),
+      adherenceByCategory,
+      topMetrics: [
+        {
+          label: "Submissions",
+          value: String(currentSubmissions.length),
+          change: percentChange(currentSubmissions.length, previousSubmissions.length),
+          unit: "items",
+        },
+        {
+          label: "Engaged Patients",
+          value: String(activePatients),
+          change: percentChange(activePatients, previousActivePatients),
+          unit: "patients",
+        },
+        {
+          label: "Chat Sessions",
+          value: String(currentChatSessions),
+          change: percentChange(currentChatSessions, previousChatSessions),
+          unit: "sessions",
+        },
+        {
+          label: "Elevated Triage",
+          value: String(recentTriageElevated),
+          change: percentChange(
+            recentTriageElevated,
+            previousTriageItems.filter(
+              (item: { signalBand: string }) => item.signalBand === "ELEVATED",
+            ).length,
+          ),
+          unit: "alerts",
+        },
+        {
+          label: "Pending Drafts",
+          value: String(pendingDrafts),
+          change: 0,
+          unit: "drafts",
+        },
+        {
+          label: "Approved Summaries",
+          value: String(approvedSummaries),
+          change: percentChange(approvedSummaries, pendingSummaries),
+          unit: "summaries",
+        },
+      ],
     });
   } catch (err) {
     next(err);

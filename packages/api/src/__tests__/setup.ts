@@ -81,6 +81,13 @@ vi.mock('../models/index.js', () => {
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    chatSessionSummary: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
     chatMessage: {
       create: vi.fn(),
     },

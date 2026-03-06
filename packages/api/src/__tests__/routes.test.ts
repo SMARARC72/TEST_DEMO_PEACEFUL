@@ -248,6 +248,96 @@ describe('Clinician routes', () => {
     const res = await request(app).get('/api/v1/clinician/triage');
     expect(res.status).toBe(401);
   });
+
+  it('GET /api/v1/clinician/analytics returns dashboard-ready analytics data', async () => {
+    (prisma.clinician.findFirst as Mock).mockResolvedValueOnce({
+      id: 'clinician-001',
+      userId: USER_ID,
+    });
+    (prisma.careTeamAssignment.findMany as Mock).mockResolvedValueOnce([
+      { patientId: PATIENT_ID },
+    ]);
+    (prisma.careTeamAssignment.count as Mock).mockResolvedValueOnce(1);
+    (prisma.aIDraft.count as Mock).mockResolvedValueOnce(2);
+    (prisma.escalationItem.count as Mock).mockResolvedValueOnce(1);
+    (prisma.chatSessionSummary.count as Mock)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(3);
+    (prisma.submission.findMany as Mock).mockResolvedValueOnce([
+      { patientId: PATIENT_ID, source: 'CHECKIN', createdAt: new Date() },
+      {
+        patientId: PATIENT_ID,
+        source: 'JOURNAL',
+        createdAt: new Date(Date.now() - 35 * 86400000),
+      },
+    ]);
+    (prisma.mBCScore.findMany as Mock).mockResolvedValueOnce([
+      {
+        patientId: PATIENT_ID,
+        instrument: 'PHQ9',
+        score: 12,
+        date: new Date(Date.now() - 20 * 86400000),
+      },
+      {
+        patientId: PATIENT_ID,
+        instrument: 'PHQ9',
+        score: 8,
+        date: new Date(Date.now() - 2 * 86400000),
+      },
+      {
+        patientId: PATIENT_ID,
+        instrument: 'GAD7',
+        score: 6,
+        date: new Date(Date.now() - 2 * 86400000),
+      },
+    ]);
+    (prisma.chatSession.findMany as Mock).mockResolvedValueOnce([
+      { createdAt: new Date() },
+    ]);
+    (prisma.triageItem.findMany as Mock).mockResolvedValueOnce([
+      { signalBand: 'ELEVATED', createdAt: new Date() },
+      { signalBand: 'LOW', createdAt: new Date() },
+    ]);
+    (prisma.adherenceItem.findMany as Mock).mockResolvedValueOnce([
+      { task: 'Medication adherence', completed: 6, target: 7 },
+    ]);
+    (prisma.escalationItem.findMany as Mock).mockResolvedValueOnce([
+      {
+        detectedAt: new Date(Date.now() - 12 * 60000),
+        acknowledgedAt: new Date(Date.now() - 7 * 60000),
+      },
+    ]);
+
+    const res = await request(app)
+      .get('/api/v1/clinician/analytics?period=30d')
+      .set('Authorization', `Bearer ${clinicianToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      overview: {
+        totalPatients: 1,
+        activePatients: 1,
+        pendingEscalations: 1,
+      },
+    });
+    expect(res.body.data.signalDistribution).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ band: 'ELEVATED', count: 1 }),
+      ]),
+    );
+    expect(res.body.data.engagementTrend).toEqual(expect.any(Array));
+    expect(res.body.data.outcomesTrend).toEqual(expect.any(Array));
+    expect(res.body.data.adherenceByCategory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'Medication', rate: 86 }),
+      ]),
+    );
+    expect(res.body.data.topMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Submissions', value: '1' }),
+      ]),
+    );
+  });
 });
 
 // ─── Analytics Endpoints ─────────────────────────────────────────────

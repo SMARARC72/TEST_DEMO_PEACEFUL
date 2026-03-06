@@ -69,6 +69,13 @@ Primary goals:
 3. Added pending clinician approval and rejection controls to `OrgManagementPage`, including member status visibility.
 4. Added targeted frontend regression coverage for the approval visibility helper.
 
+### Batch 3 Completed
+
+1. Upgraded the clinician analytics route to return the nested dashboard payload already expected by `AnalyticsDashboard`.
+2. Replaced the prior flat KPI-only response with overview metrics, signal distribution, engagement trend, outcomes trend, adherence categories, and top-metric cards.
+3. Added a clinician analytics route regression that asserts the dashboard-ready contract shape.
+4. Extended the shared API Prisma test mock to include `chatSessionSummary`, which is required by both analytics and chat-summary route coverage.
+
 ---
 
 ## 4. Remaining Execution Phases
