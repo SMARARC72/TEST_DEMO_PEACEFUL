@@ -62,6 +62,13 @@ Primary goals:
 3. Frontend TypeScript check: required.
 4. API TypeScript check: required.
 
+### Batch 2 Completed
+
+1. Exposed the existing supervisor approval and rejection endpoints through the frontend organization API client.
+2. Added permission helpers so approval actions only appear for platform supervisors/admins who also hold organization owner/admin access.
+3. Added pending clinician approval and rejection controls to `OrgManagementPage`, including member status visibility.
+4. Added targeted frontend regression coverage for the approval visibility helper.
+
 ---
 
 ## 4. Remaining Execution Phases

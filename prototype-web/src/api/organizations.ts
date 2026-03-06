@@ -101,6 +101,22 @@ export const organizationApi = {
     return apiDelete(`organizations/${orgId}/members/${userId}`);
   },
 
+  /** Approve a suspended organization member */
+  approveMember(orgId: string, userId: string) {
+    return apiPatch<{ message: string; userId: string }>(
+      `organizations/${orgId}/members/${userId}/approve`,
+      {},
+    );
+  },
+
+  /** Reject a suspended organization member */
+  rejectMember(orgId: string, userId: string) {
+    return apiPatch<{ message: string; userId: string }>(
+      `organizations/${orgId}/members/${userId}/reject`,
+      {},
+    );
+  },
+
   /** Send an invitation */
   sendInvitation(orgId: string, data: { email: string; role?: string }) {
     return apiPost<{ invitation: OrgInvitation }>(`organizations/${orgId}/invite`, data);

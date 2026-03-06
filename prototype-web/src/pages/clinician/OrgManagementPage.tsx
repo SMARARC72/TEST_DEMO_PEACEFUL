@@ -2,6 +2,7 @@
 // Clinicians can create / view their practice, manage members, and send invites.
 import { useEffect, useState, useCallback } from 'react';
 import { organizationApi, type Organization, type OrgMember, type OrgInvitation } from '@/api/organizations';
+import { canModerateOrganizationMembers, canReviewPendingClinician } from '@/lib/organization-access';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -223,7 +224,30 @@ export default function OrgManagementPage() {
     loadOrgDetail(selectedOrg);
   }
 
+  async function handleApproveMember(userId: string) {
+    if (!selectedOrg) return;
+    const [, err] = await organizationApi.approveMember(selectedOrg, userId);
+    if (err) {
+      addToast({ variant: 'error', title: err.message ?? 'Failed to approve member' });
+      return;
+    }
+    addToast({ variant: 'success', title: 'Clinician approved' });
+    loadOrgDetail(selectedOrg);
+  }
+
+  async function handleRejectMember(userId: string) {
+    if (!selectedOrg) return;
+    const [, err] = await organizationApi.rejectMember(selectedOrg, userId);
+    if (err) {
+      addToast({ variant: 'error', title: err.message ?? 'Failed to reject member' });
+      return;
+    }
+    addToast({ variant: 'success', title: 'Clinician registration rejected' });
+    loadOrgDetail(selectedOrg);
+  }
+
   const selectedOrgData = organizations.find((o) => o.id === selectedOrg);
+  const canModerateMembers = canModerateOrganizationMembers(user, selectedOrgData);
 
   if (loading) {
     return (
@@ -350,6 +374,17 @@ export default function OrgManagementPage() {
                           <div className="flex items-center gap-3">
                             <span
                               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                m.user.status === 'ACTIVE'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                  : m.user.status === 'SUSPENDED'
+                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                                    : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
+                              }`}
+                            >
+                              {m.user.status}
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 m.role === 'OWNER'
                                   ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                                   : m.role === 'ADMIN'
@@ -359,7 +394,25 @@ export default function OrgManagementPage() {
                             >
                               {m.role}
                             </span>
-                            {m.userId !== user?.id && m.role !== 'OWNER' && (
+                            {canReviewPendingClinician(user, selectedOrgData, m) && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveMember(m.userId)}
+                                  className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                                  title="Approve clinician"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectMember(m.userId)}
+                                  className="text-xs font-medium text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Reject clinician"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {m.userId !== user?.id && m.role !== 'OWNER' && canModerateMembers && (
                               <button
                                 onClick={() => handleRemoveMember(m.userId)}
                                 className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
