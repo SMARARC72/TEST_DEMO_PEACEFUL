@@ -272,6 +272,90 @@ describe('AI routes', () => {
   });
 });
 
+// ─── Crisis Endpoints ────────────────────────────────────────────────
+
+describe('Crisis routes', () => {
+  it('POST /api/v1/crisis/alert returns 401 without auth', async () => {
+    const res = await request(app)
+      .post('/api/v1/crisis/alert')
+      .send({ patientId: PATIENT_ID, severity: 'T3', summary: 'test' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /api/v1/crisis/alert returns 400 on empty body', async () => {
+    const res = await request(app)
+      .post('/api/v1/crisis/alert')
+      .set('Authorization', `Bearer ${clinicianToken()}`)
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── Voice Upload Gate ───────────────────────────────────────────────
+
+describe('Voice upload gate (UGO-1.2)', () => {
+  it('POST /api/v1/patients/:id/voice returns 501 (feature stub)', async () => {
+    const res = await request(app)
+      .post(`/api/v1/patients/${PATIENT_ID}/voice`)
+      .set('Authorization', `Bearer ${patientToken()}`)
+      .send({});
+
+    expect(res.status).toBe(501);
+    expect(res.body.error).toHaveProperty('code', 'FEATURE_COMING_SOON');
+  });
+});
+
+// ─── Clinician Extended Routes ───────────────────────────────────────
+
+describe('Clinician extended routes', () => {
+  it('GET /api/v1/clinician/caseload returns 401 without auth', async () => {
+    const res = await request(app).get('/api/v1/clinician/caseload');
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/v1/clinician/escalations returns 401 without auth', async () => {
+    const res = await request(app).get('/api/v1/clinician/escalations');
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/v1/clinician/escalations returns 403 for patients', async () => {
+    const res = await request(app)
+      .get('/api/v1/clinician/escalations')
+      .set('Authorization', `Bearer ${patientToken()}`);
+
+    expect(res.status).toBe(403);
+  });
+});
+
+// ─── Compliance Extended Routes ──────────────────────────────────────
+
+describe('Compliance extended routes', () => {
+  it('GET /api/v1/compliance/regulatory returns 200 for compliance officer', async () => {
+    const res = await request(app)
+      .get('/api/v1/compliance/regulatory')
+      .set('Authorization', `Bearer ${complianceToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('hipaa');
+    expect(res.body.data).toHaveProperty('soc2');
+  });
+});
+
+// ─── Auth Extended Routes ────────────────────────────────────────────
+
+describe('Auth extended routes', () => {
+  it('POST /api/v1/auth/forgot-password returns 200 (always)', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/forgot-password')
+      .send({ email: 'test@example.com' });
+
+    // Always returns 200 to prevent email enumeration
+    expect(res.status).toBe(200);
+  });
+});
+
 // ─── 404 ─────────────────────────────────────────────────────────────
 
 describe('Error handling', () => {

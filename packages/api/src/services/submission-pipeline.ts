@@ -222,29 +222,47 @@ export async function processSubmission(
     );
 
     // If signal is ELEVATED, trigger escalation cascade (T2)
+    // MED-012: Deduplicate — skip if OPEN/ACK T2 already exists within 60min
     if (signalBand === "ELEVATED") {
-      const escalationPayload: EscalationItem = {
-        id: result.triageItemId,
-        patientId: submission.patientId,
-        tier: EscalationTier.T2,
-        trigger: `Elevated signal detected in ${submission.source} submission`,
-        status: EscalationStatus.OPEN,
-        detectedAt: new Date().toISOString(),
-        auditTrail: [
-          {
-            action: "AI_ESCALATION",
-            by: "system",
-            at: new Date().toISOString(),
-            note: `Automated T2 escalation — signal band: ${signalBand}`,
-          },
-        ],
-      };
-      escalationCascade(escalationPayload).catch((err) => {
-        logger.error(
-          { err, submissionId },
-          "Escalation cascade failed after submission processing",
-        );
+      const DEDUP_WINDOW_MS = 60 * 60 * 1000;
+      const existingEscalation = await prisma.escalationItem.findFirst({
+        where: {
+          patientId: submission.patientId,
+          tier: "T2",
+          status: { in: ["OPEN", "ACK"] },
+          detectedAt: { gte: new Date(Date.now() - DEDUP_WINDOW_MS) },
+        },
       });
+
+      if (existingEscalation) {
+        logger.info(
+          { submissionId, existingId: existingEscalation.id },
+          "Duplicate T2 escalation suppressed — existing OPEN found",
+        );
+      } else {
+        const escalationPayload: EscalationItem = {
+          id: result.triageItemId,
+          patientId: submission.patientId,
+          tier: EscalationTier.T2,
+          trigger: `Elevated signal detected in ${submission.source} submission`,
+          status: EscalationStatus.OPEN,
+          detectedAt: new Date().toISOString(),
+          auditTrail: [
+            {
+              action: "AI_ESCALATION",
+              by: "system",
+              at: new Date().toISOString(),
+              note: `Automated T2 escalation — signal band: ${signalBand}`,
+            },
+          ],
+        };
+        escalationCascade(escalationPayload).catch((err) => {
+          logger.error(
+            { err, submissionId },
+            "Escalation cascade failed after submission processing",
+          );
+        });
+      }
     } else if (signalBand === "MODERATE") {
       // For MODERATE signals, send clinician email notification only (no full cascade)
       sendEmail(

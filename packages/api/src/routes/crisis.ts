@@ -52,6 +52,42 @@ crisisRouter.post('/alert', crisisLimiter, async (req, res, next) => {
       throw new AppError('Access denied', 403);
     }
 
+    // ── MED-012: Deduplicate escalations ──
+    // If there's an existing OPEN/ACK T3 escalation for the same patient
+    // within the last 60 minutes, return it instead of creating a duplicate.
+    const DEDUP_WINDOW_MS = 60 * 60 * 1000; // 60 minutes
+    const existingEscalation = await prisma.escalationItem.findFirst({
+      where: {
+        patientId: body.patientId,
+        tier: 'T3',
+        status: { in: ['OPEN', 'ACK'] },
+        detectedAt: { gte: new Date(Date.now() - DEDUP_WINDOW_MS) },
+      },
+      orderBy: { detectedAt: 'desc' },
+    });
+
+    if (existingEscalation) {
+      apiLogger.warn(
+        { patientId: body.patientId, existingId: existingEscalation.id },
+        'Duplicate crisis alert suppressed — existing OPEN escalation found',
+      );
+      return sendSuccess(res, req, {
+        escalationId: existingEscalation.id,
+        status: existingEscalation.status,
+        tier: 'T3',
+        timestamp: existingEscalation.detectedAt.toISOString(),
+        deduplicated: true,
+        message:
+          'Your care team has already been notified. If you are in immediate danger, please call 988 or 911.',
+        crisisResources: {
+          suicidePreventionLifeline: '988',
+          crisisTextLine: 'Text HOME to 741741',
+          emergencyServices: '911',
+          samhsa: '1-800-662-4357',
+        },
+      }, 200);
+    }
+
     // Persist the crisis escalation record (T3 — highest severity)
     const escalation = await prisma.escalationItem.create({
       data: {
