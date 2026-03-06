@@ -45,7 +45,7 @@ temp/
 *.tfvars
 
 # Prisma
-packages/api/prisma/migrations/
+# Keep committed schema migrations in source control for CI and deploys.
 
 # Docker
 *.dockerignore
