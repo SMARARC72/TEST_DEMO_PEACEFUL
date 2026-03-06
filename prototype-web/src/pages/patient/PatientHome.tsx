@@ -23,7 +23,18 @@ export default function PatientHome() {
   const [nextAppt, setNextAppt] = useState<Appointment | null>(null);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [adherenceToday, setAdherenceToday] = useState<Record<string, boolean>>({});
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const showHeatmap = useFeatureFlag('moodHeatmap');
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60_000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!patientId) return;
@@ -74,7 +85,9 @@ export default function PatientHome() {
   }, []);
 
   // Session prep appears 48h before appointment
-  const showSessionPrep = nextAppt && (new Date(nextAppt.dateTime).getTime() - Date.now()) <= 48 * 60 * 60 * 1000;
+  const showSessionPrep = nextAppt
+    ? (new Date(nextAppt.dateTime).getTime() - currentTime) <= 48 * 60 * 60 * 1000
+    : false;
 
   if (loading) {
     return (

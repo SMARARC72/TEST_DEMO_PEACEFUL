@@ -46,12 +46,11 @@ export default function TriageInboxPage() {
   const [statusFilter, setStatusFilter] = useState<TriageStatus | 'ALL'>('ALL');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  const fetchTriage = useCallback(async () => {
-    const params = statusFilter === 'ALL' ? undefined : { status: statusFilter };
+  const fetchTriage = useCallback(async (filter: TriageStatus | 'ALL' = statusFilter) => {
+    const params = filter === 'ALL' ? undefined : { status: filter };
     const [data, err] = await clinicianApi.getTriage(params);
     if (err) addToast({ title: 'Failed to load triage items', variant: 'error' });
     if (data) {
-      // Sort by severity then age
       const sorted = (data.data ?? []).sort((a, b) => {
         const sevA = SEVERITY_ORDER[(a as unknown as { severity?: string }).severity ?? 'MODERATE'] ?? 2;
         const sevB = SEVERITY_ORDER[(b as unknown as { severity?: string }).severity ?? 'MODERATE'] ?? 2;
@@ -64,8 +63,31 @@ export default function TriageInboxPage() {
   }, [statusFilter, addToast]);
 
   useEffect(() => {
-    fetchTriage();
-  }, [fetchTriage]);
+    let cancelled = false;
+
+    async function loadTriage() {
+      const params = statusFilter === 'ALL' ? undefined : { status: statusFilter };
+      const [data, err] = await clinicianApi.getTriage(params);
+      if (cancelled) return;
+
+      if (err) addToast({ title: 'Failed to load triage items', variant: 'error' });
+      if (data) {
+        const sorted = (data.data ?? []).sort((a, b) => {
+          const sevA = SEVERITY_ORDER[(a as unknown as { severity?: string }).severity ?? 'MODERATE'] ?? 2;
+          const sevB = SEVERITY_ORDER[(b as unknown as { severity?: string }).severity ?? 'MODERATE'] ?? 2;
+          if (sevA !== sevB) return sevA - sevB;
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+        setItems(sorted);
+      }
+      setLoading(false);
+    }
+
+    void loadTriage();
+    return () => {
+      cancelled = true;
+    };
+  }, [statusFilter, addToast]);
 
   const handleAcknowledge = async (id: string) => {
     const [, err] = await clinicianApi.patchTriage(id, { status: 'ACK' });

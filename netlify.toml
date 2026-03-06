@@ -5,8 +5,8 @@
 
 [build.environment]
   VITE_API_URL = "/api/v1"
-  VITE_ENV = "demo"
-  VITE_ENABLE_MOCKS = "true"
+  VITE_ENV = "production"
+  VITE_ENABLE_MOCKS = "false"
   NODE_VERSION = "22.13.0"
   VITE_AUTH0_DOMAIN = "dev-tu36ndmyt7pr2coi.us.auth0.com"
   VITE_AUTH0_CLIENT_ID = "1sYhiLWVUjrqwAgqT9SRwfGmz4Jjyd9X"
