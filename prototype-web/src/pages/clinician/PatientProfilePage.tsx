@@ -11,9 +11,37 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { SignalBadge } from '@/components/domain/SignalBadge';
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { PatientProfile, PatientDemographics, Medication, Allergy, Diagnosis, EmergencyContact } from '@/api/types';
 
 type ProfileTab = 'overview' | 'demographics' | 'medications' | 'allergies' | 'problems';
+
+const SIGNAL_LEVELS = {
+  LOW: 1,
+  GUARDED: 2,
+  MODERATE: 3,
+  ELEVATED: 4,
+} as const;
+
+const SIGNAL_LABELS: Record<number, keyof typeof SIGNAL_LEVELS> = {
+  1: 'LOW',
+  2: 'GUARDED',
+  3: 'MODERATE',
+  4: 'ELEVATED',
+};
+
+function formatSignalLabel(value: number) {
+  return SIGNAL_LABELS[value] ?? 'UNKNOWN';
+}
 
 export default function PatientProfilePage() {
   const { patientId } = useParams<{ patientId: string }>();
@@ -96,6 +124,11 @@ export default function PatientProfilePage() {
   const triageItems = profile.triageItems ?? [];
   const drafts = profile.drafts ?? [];
   const signalHistory = profile.signalHistory ?? [];
+  const signalChartData = signalHistory.map((entry) => ({
+    date: new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    signalValue: SIGNAL_LEVELS[entry.band],
+    band: entry.band,
+  }));
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -138,13 +171,72 @@ export default function PatientProfilePage() {
         <Card>
           <CardHeader><CardTitle>Signal History</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex gap-2 overflow-x-auto">
-              {signalHistory.map((s, i) => (
-                <div key={i} className="flex flex-col items-center gap-1">
-                  <SignalBadge band={s.band as 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED'} />
-                  <span className="text-xs text-neutral-400">{new Date(s.date).toLocaleDateString()}</span>
+            <div className="space-y-4">
+              <div className="h-72 w-full rounded-xl border border-neutral-200 bg-gradient-to-b from-brand-50/60 to-white p-3 dark:border-neutral-700 dark:from-brand-900/10 dark:to-neutral-900">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={signalChartData} margin={{ top: 16, right: 12, left: 12, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(115, 115, 115, 0.2)" />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
+                    />
+                    <YAxis
+                      domain={[1, 4]}
+                      ticks={[1, 2, 3, 4]}
+                      tickFormatter={formatSignalLabel}
+                      tickLine={false}
+                      axisLine={false}
+                      width={84}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
+                    />
+                    <Tooltip
+                      formatter={(value) => [formatSignalLabel(typeof value === 'number' ? value : 1), 'Signal Band']}
+                      labelFormatter={(label) => `Recorded ${label}`}
+                    />
+                    <ReferenceLine y={4} stroke="rgba(220, 38, 38, 0.35)" strokeDasharray="4 4" />
+                    <ReferenceLine y={3} stroke="rgba(217, 119, 6, 0.25)" strokeDasharray="4 4" />
+                    <Line
+                      type="monotone"
+                      dataKey="signalValue"
+                      stroke="#0f766e"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#0f766e', strokeWidth: 0 }}
+                      activeDot={{ r: 6, fill: '#115e59' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Latest</p>
+                  <p className="mt-1 text-sm font-semibold text-neutral-900 dark:text-white">{signalHistory.at(-1)?.band ?? 'N/A'}</p>
                 </div>
-              ))}
+                <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Peak</p>
+                  <p className="mt-1 text-sm font-semibold text-neutral-900 dark:text-white">
+                    {signalHistory.reduce<keyof typeof SIGNAL_LEVELS | null>((peak, entry) => {
+                      if (!peak) return entry.band;
+                      return SIGNAL_LEVELS[entry.band] > SIGNAL_LEVELS[peak] ? entry.band : peak;
+                    }, null) ?? 'N/A'}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Observations</p>
+                  <p className="mt-1 text-sm font-semibold text-neutral-900 dark:text-white">{signalHistory.length}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {signalHistory.map((s, i) => (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <SignalBadge band={s.band as 'LOW' | 'GUARDED' | 'MODERATE' | 'ELEVATED'} />
+                    <span className="text-xs text-neutral-400">{new Date(s.date).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
