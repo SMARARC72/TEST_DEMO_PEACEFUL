@@ -46,7 +46,9 @@ function resolveImport(importPath, fromFile) {
 
 // Extract import specifiers from a file
 function extractImports(filePath) {
-  const content = readFileSync(filePath, 'utf-8');
+  const content = readFileSync(filePath, 'utf-8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
   const imports = [];
   // Match: import ... from '...' and import '...' and export ... from '...'
   const re = /(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g;
