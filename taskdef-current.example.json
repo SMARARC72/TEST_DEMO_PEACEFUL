@@ -1,0 +1,37 @@
+{
+  "taskDefinition": {
+    "family": "example-service",
+    "revision": 1,
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+      {
+        "name": "api",
+        "image": "<aws_account_id>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag>",
+        "cpu": 0,
+        "portMappings": [
+          {
+            "containerPort": 3001,
+            "hostPort": 3001,
+            "protocol": "tcp"
+          }
+        ],
+        "essential": true,
+        "environment": [
+          { "name": "AWS_REGION", "value": "<region>" },
+          { "name": "NODE_ENV", "value": "production" }
+        ],
+        "secrets": [
+          {
+            "name": "DATABASE_URL",
+            "valueFrom": "<secret_arn_placeholder>"
+          }
+        ]
+      }
+    ],
+    "taskRoleArn": "<task_role_arn_placeholder>",
+    "executionRoleArn": "<execution_role_arn_placeholder>",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024"
+  }
+}

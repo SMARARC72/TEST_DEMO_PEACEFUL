@@ -24,6 +24,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Policy check: sensitive JSON patterns
+        run: npm run check:sensitive-json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: |
             prototype-web/package-lock.json

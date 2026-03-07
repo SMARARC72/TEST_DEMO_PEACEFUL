@@ -1,0 +1,33 @@
+[
+  {
+    "name": "api",
+    "image": "<aws_account_id>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag>",
+    "cpu": 0,
+    "portMappings": [
+      {
+        "containerPort": 3001,
+        "hostPort": 3001,
+        "protocol": "tcp"
+      }
+    ],
+    "essential": true,
+    "environment": [
+      { "name": "AWS_REGION", "value": "<region>" },
+      { "name": "PORT", "value": "3001" }
+    ],
+    "secrets": [
+      {
+        "name": "DATABASE_URL",
+        "valueFrom": "<secret_arn_placeholder>"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/<service-name>",
+        "awslogs-region": "<region>",
+        "awslogs-stream-prefix": "api"
+      }
+    }
+  }
+]
