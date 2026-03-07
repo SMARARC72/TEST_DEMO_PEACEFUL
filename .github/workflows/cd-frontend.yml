@@ -42,7 +42,7 @@ jobs:
           VITE_ENABLE_MOCKS: "false"
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_ENV: production
-          VITE_AUTH_MODE: bearer
+          VITE_AUTH_MODE: cookie
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: cd prototype-web && npm run build
 
