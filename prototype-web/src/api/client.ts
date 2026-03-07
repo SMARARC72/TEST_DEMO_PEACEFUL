@@ -13,7 +13,8 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 // 'cookie' = httpOnly cookies (production), 'bearer' = localStorage tokens (dev/mock)
 export type AuthMode = 'cookie' | 'bearer';
 export const AUTH_MODE: AuthMode =
-  (import.meta.env.VITE_AUTH_MODE as AuthMode) || 'bearer';
+  (import.meta.env.VITE_AUTH_MODE as AuthMode) ||
+  (import.meta.env.PROD ? 'cookie' : 'bearer');
 
 // ─── Token helpers (thin interface to avoid circular deps) ──────────
 let getAccessToken: () => string | null = () => null;
@@ -126,10 +127,12 @@ const api: KyInstance = ky.create({
           return response;
         }
 
-        // Retry original request with new token
-        const token = getAccessToken();
-        if (token) {
-          request.headers.set('Authorization', `Bearer ${token}`);
+        // Retry original request. In bearer mode we reattach access token.
+        if (AUTH_MODE === 'bearer') {
+          const token = getAccessToken();
+          if (token) {
+            request.headers.set('Authorization', `Bearer ${token}`);
+          }
         }
         request.headers.set('X-Retry-After-Refresh', '1');
         return ky(request, options);

@@ -3,6 +3,7 @@
 // All queries now target Neon Postgres via Prisma.
 
 import { Router } from "express";
+import type { CookieOptions, Request, Response, RequestHandler } from "express";
 import { z } from "zod";
 import crypto from "node:crypto";
 import { authenticate } from "../middleware/auth.js";
@@ -39,6 +40,110 @@ type PrismaUser = NonNullable<
 >;
 
 export const authRouter = Router();
+
+const ACCESS_COOKIE_NAME = "pf_access_token";
+const REFRESH_COOKIE_NAME = "pf_refresh_token";
+const CSRF_COOKIE_NAME = "pf_csrf_token";
+const ACCESS_COOKIE_TTL_MS = 15 * 60 * 1000;
+const REFRESH_COOKIE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isProductionEnv() {
+  return process.env.NODE_ENV === "production";
+}
+
+function isCookieAuthRequest(req: Request) {
+  const modeHeader = req.header("x-auth-mode");
+  if (modeHeader && modeHeader.toLowerCase() === "cookie") return true;
+  return isProductionEnv();
+}
+
+function parseCookies(req: Request): Record<string, string> {
+  const raw = req.headers.cookie;
+  if (!raw) return {};
+  return raw.split(";").reduce<Record<string, string>>((acc, pair) => {
+    const [k, ...rest] = pair.trim().split("=");
+    if (!k) return acc;
+    acc[k] = decodeURIComponent(rest.join("="));
+    return acc;
+  }, {});
+}
+
+function setCookie(res: Response, name: string, value: string, options: CookieOptions) {
+  const attrs: string[] = [];
+  attrs.push(`${name}=${encodeURIComponent(value)}`);
+  if (options.maxAge !== undefined) attrs.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
+  attrs.push(`Path=${options.path ?? "/"}`);
+  if (options.httpOnly) attrs.push("HttpOnly");
+  if (options.secure) attrs.push("Secure");
+  if (options.sameSite) {
+    const ss = typeof options.sameSite === "string" ? options.sameSite : options.sameSite ? "Strict" : undefined;
+    if (ss) attrs.push(`SameSite=${ss[0].toUpperCase()}${ss.slice(1)}`);
+  }
+  if (options.domain) attrs.push(`Domain=${options.domain}`);
+  const previous = res.getHeader("Set-Cookie");
+  const serialized = attrs.join("; ");
+  if (!previous) {
+    res.setHeader("Set-Cookie", serialized);
+    return;
+  }
+  if (Array.isArray(previous)) {
+    res.setHeader("Set-Cookie", [...previous, serialized]);
+    return;
+  }
+  res.setHeader("Set-Cookie", [String(previous), serialized]);
+}
+
+function getCookieOptions(kind: "access" | "refresh" | "csrf"): CookieOptions {
+  const secure = isProductionEnv();
+  if (kind === "refresh") {
+    return { httpOnly: true, secure, sameSite: "strict", path: "/api/v1/auth", maxAge: REFRESH_COOKIE_TTL_MS };
+  }
+  if (kind === "access") {
+    return { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: ACCESS_COOKIE_TTL_MS };
+  }
+  return { httpOnly: false, secure, sameSite: "strict", path: "/", maxAge: REFRESH_COOKIE_TTL_MS };
+}
+
+function clearAuthCookies(res: Response) {
+  setCookie(res, ACCESS_COOKIE_NAME, "", { ...getCookieOptions("access"), maxAge: 0 });
+  setCookie(res, REFRESH_COOKIE_NAME, "", { ...getCookieOptions("refresh"), maxAge: 0 });
+  setCookie(res, CSRF_COOKIE_NAME, "", { ...getCookieOptions("csrf"), maxAge: 0 });
+}
+
+function issueAuthCookies(req: Request, res: Response, tokens: { accessToken: string; refreshToken: string; }) {
+  if (!isCookieAuthRequest(req)) return;
+  const csrfToken = crypto.randomBytes(24).toString("hex");
+  setCookie(res, ACCESS_COOKIE_NAME, tokens.accessToken, getCookieOptions("access"));
+  setCookie(res, REFRESH_COOKIE_NAME, tokens.refreshToken, getCookieOptions("refresh"));
+  setCookie(res, CSRF_COOKIE_NAME, csrfToken, getCookieOptions("csrf"));
+}
+
+function resolveRefreshToken(req: Request) {
+  const bodyToken = typeof req.body?.refreshToken === "string" ? req.body.refreshToken : null;
+  if (bodyToken) return bodyToken;
+  const cookies = parseCookies(req);
+  return cookies[REFRESH_COOKIE_NAME] ?? null;
+}
+
+const authenticateWithCookieSupport: RequestHandler = (req, res, next) => {
+  const cookies = parseCookies(req);
+  const accessToken = cookies[ACCESS_COOKIE_NAME];
+  if (accessToken && !req.headers.authorization) {
+    req.headers.authorization = `Bearer ${accessToken}`;
+  }
+  authenticate(req, res, next);
+};
+
+const requireCsrfToken: RequestHandler = (req, _res, next) => {
+  if (!isCookieAuthRequest(req)) return next();
+  const cookies = parseCookies(req);
+  const csrfCookie = cookies[CSRF_COOKIE_NAME];
+  const csrfHeader = req.header("x-csrf-token");
+  if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+    return next(new AppError("Invalid or missing CSRF token", 403));
+  }
+  return next();
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -308,6 +413,7 @@ authRouter.post("/register", async (req, res, next) => {
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
 
+    issueAuthCookies(req, res, tokens);
     sendSuccess(
       res,
       req,
@@ -396,6 +502,7 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       tenantId: user.tenantId,
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
+    issueAuthCookies(req, res, tokens);
     sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
@@ -445,6 +552,7 @@ authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
       tenantId: user.tenantId,
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
+    issueAuthCookies(req, res, tokens);
     sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
@@ -456,20 +564,26 @@ authRouter.post("/mfa-verify", mfaLimiter, async (req, res, next) => {
 
 // ─── POST /refresh ───────────────────────────────────────────────────
 
-const refreshBodySchema = z.object({
-  refreshToken: z.string().min(1),
-});
+const refreshBodySchema = z
+  .object({
+    refreshToken: z.string().min(1).optional(),
+  })
+  .strict();
 
-authRouter.post("/refresh", async (req, res, next) => {
+authRouter.post("/refresh", requireCsrfToken, async (req, res, next) => {
   try {
-    const body = refreshBodySchema.parse(req.body);
+    const body = refreshBodySchema.parse(req.body ?? {});
+    const refreshToken = body.refreshToken ?? resolveRefreshToken(req);
+    if (!refreshToken) {
+      throw new AppError("Refresh token is required", 400);
+    }
 
     // C6: Check Redis-backed revocation list
-    if (await redisExists(REVOKED_KEY(body.refreshToken))) {
+    if (await redisExists(REVOKED_KEY(refreshToken))) {
       throw new AppError("Refresh token has been invalidated", 401);
     }
 
-    const payload = verifyRefreshToken(body.refreshToken);
+    const payload = verifyRefreshToken(refreshToken);
     if (payload.type !== "refresh") {
       throw new AppError("Invalid token type", 401);
     }
@@ -487,6 +601,7 @@ authRouter.post("/refresh", async (req, res, next) => {
       tenantId: user.tenantId,
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
+    issueAuthCookies(req, res, tokens);
     sendSuccess(res, req, tokens);
   } catch (err) {
     next(err);
@@ -501,13 +616,15 @@ const logoutBodySchema = z
   })
   .strict();
 
-authRouter.post("/logout", authenticate, async (req, res, next) => {
+authRouter.post("/logout", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
-    const body = logoutBodySchema.parse(req.body);
-    if (body.refreshToken) {
+    const body = logoutBodySchema.parse(req.body ?? {});
+    const refreshToken = body.refreshToken ?? resolveRefreshToken(req);
+    if (refreshToken) {
       // C6: Persist revocation in Redis with TTL
-      await redisSet(REVOKED_KEY(body.refreshToken), "1", REVOKED_TTL);
+      await redisSet(REVOKED_KEY(refreshToken), "1", REVOKED_TTL);
     }
+    clearAuthCookies(res);
     authLogger.info({ userId: req.user!.sub }, "User logged out");
     sendSuccess(res, req, { message: "Logged out successfully" });
   } catch (err) {
@@ -521,7 +638,7 @@ const stepUpBodySchema = z.object({
   password: z.string().min(8),
 });
 
-authRouter.post("/step-up", authenticate, async (req, res, next) => {
+authRouter.post("/step-up", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const body = stepUpBodySchema.parse(req.body);
 
@@ -549,7 +666,7 @@ authRouter.post("/step-up", authenticate, async (req, res, next) => {
 
 // ─── GET /me ─────────────────────────────────────────────────────────
 
-authRouter.get("/me", authenticate, async (req, res, next) => {
+authRouter.get("/me", authenticateWithCookieSupport, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
     if (!user) {
@@ -667,7 +784,7 @@ const changePasswordSchema = z.object({
     .max(128),
 });
 
-authRouter.post("/change-password", authenticate, async (req, res, next) => {
+authRouter.post("/change-password", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const body = changePasswordSchema.parse(req.body);
     const userId = req.user!.sub;
@@ -728,7 +845,7 @@ authRouter.post("/change-password", authenticate, async (req, res, next) => {
 // ─── POST /step-up/verify ──────────────────────────────────────────
 // Frontend calls /step-up/verify (separate from the original /step-up)
 
-authRouter.post("/step-up/verify", authenticate, async (req, res, next) => {
+authRouter.post("/step-up/verify", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const body = stepUpBodySchema.parse(req.body);
 
@@ -778,7 +895,8 @@ const stepUpMfaSchema = z.object({
 
 authRouter.post(
   "/step-up/mfa",
-  authenticate,
+  authenticateWithCookieSupport,
+  requireCsrfToken,
   mfaLimiter,
   async (req, res, next) => {
     try {
@@ -829,7 +947,7 @@ const auth0SyncSchema = z.object({
   picture: z.string().url().optional().nullable(),
 });
 
-authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
+authRouter.post("/auth0-sync", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const body = auth0SyncSchema.parse(req.body);
 
@@ -897,6 +1015,7 @@ authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
 
+    issueAuthCookies(req, res, tokens);
     sendSuccess(res, req, {
       ...tokens,
       user: toUserResponse(user),
@@ -909,7 +1028,7 @@ authRouter.post("/auth0-sync", authenticate, async (req, res, next) => {
 // ─── POST /mfa-setup ─────────────────────────────────────────────────
 // Clinician MFA enrollment: generates TOTP secret and QR code data URL.
 
-authRouter.post("/mfa-setup", authenticate, async (req, res, next) => {
+authRouter.post("/mfa-setup", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const userId = req.user!.sub;
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -949,7 +1068,7 @@ const mfaConfirmSetupSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post("/mfa-confirm-setup", authenticate, async (req, res, next) => {
+authRouter.post("/mfa-confirm-setup", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
   try {
     const body = mfaConfirmSetupSchema.parse(req.body);
     const userId = req.user!.sub;

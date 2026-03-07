@@ -355,6 +355,117 @@ describe("Auth routes", () => {
     const res = await request(app).post("/api/v1/auth/logout");
     expect(res.status).toBe(401);
   });
+  it("cookie auth issues secure cookies and supports refresh/logout with CSRF", async () => {
+    const passwordHash = await bcrypt.hash("DemoPassword2026!", 10);
+    const refreshUserId = "22222222-2222-4222-8222-222222222222";
+
+    (prisma.tenant.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: TENANT_ID,
+      slug: "default",
+    });
+    (prisma.user.findFirst as unknown as Mock).mockResolvedValueOnce({
+      id: refreshUserId,
+      tenantId: TENANT_ID,
+      email: "cookie.user@example.com",
+      passwordHash,
+      firstName: "Cookie",
+      lastName: "User",
+      phone: null,
+      role: "PATIENT",
+      status: "ACTIVE",
+      mfaEnabled: false,
+      mfaMethod: null,
+      mfaSecret: null,
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+      lastLogin: null,
+    });
+    (prisma.user.update as unknown as Mock).mockResolvedValue({
+      id: refreshUserId,
+      lastLogin: new Date("2026-03-06T10:00:00.000Z"),
+    });
+
+    const loginRes = await request(app)
+      .post("/api/v1/auth/login")
+      .set("X-Auth-Mode", "cookie")
+      .send({ email: "cookie.user@example.com", password: "DemoPassword2026!" });
+
+    expect(loginRes.status).toBe(200);
+    const cookiesHeader = loginRes.headers["set-cookie"];
+    expect(Array.isArray(cookiesHeader)).toBe(true);
+    const cookies = (Array.isArray(cookiesHeader) ? cookiesHeader : []) as string[];
+    expect(cookies.length).toBeGreaterThanOrEqual(3);
+    expect(cookies.some((value) => value.includes("pf_access_token=") && value.includes("HttpOnly") && value.includes("SameSite=Lax"))).toBe(true);
+    expect(cookies.some((value) => value.includes("pf_refresh_token=") && value.includes("HttpOnly") && value.includes("SameSite=Strict"))).toBe(true);
+    expect(cookies.some((value) => value.includes("pf_csrf_token=") && value.includes("SameSite=Strict"))).toBe(true);
+
+    const csrfCookie = cookies.find((value) => value.startsWith("pf_csrf_token="));
+    const csrfToken = csrfCookie?.split(";")[0]?.split("=")[1];
+    expect(csrfToken).toBeTruthy();
+
+    (prisma.user.findUnique as unknown as Mock).mockResolvedValueOnce({
+      id: refreshUserId,
+      tenantId: TENANT_ID,
+      email: "cookie.user@example.com",
+      passwordHash,
+      firstName: "Cookie",
+      lastName: "User",
+      phone: null,
+      role: "PATIENT",
+      status: "ACTIVE",
+      mfaEnabled: false,
+      mfaMethod: null,
+      mfaSecret: null,
+      createdAt: new Date("2026-03-06T10:00:00.000Z"),
+      lastLogin: null,
+    });
+
+    const refreshRes = await request(app)
+      .post("/api/v1/auth/refresh")
+      .set("X-Auth-Mode", "cookie")
+      .set("X-CSRF-Token", decodeURIComponent(csrfToken!))
+      .set("Cookie", cookies.map((value) => value.split(";")[0]));
+
+    expect(refreshRes.status).toBe(200);
+
+    const logoutRes = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("X-Auth-Mode", "cookie")
+      .set("X-CSRF-Token", decodeURIComponent(csrfToken!))
+      .set("Cookie", cookies.map((value) => value.split(";")[0]));
+
+    expect(logoutRes.status).toBe(200);
+
+    const postLogoutRefresh = await request(app)
+      .post("/api/v1/auth/refresh")
+      .set("X-Auth-Mode", "cookie")
+      .set("X-CSRF-Token", decodeURIComponent(csrfToken!))
+      .set("Cookie", [`pf_csrf_token=${decodeURIComponent(csrfToken!)}`])
+      .send({ refreshToken: loginRes.body.data.refreshToken });
+
+    expect(postLogoutRefresh.status).toBe(401);
+  });
+
+  it("rejects cookie-authenticated state-changing requests without valid CSRF token", async () => {
+    const token = patientToken();
+    const csrfCookie = "pf_csrf_token=valid-token";
+    const authCookie = `pf_access_token=${token}`;
+
+    const missingCsrf = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("X-Auth-Mode", "cookie")
+      .set("Cookie", [authCookie, csrfCookie]);
+
+    expect(missingCsrf.status).toBe(403);
+
+    const invalidCsrf = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("X-Auth-Mode", "cookie")
+      .set("X-CSRF-Token", "wrong-token")
+      .set("Cookie", [authCookie, csrfCookie]);
+
+    expect(invalidCsrf.status).toBe(403);
+  });
+
 });
 
 // ─── Patient Endpoints ───────────────────────────────────────────────
