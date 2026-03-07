@@ -68,15 +68,26 @@ function parseCookies(req: Request): Record<string, string> {
   }, {});
 }
 
-function setCookie(res: Response, name: string, value: string, options: CookieOptions) {
+function setCookie(
+  res: Response,
+  name: string,
+  value: string,
+  options: CookieOptions,
+) {
   const attrs: string[] = [];
   attrs.push(`${name}=${encodeURIComponent(value)}`);
-  if (options.maxAge !== undefined) attrs.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
+  if (options.maxAge !== undefined)
+    attrs.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
   attrs.push(`Path=${options.path ?? "/"}`);
   if (options.httpOnly) attrs.push("HttpOnly");
   if (options.secure) attrs.push("Secure");
   if (options.sameSite) {
-    const ss = typeof options.sameSite === "string" ? options.sameSite : options.sameSite ? "Strict" : undefined;
+    const ss =
+      typeof options.sameSite === "string"
+        ? options.sameSite
+        : options.sameSite
+          ? "Strict"
+          : undefined;
     if (ss) attrs.push(`SameSite=${ss[0].toUpperCase()}${ss.slice(1)}`);
   }
   if (options.domain) attrs.push(`Domain=${options.domain}`);
@@ -96,30 +107,72 @@ function setCookie(res: Response, name: string, value: string, options: CookieOp
 function getCookieOptions(kind: "access" | "refresh" | "csrf"): CookieOptions {
   const secure = isProductionEnv();
   if (kind === "refresh") {
-    return { httpOnly: true, secure, sameSite: "strict", path: "/api/v1/auth", maxAge: REFRESH_COOKIE_TTL_MS };
+    return {
+      httpOnly: true,
+      secure,
+      sameSite: "strict",
+      path: "/api/v1/auth",
+      maxAge: REFRESH_COOKIE_TTL_MS,
+    };
   }
   if (kind === "access") {
-    return { httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: ACCESS_COOKIE_TTL_MS };
+    return {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: ACCESS_COOKIE_TTL_MS,
+    };
   }
-  return { httpOnly: false, secure, sameSite: "strict", path: "/", maxAge: REFRESH_COOKIE_TTL_MS };
+  return {
+    httpOnly: false,
+    secure,
+    sameSite: "strict",
+    path: "/",
+    maxAge: REFRESH_COOKIE_TTL_MS,
+  };
 }
 
 function clearAuthCookies(res: Response) {
-  setCookie(res, ACCESS_COOKIE_NAME, "", { ...getCookieOptions("access"), maxAge: 0 });
-  setCookie(res, REFRESH_COOKIE_NAME, "", { ...getCookieOptions("refresh"), maxAge: 0 });
-  setCookie(res, CSRF_COOKIE_NAME, "", { ...getCookieOptions("csrf"), maxAge: 0 });
+  setCookie(res, ACCESS_COOKIE_NAME, "", {
+    ...getCookieOptions("access"),
+    maxAge: 0,
+  });
+  setCookie(res, REFRESH_COOKIE_NAME, "", {
+    ...getCookieOptions("refresh"),
+    maxAge: 0,
+  });
+  setCookie(res, CSRF_COOKIE_NAME, "", {
+    ...getCookieOptions("csrf"),
+    maxAge: 0,
+  });
 }
 
-function issueAuthCookies(req: Request, res: Response, tokens: { accessToken: string; refreshToken: string; }) {
+function issueAuthCookies(
+  req: Request,
+  res: Response,
+  tokens: { accessToken: string; refreshToken: string },
+) {
   if (!isCookieAuthRequest(req)) return;
   const csrfToken = crypto.randomBytes(24).toString("hex");
-  setCookie(res, ACCESS_COOKIE_NAME, tokens.accessToken, getCookieOptions("access"));
-  setCookie(res, REFRESH_COOKIE_NAME, tokens.refreshToken, getCookieOptions("refresh"));
+  setCookie(
+    res,
+    ACCESS_COOKIE_NAME,
+    tokens.accessToken,
+    getCookieOptions("access"),
+  );
+  setCookie(
+    res,
+    REFRESH_COOKIE_NAME,
+    tokens.refreshToken,
+    getCookieOptions("refresh"),
+  );
   setCookie(res, CSRF_COOKIE_NAME, csrfToken, getCookieOptions("csrf"));
 }
 
 function resolveRefreshToken(req: Request) {
-  const bodyToken = typeof req.body?.refreshToken === "string" ? req.body.refreshToken : null;
+  const bodyToken =
+    typeof req.body?.refreshToken === "string" ? req.body.refreshToken : null;
   if (bodyToken) return bodyToken;
   const cookies = parseCookies(req);
   return cookies[REFRESH_COOKIE_NAME] ?? null;
@@ -621,6 +674,11 @@ authRouter.post("/refresh", requireCsrfToken, async (req, res, next) => {
       tenantId: user.tenantId,
       role: user.role as unknown as import("@peacefull/shared").UserRole,
     });
+
+    // PRD-5: Single-use refresh rotation — revoke the consumed token so it
+    // cannot be replayed if stolen.
+    await redisSet(REVOKED_KEY(refreshToken), "1", REVOKED_TTL);
+
     issueAuthCookies(req, res, tokens);
     sendSuccess(res, req, tokens);
   } catch (err) {
@@ -636,21 +694,26 @@ const logoutBodySchema = z
   })
   .strict();
 
-authRouter.post("/logout", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = logoutBodySchema.parse(req.body ?? {});
-    const refreshToken = body.refreshToken ?? resolveRefreshToken(req);
-    if (refreshToken) {
-      // C6: Persist revocation in Redis with TTL
-      await redisSet(REVOKED_KEY(refreshToken), "1", REVOKED_TTL);
+authRouter.post(
+  "/logout",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = logoutBodySchema.parse(req.body ?? {});
+      const refreshToken = body.refreshToken ?? resolveRefreshToken(req);
+      if (refreshToken) {
+        // C6: Persist revocation in Redis with TTL
+        await redisSet(REVOKED_KEY(refreshToken), "1", REVOKED_TTL);
+      }
+      clearAuthCookies(res);
+      authLogger.info({ userId: req.user!.sub }, "User logged out");
+      sendSuccess(res, req, { message: "Logged out successfully" });
+    } catch (err) {
+      next(err);
     }
-    clearAuthCookies(res);
-    authLogger.info({ userId: req.user!.sub }, "User logged out");
-    sendSuccess(res, req, { message: "Logged out successfully" });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── POST /step-up ───────────────────────────────────────────────────
 
@@ -658,31 +721,38 @@ const stepUpBodySchema = z.object({
   password: z.string().min(8),
 });
 
-authRouter.post("/step-up", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = stepUpBodySchema.parse(req.body);
+authRouter.post(
+  "/step-up",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = stepUpBodySchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
-    if (!user) {
-      throw new AppError("User not found", 404);
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.sub },
+      });
+      if (!user) {
+        throw new AppError("User not found", 404);
+      }
+
+      const valid = await verifyPassword(body.password, user.passwordHash);
+      if (!valid) {
+        throw new AppError("Invalid credentials", 401);
+      }
+
+      const stepUpTokens = generateStepUpToken({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
+      });
+      authLogger.info({ userId: user.id }, "Step-up auth completed");
+      sendSuccess(res, req, stepUpTokens);
+    } catch (err) {
+      next(err);
     }
-
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) {
-      throw new AppError("Invalid credentials", 401);
-    }
-
-    const stepUpTokens = generateStepUpToken({
-      id: user.id,
-      tenantId: user.tenantId,
-      role: user.role as unknown as import("@peacefull/shared").UserRole,
-    });
-    authLogger.info({ userId: user.id }, "Step-up auth completed");
-    sendSuccess(res, req, stepUpTokens);
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── GET /me ─────────────────────────────────────────────────────────
 
@@ -804,108 +874,129 @@ const changePasswordSchema = z.object({
     .max(128),
 });
 
-authRouter.post("/change-password", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = changePasswordSchema.parse(req.body);
-    const userId = req.user!.sub;
+authRouter.post(
+  "/change-password",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = changePasswordSchema.parse(req.body);
+      const userId = req.user!.sub;
 
-    // Validate password complexity
-    if (!isStrongPassword(body.newPassword)) {
-      throw new AppError(PASSWORD_COMPLEXITY_MESSAGE, 400);
-    }
+      // Validate password complexity
+      if (!isStrongPassword(body.newPassword)) {
+        throw new AppError(PASSWORD_COMPLEXITY_MESSAGE, 400);
+      }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new AppError("User not found", 404);
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new AppError("User not found", 404);
 
-    // Verify current password
-    const valid = await verifyPassword(body.currentPassword, user.passwordHash);
-    if (!valid) {
-      throw new AppError("Current password is incorrect", 401);
-    }
-
-    // Prevent setting the same password
-    const sameAsOld = await verifyPassword(body.newPassword, user.passwordHash);
-    if (sameAsOld) {
-      throw new AppError(
-        "New password must be different from your current password",
-        400,
+      // Verify current password
+      const valid = await verifyPassword(
+        body.currentPassword,
+        user.passwordHash,
       );
+      if (!valid) {
+        throw new AppError("Current password is incorrect", 401);
+      }
+
+      // Prevent setting the same password
+      const sameAsOld = await verifyPassword(
+        body.newPassword,
+        user.passwordHash,
+      );
+      if (sameAsOld) {
+        throw new AppError(
+          "New password must be different from your current password",
+          400,
+        );
+      }
+
+      // Hash and save new password
+      const newHash = await hashPassword(body.newPassword);
+      await prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash: newHash },
+      });
+
+      authLogger.info(
+        { userId },
+        "Password changed; refresh-token persistence is handled via stateless token rotation",
+      );
+
+      // Generate new tokens for the current session so user stays logged in
+      const newTokens = generateTokens({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
+      });
+
+      sendSuccess(res, req, {
+        success: true,
+        message:
+          "Password changed successfully. All other sessions have been signed out.",
+        ...newTokens,
+      });
+    } catch (err) {
+      next(err);
     }
-
-    // Hash and save new password
-    const newHash = await hashPassword(body.newPassword);
-    await prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash: newHash },
-    });
-
-    authLogger.info(
-      { userId },
-      "Password changed; refresh-token persistence is handled via stateless token rotation",
-    );
-
-    // Generate new tokens for the current session so user stays logged in
-    const newTokens = generateTokens({
-      id: user.id,
-      tenantId: user.tenantId,
-      role: user.role as unknown as import("@peacefull/shared").UserRole,
-    });
-
-    sendSuccess(res, req, {
-      success: true,
-      message:
-        "Password changed successfully. All other sessions have been signed out.",
-      ...newTokens,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── POST /step-up/verify ──────────────────────────────────────────
 // Frontend calls /step-up/verify (separate from the original /step-up)
 
-authRouter.post("/step-up/verify", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = stepUpBodySchema.parse(req.body);
+authRouter.post(
+  "/step-up/verify",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = stepUpBodySchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
-    if (!user) throw new AppError("User not found", 404);
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.sub },
+      });
+      if (!user) throw new AppError("User not found", 404);
 
-    const valid = await verifyPassword(body.password, user.passwordHash);
-    if (!valid) throw new AppError("Invalid credentials", 401);
+      const valid = await verifyPassword(body.password, user.passwordHash);
+      if (!valid) throw new AppError("Invalid credentials", 401);
 
-    const mfaChallenge = resolveMfaChallenge(user);
-    if (mfaChallenge) {
-      if (mfaChallenge.method === "EMAIL") {
-        await prepareEmailMfaChallenge(user);
-        authLogger.info({ userId: user.id }, "Step-up MFA code sent via email");
-      } else {
-        authLogger.info(
-          { userId: user.id },
-          "Step-up TOTP challenge requested",
-        );
+      const mfaChallenge = resolveMfaChallenge(user);
+      if (mfaChallenge) {
+        if (mfaChallenge.method === "EMAIL") {
+          await prepareEmailMfaChallenge(user);
+          authLogger.info(
+            { userId: user.id },
+            "Step-up MFA code sent via email",
+          );
+        } else {
+          authLogger.info(
+            { userId: user.id },
+            "Step-up TOTP challenge requested",
+          );
+        }
+
+        sendSuccess(res, req, {
+          mfaRequired: true,
+          method: mfaChallenge.method,
+          message: mfaChallenge.message,
+        });
+        return;
       }
 
-      sendSuccess(res, req, {
-        mfaRequired: true,
-        method: mfaChallenge.method,
-        message: mfaChallenge.message,
+      const stepUpTokens = generateStepUpToken({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
       });
-      return;
+      authLogger.info({ userId: user.id }, "Step-up verify completed");
+      sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
+    } catch (err) {
+      next(err);
     }
-
-    const stepUpTokens = generateStepUpToken({
-      id: user.id,
-      tenantId: user.tenantId,
-      role: user.role as unknown as import("@peacefull/shared").UserRole,
-    });
-    authLogger.info({ userId: user.id }, "Step-up verify completed");
-    sendSuccess(res, req, { elevatedToken: stepUpTokens.accessToken });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── POST /step-up/mfa ──────────────────────────────────────────────
 
@@ -967,119 +1058,129 @@ const auth0SyncSchema = z.object({
   picture: z.string().url().optional().nullable(),
 });
 
-authRouter.post("/auth0-sync", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = auth0SyncSchema.parse(req.body);
+authRouter.post(
+  "/auth0-sync",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = auth0SyncSchema.parse(req.body);
 
-    if (req.user!.sub !== body.auth0Sub) {
-      throw new AppError("Auth0 identity mismatch", 403);
-    }
+      if (req.user!.sub !== body.auth0Sub) {
+        throw new AppError("Auth0 identity mismatch", 403);
+      }
 
-    // req.user.sub is the Auth0 sub (e.g., "auth0|abc123") from the verified token.
-    // The email in the body comes from Auth0's ID token on the frontend.
-    authLogger.info(
-      { auth0Sub: req.user!.sub, email: body.email },
-      "Auth0 sync initiated",
-    );
-
-    const matchingUsers = await prisma.user.findMany({
-      where: { email: body.email },
-      orderBy: { createdAt: "asc" },
-    });
-
-    if (matchingUsers.length === 0) {
-      throw new AppError(
-        "No pre-provisioned account matches this Auth0 identity. Use your clinic invitation or contact an administrator.",
-        403,
+      // req.user.sub is the Auth0 sub (e.g., "auth0|abc123") from the verified token.
+      // The email in the body comes from Auth0's ID token on the frontend.
+      authLogger.info(
+        { auth0Sub: req.user!.sub, email: body.email },
+        "Auth0 sync initiated",
       );
-    }
 
-    const tenantScopedUser = matchingUsers.find(
-      (candidate) => candidate.tenantId === req.user!.tid,
-    );
+      const matchingUsers = await prisma.user.findMany({
+        where: { email: body.email },
+        orderBy: { createdAt: "asc" },
+      });
 
-    if (matchingUsers.length > 1 && !tenantScopedUser) {
-      throw new AppError(
-        "This Auth0 identity matches multiple organizations and cannot be linked automatically. Contact support.",
-        409,
+      if (matchingUsers.length === 0) {
+        throw new AppError(
+          "No pre-provisioned account matches this Auth0 identity. Use your clinic invitation or contact an administrator.",
+          403,
+        );
+      }
+
+      const tenantScopedUser = matchingUsers.find(
+        (candidate) => candidate.tenantId === req.user!.tid,
       );
-    }
 
-    const resolvedUser = tenantScopedUser ?? matchingUsers[0]!;
-    const user = await prisma.user.update({
-      where: { id: resolvedUser.id },
-      data: { lastLogin: new Date() },
-    });
+      if (matchingUsers.length > 1 && !tenantScopedUser) {
+        throw new AppError(
+          "This Auth0 identity matches multiple organizations and cannot be linked automatically. Contact support.",
+          409,
+        );
+      }
 
-    authLogger.info(
-      { userId: user.id, auth0Sub: body.auth0Sub },
-      "Auth0 sync: existing user linked",
-    );
+      const resolvedUser = tenantScopedUser ?? matchingUsers[0]!;
+      const user = await prisma.user.update({
+        where: { id: resolvedUser.id },
+        data: { lastLogin: new Date() },
+      });
 
-    if (user.passwordHash && user.passwordHash.trim().length > 0) {
-      authLogger.warn(
-        { userId: user.id },
-        "Auth0 sync linked an account that also has a local password",
+      authLogger.info(
+        { userId: user.id, auth0Sub: body.auth0Sub },
+        "Auth0 sync: existing user linked",
       );
+
+      if (user.passwordHash && user.passwordHash.trim().length > 0) {
+        authLogger.warn(
+          { userId: user.id },
+          "Auth0 sync linked an account that also has a local password",
+        );
+      }
+
+      // Check user is active
+      if (user.status !== "ACTIVE") {
+        throw new AppError("Account is suspended. Contact admin.", 403);
+      }
+
+      // Generate local JWT tokens (so existing routes, WS, etc. work with local user IDs)
+      const tokens = generateTokens({
+        id: user.id,
+        tenantId: user.tenantId,
+        role: user.role as unknown as import("@peacefull/shared").UserRole,
+      });
+
+      issueAuthCookies(req, res, tokens);
+      sendSuccess(res, req, {
+        ...tokens,
+        user: toUserResponse(user),
+      });
+    } catch (err) {
+      next(err);
     }
-
-    // Check user is active
-    if (user.status !== "ACTIVE") {
-      throw new AppError("Account is suspended. Contact admin.", 403);
-    }
-
-    // Generate local JWT tokens (so existing routes, WS, etc. work with local user IDs)
-    const tokens = generateTokens({
-      id: user.id,
-      tenantId: user.tenantId,
-      role: user.role as unknown as import("@peacefull/shared").UserRole,
-    });
-
-    issueAuthCookies(req, res, tokens);
-    sendSuccess(res, req, {
-      ...tokens,
-      user: toUserResponse(user),
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── POST /mfa-setup ─────────────────────────────────────────────────
 // Clinician MFA enrollment: generates TOTP secret and QR code data URL.
 
-authRouter.post("/mfa-setup", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const userId = req.user!.sub;
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new AppError("User not found", 404);
+authRouter.post(
+  "/mfa-setup",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const userId = req.user!.sub;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new AppError("User not found", 404);
 
-    if (user.mfaEnabled) {
-      throw new AppError("MFA is already enabled", 400);
+      if (user.mfaEnabled) {
+        throw new AppError("MFA is already enabled", 400);
+      }
+
+      // Generate a TOTP secret
+      const crypto = await import("crypto");
+      const secret = crypto.randomBytes(20).toString("hex").slice(0, 32);
+
+      // Store the pending secret in Redis (10 min TTL)
+      await redisSet(`mfa-setup:${userId}`, secret, 600);
+
+      // Build an otpauth URI for QR code
+      const issuer = "Peacefull.ai";
+      const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=6&period=30`;
+
+      // Generate a simple SVG-based QR code data URL (or return the URL for client-side rendering)
+      // For now, return the secret + otpauth URL — the frontend can use a QR library
+      sendSuccess(res, req, {
+        secret,
+        otpauthUrl,
+        qrCodeDataUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`,
+      });
+    } catch (err) {
+      next(err);
     }
-
-    // Generate a TOTP secret
-    const crypto = await import("crypto");
-    const secret = crypto.randomBytes(20).toString("hex").slice(0, 32);
-
-    // Store the pending secret in Redis (10 min TTL)
-    await redisSet(`mfa-setup:${userId}`, secret, 600);
-
-    // Build an otpauth URI for QR code
-    const issuer = "Peacefull.ai";
-    const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=6&period=30`;
-
-    // Generate a simple SVG-based QR code data URL (or return the URL for client-side rendering)
-    // For now, return the secret + otpauth URL — the frontend can use a QR library
-    sendSuccess(res, req, {
-      secret,
-      otpauthUrl,
-      qrCodeDataUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── POST /mfa-confirm-setup ─────────────────────────────────────────
 // Verifies the TOTP code against the pending secret and enables MFA.
@@ -1088,58 +1189,63 @@ const mfaConfirmSetupSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-authRouter.post("/mfa-confirm-setup", authenticateWithCookieSupport, requireCsrfToken, async (req, res, next) => {
-  try {
-    const body = mfaConfirmSetupSchema.parse(req.body);
-    const userId = req.user!.sub;
+authRouter.post(
+  "/mfa-confirm-setup",
+  authenticateWithCookieSupport,
+  requireCsrfToken,
+  async (req, res, next) => {
+    try {
+      const body = mfaConfirmSetupSchema.parse(req.body);
+      const userId = req.user!.sub;
 
-    const pendingSecret = await redisGet(`mfa-setup:${userId}`);
-    if (!pendingSecret) {
-      throw new AppError(
-        "No pending MFA setup. Please start the setup process again.",
-        400,
-      );
+      const pendingSecret = await redisGet(`mfa-setup:${userId}`);
+      if (!pendingSecret) {
+        throw new AppError(
+          "No pending MFA setup. Please start the setup process again.",
+          400,
+        );
+      }
+
+      if (!verifyTotpCode(body.code, pendingSecret)) {
+        throw new AppError("Invalid verification code. Please try again.", 401);
+      }
+
+      // Enable MFA on the user record
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          mfaEnabled: true,
+          mfaMethod: "TOTP",
+          mfaSecret: pendingSecret, // In production: encrypt this with ENCRYPTION_KEY
+        },
+      });
+
+      // Clean up the pending secret
+      await redisDel(`mfa-setup:${userId}`);
+
+      // Generate backup codes
+      const backupCodes: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        backupCodes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
+      }
+
+      await prisma.$transaction([
+        prisma.mfaBackupCode.deleteMany({ where: { userId } }),
+        prisma.mfaBackupCode.createMany({
+          data: backupCodes.map((code) => ({
+            userId,
+            codeHash: hashBackupCode(userId, code),
+          })),
+        }),
+      ]);
+
+      authLogger.info({ userId }, "MFA enabled via TOTP");
+      sendSuccess(res, req, { backupCodes });
+    } catch (err) {
+      next(err);
     }
-
-    if (!verifyTotpCode(body.code, pendingSecret)) {
-      throw new AppError("Invalid verification code. Please try again.", 401);
-    }
-
-    // Enable MFA on the user record
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        mfaEnabled: true,
-        mfaMethod: "TOTP",
-        mfaSecret: pendingSecret, // In production: encrypt this with ENCRYPTION_KEY
-      },
-    });
-
-    // Clean up the pending secret
-    await redisDel(`mfa-setup:${userId}`);
-
-    // Generate backup codes
-    const backupCodes: string[] = [];
-    for (let i = 0; i < 10; i++) {
-      backupCodes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
-    }
-
-    await prisma.$transaction([
-      prisma.mfaBackupCode.deleteMany({ where: { userId } }),
-      prisma.mfaBackupCode.createMany({
-        data: backupCodes.map((code) => ({
-          userId,
-          codeHash: hashBackupCode(userId, code),
-        })),
-      }),
-    ]);
-
-    authLogger.info({ userId }, "MFA enabled via TOTP");
-    sendSuccess(res, req, { backupCodes });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // ─── GET /tenants ────────────────────────────────────────────────────
 

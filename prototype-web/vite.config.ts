@@ -31,6 +31,15 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
   const mocksEnabled = env.VITE_ENABLE_MOCKS === 'true'
 
+  // PRD-7 Risk Register: VITE_ENABLE_MOCKS must never be 'true' in a
+  // production build — fail fast so CI/Netlify never ships MSW to prod.
+  if (mode === 'production' && mocksEnabled) {
+    throw new Error(
+      'FATAL: VITE_ENABLE_MOCKS=true is set for a production build. ' +
+      'Remove or set to "false" before deploying.',
+    )
+  }
+
   return {
     plugins: [react(), tailwindcss(), cleanDistPlugin(mocksEnabled)],
   resolve: {
