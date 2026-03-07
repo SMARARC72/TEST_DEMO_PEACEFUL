@@ -51,7 +51,7 @@ async function getClinicianPatientIds(clinicianId: string): Promise<string[]> {
 }
 
 /** SEC-009: Verify the patient belongs to clinician's caseload and tenant. */
-async function requireCaseloadAccess(
+export async function requireCaseloadAccess(
   userId: string,
   tid: string,
   patientId: string,
