@@ -1,0 +1,17 @@
+{
+  "taskDefinition": {
+    "family": "example-web-api",
+    "containerDefinitions": [
+      {
+        "name": "api",
+        "image": "<aws_account_id>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag>",
+        "secrets": [
+          { "name": "JWT_SECRET", "valueFrom": "<secret_arn_placeholder>" },
+          { "name": "AUTH0_CLIENT_SECRET", "valueFrom": "<secret_arn_placeholder>" }
+        ]
+      }
+    ],
+    "taskRoleArn": "<task_role_arn_placeholder>",
+    "executionRoleArn": "<execution_role_arn_placeholder>"
+  }
+}

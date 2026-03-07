@@ -5,6 +5,7 @@
     "prettier": "^3.8.1"
   },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:sensitive-json": "node scripts/check-sensitive-json.mjs"
   }
 }
