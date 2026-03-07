@@ -110,7 +110,7 @@ function formatPendingClinician(
 organizationRouter.get(
   "/pending-clinicians",
   authenticate,
-  requireRole(UserRole.ADMIN),
+  requireRole(UserRole.ADMIN, UserRole.SUPERVISOR),
   async (req, res, next) => {
     try {
       const pendingClinicians = await prisma.user.findMany({
@@ -155,7 +155,7 @@ organizationRouter.get(
 organizationRouter.patch(
   "/pending-clinicians/:userId/approve",
   authenticate,
-  requireRole(UserRole.ADMIN),
+  requireRole(UserRole.ADMIN, UserRole.SUPERVISOR),
   async (req, res, next) => {
     try {
       const requesterId = req.user!.sub;
@@ -199,7 +199,7 @@ organizationRouter.patch(
 organizationRouter.patch(
   "/pending-clinicians/:userId/reject",
   authenticate,
-  requireRole(UserRole.ADMIN),
+  requireRole(UserRole.ADMIN, UserRole.SUPERVISOR),
   async (req, res, next) => {
     try {
       const requesterId = req.user!.sub;

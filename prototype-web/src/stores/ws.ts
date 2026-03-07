@@ -64,10 +64,14 @@ const WS_BASE = import.meta.env.VITE_WS_URL ?? (
 const MAX_RECONNECT_DELAY = 30_000;
 const INITIAL_RECONNECT_DELAY = 1_000;
 const TOKEN_REFRESH_LEEWAY_MS = 120_000;
+// Give up after this many consecutive failed attempts to avoid infinite noise
+// when the WS endpoint is not provisioned (e.g. production 404).
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectDelay = INITIAL_RECONNECT_DELAY;
+let reconnectAttempts = 0;
 let intentionalClose = false;
 
 // ─── Store ──────────────────────────────────────────────────────────
@@ -80,6 +84,8 @@ export const useWsStore = create<WsState>()((set, get) => ({
   connect: (token: string | null) => {
     get().disconnect();
     intentionalClose = false;
+    reconnectAttempts = 0;
+    reconnectDelay = INITIAL_RECONNECT_DELAY;
 
     void openSocket(token);
   },
@@ -208,6 +214,13 @@ async function getValidSocketToken(token: string | null) {
 }
 
 function scheduleReconnect() {
+  reconnectAttempts += 1;
+  if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+    // WS endpoint is likely unavailable (e.g. not provisioned in this environment).
+    // Stop retrying silently — real-time notifications are degraded but not required.
+    useWsStore.setState({ status: 'error' });
+    return;
+  }
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
     useWsStore.getState().connect(useAuthStore.getState().accessToken);

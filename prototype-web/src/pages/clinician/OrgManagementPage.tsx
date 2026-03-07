@@ -176,7 +176,7 @@ export default function OrgManagementPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [pendingClinicianLoading, setPendingClinicianLoading] = useState(false);
 
-  const isPlatformAdmin = user?.role === 'ADMIN';
+  const isPlatformAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
 
   const loadOrgs = useCallback(async () => {
     setLoading(true);
