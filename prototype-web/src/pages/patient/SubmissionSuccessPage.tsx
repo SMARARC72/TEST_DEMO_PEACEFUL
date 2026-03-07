@@ -10,8 +10,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { SignalBadge } from '@/components/domain/SignalBadge';
 import type { SubmissionReflection } from '@/api/types';
 
-const MAX_POLL_ATTEMPTS = 5;
-const POLL_INTERVAL_MS = 3_000;
+const MAX_POLL_ATTEMPTS = 8;
+const BASE_POLL_INTERVAL_MS = 3_000;
+const MAX_POLL_INTERVAL_MS = 120_000;
 
 export default function SubmissionSuccessPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
@@ -21,6 +22,7 @@ export default function SubmissionSuccessPage() {
   const [reflection, setReflection] = useState<SubmissionReflection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pollPhase, setPollPhase] = useState<'initial' | 'processing' | 'slow' | 'done'>('initial');
   const pollCount = useRef(0);
 
   useEffect(() => {
@@ -32,10 +34,14 @@ export default function SubmissionSuccessPage() {
       if (cancelled) return;
 
       if (err) {
-        // 404 = reflection not ready yet; retry with backoff
+        // 404 = reflection not ready yet; retry with exponential backoff
         if (err.status === 404 && pollCount.current < MAX_POLL_ATTEMPTS) {
           pollCount.current += 1;
-          setTimeout(fetchReflection, POLL_INTERVAL_MS);
+          // Update UX phase based on attempts
+          if (pollCount.current >= 5) setPollPhase('slow');
+          else if (pollCount.current >= 2) setPollPhase('processing');
+          const delay = Math.min(BASE_POLL_INTERVAL_MS * Math.pow(2, pollCount.current - 1), MAX_POLL_INTERVAL_MS);
+          setTimeout(fetchReflection, delay);
           return;
         }
         if (err.status !== 404) setError(err.message);
@@ -69,8 +75,14 @@ export default function SubmissionSuccessPage() {
 
       {/* Reflection */}
       {loading ? (
-        <div className="flex justify-center py-8">
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
           <Spinner />
+          {pollPhase === 'processing' && (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Still processing your submission…</p>
+          )}
+          {pollPhase === 'slow' && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">Taking longer than expected — hang tight…</p>
+          )}
         </div>
       ) : reflection ? (
         <Card>

@@ -36,18 +36,35 @@ export function MoodTrendChart({ checkins, className = '' }: MoodTrendChartProps
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - RANGE_DAYS[range]);
 
-    return checkins
-      .filter((c) => new Date(c.createdAt) >= cutoff)
-      .map((c) => ({
-        date: new Date(c.createdAt).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
-        mood: c.mood,
-        stress: c.stress,
-        sleep: c.sleep,
-        anxiety: c.anxiety ?? null,
-      }));
+    const filtered = checkins.filter((c) => new Date(c.createdAt) >= cutoff);
+
+    // Deduplicate by date — average same-day values
+    const byDate = new Map<string, { mood: number[]; stress: number[]; sleep: number[]; anxiety: number[] }>();
+    for (const c of filtered) {
+      const dateKey = new Date(c.createdAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      let entry = byDate.get(dateKey);
+      if (!entry) {
+        entry = { mood: [], stress: [], sleep: [], anxiety: [] };
+        byDate.set(dateKey, entry);
+      }
+      if (c.mood != null) entry.mood.push(c.mood);
+      if (c.stress != null) entry.stress.push(c.stress);
+      if (c.sleep != null) entry.sleep.push(c.sleep);
+      if (c.anxiety != null) entry.anxiety.push(c.anxiety);
+    }
+
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+    return Array.from(byDate.entries()).map(([date, vals]) => ({
+      date,
+      mood: avg(vals.mood),
+      stress: avg(vals.stress),
+      sleep: avg(vals.sleep),
+      anxiety: avg(vals.anxiety),
+    }));
   }, [checkins, range]);
 
   // Calculate averages

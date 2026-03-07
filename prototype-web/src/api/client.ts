@@ -127,12 +127,11 @@ const api: KyInstance = ky.create({
           return response;
         }
 
-        // Retry original request. In bearer mode we reattach access token.
-        if (AUTH_MODE === 'bearer') {
-          const token = getAccessToken();
-          if (token) {
-            request.headers.set('Authorization', `Bearer ${token}`);
-          }
+        // Retry original request. Reattach access token if one exists –
+        // mirrors beforeRequest which always sends bearer when available.
+        const token = getAccessToken();
+        if (token) {
+          request.headers.set('Authorization', `Bearer ${token}`);
         }
         request.headers.set('X-Retry-After-Refresh', '1');
         return ky(request, options);

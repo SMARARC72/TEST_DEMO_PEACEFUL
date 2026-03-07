@@ -2,8 +2,9 @@
 // Patient-facing crisis alert button. Sends POST /crisis/alert and
 // displays confirmation with emergency numbers.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { apiPost } from '@/api/client';
+import { patientApi } from '@/api/patients';
 import { useAuthStore } from '@/stores/auth';
 
 interface CrisisAlertResponse {
@@ -20,11 +21,28 @@ export function CrisisButton(): React.ReactElement {
   const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const user = useAuthStore((s) => s.user);
+  const [resolvedPatientId, setResolvedPatientId] = useState<string | null>(null);
 
-  const handleCrisisAlert = useCallback(async (): Promise<void> => {
+  // Resolve the clinical patient ID from user.id (same pattern as ChatPage)
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId || user?.role !== 'PATIENT') return;
+    let cancelled = false;
+    (async () => {
+      const [patient] = await patientApi.getPatient(userId);
+      if (!cancelled && patient) {
+        setResolvedPatientId(patient.id);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, user?.role]);
+
+  const handleCrisisAlert = async (): Promise<void> => {
     setStatus('sending');
     try {
+      const patientId = resolvedPatientId ?? user?.id;
       const [data] = await apiPost<CrisisAlertResponse>('crisis/alert', {
+        patientId,
         context: 'Patient initiated crisis alert from UI',
       });
       if (data) {
@@ -35,7 +53,7 @@ export function CrisisButton(): React.ReactElement {
     } catch {
       setStatus('error');
     }
-  }, []);
+  };
 
   const handleClose = useCallback((): void => {
     setShowModal(false);

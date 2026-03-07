@@ -169,6 +169,12 @@ export default function MfaEnrollmentPage() {
               <Button onClick={() => setStep('verify')} className="w-full">
                 I've scanned the QR code →
               </Button>
+              <button
+                onClick={() => navigate('/login', { replace: true })}
+                className="w-full text-sm text-neutral-500 hover:underline"
+              >
+                ← Back to login
+              </button>
             </div>
           )}
 
@@ -193,6 +199,12 @@ export default function MfaEnrollmentPage() {
                 className="w-full text-sm text-neutral-500 hover:underline"
               >
                 ← Back to QR code
+              </button>
+              <button
+                onClick={() => navigate('/login', { replace: true })}
+                className="w-full text-sm text-neutral-500 hover:underline"
+              >
+                ← Back to login
               </button>
             </div>
           )}

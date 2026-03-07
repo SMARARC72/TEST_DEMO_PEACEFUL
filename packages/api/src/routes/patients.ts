@@ -470,14 +470,57 @@ function toSubmissionResponse(row: {
 const submissionInclude = { patient: { select: { tenantId: true } } } as const;
 
 // ─── GET / ───────────────────────────────────────────────────────────
-// List all patients for the authenticated user's tenant.
+// List patients scoped by role: PATIENT sees only self, CLINICIAN sees
+// caseload, SUPERVISOR/ADMIN sees full tenant list.
 
 patientRouter.get("/", async (req, res, next) => {
   try {
-    const rows = await prisma.patient.findMany({
-      where: { tenantId: req.user!.tid },
-      include: patientInclude,
-    });
+    const role = req.user!.role;
+    const tenantId = req.user!.tid;
+    const userId = req.user!.sub;
+
+    type PatientWithIncludes = Awaited<
+      ReturnType<
+        typeof prisma.patient.findMany<{ include: typeof patientInclude }>
+      >
+    >;
+    let rows: PatientWithIncludes = [];
+    if (role === "PATIENT") {
+      // Patients may only see their own record
+      rows = await prisma.patient.findMany({
+        where: { userId, tenantId },
+        include: patientInclude,
+      });
+    } else if (role === "CLINICIAN") {
+      // Clinicians see their assigned caseload
+      const clinician = await prisma.clinician.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      if (!clinician) {
+        rows = [];
+      } else {
+        const assignments = await prisma.careTeamAssignment.findMany({
+          where: { clinicianId: clinician.id, active: true },
+          select: { patientId: true },
+        });
+        const patientIds = assignments.map((a) => a.patientId);
+        rows =
+          patientIds.length > 0
+            ? await prisma.patient.findMany({
+                where: { id: { in: patientIds }, tenantId },
+                include: patientInclude,
+              })
+            : [];
+      }
+    } else {
+      // SUPERVISOR, ADMIN, COMPLIANCE_OFFICER — full tenant list
+      rows = await prisma.patient.findMany({
+        where: { tenantId },
+        include: patientInclude,
+      });
+    }
+
     sendSuccess(res, req, rows.map(toPatientResponse));
   } catch (err) {
     next(err);

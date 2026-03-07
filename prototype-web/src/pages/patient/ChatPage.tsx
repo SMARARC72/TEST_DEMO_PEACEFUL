@@ -103,6 +103,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
   const [resolvedPatientId, setResolvedPatientId] = useState<string | null>(null);
   const showVoice = useFeatureFlag('voiceInput');
 
@@ -176,12 +178,11 @@ export default function ChatPage() {
       const patientId = resolvedPatientId ?? user?.id ?? '';
 
       // Build message history in backend-expected format (exclude system messages)
-      const conversationMessages = messages
+      // Use messagesRef.current to capture the latest state including the just-added user message
+      const conversationMessages = messagesRef.current
         .filter((m) => m.role !== 'system')
         .slice(-20)
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-      // Append the new user message
-      conversationMessages.push({ role: 'user', content: text });
 
       const response = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',

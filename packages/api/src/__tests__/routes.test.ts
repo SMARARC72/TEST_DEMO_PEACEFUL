@@ -146,7 +146,9 @@ describe("Auth routes", () => {
   });
 
   it("POST /api/v1/auth/login returns a TOTP MFA challenge for enrolled clinicians", async () => {
-    const passwordHash = await bcrypt.hash("DemoPassword2026!", 10);
+    // Pre-computed bcrypt hash for "DemoPassword2026!" at 10 rounds (avoids slow inline hashing)
+    const passwordHash =
+      "$2a$10$Cvz06LJ8Yoxxz1SWDNgk2OYisN6hM7F73kED1bIxb.RgObaQZ7Lji";
 
     (prisma.tenant.findFirst as unknown as Mock).mockResolvedValueOnce({
       id: TENANT_ID,
@@ -387,18 +389,44 @@ describe("Auth routes", () => {
     const loginRes = await request(app)
       .post("/api/v1/auth/login")
       .set("X-Auth-Mode", "cookie")
-      .send({ email: "cookie.user@example.com", password: "DemoPassword2026!" });
+      .send({
+        email: "cookie.user@example.com",
+        password: "DemoPassword2026!",
+      });
 
     expect(loginRes.status).toBe(200);
     const cookiesHeader = loginRes.headers["set-cookie"];
     expect(Array.isArray(cookiesHeader)).toBe(true);
-    const cookies = (Array.isArray(cookiesHeader) ? cookiesHeader : []) as string[];
+    const cookies = (
+      Array.isArray(cookiesHeader) ? cookiesHeader : []
+    ) as string[];
     expect(cookies.length).toBeGreaterThanOrEqual(3);
-    expect(cookies.some((value) => value.includes("pf_access_token=") && value.includes("HttpOnly") && value.includes("SameSite=Lax"))).toBe(true);
-    expect(cookies.some((value) => value.includes("pf_refresh_token=") && value.includes("HttpOnly") && value.includes("SameSite=Strict"))).toBe(true);
-    expect(cookies.some((value) => value.includes("pf_csrf_token=") && value.includes("SameSite=Strict"))).toBe(true);
+    expect(
+      cookies.some(
+        (value) =>
+          value.includes("pf_access_token=") &&
+          value.includes("HttpOnly") &&
+          value.includes("SameSite=Lax"),
+      ),
+    ).toBe(true);
+    expect(
+      cookies.some(
+        (value) =>
+          value.includes("pf_refresh_token=") &&
+          value.includes("HttpOnly") &&
+          value.includes("SameSite=Strict"),
+      ),
+    ).toBe(true);
+    expect(
+      cookies.some(
+        (value) =>
+          value.includes("pf_csrf_token=") && value.includes("SameSite=Strict"),
+      ),
+    ).toBe(true);
 
-    const csrfCookie = cookies.find((value) => value.startsWith("pf_csrf_token="));
+    const csrfCookie = cookies.find((value) =>
+      value.startsWith("pf_csrf_token="),
+    );
     const csrfToken = csrfCookie?.split(";")[0]?.split("=")[1];
     expect(csrfToken).toBeTruthy();
 
@@ -423,7 +451,10 @@ describe("Auth routes", () => {
       .post("/api/v1/auth/refresh")
       .set("X-Auth-Mode", "cookie")
       .set("X-CSRF-Token", decodeURIComponent(csrfToken!))
-      .set("Cookie", cookies.map((value) => value.split(";")[0]));
+      .set(
+        "Cookie",
+        cookies.map((value) => value.split(";")[0]),
+      );
 
     expect(refreshRes.status).toBe(200);
 
@@ -431,7 +462,10 @@ describe("Auth routes", () => {
       .post("/api/v1/auth/logout")
       .set("X-Auth-Mode", "cookie")
       .set("X-CSRF-Token", decodeURIComponent(csrfToken!))
-      .set("Cookie", cookies.map((value) => value.split(";")[0]));
+      .set(
+        "Cookie",
+        cookies.map((value) => value.split(";")[0]),
+      );
 
     expect(logoutRes.status).toBe(200);
 
@@ -465,7 +499,6 @@ describe("Auth routes", () => {
 
     expect(invalidCsrf.status).toBe(403);
   });
-
 });
 
 // ─── Patient Endpoints ───────────────────────────────────────────────
@@ -1128,13 +1161,15 @@ describe("Crisis routes", () => {
     expect(res.status).toBe(401);
   });
 
-  it("POST /api/v1/crisis/alert returns 400 on empty body", async () => {
+  it("POST /api/v1/crisis/alert returns 404 when clinician sends empty body (no patient profile)", async () => {
     const res = await request(app)
       .post("/api/v1/crisis/alert")
       .set("Authorization", `Bearer ${clinicianToken()}`)
       .send({});
 
-    expect(res.status).toBe(400);
+    // patientId is optional (resolved from user profile for patient callers),
+    // but clinicians have no patient record → 404
+    expect(res.status).toBe(404);
   });
 });
 
