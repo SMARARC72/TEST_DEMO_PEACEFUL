@@ -81,6 +81,26 @@ jobs:
           name: prototype-dist
           path: prototype-web/dist/
 
+
+  terraform-validate-and-policy:
+    name: Terraform Validate & Secrets Rotation Policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+      - name: Terraform init (infra root)
+        run: cd packages/infra/terraform && terraform init -backend=false
+      - name: Terraform validate (infra root)
+        run: cd packages/infra/terraform && terraform validate
+      - name: Terraform init (prod env)
+        run: cd packages/infra/terraform/environments/prod && terraform init -backend=false
+      - name: Terraform validate (prod env)
+        run: cd packages/infra/terraform/environments/prod && terraform validate
+      - name: Secrets rotation policy check
+        run: python3 packages/infra/scripts/check-secret-rotation-policy.py
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
