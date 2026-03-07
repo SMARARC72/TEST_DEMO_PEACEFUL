@@ -14,6 +14,8 @@ on:
 env:
   NODE_VERSION: '22'
   AWS_REGION: us-east-1
+  SECURITY_SEVERITY_THRESHOLD: high
+  SECURITY_ARTIFACT_RETENTION_DAYS: 90
 
 jobs:
   lint-and-typecheck:
@@ -84,24 +86,97 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    env:
+      FAIL_ON_SEVERITY: ${{ env.SECURITY_SEVERITY_THRESHOLD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Prepare security evidence directory
+        run: mkdir -p ci-artifacts/security
+      - name: Install dependencies (prototype)
+        run: cd prototype-web && npm ci
+      - name: Install dependencies (API)
+        run: cd packages/api && npm ci
+      - name: Install dependencies (shared)
+        run: cd packages/shared && npm ci
       - name: Run npm audit (prototype)
-        run: cd prototype-web && npm ci && npm audit --audit-level=high
+        id: audit_prototype
+        run: |
+          set +e
+          cd prototype-web
+          npm audit --audit-level=${FAIL_ON_SEVERITY} --json > ../ci-artifacts/security/npm-audit-prototype.json
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run npm audit (API)
-        run: cd packages/api && npm ci && npm audit --audit-level=high
+        id: audit_api
+        run: |
+          set +e
+          cd packages/api
+          npm audit --audit-level=${FAIL_ON_SEVERITY} --json > ../../ci-artifacts/security/npm-audit-api.json
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run npm audit (shared)
-        run: cd packages/shared && npm ci && npm audit --audit-level=high
+        id: audit_shared
+        run: |
+          set +e
+          cd packages/shared
+          npm audit --audit-level=${FAIL_ON_SEVERITY} --json > ../../ci-artifacts/security/npm-audit-shared.json
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
       - name: Perform CodeQL Analysis
+        id: codeql
         uses: github/codeql-action/analyze@v3
-        continue-on-error: true
+        with:
+          output: ci-artifacts/security/codeql-sarif
+      - name: Enforce dependency vulnerability policy
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+        run: |
+          if [ "${{ steps.audit_prototype.outputs.exit_code }}" -ne 0 ] || \
+             [ "${{ steps.audit_api.outputs.exit_code }}" -ne 0 ] || \
+             [ "${{ steps.audit_shared.outputs.exit_code }}" -ne 0 ]; then
+            echo "Dependency vulnerability policy failed: High/Critical vulnerabilities are not allowed for PRs targeting main."
+            exit 1
+          fi
+      - name: Enforce CodeQL severity policy
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const threshold = process.env.FAIL_ON_SEVERITY.toLowerCase();
+            const rank = { low: 1, medium: 2, high: 3, critical: 4 };
+            const thresholdRank = rank[threshold] ?? rank.high;
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const ref = `refs/pull/${context.payload.pull_request.number}/head`;
+
+            const alerts = await github.paginate(github.rest.codeScanning.listAlertsForRepo, {
+              owner,
+              repo,
+              ref,
+              state: 'open',
+              per_page: 100
+            });
+
+            const failingAlerts = alerts.filter((alert) => {
+              const level = (alert.rule?.security_severity_level || alert.rule?.severity || 'low').toLowerCase();
+              return (rank[level] ?? 0) >= thresholdRank;
+            });
+
+            if (failingAlerts.length > 0) {
+              core.setFailed(`CodeQL policy failed: Found ${failingAlerts.length} open alerts at or above ${threshold}.`);
+            } else {
+              core.info(`CodeQL policy passed: no open alerts at or above ${threshold}.`);
+            }
       - name: Gitleaks — secrets scan
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -110,6 +185,13 @@ jobs:
         run: |
           cd prototype-web
           npx license-checker --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0' --production --summary
+      - name: Upload security scan evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-evidence
+          path: ci-artifacts/security/
+          retention-days: ${{ env.SECURITY_ARTIFACT_RETENTION_DAYS }}
 
   build-api:
     name: Build & Test API

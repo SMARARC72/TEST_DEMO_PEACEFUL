@@ -66,6 +66,23 @@ git push -u origin main
 
 ---
 
+
+## 🛡️ Branch Protection Rules (Required for `main`)
+
+Configure branch protection for `main` in **Settings → Branches → Add rule**:
+
+1. Enable **Require a pull request before merging**.
+2. Enable **Require status checks to pass before merging**.
+3. Add required check: **`security-scan`**.
+4. Keep merges blocked unless `security-scan` passes.
+
+`security-scan` enforces:
+- Dependency vulnerability threshold policy (`high` / `critical`) on `npm audit`.
+- CodeQL severity threshold policy (`high` default) for PRs targeting `main`.
+- Publication of SARIF + audit JSON artifacts retained for audit evidence.
+
+---
+
 ## 📁 Files to Include
 
 | File | Required | Description |
