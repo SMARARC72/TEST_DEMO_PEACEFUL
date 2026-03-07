@@ -23,6 +23,12 @@ const envSchema = z.object({
     .string()
     .min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
 
+  /** Previous access-token signing secret used during zero-downtime rotation windows. */
+  JWT_SECRET_PREVIOUS: z.string().optional(),
+
+  /** Previous refresh-token signing secret used during zero-downtime rotation windows. */
+  JWT_REFRESH_SECRET_PREVIOUS: z.string().optional(),
+
   /** Auth0 domain (optional for local development). */
   AUTH0_DOMAIN: z.string().optional(),
 

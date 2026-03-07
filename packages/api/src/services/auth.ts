@@ -74,7 +74,14 @@ export function generateStepUpToken(
  * Throws on invalid or expired tokens.
  */
 export function verifyAccessToken(token: string): AuthTokenPayload {
-  return jwt.verify(token, env.JWT_SECRET) as AuthTokenPayload;
+  try {
+    return jwt.verify(token, env.JWT_SECRET) as AuthTokenPayload;
+  } catch (err) {
+    if (env.JWT_SECRET_PREVIOUS) {
+      return jwt.verify(token, env.JWT_SECRET_PREVIOUS) as AuthTokenPayload;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -86,11 +93,22 @@ export function verifyRefreshToken(token: string): {
   tid: string;
   type: string;
 } {
-  return jwt.verify(token, env.JWT_REFRESH_SECRET) as {
-    sub: string;
-    tid: string;
-    type: string;
-  };
+  try {
+    return jwt.verify(token, env.JWT_REFRESH_SECRET) as {
+      sub: string;
+      tid: string;
+      type: string;
+    };
+  } catch (err) {
+    if (env.JWT_REFRESH_SECRET_PREVIOUS) {
+      return jwt.verify(token, env.JWT_REFRESH_SECRET_PREVIOUS) as {
+        sub: string;
+        tid: string;
+        type: string;
+      };
+    }
+    throw err;
+  }
 }
 
 // ─── Password Hashing ───────────────────────────────────────────────
