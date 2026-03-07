@@ -32,6 +32,11 @@ const defaultState = {
   isAuth0Session: false,
 };
 
+
+beforeEach(() => {
+  sessionStorage.clear();
+});
+
 describe('Auth Store — Registration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -415,5 +420,32 @@ describe('Auth Store — MFA and profile refresh', () => {
     });
 
     expect(useAuthStore.getState()).toMatchObject(defaultState);
+  });
+});
+
+
+describe('Auth Store — persistence safety', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAuthStore.setState(defaultState);
+  });
+
+  it('does not persist access or refresh tokens to sessionStorage', () => {
+    useAuthStore.getState().setTokens('access-secret', 'refresh-secret');
+
+    const persistedRaw = sessionStorage.getItem('peacefull-auth');
+    expect(persistedRaw).not.toBeNull();
+
+    const persisted = JSON.parse(persistedRaw as string) as {
+      state?: Record<string, unknown>;
+    };
+
+    expect(persisted.state).toMatchObject({
+      isAuthenticated: true,
+    });
+    expect(persistedRaw).not.toContain('access-secret');
+    expect(persistedRaw).not.toContain('refresh-secret');
+    expect(persisted.state).not.toHaveProperty('accessToken');
+    expect(persisted.state).not.toHaveProperty('refreshToken');
   });
 });
