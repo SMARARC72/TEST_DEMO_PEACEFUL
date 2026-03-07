@@ -34,6 +34,8 @@
 
 **Escalation chain:** PagerDuty → Slack #incidents → Phone tree
 
+**Secrets rotation runbook:** `packages/infra/runbook/SECRETS_ROTATION.md`
+
 ---
 
 ## 2. Severity Levels
@@ -130,6 +132,13 @@ aws rds describe-db-instances \
 3. Verify notification service logs: `aws logs filter-log-events --log-group-name /ecs/peacefull-prod --filter-pattern "escalation"`
 4. If SMS gateway down: activate backup email-only path
 5. If all channels down: manual phone call roster for active T3 patients
+
+### 3.5 Secrets Rotation Failure
+
+1. Check CloudWatch alarm `peacefull-prod-secrets-rotation-failures`.
+2. Open `runbook/SECRETS_ROTATION.md` and execute investigation steps.
+3. If JWT/Auth secret rotation is impacted, trigger ECS force deployment after promoting known-good version.
+4. Escalate to SEV-2 if rotation cannot be restored in 30 minutes.
 
 ---
 

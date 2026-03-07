@@ -164,9 +164,27 @@ async function verifyAuth0Token(
  * PRD §3.6: Validates exp, iss, nbf claims.
  */
 function verifyLocalToken(token: string): AuthTokenPayload {
-  const payload = jwt.verify(token, env.JWT_SECRET, {
-    clockTolerance: 5, // 5-second skew tolerance
-  }) as AuthTokenPayload & { nbf?: number };
+  const secrets = [env.JWT_SECRET, env.JWT_SECRET_PREVIOUS].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  let payload: (AuthTokenPayload & { nbf?: number }) | null = null;
+  let lastError: unknown;
+
+  for (const secret of secrets) {
+    try {
+      payload = jwt.verify(token, secret, {
+        clockTolerance: 5, // 5-second skew tolerance
+      }) as AuthTokenPayload & { nbf?: number };
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  if (!payload) {
+    throw lastError ?? new AppError("Invalid or expired token", 401);
+  }
 
   // PRD §3.6: Validate not-before claim if present
   if (payload.nbf && Date.now() / 1000 < payload.nbf) {

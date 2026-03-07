@@ -23,6 +23,12 @@ const envSchema = z.object({
     .string()
     .min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
 
+  /** Previous access-token signing secret used during zero-downtime rotation windows. */
+  JWT_SECRET_PREVIOUS: z.string().optional(),
+
+  /** Previous refresh-token signing secret used during zero-downtime rotation windows. */
+  JWT_REFRESH_SECRET_PREVIOUS: z.string().optional(),
+
   /** Auth0 domain (optional for local development). */
   AUTH0_DOMAIN: z.string().optional(),
 
@@ -85,6 +91,19 @@ function validateEnv() {
   }
 
   const data = parsed.data;
+
+  // Disallow wildcard CORS origins in staging/production
+  if (
+    ["staging", "production"].includes(data.NODE_ENV) &&
+    data.CORS_ORIGIN.split(",")
+      .map((origin) => origin.trim())
+      .some((origin) => origin.includes("*"))
+  ) {
+    console.error(
+      "\n❌  CORS_ORIGIN cannot include wildcard origins (*) in staging/production.\n",
+    );
+    process.exit(1);
+  }
 
   // Enforce ENCRYPTION_KEY in production
   if (data.NODE_ENV === "production" && !data.ENCRYPTION_KEY) {

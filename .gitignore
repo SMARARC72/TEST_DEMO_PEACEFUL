@@ -54,3 +54,14 @@ temp/
 
 # Local Netlify folder
 .netlify
+
+# Deployment/task-definition snapshots (keep only sanitized templates in repo)
+taskdef-current.json
+containerdef.json
+ecs-logs.json
+**/task-def-raw.json
+**/task-def-clean.json
+**/task-def-fixed.json
+**/task-def-update.json
+**/aws-ecs-describe-task-definition*.json
+**/describe-task-definition*.json
