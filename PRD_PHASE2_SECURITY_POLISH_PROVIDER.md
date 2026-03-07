@@ -352,7 +352,7 @@ The subagent MUST:
 
 ### 3.9 — Dependency Vulnerability Scanning in CI
 
-**What:** Add automated dependency scanning to the CI pipeline.
+**What:** Add automated dependency and CodeQL severity scanning to the CI pipeline.
 
 **Where to create:**
 - New job in `.github/workflows/ci.yml` (or create `.github/workflows/security-scan.yml`)
@@ -361,14 +361,30 @@ The subagent MUST:
 - `npm audit --audit-level=high` on `prototype-web/`
 - `npm audit --audit-level=high` on every Lambda package directory
 - `npm audit --audit-level=high` on `packages/shared/`
+- CodeQL analysis with severity threshold policy (`high` default)
 - Optionally add `Snyk` or `Trivy` for deeper scanning
 
 **Where to modify:**
-- Branch protection rules — this job must be required to pass before merge
+- Branch protection rules — `security-scan` must be configured as a required status check for `main`.
+
+**Branch protection policy for `main`:**
+1. Require pull request before merge.
+2. Require status checks to pass before merge.
+3. Add `security-scan` to required status checks.
+4. Block merge when the `security-scan` job fails due to:
+   - Any `npm audit` result at/above the configured threshold.
+   - Any open CodeQL alert at/above the configured threshold.
+
+**Audit evidence retention policy:**
+- Upload CI artifacts for security evidence (`npm audit` JSON + CodeQL SARIF).
+- Retain security evidence artifacts for at least 90 days.
 
 **Acceptance criteria:**
-- [ ] CI workflow runs dependency audit on every PR
-- [ ] Build fails if any `high` or `critical` vulnerability found
+- [ ] CI workflow runs dependency audit and CodeQL checks on every PR
+- [ ] PRs targeting `main` fail if any `high`/`critical` dependency vulnerability is found
+- [ ] PRs targeting `main` fail if any open CodeQL alert at/above threshold exists
+- [ ] Branch protection on `main` requires the `security-scan` check before merge
+- [ ] Security scan artifacts are published and retained for audit evidence
 - [ ] Current codebase passes (fix any existing vulnerabilities first)
 - [ ] Dependabot or Renovate configured for automated dependency update PRs
 
