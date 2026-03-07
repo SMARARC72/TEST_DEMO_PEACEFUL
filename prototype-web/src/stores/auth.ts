@@ -162,8 +162,11 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         const { refreshToken } = get();
-        await authApi.logout(refreshToken ?? undefined);
-        get().clearAuth();
+        try {
+          await authApi.logout(refreshToken ?? undefined);
+        } finally {
+          get().clearAuth();
+        }
       },
 
       fetchMe: async () => {
@@ -179,9 +182,6 @@ export const useAuthStore = create<AuthState>()(
       name: 'peacefull-auth',
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        user: state.user,
         isAuthenticated: state.isAuthenticated,
         isAuth0Session: state.isAuth0Session,
       }),
