@@ -41,8 +41,28 @@ export function bindTokenAccessors(fns: {
 let refreshPromise: Promise<boolean> | null = null;
 
 async function attemptRefresh(): Promise<boolean> {
+  const refresh = getRefreshToken();
+  if (refresh) {
+    try {
+      const raw = await ky
+        .post(`${BASE_URL}/auth/refresh`, {
+          json: { refreshToken: refresh },
+        })
+        .json();
+
+      const res = (raw && typeof raw === 'object' && 'data' in raw && 'requestId' in raw)
+        ? (raw as { data: { accessToken: string; refreshToken: string } }).data
+        : raw as { accessToken: string; refreshToken: string };
+
+      setTokens(res.accessToken, res.refreshToken);
+      return true;
+    } catch {
+      // Fall through to cookie refresh only when explicitly configured.
+    }
+  }
+
   if (AUTH_MODE === 'cookie') {
-    // Cookie mode: POST to refresh endpoint; server reads httpOnly refresh cookie
+    // Cookie mode fallback: server reads httpOnly refresh cookie.
     try {
       await ky.post(`${BASE_URL}/auth/refresh`, {
         credentials: 'include',
@@ -54,27 +74,8 @@ async function attemptRefresh(): Promise<boolean> {
     }
   }
 
-  // Bearer mode: send refreshToken in JSON body
-  const refresh = getRefreshToken();
-  if (!refresh) return false;
-
-  try {
-    const raw = await ky
-      .post(`${BASE_URL}/auth/refresh`, {
-        json: { refreshToken: refresh },
-      })
-      .json();
-
-    const res = (raw && typeof raw === 'object' && 'data' in raw && 'requestId' in raw)
-      ? (raw as { data: { accessToken: string; refreshToken: string } }).data
-      : raw as { accessToken: string; refreshToken: string };
-
-    setTokens(res.accessToken, res.refreshToken);
-    return true;
-  } catch {
-    clearAuth();
-    return false;
-  }
+  clearAuth();
+  return false;
 }
 
 // ─── ky instance ──────────────────────────────
@@ -89,14 +90,13 @@ const api: KyInstance = ky.create({
   hooks: {
     beforeRequest: [
       (request) => {
-        // Bearer mode: inject Authorization header from store
-        if (AUTH_MODE === 'bearer') {
-          const token = getAccessToken();
-          if (token) {
-            request.headers.set('Authorization', `Bearer ${token}`);
-          }
+        // If a bearer token exists, always send it. This keeps the client
+        // compatible with token-based backends even when auth-mode config drifts.
+        const token = getAccessToken();
+        if (token) {
+          request.headers.set('Authorization', `Bearer ${token}`);
         }
-        // Cookie mode: no header needed — browser sends httpOnly cookie automatically
+        // Cookie mode still works because credentials are included above.
 
         // Multi-tenant: inject tenant ID header
         const tenantId = getCurrentTenantId();

@@ -1,7 +1,13 @@
 // ─── Organization Management Page ────────────────────────────────────
 // Clinicians can create / view their practice, manage members, and send invites.
 import { useEffect, useState, useCallback } from 'react';
-import { organizationApi, type Organization, type OrgMember, type OrgInvitation } from '@/api/organizations';
+import {
+  organizationApi,
+  type Organization,
+  type OrgMember,
+  type OrgInvitation,
+  type PendingClinician,
+} from '@/api/organizations';
 import { canModerateOrganizationMembers, canReviewPendingClinician } from '@/lib/organization-access';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
@@ -165,8 +171,12 @@ export default function OrgManagementPage() {
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [invitations, setInvitations] = useState<OrgInvitation[]>([]);
+  const [pendingClinicians, setPendingClinicians] = useState<PendingClinician[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [pendingClinicianLoading, setPendingClinicianLoading] = useState(false);
+
+  const isPlatformAdmin = user?.role === 'ADMIN';
 
   const loadOrgs = useCallback(async () => {
     setLoading(true);
@@ -192,6 +202,23 @@ export default function OrgManagementPage() {
     setDetailLoading(false);
   }, []);
 
+  const loadPendingClinicians = useCallback(async () => {
+    if (!isPlatformAdmin) {
+      setPendingClinicians([]);
+      return;
+    }
+
+    setPendingClinicianLoading(true);
+    const [data, err] = await organizationApi.listPendingClinicians();
+    setPendingClinicianLoading(false);
+    if (err) {
+      addToast({ variant: 'error', title: err.message ?? 'Failed to load pending clinicians' });
+      return;
+    }
+
+    setPendingClinicians(data?.pendingClinicians ?? []);
+  }, [addToast, isPlatformAdmin]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- standard data-fetching pattern
     void loadOrgs();
@@ -201,6 +228,11 @@ export default function OrgManagementPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- standard data-fetching pattern
     if (selectedOrg) void loadOrgDetail(selectedOrg);
   }, [selectedOrg, loadOrgDetail]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- standard data-fetching pattern
+    void loadPendingClinicians();
+  }, [loadPendingClinicians]);
 
   async function handleRemoveMember(userId: string) {
     if (!selectedOrg) return;
@@ -246,6 +278,34 @@ export default function OrgManagementPage() {
     loadOrgDetail(selectedOrg);
   }
 
+  async function handleApprovePendingClinician(userId: string) {
+    const [, err] = await organizationApi.approvePendingClinician(userId);
+    if (err) {
+      addToast({ variant: 'error', title: err.message ?? 'Failed to approve clinician' });
+      return;
+    }
+
+    addToast({ variant: 'success', title: 'Clinician approved' });
+    await loadPendingClinicians();
+    if (selectedOrg) {
+      void loadOrgDetail(selectedOrg);
+    }
+  }
+
+  async function handleRejectPendingClinician(userId: string) {
+    const [, err] = await organizationApi.rejectPendingClinician(userId);
+    if (err) {
+      addToast({ variant: 'error', title: err.message ?? 'Failed to reject clinician' });
+      return;
+    }
+
+    addToast({ variant: 'success', title: 'Clinician registration rejected' });
+    await loadPendingClinicians();
+    if (selectedOrg) {
+      void loadOrgDetail(selectedOrg);
+    }
+  }
+
   const selectedOrgData = organizations.find((o) => o.id === selectedOrg);
   const canModerateMembers = canModerateOrganizationMembers(user, selectedOrgData);
 
@@ -264,9 +324,86 @@ export default function OrgManagementPage() {
           Organization Management
         </h1>
         <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-          Manage your practice, team members, and patient invitations.
+          Manage your practice, team members, patient invitations, and clinician approvals.
         </p>
       </div>
+
+      {isPlatformAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Clinician Approvals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingClinicianLoading ? (
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            ) : pendingClinicians.length === 0 ? (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                No clinician registrations are currently awaiting administrator approval.
+              </p>
+            ) : (
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                {pendingClinicians.map((clinician) => (
+                  <div
+                    key={clinician.id}
+                    className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                          {clinician.firstName}
+                        </p>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                          Pending
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {clinician.email}
+                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        Requested {new Date(clinician.createdAt).toLocaleString()}
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {clinician.organizations.length > 0 ? (
+                          clinician.organizations.map((organization) => (
+                            <span
+                              key={`${clinician.id}-${organization.id}`}
+                              className="rounded-full bg-neutral-100 px-2 py-1 text-[11px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                            >
+                              {organization.name} · {organization.role}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="rounded-full bg-neutral-100 px-2 py-1 text-[11px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                            No organization membership yet
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprovePendingClinician(clinician.id)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        onClick={() => handleRejectPendingClinician(clinician.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Organization selector or create form */}
       {organizations.length === 0 ? (

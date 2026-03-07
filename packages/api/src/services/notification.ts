@@ -4,16 +4,11 @@
 
 import { env } from "../config/index.js";
 import { apiLogger } from "../utils/logger.js";
-import { prisma } from "../models/index.js";
 import type { EscalationItem } from "@peacefull/shared";
 
 const isProduction = env.NODE_ENV === "production";
-
-// Allow email sending when SES credentials are explicitly configured, even in non-production
-// This enables staging/development environments to test real email delivery.
-const sesCredentialsConfigured = !!(
-  process.env.SES_FROM_EMAIL || process.env.AWS_ACCESS_KEY_ID
-);
+const enableNonProdEmailDelivery =
+  process.env.ENABLE_NON_PROD_EMAIL_DELIVERY === "true";
 
 // ─── SES Client (lazy-initialized) ──────────────────────────────────
 
@@ -22,7 +17,7 @@ let sesClient: import("@aws-sdk/client-ses").SESClient | null = null;
 async function getSESClient(): Promise<
   import("@aws-sdk/client-ses").SESClient | null
 > {
-  if (!isProduction && !sesCredentialsConfigured) return null;
+  if (!isProduction && !enableNonProdEmailDelivery) return null;
   if (sesClient) return sesClient;
   try {
     const { SESClient } = await import("@aws-sdk/client-ses");
@@ -52,10 +47,10 @@ export async function sendEmail(
   template: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  if (!isProduction && !sesCredentialsConfigured) {
+  if (!isProduction && !enableNonProdEmailDelivery) {
     apiLogger.info(
       { to, subject, template, data },
-      "[DEV] Email notification (logged, not sent — set SES_FROM_EMAIL to enable)",
+      "[DEV] Email notification (logged, not sent — set ENABLE_NON_PROD_EMAIL_DELIVERY=true to enable SES)",
     );
     return;
   }
@@ -170,8 +165,9 @@ export async function escalationCascade(
   let onCallPhone = "";
 
   try {
+    const { prisma } = await import("../models/index.js");
     const assignment = await prisma.careTeamAssignment.findFirst({
-      where: { patientId, active: true, role: "PRIMARY" },
+      where: { patientId, active: true, role: "Primary Therapist" },
       include: {
         clinician: {
           include: { user: { select: { email: true, phone: true } } },
@@ -327,7 +323,7 @@ function renderTemplate(
             <div style="background: #fef3c7; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
               <p style="margin: 0 0 8px; font-size: 14px; color: #92400e;"><strong>What happens next?</strong></p>
               <ol style="margin: 0; padding-left: 20px; font-size: 13px; color: #92400e;">
-                <li>A supervisor will review your registration</li>
+                <li>An administrator will review your registration</li>
                 <li>You will receive an email once approved</li>
                 <li>After approval, you can sign in and access your dashboard</li>
               </ol>
@@ -345,12 +341,12 @@ function renderTemplate(
       return `
         <html><body style="font-family: sans-serif; padding: 20px; max-width: 520px; margin: 0 auto;">
           <h2 style="color: #2563eb;">New Clinician Registration</h2>
-          <p>A new clinician has registered and requires your approval:</p>
+          <p>A new clinician has registered and requires administrator approval:</p>
           <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 16px 0;">
             <p style="margin: 0 0 4px;"><strong>Name:</strong> ${String(data.firstName ?? "")} ${String(data.lastName ?? "")}</p>
             <p style="margin: 0;"><strong>Email:</strong> ${String(data.email ?? "")}</p>
           </div>
-          <p>Please review and approve their account in the admin dashboard.</p>
+          <p>Please review and approve their account in the administrator dashboard.</p>
           <hr/>
           <p style="color: #94a3b8; font-size: 11px;">Peacefull.ai &mdash; Automated notification</p>
         </body></html>

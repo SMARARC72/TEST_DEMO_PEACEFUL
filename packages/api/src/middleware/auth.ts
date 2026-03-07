@@ -3,13 +3,15 @@
 // Role gates, tenant scoping, and step-up auth.
 
 import type { Request, Response, NextFunction } from "express";
+import { createRequire } from "node:module";
 import jwt from "jsonwebtoken";
-import jwksRsa from "jwks-rsa";
 import { env } from "../config/index.js";
 import { AppError } from "./error.js";
 import { authLogger } from "../utils/logger.js";
 import { isTokenBlacklisted } from "../services/token-blacklist.js";
 import type { AuthTokenPayload, UserRole } from "@peacefull/shared";
+
+const require = createRequire(import.meta.url);
 
 // ─── Express Request Augmentation ────────────────────────────────────
 
@@ -28,13 +30,59 @@ declare global {
  * Lazy-initialized JWKS client for verifying Auth0-issued RS256 tokens.
  * Only created when AUTH0_DOMAIN is configured.
  */
-let jwksClient: jwksRsa.JwksClient | null = null;
+type SigningKey = {
+  getPublicKey(): string;
+};
 
-function getJwksClient(): jwksRsa.JwksClient | null {
+type JwksClient = {
+  getSigningKey(
+    kid: string,
+    callback: (err: Error | null, key?: SigningKey) => void,
+  ): void;
+};
+
+type JwksFactory = (options: {
+  jwksUri: string;
+  cache: boolean;
+  cacheMaxEntries: number;
+  cacheMaxAge: number;
+  rateLimit: boolean;
+  jwksRequestsPerMinute: number;
+}) => JwksClient;
+
+let jwksClient: JwksClient | null = null;
+let jwksFactory: JwksFactory | null = null;
+
+function loadJwksFactory(): JwksFactory {
+  if (jwksFactory) {
+    return jwksFactory;
+  }
+
+  const mod = require("jwks-rsa") as
+    | JwksFactory
+    | {
+        default?: JwksFactory;
+      };
+  const factory =
+    typeof mod === "function"
+      ? mod
+      : typeof mod.default === "function"
+        ? mod.default
+        : null;
+
+  if (!factory) {
+    throw new AppError("JWKS client unavailable", 500);
+  }
+
+  jwksFactory = factory;
+  return jwksFactory;
+}
+
+function getJwksClient(): JwksClient | null {
   if (jwksClient) return jwksClient;
   if (!env.AUTH0_DOMAIN) return null;
 
-  jwksClient = jwksRsa({
+  jwksClient = loadJwksFactory()({
     jwksUri: `https://${env.AUTH0_DOMAIN}/.well-known/jwks.json`,
     cache: true,
     cacheMaxEntries: 5,

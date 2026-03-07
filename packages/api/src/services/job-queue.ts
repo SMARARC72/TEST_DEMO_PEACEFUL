@@ -6,12 +6,23 @@
 // UGO-1.1 (HIGH-004): Moves the synchronous AI pipeline off the HTTP
 // request path so callers get 202 Accepted immediately.
 
-import { Queue, Worker, type Job, type ConnectionOptions } from "bullmq";
+import { createRequire } from "node:module";
+import type { Queue, Worker, Job, ConnectionOptions } from "bullmq";
 import { env } from "../config/index.js";
 import { apiLogger } from "../utils/logger.js";
 import type { ProcessingResult } from "./submission-pipeline.js";
 
+const require = createRequire(import.meta.url);
 const logger = apiLogger.child({ service: "job-queue" });
+
+type BullMqModule = typeof import("bullmq");
+
+let bullMqModule: BullMqModule | null = null;
+
+function getBullMqModule(): BullMqModule {
+  bullMqModule ??= require("bullmq") as BullMqModule;
+  return bullMqModule;
+}
 
 // ─── Queue name ──────────────────────────────────────────────────────
 export const QUEUE_NAME = "submission-pipeline";
@@ -38,6 +49,7 @@ export function getQueue(): Queue | null {
     logger.warn("REDIS_URL not set — job queue will run inline (no BullMQ)");
     return null;
   }
+  const { Queue } = getBullMqModule();
   _queue = new Queue(QUEUE_NAME, {
     connection: conn,
     defaultJobOptions: {
@@ -70,6 +82,7 @@ export function startWorker(): Worker | null {
   if (_worker) return _worker;
   const conn = getRedisConnection();
   if (!conn) return null;
+  const { Worker } = getBullMqModule();
 
   _worker = new Worker<{ submissionId: string }, ProcessingResult>(
     QUEUE_NAME,

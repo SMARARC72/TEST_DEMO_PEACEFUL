@@ -54,6 +54,20 @@ export interface OrgInvitation {
   inviter: { firstName: string; lastName: string };
 }
 
+export interface PendingClinician {
+  id: string;
+  email: string;
+  firstName: string;
+  status: string;
+  createdAt: string;
+  organizations: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    role: string;
+  }>;
+}
+
 export interface InviteValidation {
   email: string;
   role: string;
@@ -113,6 +127,29 @@ export const organizationApi = {
   rejectMember(orgId: string, userId: string) {
     return apiPatch<{ message: string; userId: string }>(
       `organizations/${orgId}/members/${userId}/reject`,
+      {},
+    );
+  },
+
+  /** List tenant-wide clinician registrations awaiting admin approval */
+  listPendingClinicians() {
+    return apiGet<{ pendingClinicians: PendingClinician[] }>(
+      "organizations/pending-clinicians",
+    );
+  },
+
+  /** Platform-admin approval for suspended clinician registrations */
+  approvePendingClinician(userId: string) {
+    return apiPatch<{ message: string; userId: string }>(
+      `organizations/pending-clinicians/${userId}/approve`,
+      {},
+    );
+  },
+
+  /** Platform-admin rejection for suspended clinician registrations */
+  rejectPendingClinician(userId: string) {
+    return apiPatch<{ message: string; userId: string }>(
+      `organizations/pending-clinicians/${userId}/reject`,
       {},
     );
   },

@@ -72,7 +72,7 @@ function assertUserCanAuthenticate(user: { status: string; role: string }) {
 
   if (user.status === "SUSPENDED" && user.role === "CLINICIAN") {
     throw new AppError(
-      "Your clinician account is pending supervisor approval.",
+      "Your clinician account is pending administrator approval.",
       403,
     );
   }
@@ -223,7 +223,7 @@ authRouter.post("/register", async (req, res, next) => {
 
     // Send welcome/confirmation email (fire-and-forget — don't block registration)
     if (status === "SUSPENDED") {
-      // Clinician pending approval: email the clinician + notify supervisor
+      // Clinician pending approval: email the clinician + notify the tenant approvers
       sendEmail(
         body.email,
         "Peacefull.ai — Registration Received",
@@ -240,37 +240,57 @@ authRouter.post("/register", async (req, res, next) => {
         ),
       );
 
-      // Notify tenant supervisor(s)
-      prisma.user
-        .findMany({
+      void (async () => {
+        const supervisors = await prisma.user.findMany({
           where: { tenantId: tenant.id, role: "SUPERVISOR", status: "ACTIVE" },
-          select: { email: true },
-        })
-        .then((supervisors: Array<{ email: string }>) => {
-          for (const sup of supervisors) {
-            sendEmail(
-              sup.email,
-              "New Clinician Registration — Approval Required",
-              "supervisor-new-clinician",
+          select: { email: true, role: true },
+        });
+        const approvers =
+          supervisors.length > 0
+            ? supervisors
+            : await prisma.user.findMany({
+                where: { tenantId: tenant.id, role: "ADMIN", status: "ACTIVE" },
+                select: { email: true, role: true },
+              });
+
+        if (approvers.length === 0) {
+          authLogger.warn(
+            { tenantId: tenant.id, userId: user.id },
+            "No active approvers found for clinician registration",
+          );
+          return;
+        }
+
+        for (const approver of approvers) {
+          const approverLabel =
+            approver.role === "SUPERVISOR" ? "supervisor" : "admin";
+
+          void sendEmail(
+            approver.email,
+            "New Clinician Registration — Approval Required",
+            "supervisor-new-clinician",
+            {
+              firstName: body.firstName,
+              lastName: body.lastName,
+              email: body.email,
+            },
+          ).catch((err: unknown) =>
+            authLogger.error(
               {
-                firstName: body.firstName,
-                lastName: body.lastName,
-                email: body.email,
+                err,
+                approverEmail: approver.email,
+                approverRole: approver.role,
               },
-            ).catch((err: unknown) =>
-              authLogger.error(
-                { err, supervisorEmail: sup.email },
-                "Failed to send supervisor notification",
-              ),
-            );
-          }
-        })
-        .catch((err: unknown) =>
-          authLogger.error(
-            { err },
-            "Failed to query supervisors for clinician approval",
-          ),
-        );
+              `Failed to send ${approverLabel} notification`,
+            ),
+          );
+        }
+      })().catch((err: unknown) =>
+        authLogger.error(
+          { err },
+          "Failed to query approvers for clinician approval",
+        ),
+      );
     } else {
       // Patient welcome email
       sendEmail(body.email, "Welcome to Peacefull.ai!", "welcome", {
@@ -292,7 +312,7 @@ authRouter.post("/register", async (req, res, next) => {
         req,
         {
           message:
-            "Registration successful. Your clinician account is pending admin approval.",
+            "Registration successful. Your clinician account is pending administrator approval.",
           userId: user.id,
           status: "PENDING_APPROVAL",
         },

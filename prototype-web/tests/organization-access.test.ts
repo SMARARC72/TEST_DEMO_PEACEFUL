@@ -17,6 +17,17 @@ const supervisor: User = {
   createdAt: '2026-03-06T00:00:00.000Z',
 };
 
+const admin: User = {
+  id: 'user-admin',
+  email: 'admin@example.com',
+  firstName: 'Addison',
+  lastName: 'Admin',
+  role: 'ADMIN',
+  tenantId: 'tenant-001',
+  status: 'ACTIVE',
+  createdAt: '2026-03-06T00:00:00.000Z',
+};
+
 const org: Organization = {
   id: 'org-001',
   tenantId: 'tenant-001',
@@ -47,6 +58,10 @@ const pendingClinician: OrgMember = {
 describe('organization access helpers', () => {
   it('allows supervisor owners to moderate organization members', () => {
     expect(canModerateOrganizationMembers(supervisor, org)).toBe(true);
+  });
+
+  it('allows platform admins to moderate pending clinicians without org membership context', () => {
+    expect(canModerateOrganizationMembers(admin, undefined)).toBe(true);
   });
 
   it('only exposes pending clinician review actions for suspended clinicians', () => {

@@ -17,7 +17,9 @@ export default defineConfig({
     globals: true,
     testTimeout: 30_000,
     hookTimeout: 30_000,
-    pool: 'threads',
+    pool: 'forks',
+    minWorkers: 1,
+    maxWorkers: 2,
     coverage: {
       provider: 'v8',
       exclude: ['src/mocks/**', 'src/**/*.d.ts'],

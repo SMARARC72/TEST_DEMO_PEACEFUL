@@ -47,6 +47,199 @@ async function requireOrgRole(
   return membership;
 }
 
+async function getPendingClinicianForTenant(userId: string, tenantId: string) {
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      tenantId: true,
+      email: true,
+      firstName: true,
+      status: true,
+      role: true,
+      createdAt: true,
+      orgMemberships: {
+        select: {
+          role: true,
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!targetUser) {
+    throw new AppError("User not found", 404);
+  }
+  if (targetUser.tenantId !== tenantId) {
+    throw new AppError("User belongs to a different tenant", 403);
+  }
+  if (targetUser.role !== "CLINICIAN") {
+    throw new AppError("Only clinician accounts can be reviewed here", 400);
+  }
+  if (targetUser.status !== "SUSPENDED") {
+    throw new AppError("User is not pending approval", 400);
+  }
+
+  return targetUser;
+}
+
+function formatPendingClinician(
+  user: Awaited<ReturnType<typeof getPendingClinicianForTenant>>,
+) {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    status: user.status,
+    createdAt: user.createdAt.toISOString(),
+    organizations: user.orgMemberships.map((membership) => ({
+      id: membership.organization.id,
+      name: membership.organization.name,
+      slug: membership.organization.slug,
+      role: membership.role,
+    })),
+  };
+}
+
+organizationRouter.get(
+  "/pending-clinicians",
+  authenticate,
+  requireRole(UserRole.ADMIN),
+  async (req, res, next) => {
+    try {
+      const pendingClinicians = await prisma.user.findMany({
+        where: {
+          tenantId: req.user!.tid,
+          role: "CLINICIAN",
+          status: "SUSPENDED",
+        },
+        select: {
+          id: true,
+          tenantId: true,
+          email: true,
+          firstName: true,
+          status: true,
+          role: true,
+          createdAt: true,
+          orgMemberships: {
+            select: {
+              role: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      sendSuccess(res, req, {
+        pendingClinicians: pendingClinicians.map(formatPendingClinician),
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+organizationRouter.patch(
+  "/pending-clinicians/:userId/approve",
+  authenticate,
+  requireRole(UserRole.ADMIN),
+  async (req, res, next) => {
+    try {
+      const requesterId = req.user!.sub;
+      const targetUser = await getPendingClinicianForTenant(
+        req.params.userId as string,
+        req.user!.tid,
+      );
+
+      await prisma.user.update({
+        where: { id: targetUser.id },
+        data: { status: "ACTIVE" },
+      });
+
+      sendEmail(
+        targetUser.email,
+        "Peacefull.ai — Your Account Has Been Approved",
+        "account-approved",
+        { firstName: targetUser.firstName },
+      ).catch((err) =>
+        apiLogger.error(
+          { err, email: targetUser.email },
+          "Failed to send approval email",
+        ),
+      );
+
+      apiLogger.info(
+        { approvedUserId: targetUser.id, approvedBy: requesterId },
+        "Pending clinician approved by platform admin",
+      );
+
+      sendSuccess(res, req, {
+        message: "User approved successfully",
+        userId: targetUser.id,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+organizationRouter.patch(
+  "/pending-clinicians/:userId/reject",
+  authenticate,
+  requireRole(UserRole.ADMIN),
+  async (req, res, next) => {
+    try {
+      const requesterId = req.user!.sub;
+      const targetUser = await getPendingClinicianForTenant(
+        req.params.userId as string,
+        req.user!.tid,
+      );
+
+      await prisma.user.update({
+        where: { id: targetUser.id },
+        data: { status: "DEACTIVATED" },
+      });
+
+      sendEmail(
+        targetUser.email,
+        "Peacefull.ai — Registration Update",
+        "account-rejected",
+        { firstName: targetUser.firstName },
+      ).catch((err) =>
+        apiLogger.error(
+          { err, email: targetUser.email },
+          "Failed to send rejection email",
+        ),
+      );
+
+      apiLogger.info(
+        { rejectedUserId: targetUser.id, rejectedBy: requesterId },
+        "Pending clinician rejected by platform admin",
+      );
+
+      sendSuccess(res, req, {
+        message: "User rejected",
+        userId: targetUser.id,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ─── POST /organizations — Create a new practice ─────────────────────
 
 const createOrgSchema = z.object({
@@ -297,24 +490,13 @@ organizationRouter.patch(
       const orgId = req.params.id as string;
       const targetUserId = req.params.userId as string;
 
-      // Verify requester is OWNER or ADMIN of the org
-      await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
-
-      // Find the target user and verify they are SUSPENDED
-      const targetUser = await prisma.user.findUnique({
-        where: { id: targetUserId },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          status: true,
-          role: true,
-        },
-      });
-      if (!targetUser) throw new AppError("User not found", 404);
-      if (targetUser.status !== "SUSPENDED") {
-        throw new AppError("User is not pending approval", 400);
+      if (req.user!.role !== UserRole.ADMIN) {
+        await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
       }
+      const targetUser = await getPendingClinicianForTenant(
+        targetUserId,
+        req.user!.tid,
+      );
 
       // Activate the user
       await prisma.user.update({
@@ -362,16 +544,13 @@ organizationRouter.patch(
       const orgId = req.params.id as string;
       const targetUserId = req.params.userId as string;
 
-      await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
-
-      const targetUser = await prisma.user.findUnique({
-        where: { id: targetUserId },
-        select: { id: true, email: true, firstName: true, status: true },
-      });
-      if (!targetUser) throw new AppError("User not found", 404);
-      if (targetUser.status !== "SUSPENDED") {
-        throw new AppError("User is not pending approval", 400);
+      if (req.user!.role !== UserRole.ADMIN) {
+        await requireOrgRole(requesterId, orgId, "OWNER", "ADMIN");
       }
+      const targetUser = await getPendingClinicianForTenant(
+        targetUserId,
+        req.user!.tid,
+      );
 
       await prisma.user.update({
         where: { id: targetUserId },

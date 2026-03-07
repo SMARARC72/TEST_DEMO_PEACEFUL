@@ -7,6 +7,13 @@
 
 ## 🟢 ACTIVE PRD: PRD-MVP-STABILIZE-2026-001 (MVP Stabilization + Demo Environment)
 
+### Continued Changes & Improvements (2026-03-07)
+- Added a new reality-based readiness report and PRD extension in [MVP_V1_READINESS_REASSESSMENT_2026-03-07.md](./MVP_V1_READINESS_REASSESSMENT_2026-03-07.md).
+- Repository validation is currently stronger than live deployment validation: API checks are green (`158/158`), frontend checks are green (`120/120`), and local Playwright critical flows passed (`15 passed`, `1 skipped`).
+- Production is not MVP V1 ready yet: live auth still regresses after login, the first live super-admin account has not been provisioned, and the production websocket handshake returns `404`.
+- Admin fallback approval paths were implemented in repo so platform admins can approve pending clinicians when no supervisor exists, but this still requires deployment plus live verification.
+- This section supersedes older "go" or "unconditional go" claims anywhere else in the repository unless a newer dated verification record explicitly replaces it.
+
 ### Continued Changes & Improvements (2026-03-05)
 - Fixed AI Companion SSE mock to read `messages` array (prevents offline-mode fallback) and emit `sessionId` on first chunk for continuity.
 - Made patient profile endpoints session-aware so real patient logins no longer see the hardcoded demo profile.

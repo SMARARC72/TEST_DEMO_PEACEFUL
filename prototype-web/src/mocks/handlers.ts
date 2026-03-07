@@ -91,8 +91,20 @@ const mockSupervisor: User = {
   createdAt: '2025-01-05T00:00:00Z',
 };
 
+const mockAdmin: User = {
+  id: 'admin-001',
+  tenantId: 'tenant-001',
+  email: 'admin@peacefull.cloud',
+  role: 'ADMIN',
+  status: 'ACTIVE',
+  profile: { firstName: 'Avery', lastName: 'Admin' },
+  mfaEnabled: true,
+  createdAt: '2025-01-04T00:00:00Z',
+};
+
 // Resolve the correct mock user from an email address
 function resolveUserByEmail(email: string): User {
+  if (email.includes('admin')) return { ...mockAdmin };
   if (email.includes('supervisor')) return { ...mockSupervisor };
   if (email.includes('clinician') || email.includes('dr.')) return { ...mockClinician };
   return { ...mockUser };
@@ -201,6 +213,24 @@ const mockSettings: PatientSettings = {
   checkinReminderTime: '09:00',
 };
 
+let mockPendingClinicians = [
+  {
+    id: 'pending-clinician-001',
+    email: 'new.clinician@peacefull.cloud',
+    firstName: 'Jordan',
+    status: 'SUSPENDED',
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+    organizations: [
+      {
+        id: 'org-001',
+        name: 'Demo Clinic',
+        slug: 'demo-clinic',
+        role: 'MEMBER',
+      },
+    ],
+  },
+];
+
 // ─── Handlers ────────────────────────────────
 
 export const handlers = [
@@ -250,7 +280,7 @@ export const handlers = [
         user,
         status: 'PENDING_APPROVAL',
         emailSent: true,
-        message: `A confirmation email has been sent to ${body.email}. Your account is pending supervisor approval.`,
+        message: `A confirmation email has been sent to ${body.email}. Your account is pending administrator approval.`,
       }, 201);
     }
     return mockJson({
@@ -1347,6 +1377,12 @@ export const handlers = [
     }, 201);
   }),
 
+  http.get(`${BASE}/organizations/pending-clinicians`, () => {
+    return mockJson({
+      pendingClinicians: mockPendingClinicians,
+    });
+  }),
+
   http.get(`${BASE}/organizations/:orgId`, ({ params }) => {
     return mockJson({
       id: params.orgId,
@@ -1384,6 +1420,20 @@ export const handlers = [
         },
       ],
     });
+  }),
+
+  http.patch(`${BASE}/organizations/pending-clinicians/:userId/approve`, ({ params }) => {
+    mockPendingClinicians = mockPendingClinicians.filter(
+      (clinician) => clinician.id !== params.userId,
+    );
+    return mockJson({ success: true, userId: params.userId });
+  }),
+
+  http.patch(`${BASE}/organizations/pending-clinicians/:userId/reject`, ({ params }) => {
+    mockPendingClinicians = mockPendingClinicians.filter(
+      (clinician) => clinician.id !== params.userId,
+    );
+    return mockJson({ success: true, userId: params.userId });
   }),
 
   http.post(`${BASE}/organizations/:orgId/invite`, async ({ params, request }) => {
@@ -1438,6 +1488,14 @@ export const handlers = [
 
   http.delete(`${BASE}/organizations/:orgId/members/:userId`, ({ params }) => {
     return mockJson({ success: true, removedUserId: params.userId });
+  }),
+
+  http.patch(`${BASE}/organizations/:orgId/members/:userId/approve`, ({ params }) => {
+    return mockJson({ success: true, userId: params.userId });
+  }),
+
+  http.patch(`${BASE}/organizations/:orgId/members/:userId/reject`, ({ params }) => {
+    return mockJson({ success: true, userId: params.userId });
   }),
 
   http.delete(`${BASE}/organizations/:orgId/invitations/:inviteId`, ({ params }) => {

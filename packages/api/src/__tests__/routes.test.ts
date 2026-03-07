@@ -142,7 +142,7 @@ describe("Auth routes", () => {
     });
 
     expect(res.status).toBe(403);
-    expect(res.body.error.message).toMatch(/pending supervisor approval/i);
+    expect(res.body.error.message).toMatch(/pending administrator approval/i);
   });
 
   it("POST /api/v1/auth/login returns a TOTP MFA challenge for enrolled clinicians", async () => {

@@ -5,12 +5,20 @@ export function canModerateOrganizationMembers(
   currentUser: User | null,
   organization: Organization | undefined,
 ): boolean {
-  if (!currentUser || !organization) {
+  if (!currentUser) {
+    return false;
+  }
+
+  if (currentUser.role === 'ADMIN') {
+    return true;
+  }
+
+  if (!organization) {
     return false;
   }
 
   const hasOrgRole = organization.role === 'OWNER' || organization.role === 'ADMIN';
-  const hasPlatformRole = currentUser.role === 'SUPERVISOR' || currentUser.role === 'ADMIN';
+  const hasPlatformRole = currentUser.role === 'SUPERVISOR';
 
   return hasOrgRole && hasPlatformRole;
 }

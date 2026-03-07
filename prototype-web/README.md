@@ -37,14 +37,14 @@ No backend required — MSW intercepts all API calls with realistic mock data.
 |----------|---------|-------------|
 | `VITE_ENABLE_MOCKS` | `true` | Enable MSW mock service worker |
 | `VITE_API_URL` | `http://localhost:3001/api/v1` | Backend API base URL |
-| `VITE_AUTH_MODE` | `bearer` | Auth mode: `cookie` (httpOnly) or `bearer` |
+| `VITE_AUTH_MODE` | `bearer` | Auth mode: prefer `bearer` until the backend issues httpOnly auth cookies end-to-end |
 | `VITE_ANALYTICS_URL` | — | Web Vitals beacon endpoint |
 | `VITE_SENTRY_DSN` | — | Sentry error monitoring DSN |
 | `VITE_ENV` | `development` | Environment: dev / staging / production |
 | `VITE_FEATURE_FLAGS_URL` | — | Remote feature flag config endpoint |
 | `VITE_FF_<FLAG>` | `true` | Per-feature toggle (e.g., `VITE_FF_PATIENT_CHAT=false`) |
 
-Prod connection to ECS/ALB (no mocks): copy [prototype-web/.env.example](prototype-web/.env.example) → `.env.production` and set `VITE_API_URL` to the ALB or custom domain (e.g., `https://api.peacefull.ai/api/v1`), `VITE_ENABLE_MOCKS=false`, `VITE_AUTH_MODE=cookie`, `VITE_ENV=production`.
+Prod connection to ECS/ALB (no mocks): copy [prototype-web/.env.example](prototype-web/.env.example) → `.env.production` and set `VITE_API_URL` to the ALB or custom domain (e.g., `https://api.peacefull.ai/api/v1`), `VITE_ENABLE_MOCKS=false`, `VITE_AUTH_MODE=bearer`, `VITE_ENV=production`. Only use `cookie` once the backend is actually issuing and refreshing httpOnly auth cookies.
 
 ---
 
@@ -55,7 +55,7 @@ src/
 ├── main.tsx                    # React root, MSW init, WebSocket wiring
 ├── router.tsx                  # All routes (lazy-loaded via React.lazy)
 ├── api/                        # ky-based HTTP client + typed API methods
-│   ├── client.ts               # Dual-mode auth (cookie/bearer), tenant headers, refresh
+│   ├── client.ts               # Bearer-first auth client with cookie fallback, tenant headers, refresh
 │   ├── auth.ts                 # login, register, mfa, step-up, tenants
 │   ├── patients.ts             # check-in, journal, voice, history, safety plan
 │   ├── clinician.ts            # caseload, triage, drafts, MBC, notes, exports
@@ -204,7 +204,7 @@ src/pages/**   → 60% lines, 50% branches
 
 | Item | Implementation |
 |------|---------------|
-| httpOnly cookie auth | Dual-mode API client (`cookie`/`bearer`) in `api/client.ts` |
+| Resilient auth transport | Bearer-first API client with cookie fallback in `api/client.ts` |
 | WebSocket notifications | `stores/ws.ts` + `NotificationBell.tsx` (auto-reconnect, priority badges) |
 | WCAG 2.1 accessibility | `SkipLink.tsx`, `LiveAnnouncer.tsx`, ARIA roles, focus management |
 | Dark mode | `useTheme.ts` store + `ThemeToggle.tsx` (light/dark/system with OS sync) |

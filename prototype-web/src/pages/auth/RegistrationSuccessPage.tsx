@@ -79,9 +79,9 @@ export default function RegistrationSuccessPage() {
 
           {isPending ? (
             <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-              <p className="font-semibold">Pending Supervisor Approval</p>
+              <p className="font-semibold">Pending Administrator Approval</p>
               <p className="mt-1">
-                Your clinician account needs to be approved by a supervisor before you can access the system.
+                Your clinician account needs administrator approval before you can access the system.
                 You&apos;ll receive an email once your account is approved.
               </p>
             </div>

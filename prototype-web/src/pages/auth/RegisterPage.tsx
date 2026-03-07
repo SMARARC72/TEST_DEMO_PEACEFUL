@@ -157,7 +157,7 @@ export default function RegisterPage() {
           {pendingApproval && (
             <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
               <p className="font-semibold">Registration submitted!</p>
-              <p className="mt-1">Your clinician account is pending supervisor approval. You'll receive an email once approved.</p>
+              <p className="mt-1">Your clinician account is pending administrator approval. You&apos;ll receive an email once approved.</p>
             </div>
           )}
 
