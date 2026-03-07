@@ -86,6 +86,19 @@ function validateEnv() {
 
   const data = parsed.data;
 
+  // Disallow wildcard CORS origins in staging/production
+  if (
+    ["staging", "production"].includes(data.NODE_ENV) &&
+    data.CORS_ORIGIN.split(",")
+      .map((origin) => origin.trim())
+      .some((origin) => origin.includes("*"))
+  ) {
+    console.error(
+      "\n❌  CORS_ORIGIN cannot include wildcard origins (*) in staging/production.\n",
+    );
+    process.exit(1);
+  }
+
   // Enforce ENCRYPTION_KEY in production
   if (data.NODE_ENV === "production" && !data.ENCRYPTION_KEY) {
     console.error("\n❌  ENCRYPTION_KEY is required in production.\n");
