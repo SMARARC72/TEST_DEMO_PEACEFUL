@@ -151,6 +151,248 @@ const patientInclude = {
   },
 } as const;
 
+function toArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeMedication(
+  entry: unknown,
+  index: number,
+  defaults: {
+    patientId: string;
+    startDate: string;
+  },
+) {
+  if (typeof entry === "string") {
+    const tokens = entry.trim().split(/\s+/).filter(Boolean);
+    const doseIndex = tokens.findIndex((token) => /\d/.test(token));
+    const name = doseIndex > 0 ? tokens.slice(0, doseIndex).join(" ") : entry;
+    const dose = doseIndex >= 0 ? (tokens[doseIndex] ?? "") : "";
+    const frequency =
+      doseIndex >= 0 ? tokens.slice(doseIndex + 1).join(" ") : "";
+
+    return {
+      id: `${defaults.patientId}-med-${index + 1}`,
+      name,
+      dose,
+      frequency,
+      startDate: defaults.startDate,
+      status: "ACTIVE" as const,
+    };
+  }
+
+  if (entry && typeof entry === "object") {
+    const raw = entry as Record<string, unknown>;
+    const status =
+      typeof raw.status === "string"
+        ? raw.status.toUpperCase()
+        : raw.active === false
+          ? "DISCONTINUED"
+          : "ACTIVE";
+
+    return {
+      id:
+        typeof raw.id === "string" && raw.id.length > 0
+          ? raw.id
+          : `${defaults.patientId}-med-${index + 1}`,
+      name: typeof raw.name === "string" ? raw.name : `Medication ${index + 1}`,
+      dose:
+        typeof raw.dose === "string"
+          ? raw.dose
+          : typeof raw.dosage === "string"
+            ? raw.dosage
+            : "",
+      frequency: typeof raw.frequency === "string" ? raw.frequency : "",
+      prescriber:
+        typeof raw.prescriber === "string"
+          ? raw.prescriber
+          : typeof raw.prescribedBy === "string"
+            ? raw.prescribedBy
+            : undefined,
+      startDate:
+        typeof raw.startDate === "string" && raw.startDate.length > 0
+          ? raw.startDate
+          : defaults.startDate,
+      endDate:
+        typeof raw.endDate === "string" && raw.endDate.length > 0
+          ? raw.endDate
+          : undefined,
+      status:
+        status === "DISCONTINUED" || status === "ON_HOLD"
+          ? (status as "DISCONTINUED" | "ON_HOLD")
+          : ("ACTIVE" as const),
+      adherenceRate:
+        typeof raw.adherenceRate === "number" ? raw.adherenceRate : undefined,
+    };
+  }
+
+  return {
+    id: `${defaults.patientId}-med-${index + 1}`,
+    name: `Medication ${index + 1}`,
+    dose: "",
+    frequency: "",
+    startDate: defaults.startDate,
+    status: "ACTIVE" as const,
+  };
+}
+
+function normalizeAllergies(patientId: string, allergies: unknown) {
+  return toArray(allergies).flatMap((entry, index) => {
+    if (typeof entry === "string") {
+      if (/^(none reported|no known allergies|nkda)$/i.test(entry.trim())) {
+        return [];
+      }
+
+      return [
+        {
+          id: `${patientId}-allergy-${index + 1}`,
+          allergen: entry,
+          severity: "MODERATE" as const,
+          reaction: "Reported allergy",
+        },
+      ];
+    }
+
+    if (entry && typeof entry === "object") {
+      const raw = entry as Record<string, unknown>;
+      const severity =
+        typeof raw.severity === "string"
+          ? raw.severity.toUpperCase().replace(/\s+/g, "_")
+          : "MODERATE";
+
+      return [
+        {
+          id:
+            typeof raw.id === "string" && raw.id.length > 0
+              ? raw.id
+              : `${patientId}-allergy-${index + 1}`,
+          allergen:
+            typeof raw.allergen === "string"
+              ? raw.allergen
+              : `Allergy ${index + 1}`,
+          severity:
+            severity === "MILD" ||
+            severity === "SEVERE" ||
+            severity === "LIFE_THREATENING"
+              ? (severity as "MILD" | "SEVERE" | "LIFE_THREATENING")
+              : ("MODERATE" as const),
+          reaction:
+            typeof raw.reaction === "string" && raw.reaction.length > 0
+              ? raw.reaction
+              : "Reported allergy",
+        },
+      ];
+    }
+
+    return [];
+  });
+}
+
+function normalizeDiagnoses(row: {
+  id: string;
+  diagnosisPrimary: string | null;
+  diagnosisCode: string | null;
+  treatmentStart: Date | null;
+  createdAt: Date;
+}) {
+  if (!row.diagnosisPrimary) {
+    return [];
+  }
+
+  const descriptions = row.diagnosisPrimary
+    .split(/\s*\+\s*|\s*;\s*/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const codes = (row.diagnosisCode ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const diagnosedDate = (row.treatmentStart ?? row.createdAt).toISOString();
+
+  if (descriptions.length > 1 && descriptions.length === codes.length) {
+    return descriptions.map((description, index) => ({
+      id: `${row.id}-diagnosis-${index + 1}`,
+      icd10Code: codes[index] ?? "",
+      description,
+      status: "ACTIVE" as const,
+      diagnosedDate,
+    }));
+  }
+
+  return [
+    {
+      id: `${row.id}-diagnosis-1`,
+      icd10Code: row.diagnosisCode ?? "",
+      description: row.diagnosisPrimary,
+      status: "ACTIVE" as const,
+      diagnosedDate,
+    },
+  ];
+}
+
+function toClinicalPatientResponse(row: {
+  id: string;
+  tenantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  pronouns: string | null;
+  language: string;
+  emergencyName: string | null;
+  emergencyPhone: string | null;
+  emergencyRel: string | null;
+  diagnosisPrimary: string | null;
+  diagnosisCode: string | null;
+  treatmentStart: Date | null;
+  medications: unknown;
+  allergies: unknown;
+}) {
+  const startDate = (row.treatmentStart ?? row.createdAt).toISOString();
+
+  return {
+    appointments: [] as {
+      id: string;
+      patientId: string;
+      clinicianId: string;
+      clinicianName?: string;
+      dateTime: string;
+      duration: number;
+      type:
+        | "INTAKE"
+        | "FOLLOW_UP"
+        | "CRISIS"
+        | "GROUP"
+        | "MEDICATION_MANAGEMENT";
+      status: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+      notes?: string;
+      createdAt: string;
+    }[],
+    demographics: {
+      pronouns: row.pronouns ?? undefined,
+      primaryLanguage: row.language,
+    },
+    emergencyContacts:
+      row.emergencyName && row.emergencyPhone
+        ? [
+            {
+              id: `${row.id}-emergency-1`,
+              name: row.emergencyName,
+              relationship: row.emergencyRel ?? "Emergency Contact",
+              phone: row.emergencyPhone,
+              isPrimary: true,
+            },
+          ]
+        : [],
+    medications: toArray(row.medications).map((entry, index) =>
+      normalizeMedication(entry, index, { patientId: row.id, startDate }),
+    ),
+    allergies: normalizeAllergies(row.id, row.allergies),
+    diagnoses: normalizeDiagnoses(row),
+    metadata: {
+      lastUpdatedAt: row.updatedAt.toISOString(),
+    },
+  };
+}
+
 /**
  * Resolve a patient by either patientId or userId.
  * The frontend typically has the userId from the JWT, not the patientId.
@@ -254,6 +496,198 @@ patientRouter.get("/:id", async (req, res, next) => {
     });
     if (!row) throw new AppError("Patient not found", 404);
     sendSuccess(res, req, toPatientResponse(row));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/appointments ──────────────────────────────────────────
+
+patientRouter.get("/:id/appointments", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).appointments);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/demographics ─────────────────────────────────────────
+
+patientRouter.get("/:id/demographics", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).demographics);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/emergency-contacts ───────────────────────────────────
+
+patientRouter.get("/:id/emergency-contacts", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).emergencyContacts);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/medications ──────────────────────────────────────────
+
+patientRouter.get("/:id/medications", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).medications);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/allergies ────────────────────────────────────────────
+
+patientRouter.get("/:id/allergies", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).allergies);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /:id/diagnoses ────────────────────────────────────────────
+
+patientRouter.get("/:id/diagnoses", async (req, res, next) => {
+  try {
+    const patient = await resolvePatient(req.params.id, req.user!.tid);
+    const row = await prisma.patient.findUnique({
+      where: { id: patient.id },
+      select: {
+        id: true,
+        tenantId: true,
+        createdAt: true,
+        updatedAt: true,
+        pronouns: true,
+        language: true,
+        emergencyName: true,
+        emergencyPhone: true,
+        emergencyRel: true,
+        diagnosisPrimary: true,
+        diagnosisCode: true,
+        treatmentStart: true,
+        medications: true,
+        allergies: true,
+      },
+    });
+    if (!row) throw new AppError("Patient not found", 404);
+
+    sendSuccess(res, req, toClinicalPatientResponse(row).diagnoses);
   } catch (err) {
     next(err);
   }
@@ -1282,12 +1716,7 @@ patientRouter.post("/:id/consent", async (req, res, next) => {
       })
       .catch(() => {});
 
-    sendSuccess(
-      res,
-      req,
-      toConsentRecordResponse(record),
-      201,
-    );
+    sendSuccess(res, req, toConsentRecordResponse(record), 201);
   } catch (err) {
     next(err);
   }

@@ -421,6 +421,254 @@ describe("Patient routes", () => {
       granted: true,
     });
   });
+
+  it("GET /api/v1/patients/:id/demographics returns the clinician profile contract", async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: "they/them",
+        language: "en",
+        emergencyName: "Jordan Doe",
+        emergencyPhone: "555-0101",
+        emergencyRel: "Sibling",
+        diagnosisPrimary: null,
+        diagnosisCode: null,
+        treatmentStart: null,
+        medications: [],
+        allergies: [],
+      });
+
+    const res = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/demographics`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      pronouns: "they/them",
+      primaryLanguage: "en",
+    });
+  });
+
+  it("GET /api/v1/patients/:id/emergency-contacts returns the stored primary contact", async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: null,
+        language: "en",
+        emergencyName: "Jordan Doe",
+        emergencyPhone: "555-0101",
+        emergencyRel: "Sibling",
+        diagnosisPrimary: null,
+        diagnosisCode: null,
+        treatmentStart: null,
+        medications: [],
+        allergies: [],
+      });
+
+    const res = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/emergency-contacts`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        id: `${PATIENT_ID}-emergency-1`,
+        name: "Jordan Doe",
+        relationship: "Sibling",
+        phone: "555-0101",
+        isPrimary: true,
+      }),
+    ]);
+  });
+
+  it("GET /api/v1/patients/:id/medications normalizes legacy medication JSON", async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: null,
+        language: "en",
+        emergencyName: null,
+        emergencyPhone: null,
+        emergencyRel: null,
+        diagnosisPrimary: null,
+        diagnosisCode: null,
+        treatmentStart: new Date("2026-02-20T00:00:00.000Z"),
+        medications: [
+          "Sertraline 50mg daily",
+          {
+            id: "med-002",
+            name: "Buspirone",
+            dosage: "10mg",
+            frequency: "BID",
+            prescribedBy: "Dr. Lee",
+            active: false,
+            startDate: "2026-02-21T00:00:00.000Z",
+          },
+        ],
+        allergies: [],
+      });
+
+    const res = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/medications`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({
+        id: `${PATIENT_ID}-med-1`,
+        name: "Sertraline",
+        dose: "50mg",
+        frequency: "daily",
+        status: "ACTIVE",
+      }),
+      expect.objectContaining({
+        id: "med-002",
+        name: "Buspirone",
+        dose: "10mg",
+        frequency: "BID",
+        prescriber: "Dr. Lee",
+        status: "DISCONTINUED",
+      }),
+    ]);
+  });
+
+  it("GET /api/v1/patients/:id/allergies and diagnoses normalize legacy patient fields", async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: null,
+        language: "en",
+        emergencyName: null,
+        emergencyPhone: null,
+        emergencyRel: null,
+        diagnosisPrimary: "ADHD + Generalized Anxiety",
+        diagnosisCode: "F90.0, F41.1",
+        treatmentStart: new Date("2026-02-20T00:00:00.000Z"),
+        medications: [],
+        allergies: [
+          "None reported",
+          { allergen: "Penicillin", reaction: "Rash", severity: "severe" },
+        ],
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: null,
+        language: "en",
+        emergencyName: null,
+        emergencyPhone: null,
+        emergencyRel: null,
+        diagnosisPrimary: "ADHD + Generalized Anxiety",
+        diagnosisCode: "F90.0, F41.1",
+        treatmentStart: new Date("2026-02-20T00:00:00.000Z"),
+        medications: [],
+        allergies: [
+          "None reported",
+          { allergen: "Penicillin", reaction: "Rash", severity: "severe" },
+        ],
+      });
+
+    const allergiesRes = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/allergies`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+    const diagnosesRes = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/diagnoses`)
+      .set("Authorization", `Bearer ${clinicianToken()}`);
+
+    expect(allergiesRes.status).toBe(200);
+    expect(allergiesRes.body.data).toEqual([
+      expect.objectContaining({
+        allergen: "Penicillin",
+        reaction: "Rash",
+        severity: "SEVERE",
+      }),
+    ]);
+
+    expect(diagnosesRes.status).toBe(200);
+    expect(diagnosesRes.body.data).toEqual([
+      expect.objectContaining({
+        icd10Code: "F90.0",
+        description: "ADHD",
+        status: "ACTIVE",
+      }),
+      expect.objectContaining({
+        icd10Code: "F41.1",
+        description: "Generalized Anxiety",
+        status: "ACTIVE",
+      }),
+    ]);
+  });
+
+  it("GET /api/v1/patients/:id/appointments returns an empty list until scheduler data exists", async () => {
+    (prisma.patient.findUnique as Mock)
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        userId: USER_ID,
+      })
+      .mockResolvedValueOnce({
+        id: PATIENT_ID,
+        tenantId: TENANT_ID,
+        createdAt: new Date("2026-03-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-03-06T00:00:00.000Z"),
+        pronouns: null,
+        language: "en",
+        emergencyName: null,
+        emergencyPhone: null,
+        emergencyRel: null,
+        diagnosisPrimary: null,
+        diagnosisCode: null,
+        treatmentStart: null,
+        medications: [],
+        allergies: [],
+      });
+
+    const res = await request(app)
+      .get(`/api/v1/patients/${PATIENT_ID}/appointments`)
+      .set("Authorization", `Bearer ${patientToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+  });
 });
 
 // ─── Clinician Endpoints ─────────────────────────────────────────────
