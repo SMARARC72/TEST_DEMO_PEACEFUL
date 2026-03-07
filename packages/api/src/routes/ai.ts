@@ -2,6 +2,7 @@
 // Chat, summarization, risk assessment, session prep, memory extraction,
 // and SDOH analysis — all powered by the Claude service.
 
+import type { Request } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
@@ -15,6 +16,7 @@ import { aiLogger } from "../utils/logger.js";
 import { env } from "../config/index.js";
 import { CLAUDE_MODEL, MAX_CLAUDE_TOKENS } from "@peacefull/shared";
 import { v4 as uuidv4 } from "uuid";
+import { requireCaseloadAccess } from "./clinician.js";
 
 export const aiRouter = Router();
 
@@ -37,6 +39,60 @@ async function resolvePatientForAI(idOrUserId: string) {
     });
   }
   return patient;
+}
+
+async function authorizePatientAccessForAI(req: Request, patientId: string) {
+  const patient = await resolvePatientForAI(patientId);
+  if (!patient) {
+    throw new AppError("Patient not found", 404);
+  }
+
+  if (patient.tenantId !== req.user!.tid) {
+    aiLogger.warn(
+      {
+        userId: req.user!.sub,
+        patientTenant: patient.tenantId,
+        userTenant: req.user!.tid,
+      },
+      "Cross-tenant AI access attempt blocked",
+    );
+    throw new AppError("Access denied", 403);
+  }
+
+  if (req.user!.role === "PATIENT") {
+    if (patient.userId !== req.user!.sub) {
+      throw new AppError("Access denied", 403);
+    }
+    return patient;
+  }
+
+  if (
+    req.user!.role === "CLINICIAN" ||
+    req.user!.role === "SUPERVISOR" ||
+    req.user!.role === "ADMIN"
+  ) {
+    await requireCaseloadAccess(req.user!.sub, req.user!.tid, patient.id);
+    return patient;
+  }
+
+  throw new AppError("Access denied", 403);
+}
+
+async function authorizeSubmissionAccessForAI(
+  req: Request,
+  submissionId: string,
+) {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    select: { id: true, patientId: true },
+  });
+
+  if (!submission) {
+    throw new AppError("Submission not found", 404);
+  }
+
+  const patient = await authorizePatientAccessForAI(req, submission.patientId);
+  return { submission, patient };
 }
 
 // ─── Chat Rate Limiter (imported from rate-limit module) ─────────────
@@ -123,39 +179,8 @@ aiRouter.post("/chat", chatLimiter, async (req, res, next) => {
       }
     }
 
-    // Verify the patient exists and belongs to the authenticated user's tenant
-    const patient = await resolvePatientForAI(body.patientId);
-    if (!patient) {
-      throw new AppError("Patient not found", 404);
-    }
-    // SEC-011: Tenant isolation — ensure patient belongs to the same tenant as the requester
-    if (patient.tenantId !== req.user!.tid) {
-      aiLogger.warn(
-        {
-          userId: req.user!.sub,
-          patientTenant: patient.tenantId,
-          userTenant: req.user!.tid,
-        },
-        "Cross-tenant AI chat attempt blocked",
-      );
-      throw new AppError("Access denied", 403);
-    }
-    // Use resolved patient.id for all downstream queries
+    const patient = await authorizePatientAccessForAI(req, body.patientId);
     const resolvedPatientId = patient.id;
-    // SEC: Patient can only chat as themselves
-    if (patient.userId !== req.user!.sub && patient.id !== req.user!.sub) {
-      // Allow if user is clinician/supervisor viewing (read-only in future)
-      const userRecord = await prisma.user.findUnique({
-        where: { id: req.user!.sub },
-        select: { role: true },
-      });
-      if (!userRecord || userRecord.role === "PATIENT") {
-        throw new AppError(
-          "Access denied — you can only chat as yourself",
-          403,
-        );
-      }
-    }
 
     // Crisis detection on latest user message
     let crisisDetected = false;
@@ -451,18 +476,7 @@ aiRouter.get("/chat/sessions/:patientId", async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
-    // SEC: Verify the requesting user owns this patient record
-    const patient = await resolvePatientForAI(patientId);
-    if (!patient) {
-      throw new AppError("Patient not found", 404);
-    }
-    const userRecord = await prisma.user.findUnique({
-      where: { id: req.user!.sub },
-      select: { role: true },
-    });
-    if (userRecord?.role === "PATIENT" && patient.userId !== req.user!.sub) {
-      throw new AppError("Access denied", 403);
-    }
+    const patient = await authorizePatientAccessForAI(req, patientId);
 
     const sessions = await prisma.chatSession.findMany({
       where: { patientId: patient.id },
@@ -519,32 +533,29 @@ aiRouter.post("/summarize", async (req, res, next) => {
       "AI summarize request",
     );
 
+    const authorizedSubmission = body.submissionId
+      ? await authorizeSubmissionAccessForAI(req, body.submissionId)
+      : null;
+
     const response = await claudeService.summarize(body.content, body.context);
 
     // If a submissionId was provided, store the AI draft
-    if (body.submissionId) {
-      const submission = await prisma.submission.findUnique({
-        where: { id: body.submissionId },
-        select: { patientId: true },
+    if (body.submissionId && authorizedSubmission) {
+      const draftContent =
+        typeof response === "string"
+          ? response
+          : ((response as { content?: string })?.content ??
+            JSON.stringify(response));
+
+      await prisma.aIDraft.create({
+        data: {
+          submissionId: body.submissionId,
+          patientId: authorizedSubmission.submission.patientId,
+          content: draftContent,
+          format: "SOAP",
+          status: "DRAFT",
+        },
       });
-
-      if (submission) {
-        const draftContent =
-          typeof response === "string"
-            ? response
-            : ((response as { content?: string })?.content ??
-              JSON.stringify(response));
-
-        await prisma.aIDraft.create({
-          data: {
-            submissionId: body.submissionId,
-            patientId: submission.patientId,
-            content: draftContent,
-            format: "SOAP",
-            status: "DRAFT",
-          },
-        });
-      }
     }
 
     sendSuccess(res, req, response);
@@ -581,8 +592,9 @@ aiRouter.post("/risk-assess", crisisLimiter, async (req, res, next) => {
     // If patientId provided, enrich with recent MBC scores
     let enrichedContent = body.content;
     if (body.patientId) {
+      const patient = await authorizePatientAccessForAI(req, body.patientId);
       const recentScores = await prisma.mBCScore.findMany({
-        where: { patientId: body.patientId },
+        where: { patientId: patient.id },
         orderBy: { date: "desc" },
         take: 5,
       });
@@ -633,8 +645,13 @@ aiRouter.post("/session-prep", async (req, res, next) => {
     );
 
     // Fetch patient data from DB
+    const authorizedPatient = await authorizePatientAccessForAI(
+      req,
+      body.patientId,
+    );
+
     const patient = await prisma.patient.findUnique({
-      where: { id: body.patientId },
+      where: { id: authorizedPatient.id },
       include: {
         user: { select: { firstName: true, lastName: true } },
         mbcScores: { orderBy: { date: "desc" }, take: 5 },
@@ -714,6 +731,8 @@ aiRouter.post("/memory-extract", async (req, res, next) => {
       "AI memory extraction request",
     );
 
+    const patient = await authorizePatientAccessForAI(req, body.patientId);
+
     const response = await claudeService.extractMemories(body.content);
 
     // Store extracted memories as proposals
@@ -729,7 +748,7 @@ aiRouter.post("/memory-extract", async (req, res, next) => {
     if (Array.isArray(proposals) && proposals.length > 0) {
       await prisma.memoryProposal.createMany({
         data: proposals.map((m) => ({
-          patientId: body.patientId,
+          patientId: patient.id,
           category: m.category ?? "general",
           statement: m.statement ?? "",
           confidence: m.confidence ?? 0.5,
@@ -764,12 +783,13 @@ aiRouter.post("/sdoh-analyze", async (req, res, next) => {
 
     const response = await claudeService.analyzeSDOH(body.intakeData);
 
-    // If patientId provided, store the SDOH assessment
+    // If patientId provided, verify access and store the SDOH assessment
     if (body.patientId) {
+      const patient = await authorizePatientAccessForAI(req, body.patientId);
       const factors = response as unknown as Record<string, unknown>;
       await prisma.sDOHAssessment.create({
         data: {
-          patientId: body.patientId,
+          patientId: patient.id,
           housing: String(factors.housing ?? "unknown"),
           food: String(factors.food ?? "unknown"),
           transportation: String(factors.transportation ?? "unknown"),
