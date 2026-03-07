@@ -24,6 +24,7 @@ async function safeGoto(page, url, retries = 4) {
       const msg = err?.message || '';
       const isRetryable = msg.includes('NS_BINDING_ABORTED')
         || msg.includes('NS_ERROR')
+        || msg.includes('Frame load interrupted')
         || msg.includes('interrupted by another navigation');
       if (isRetryable && i < retries - 1) {
         await page.waitForTimeout(1000);
@@ -43,6 +44,10 @@ async function loginAs(page, creds) {
   await page.locator('button[type="submit"]:has-text("Sign in with email")').click();
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
   await page.waitForLoadState('networkidle').catch(() => {});
+}
+
+function screenshotPath(testInfo, name) {
+  return testInfo.outputPath(name);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -70,10 +75,9 @@ test.describe('Registration Flow', () => {
     await expect(page.locator('text=✓ Number')).toBeVisible();
     await expect(page.locator('text=✓ Special character')).toBeVisible();
 
-    await page.screenshot({ path: 'test-results/prod-screenshots/30-register-password-strength.png', fullPage: true });
   });
 
-  test('duplicate registration shows error with sign-in link', async ({ page }) => {
+  test('duplicate registration shows error with sign-in link', async ({ page }, testInfo) => {
     await page.goto('/register');
     await expect(page.getByRole('heading', { name: 'Clinician Registration' })).toBeVisible({ timeout: 15_000 });
 
@@ -92,7 +96,7 @@ test.describe('Registration Flow', () => {
     // Should show sign-in link
     await expect(page.locator('text=Sign in instead')).toBeVisible();
 
-    await page.screenshot({ path: 'test-results/prod-screenshots/31-register-duplicate-error.png', fullPage: true });
+    await page.screenshot({ path: screenshotPath(testInfo, '31-register-duplicate-error.png'), fullPage: true });
   });
 
   test('register page has patient invitation callout and clinician form', async ({ page }) => {
@@ -117,7 +121,7 @@ test.describe('Registration Flow', () => {
 // ═══════════════════════════════════════════════════════════════════════
 
 test.describe('Clinician Caseload', () => {
-  test('caseload shows patient cards with names', async ({ page }) => {
+  test('caseload shows patient cards with names', async ({ page }, testInfo) => {
     await loginAs(page, CLINICIAN);
     await safeGoto(page, '/clinician/caseload');
     await expect(page).toHaveURL(/\/clinician/, { timeout: 15_000 });
@@ -132,7 +136,7 @@ test.describe('Clinician Caseload', () => {
     // Either we have cards or an empty state — anything but a crash
     expect(hasPatientCards > 0 || hasEmptyState || true).toBeTruthy();
 
-    await page.screenshot({ path: 'test-results/prod-screenshots/40-clinician-caseload-cards.png', fullPage: true });
+    await page.screenshot({ path: screenshotPath(testInfo, '40-clinician-caseload-cards.png'), fullPage: true });
   });
 });
 

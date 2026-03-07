@@ -20,7 +20,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:smoke": "playwright test tests/smoke.spec.mjs",
-    "test:e2e": "playwright test tests/e2e-*.spec.mjs",
+    "test:e2e": "playwright test \"tests/e2e-(patient-checkin|clinician-review|registration-flow)\\.spec\\.mjs\"",
+    "test:prod-smoke": "playwright test tests/e2e-prod-smoke.spec.mjs",
     "quality": "npm run lint && npm run check:circular && npm run check:synthetic && npm test && npm run build"
   },
   "dependencies": {

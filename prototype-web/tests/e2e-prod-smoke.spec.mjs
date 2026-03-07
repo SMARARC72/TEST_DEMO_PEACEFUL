@@ -2,11 +2,153 @@
 // Runs against the live Netlify deployment at https://peacefullai.netlify.app
 // Validates critical paths: page loads, login, navigation, patient + clinician flows.
 
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { test, expect } from '@playwright/test';
 
 // ── Demo credentials (displayed on the login page itself) ──
 const PATIENT = { email: 'test.patient.1@peacefull.cloud', password: 'Demo2026!' };
-const CLINICIAN = { email: 'pilot.clinician.1@peacefull.cloud', password: 'Demo2026!' };
+const CLINICIAN = { email: 'pilot.supervisor@peacefull.cloud', password: 'Demo2026!' };
+const CLINICIAN_TOTP_SECRET_PATH = path.join(process.cwd(), 'test-results', '.clinician-totp-secret.txt');
+const ENV_CLINICIAN_TOTP_SECRET = process.env.PLAYWRIGHT_CLINICIAN_TOTP_SECRET?.trim() || null;
+
+function generateTotp(secret, timestamp = Date.now()) {
+  const timeStep = Math.floor(timestamp / 30000);
+  const hmac = crypto.createHmac('sha1', secret);
+
+  hmac.update(Buffer.from(timeStep.toString(16).padStart(16, '0'), 'hex'));
+  const hash = hmac.digest();
+  const offset = hash[hash.length - 1] & 0x0f;
+  const binary =
+    ((hash[offset] & 0x7f) << 24)
+    | ((hash[offset + 1] & 0xff) << 16)
+    | ((hash[offset + 2] & 0xff) << 8)
+    | (hash[offset + 3] & 0xff);
+
+  return (binary % 1000000).toString().padStart(6, '0');
+}
+
+function storeClinicianTotpSecret(secret) {
+  fs.mkdirSync(path.dirname(CLINICIAN_TOTP_SECRET_PATH), { recursive: true });
+  fs.writeFileSync(CLINICIAN_TOTP_SECRET_PATH, `${secret.trim()}\n`, 'utf8');
+}
+
+function loadClinicianTotpSecret() {
+  if (ENV_CLINICIAN_TOTP_SECRET) {
+    return ENV_CLINICIAN_TOTP_SECRET;
+  }
+
+  if (!fs.existsSync(CLINICIAN_TOTP_SECRET_PATH)) {
+    return null;
+  }
+
+  return fs.readFileSync(CLINICIAN_TOTP_SECRET_PATH, 'utf8').trim() || null;
+}
+
+async function completeClinicianEnrollmentIfNeeded(page) {
+  if (!page.url().includes('/mfa-enrollment')) {
+    return;
+  }
+
+  async function captureEnrollmentSecret() {
+    await expect(page.getByRole('heading', { name: 'Set Up Two-Factor Authentication' })).toBeVisible({ timeout: 15_000 });
+    const secret = (await page.locator('code').first().textContent())?.trim();
+    if (!secret) {
+      throw new Error('Clinician MFA enrollment secret was not rendered on the page.');
+    }
+
+    storeClinicianTotpSecret(secret);
+    await page.getByRole('button', { name: "I've scanned the QR code →" }).click();
+    await expect(page.getByRole('heading', { name: 'Verify Your Code' })).toBeVisible({ timeout: 15_000 });
+
+    return secret;
+  }
+
+  let secret = await captureEnrollmentSecret();
+
+  const verificationInput = page.getByLabel('6-digit verification code');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await verificationInput.fill(generateTotp(secret));
+    await page.getByRole('button', { name: 'Verify & Enable MFA' }).click();
+
+    if (await page.getByRole('heading', { name: 'Save Backup Codes' }).isVisible({ timeout: 15_000 }).catch(() => false)) {
+      break;
+    }
+
+    const errorText = await page.locator('text=/Invalid verification code|No pending MFA setup/').first().textContent().catch(() => '');
+    if (errorText?.includes('No pending MFA setup')) {
+      await page.getByRole('button', { name: '← Back to QR code' }).click();
+      secret = await captureEnrollmentSecret();
+      continue;
+    }
+
+    if (!errorText?.includes('Invalid verification code')) {
+      throw new Error(`Clinician MFA enrollment did not reach the backup-code step. Last error: ${errorText || 'none'}`);
+    }
+
+    await page.waitForTimeout(1200);
+  }
+
+  await expect(page.getByRole('heading', { name: 'Save Backup Codes' })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await expect(page).toHaveURL(/\/clinician/, { timeout: 20_000 });
+}
+
+async function completeClinicianTotpChallengeIfNeeded(page) {
+  const totpPrompt = page.getByText('Enter the 6-digit code from your authenticator app.');
+  if (!page.url().includes('/login')) {
+    return;
+  }
+
+  if (!(await totpPrompt.isVisible({ timeout: 5_000 }).catch(() => false))) {
+    return;
+  }
+
+  const secret = loadClinicianTotpSecret();
+  if (!secret) {
+    throw new Error('Clinician TOTP prompt appeared, but no stored secret is available for the live smoke run.');
+  }
+
+  const codeInput = page.getByLabel('Authenticator code');
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (!page.url().includes('/login')) {
+      return;
+    }
+
+    if (!(await codeInput.isVisible({ timeout: 2_000 }).catch(() => false))) {
+      if (!page.url().includes('/login')) {
+        return;
+      }
+      throw new Error('Clinician TOTP challenge field was not available on the login page.');
+    }
+
+    await codeInput.fill(generateTotp(secret));
+    const verifyButton = page.getByRole('button', { name: 'Verify' });
+
+    try {
+      await verifyButton.click({ timeout: 5_000 });
+    } catch (err) {
+      const stillOnPrompt = await totpPrompt.isVisible({ timeout: 2_000 }).catch(() => false);
+      if (!stillOnPrompt || !page.url().includes('/login')) {
+        return;
+      }
+      throw err;
+    }
+
+    if (!(await totpPrompt.isVisible({ timeout: 5_000 }).catch(() => false))) {
+      return;
+    }
+
+    if (!page.url().includes('/login')) {
+      return;
+    }
+
+    await page.waitForTimeout(1200);
+  }
+
+  throw new Error('Clinician TOTP challenge did not clear after verification attempts.');
+}
 
 // ─── Helper: Firefox-safe navigation (retries on NS_BINDING_ABORTED) ────
 async function safeGoto(page, url, retries = 4) {
@@ -17,9 +159,15 @@ async function safeGoto(page, url, retries = 4) {
       await page.waitForTimeout(300);
       return;
     } catch (err) {
+      if (page.url().endsWith(url)) {
+        await page.waitForTimeout(300);
+        return;
+      }
+
       const msg = err?.message || '';
       const isRetryable = msg.includes('NS_BINDING_ABORTED')
         || msg.includes('NS_ERROR')
+        || msg.includes('Frame load interrupted')
         || msg.includes('interrupted by another navigation');
       if (isRetryable && i < retries - 1) {
         await page.waitForTimeout(1000);
@@ -41,8 +189,24 @@ async function loginAs(page, creds) {
   // Click the email sign-in button (not Auth0)
   await page.locator('button[type="submit"]:has-text("Sign in with email")').click();
 
-  // Wait for navigation away from login (allow extra time for cold-start API)
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  await page.waitForFunction(
+    () => window.location.pathname !== '/login' || document.body.innerText.includes('Enter the 6-digit code from your authenticator app.'),
+    { timeout: 30_000 },
+  );
+
+  const onTotpPrompt = await page
+    .getByText('Enter the 6-digit code from your authenticator app.')
+    .isVisible({ timeout: 2_000 })
+    .catch(() => false);
+
+  if (onTotpPrompt) {
+    await completeClinicianTotpChallengeIfNeeded(page);
+  } else {
+    // Wait for navigation away from login (allow extra time for cold-start API)
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  }
+
+  await completeClinicianEnrollmentIfNeeded(page);
   // Let the post-login SPA navigation fully settle (Firefox)
   await page.waitForLoadState('networkidle').catch(() => {});
 }

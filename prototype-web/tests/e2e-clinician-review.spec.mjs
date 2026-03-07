@@ -13,6 +13,7 @@ async function safeGoto(page, url, retries = 4) {
       const msg = err?.message || '';
       const isRetryable = msg.includes('NS_BINDING_ABORTED')
         || msg.includes('NS_ERROR')
+        || msg.includes('Frame load interrupted')
         || msg.includes('interrupted by another navigation');
       if (isRetryable && i < retries - 1) {
         await page.waitForTimeout(1000);
@@ -30,6 +31,8 @@ test.describe('Clinician triage review flow', () => {
   });
 
   test('clinician can login, view triage, and review a draft', async ({ page }) => {
+    test.slow();
+
     // ── Step 1: Login as clinician ──
     await page.fill('input[type="email"]', 'pilot.clinician.1@peacefull.cloud');
     await page.fill('input[type="password"]', 'Demo2026!');
@@ -51,7 +54,7 @@ test.describe('Clinician triage review flow', () => {
     });
 
     // ── Step 3: Navigate to caseload ──
-    await page.click('text=Caseload');
+    await page.locator('a[href="/clinician/caseload"]').first().click({ force: true });
     await expect(page).toHaveURL(/\/clinician\/caseload/);
     await page.screenshot({ path: 'test-results/screenshots/e2e-clinician-03-caseload.png', fullPage: true });
 

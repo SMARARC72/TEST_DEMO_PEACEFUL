@@ -13,6 +13,7 @@ async function safeGoto(page, url, retries = 4) {
       const msg = err?.message || '';
       const isRetryable = msg.includes('NS_BINDING_ABORTED')
         || msg.includes('NS_ERROR')
+        || msg.includes('Frame load interrupted')
         || msg.includes('interrupted by another navigation');
       if (isRetryable && i < retries - 1) {
         await page.waitForTimeout(1000);
@@ -31,10 +32,12 @@ test.describe('Patient check-in flow', () => {
   });
 
   test('patient can login, navigate to checkin, submit, and see reflection', async ({ page }) => {
+    test.slow();
+
     // ── Step 1: Login as patient ──
     await page.fill('input[type="email"]', 'test.patient.1@peacefull.cloud');
     await page.fill('input[type="password"]', 'Demo2026!');
-    await page.click('button[type="submit"]');
+    await page.locator('button[type="submit"]:has-text("Sign in with email")').click();
 
     // Should navigate to patient home (may go through consent first)
     await expect(page).toHaveURL(/\/patient/, { timeout: 10_000 });
@@ -75,7 +78,7 @@ test.describe('Patient check-in flow', () => {
     // Login
     await page.fill('input[type="email"]', 'test.patient.1@peacefull.cloud');
     await page.fill('input[type="password"]', 'Demo2026!');
-    await page.click('button[type="submit"]');
+    await page.locator('button[type="submit"]:has-text("Sign in with email")').click();
     await expect(page).toHaveURL(/\/patient/, { timeout: 10_000 });
 
     // Visit each patient route

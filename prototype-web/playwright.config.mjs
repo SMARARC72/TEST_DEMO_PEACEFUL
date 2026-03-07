@@ -4,8 +4,9 @@ export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.{mjs,js,ts}',
   timeout: 30_000,
+  workers: 1,
   use: {
-    baseURL: 'http://127.0.0.1:5173'
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:5173'
   },
   projects: [
     {

@@ -314,17 +314,17 @@ type DraftRecord = {
 
 type SessionNoteRecord = {
   id: string;
-  patientId: string;
-  date: Date;
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
+  patientId?: string;
+  date?: Date;
+  subjective?: string;
+  objective?: string;
+  assessment?: string;
+  plan?: string;
   signed: boolean;
   signedAt: Date | null;
   coSignedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 function normalizeSoapSection(value: string | undefined): string {
@@ -334,10 +334,10 @@ function normalizeSoapSection(value: string | undefined): string {
 function buildDraftSessionNoteSeed(draft: DraftRecord): DraftSeed {
   const content = draft.content.replace(/\r\n/g, "\n").trim();
   const linePatterns: Record<keyof Omit<DraftSeed, "sourceDraftId">, RegExp> = {
-    subjective: /^(subjective|s)\s*[:\-]\s*(.*)$/i,
-    objective: /^(objective|o)\s*[:\-]\s*(.*)$/i,
-    assessment: /^(assessment|a)\s*[:\-]\s*(.*)$/i,
-    plan: /^(plan|p)\s*[:\-]\s*(.*)$/i,
+    subjective: /^(subjective|s)\s*[:-]\s*(.*)$/i,
+    objective: /^(objective|o)\s*[:-]\s*(.*)$/i,
+    assessment: /^(assessment|a)\s*[:-]\s*(.*)$/i,
+    plan: /^(plan|p)\s*[:-]\s*(.*)$/i,
   };
   const sections: Record<keyof Omit<DraftSeed, "sourceDraftId">, string[]> = {
     subjective: [],
@@ -433,20 +433,31 @@ function serializeDraft(draft: DraftRecord) {
 }
 
 function serializeSessionNote(note: SessionNoteRecord) {
+  const sessionDate =
+    note.date ?? note.createdAt ?? note.signedAt ?? new Date(0);
+  const createdAt = note.createdAt ?? note.date ?? note.signedAt ?? new Date(0);
+  const updatedAt =
+    note.updatedAt ??
+    note.signedAt ??
+    note.createdAt ??
+    note.date ??
+    new Date(0);
+
   return {
     id: note.id,
     patientId: note.patientId,
-    sessionDate: note.date.toISOString(),
+    sessionDate: sessionDate.toISOString(),
     status: note.coSignedAt ? "CO_SIGNED" : note.signed ? "SIGNED" : "DRAFT",
-    subjective: note.subjective,
-    objective: note.objective,
-    assessment: note.assessment,
-    plan: note.plan,
+    subjective: note.subjective ?? "",
+    objective: note.objective ?? "",
+    assessment: note.assessment ?? "",
+    plan: note.plan ?? "",
     duration: 50,
+    signed: note.signed,
     signedAt: note.signedAt?.toISOString(),
     coSignedAt: note.coSignedAt?.toISOString(),
-    createdAt: note.createdAt.toISOString(),
-    updatedAt: note.updatedAt.toISOString(),
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 }
 
@@ -1118,15 +1129,27 @@ clinicianRouter.patch(
         );
       }
 
+      const signedAt = new Date();
       const updated = await prisma.sessionNote.update({
         where: { id: req.params.noteId },
         data: {
           signed: true,
-          signedAt: new Date(),
+          signedAt,
         },
       });
 
-      sendSuccess(res, req, serializeSessionNote(updated as SessionNoteRecord));
+      sendSuccess(
+        res,
+        req,
+        serializeSessionNote(
+          ((updated as SessionNoteRecord | undefined) ?? {
+            ...note,
+            signed: true,
+            signedAt,
+            coSignedAt: note.coSignedAt ?? null,
+          }) as SessionNoteRecord,
+        ),
+      );
     } catch (err) {
       next(err);
     }
