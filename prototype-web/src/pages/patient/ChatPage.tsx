@@ -184,13 +184,19 @@ export default function ChatPage() {
         .slice(-20)
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
+      // Read CSRF token from cookie for cookie-auth mode
+      const csrfMatch = document.cookie.match(/(?:^|;\s*)pf_csrf_token=([^;]*)/);
+      const csrfToken = csrfMatch?.[1] ? decodeURIComponent(csrfMatch[1]) : null;
+
       const response = await fetch(`${apiUrl}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
         },
+        credentials: 'include',
         body: JSON.stringify({
           patientId,
           messages: conversationMessages,

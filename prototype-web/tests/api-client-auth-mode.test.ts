@@ -98,6 +98,8 @@ describe('api client auth mode resilience', () => {
 
     expect(kyPostMock).toHaveBeenCalledWith('/api/v1/auth/refresh', {
       json: { refreshToken: 'refresh-token-123' },
+      credentials: 'include',
+      headers: {},
     });
     expect(setTokens).toHaveBeenCalledWith('fresh-access', 'fresh-refresh');
     expect(clearAuth).not.toHaveBeenCalled();

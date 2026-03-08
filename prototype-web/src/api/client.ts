@@ -16,6 +16,13 @@ export const AUTH_MODE: AuthMode =
   (import.meta.env.VITE_AUTH_MODE as AuthMode) ||
   (import.meta.env.PROD ? 'cookie' : 'bearer');
 
+// ─── CSRF helper ──────────────────────────────
+/** Read the non-httpOnly CSRF cookie set by the backend */
+function getCsrfToken(): string | null {
+  const match = document.cookie.match(/(?:^|;\s*)pf_csrf_token=([^;]*)/);
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
+
 // ─── Token helpers (thin interface to avoid circular deps) ──────────
 let getAccessToken: () => string | null = () => null;
 let getRefreshToken: () => string | null = () => null;
@@ -43,11 +50,17 @@ let refreshPromise: Promise<boolean> | null = null;
 
 async function attemptRefresh(): Promise<boolean> {
   const refresh = getRefreshToken();
+  const csrfHeaders: Record<string, string> = {};
+  const csrf = getCsrfToken();
+  if (csrf) csrfHeaders['X-CSRF-Token'] = csrf;
+
   if (refresh) {
     try {
       const raw = await ky
         .post(`${BASE_URL}/auth/refresh`, {
           json: { refreshToken: refresh },
+          credentials: 'include',
+          headers: csrfHeaders,
         })
         .json();
 
@@ -67,6 +80,7 @@ async function attemptRefresh(): Promise<boolean> {
     try {
       await ky.post(`${BASE_URL}/auth/refresh`, {
         credentials: 'include',
+        headers: csrfHeaders,
       }).json<{ ok: boolean }>();
       return true;
     } catch {
@@ -98,6 +112,13 @@ const api: KyInstance = ky.create({
           request.headers.set('Authorization', `Bearer ${token}`);
         }
         // Cookie mode still works because credentials are included above.
+
+        // CSRF: attach the non-httpOnly CSRF cookie value as a header
+        // so the backend can match cookie ↔ header for cookie-auth requests.
+        const csrf = getCsrfToken();
+        if (csrf) {
+          request.headers.set('X-CSRF-Token', csrf);
+        }
 
         // Multi-tenant: inject tenant ID header
         const tenantId = getCurrentTenantId();

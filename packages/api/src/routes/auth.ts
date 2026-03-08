@@ -54,7 +54,15 @@ function isProductionEnv() {
 function isCookieAuthRequest(req: Request) {
   const modeHeader = req.header("x-auth-mode");
   if (modeHeader && modeHeader.toLowerCase() === "cookie") return true;
-  return isProductionEnv();
+  // Only treat as cookie auth when auth cookies are actually present.
+  // Bearer-token requests in production should NOT require CSRF.
+  if (req.headers.cookie) {
+    const hasAuthCookie =
+      req.headers.cookie.includes(ACCESS_COOKIE_NAME) ||
+      req.headers.cookie.includes(REFRESH_COOKIE_NAME);
+    if (hasAuthCookie) return true;
+  }
+  return false;
 }
 
 function parseCookies(req: Request): Record<string, string> {
