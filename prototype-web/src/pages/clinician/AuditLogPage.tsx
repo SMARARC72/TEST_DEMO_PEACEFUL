@@ -32,11 +32,11 @@ export default function AuditLogPage() {
 
   useEffect(() => {
     (async () => {
-      const [data, err] = await apiGet<AuditLogEntry[]>('clinician/audit-log');
+      const [data, err] = await apiGet<{ data: AuditLogEntry[]; total: number }>('compliance/audit-log');
       if (err) {
         addToast({ title: 'Failed to load audit log', variant: 'error' });
       } else if (data) {
-        setEntries(data);
+        setEntries(data.data ?? []);
       }
       setLoading(false);
     })();

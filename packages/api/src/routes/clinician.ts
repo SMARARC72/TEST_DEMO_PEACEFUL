@@ -1251,7 +1251,7 @@ clinicianRouter.get("/escalations", crisisLimiter, async (req, res, next) => {
       },
     }));
 
-    sendSuccess(res, req, { data, total: data.length });
+    sendSuccess(res, req, data);
   } catch (err) {
     next(err);
   }

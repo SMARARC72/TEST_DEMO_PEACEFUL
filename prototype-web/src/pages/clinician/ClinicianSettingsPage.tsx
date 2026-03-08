@@ -84,7 +84,7 @@ export default function ClinicianSettingsPage() {
       addToast({ title: 'Failed to save', description: err.message, variant: 'error' });
       return;
     }
-    if (updated) setSettings(updated);
+    if (updated && 'notifications' in updated) setSettings(updated);
     addToast({ title: 'Settings saved', variant: 'success' });
   };
 

@@ -71,6 +71,7 @@ export function useIdleTimeout() {
     ACTIVITY_EVENTS.forEach((event) =>
       window.addEventListener(event, resetTimer, { passive: true }),
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetTimer sets up timers, not direct render-triggering state
     resetTimer();
 
     return () => {

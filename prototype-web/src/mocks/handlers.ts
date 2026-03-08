@@ -1713,9 +1713,9 @@ export const handlers = [
     return mockJson({ withdrawn: true });
   }),
 
-  // Clinician - Audit log export
-  http.get(`${BASE}/clinician/audit-log`, () => {
-    return mockJson([
+  // Clinician - Audit log
+  http.get(`${BASE}/compliance/audit-log`, () => {
+    const entries = [
       {
         id: 'log-001',
         userId: 'clinician-001',
@@ -1738,7 +1738,8 @@ export const handlers = [
         timestamp: new Date(Date.now() - 7200000).toISOString(),
         details: { instrument: 'PHQ9', score: 14 },
       },
-    ]);
+    ];
+    return mockJson({ data: entries, total: entries.length });
   }),
 
   // ─── SMS Consent (TCPA – Phase 9.4) ─────────────────────────────────
