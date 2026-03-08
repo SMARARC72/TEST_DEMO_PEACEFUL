@@ -27,6 +27,9 @@ interface AuthState {
     firstName: string;
     lastName: string;
     role: 'PATIENT' | 'CLINICIAN';
+    npi?: string;
+    credentials?: string;
+    specialty?: string;
   }) => Promise<void>;
   mfaVerify: (userId: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -184,6 +187,8 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         isAuth0Session: state.isAuth0Session,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
     },
   ),

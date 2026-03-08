@@ -115,7 +115,7 @@ export function MoodTrendChart({ checkins, className = '' }: MoodTrendChartProps
 
       {/* Chart */}
       <div className="h-56">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />

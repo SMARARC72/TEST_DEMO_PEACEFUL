@@ -23,6 +23,9 @@ export const authApi = {
     lastName: string;
     role: 'PATIENT' | 'CLINICIAN';
     tenantId?: string;
+    npi?: string;
+    credentials?: string;
+    specialty?: string;
   }) {
     return apiPost<RegisterResponse>('auth/register', data);
   },

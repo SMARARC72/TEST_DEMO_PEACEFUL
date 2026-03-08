@@ -4,6 +4,16 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { Spinner } from '@/components/ui/Spinner';
+import { useAuthStore } from '@/stores/auth';
+
+// ─── Dashboard redirect — routes to role-appropriate home ───────────
+function DashboardRedirect() {
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+  if (user.role === 'PATIENT') return <Navigate to="/patient" replace />;
+  return <Navigate to="/clinician" replace />;
+}
 
 // ─── Lazy-loaded pages ──────────────────────────
 // Retry dynamic imports once on failure (handles stale chunk hashes after deploy)
@@ -45,6 +55,12 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <Navigate to="/login" replace />,
+  },
+
+  // ── Dashboard role-based redirect ─────────
+  {
+    path: '/dashboard',
+    element: <DashboardRedirect />,
   },
 
   // ── Tenant selector (multi-tenant login) ───

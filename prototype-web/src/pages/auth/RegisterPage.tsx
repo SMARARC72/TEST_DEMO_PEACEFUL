@@ -18,6 +18,9 @@ const schema = z
     firstName: z.string().min(1, 'First name required'),
     lastName: z.string().min(1, 'Last name required'),
     email: z.string().email('Valid email required'),
+    npi: z.string().regex(/^\d{10}$/, 'NPI must be exactly 10 digits').optional().or(z.literal('')),
+    credentials: z.string().max(100).optional().or(z.literal('')),
+    specialty: z.string().max(100).optional().or(z.literal('')),
     password: z
       .string()
       .min(12, 'At least 12 characters')
@@ -83,6 +86,9 @@ export default function RegisterPage() {
         firstName: data.firstName,
         lastName: data.lastName,
         role: 'CLINICIAN',
+        ...(data.npi ? { npi: data.npi } : {}),
+        ...(data.credentials ? { credentials: data.credentials } : {}),
+        ...(data.specialty ? { specialty: data.specialty } : {}),
       });
       // Clinician pending approval — redirect to success with pending flag
       const user = useAuthStore.getState().user;
@@ -174,6 +180,31 @@ export default function RegisterPage() {
               error={errors.email?.message}
               {...register('email')}
             />
+
+            {/* Clinical Credentials */}
+            <Input
+              label="NPI Number"
+              placeholder="10-digit NPI (optional)"
+              maxLength={10}
+              inputMode="numeric"
+              error={errors.npi?.message}
+              {...register('npi')}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Credentials"
+                placeholder="e.g., PhD, LCSW"
+                error={errors.credentials?.message}
+                {...register('credentials')}
+              />
+              <Input
+                label="Specialty"
+                placeholder="e.g., CBT, Trauma"
+                error={errors.specialty?.message}
+                {...register('specialty')}
+              />
+            </div>
+
             <Input
               label="Password"
               type="password"

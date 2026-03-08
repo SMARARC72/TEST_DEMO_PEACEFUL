@@ -301,6 +301,9 @@ const registerBodySchema = z.object({
   lastName: z.string().min(1).max(100),
   role: z.enum(["PATIENT", "CLINICIAN"]).default("PATIENT"),
   tenantSlug: z.string().min(1).max(100).optional(),
+  npi: z.string().regex(/^\d{10}$/, "NPI must be exactly 10 digits").optional(),
+  credentials: z.string().max(100).optional(),
+  specialty: z.string().max(100).optional(),
 });
 
 authRouter.post("/register", async (req, res, next) => {
@@ -367,8 +370,9 @@ authRouter.post("/register", async (req, res, next) => {
       await prisma.clinician.create({
         data: {
           userId: user.id,
-          credentials: "",
-          specialty: "General",
+          credentials: body.credentials ?? "",
+          specialty: body.specialty ?? "General",
+          ...(body.npi ? { npi: body.npi } : {}),
           caseloadSize: 0,
         },
       });

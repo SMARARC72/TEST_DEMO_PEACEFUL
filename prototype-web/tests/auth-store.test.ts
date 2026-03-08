@@ -430,7 +430,7 @@ describe('Auth Store — persistence safety', () => {
     useAuthStore.setState(defaultState);
   });
 
-  it('does not persist access or refresh tokens to sessionStorage', () => {
+  it('persists access and refresh tokens to sessionStorage for session continuity', () => {
     useAuthStore.getState().setTokens('access-secret', 'refresh-secret');
 
     const persistedRaw = sessionStorage.getItem('peacefull-auth');
@@ -442,10 +442,8 @@ describe('Auth Store — persistence safety', () => {
 
     expect(persisted.state).toMatchObject({
       isAuthenticated: true,
+      accessToken: 'access-secret',
+      refreshToken: 'refresh-secret',
     });
-    expect(persistedRaw).not.toContain('access-secret');
-    expect(persistedRaw).not.toContain('refresh-secret');
-    expect(persisted.state).not.toHaveProperty('accessToken');
-    expect(persisted.state).not.toHaveProperty('refreshToken');
   });
 });

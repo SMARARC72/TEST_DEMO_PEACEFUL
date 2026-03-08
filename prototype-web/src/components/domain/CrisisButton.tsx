@@ -67,7 +67,7 @@ export function CrisisButton(): React.ReactElement {
       {/* Floating crisis button */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-2xl text-white shadow-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-2xl text-white shadow-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800 max-sm:bottom-20 max-sm:right-3 max-sm:h-12 max-sm:w-12 max-sm:text-xl"
         aria-label="I need help now — open crisis alert"
         title="Crisis Alert"
       >

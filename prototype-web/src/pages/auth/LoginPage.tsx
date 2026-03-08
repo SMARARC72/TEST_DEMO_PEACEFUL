@@ -124,18 +124,18 @@ export default function LoginPage() {
           )}
 
           {!mfaState ? (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
               <Input
                 label="Email"
                 type="email"
-                autoComplete="email"
+                autoComplete="off"
                 error={errors.email?.message}
                 {...register('email')}
               />
               <Input
                 label="Password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 error={errors.password?.message}
                 {...register('password')}
               />

@@ -751,7 +751,16 @@ export default function SettingsPage() {
       try {
         const [data, err] = await patientApi.getSettings(patientId);
         if (!cancelled && err) addToast({ title: 'Using default settings', variant: 'info' });
-        if (!cancelled && data) setSettings(data);
+        if (!cancelled && data) {
+          const merged: SettingsType = {
+            ...DEFAULT_SETTINGS,
+            ...data,
+            notifications: { ...DEFAULT_SETTINGS.notifications, ...data.notifications },
+            privacy: { ...DEFAULT_SETTINGS.privacy, ...data.privacy },
+            display: { ...DEFAULT_SETTINGS.display, ...data.display },
+          };
+          setSettings(merged);
+        }
       } catch {
         // Use defaults if API unavailable
       } finally {

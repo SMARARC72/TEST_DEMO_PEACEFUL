@@ -19,8 +19,8 @@ export function AppShell() {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const location = useLocation();
 
-  // HIPAA: auto-logout after 15 min idle
-  useIdleTimeout();
+  // HIPAA: auto-logout after 15 min idle — with countdown warning modal
+  const { showWarning, secondsLeft, staySignedIn } = useIdleTimeout();
 
   // Sync system theme preference
   useSystemThemeSync();
@@ -80,6 +80,9 @@ export function AppShell() {
           <p className="mt-1 text-[10px] text-neutral-400 dark:text-neutral-500">
             BAA-covered infrastructure
           </p>
+          <p className="text-[10px] text-neutral-400 dark:text-neutral-500">
+            BAA available on request &middot; Last legal review 2026-03-01
+          </p>
         </div>
       </aside>
 
@@ -127,6 +130,28 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      {/* Session timeout warning modal */}
+      {showWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="alertdialog" aria-modal="true" aria-label="Session timeout warning">
+          <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl dark:bg-neutral-800">
+            <h2 className="text-lg font-bold text-amber-700 dark:text-amber-400">Session Expiring</h2>
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+              Your session will expire in{' '}
+              <span className="font-mono font-bold text-red-600 dark:text-red-400">
+                {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
+              </span>
+              {' '}due to inactivity.
+            </p>
+            <button
+              onClick={staySignedIn}
+              className="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              Stay Signed In
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
