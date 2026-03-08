@@ -74,7 +74,12 @@ export function auditLog(
  * CRIT-006 FIX: Uses a serializable transaction to atomically read the
  * latest hash and write the new entry, eliminating race conditions
  * where concurrent requests could chain to the same previous hash.
+ *
+ * Retries up to 3 times on serialization failures (P2034) which are
+ * expected under concurrency across multiple ECS tasks.
  */
+const AUDIT_MAX_RETRIES = 3;
+
 async function persistAuditEntry(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user?.sub ?? null;
@@ -110,16 +115,19 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
       taskInstanceId: TASK_INSTANCE_ID,
     };
 
-    // CRIT-006 FIX: Atomic read-then-write inside a serializable transaction.
-    // This guarantees that no two concurrent requests can read the same
-    // previousHash, even across multiple ECS tasks sharing the same DB.
-    await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        const latest = await tx.auditLog.findFirst({
-          orderBy: { timestamp: "desc" },
-          select: { hash: true },
-        });
-        const previousHash = latest?.hash ?? "0".repeat(64);
+    // Retry loop for serialization failures (P2034) under concurrent ECS tasks
+    for (let attempt = 1; attempt <= AUDIT_MAX_RETRIES; attempt++) {
+      try {
+        // CRIT-006 FIX: Atomic read-then-write inside a serializable transaction.
+        // This guarantees that no two concurrent requests can read the same
+        // previousHash, even across multiple ECS tasks sharing the same DB.
+        await prisma.$transaction(
+          async (tx: Prisma.TransactionClient) => {
+            const latest = await tx.auditLog.findFirst({
+              orderBy: { timestamp: "desc" },
+              select: { hash: true },
+            });
+            const previousHash = latest?.hash ?? "0".repeat(64);
 
         const entryForHash: Omit<AuditLogEntry, "hash"> = {
           id: "",
@@ -165,6 +173,27 @@ async function persistAuditEntry(req: Request, res: Response): Promise<void> {
         timeout: 10_000,
       },
     );
+        // Transaction succeeded — exit retry loop
+        break;
+      } catch (txErr: unknown) {
+        // P2034 = write conflict / serialization failure — retry
+        const isPrismaConflict =
+          txErr &&
+          typeof txErr === "object" &&
+          "code" in txErr &&
+          (txErr as { code: string }).code === "P2034";
+        if (isPrismaConflict && attempt < AUDIT_MAX_RETRIES) {
+          auditLogger.warn(
+            { attempt, action },
+            "Audit log serialization conflict — retrying",
+          );
+          // Brief back-off: 50ms, 100ms
+          await new Promise((r) => setTimeout(r, attempt * 50));
+          continue;
+        }
+        throw txErr;
+      }
+    }
   } catch (err) {
     // Never let audit failures crash the server
     auditLogger.error({ err }, "Failed to persist audit log entry");

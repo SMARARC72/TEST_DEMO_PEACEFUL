@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { redisSet } from "../services/redis.js";
 import { PASSWORD_COMPLEXITY_MESSAGE } from "../utils/password-policy.js";
+import { generateTotpCode } from "../services/auth.js";
 
 vi.mock("../services/realtime.js", () => ({
   broadcastClinicianEvent: vi.fn(),
@@ -47,20 +48,8 @@ const patientToken = () => makeToken("PATIENT");
 const adminToken = () => makeToken("ADMIN");
 const complianceToken = () => makeToken("COMPLIANCE_OFFICER");
 
-function generateTotp(secret: string) {
-  const timeStep = Math.floor(Date.now() / 30000);
-  const hmac = crypto.createHmac("sha1", secret);
-  hmac.update(Buffer.from(timeStep.toString(16).padStart(16, "0"), "hex"));
-  const hash = hmac.digest();
-  const offset = hash[hash.length - 1] & 0x0f;
-  const binary =
-    ((hash[offset] & 0x7f) << 24) |
-    ((hash[offset + 1] & 0xff) << 16) |
-    ((hash[offset + 2] & 0xff) << 8) |
-    (hash[offset + 3] & 0xff);
-
-  return (binary % 1000000).toString().padStart(6, "0");
-}
+// Base32 secret matching the standard 20-byte TOTP test vector "12345678901234567890"
+const BASE32_TEST_SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 
 // ─── Health / Infrastructure Endpoints ───────────────────────────────
 
@@ -213,7 +202,7 @@ describe("Auth routes", () => {
   });
 
   it("POST /api/v1/auth/mfa-confirm-setup stores backup codes in Postgres", async () => {
-    const secret = "12345678901234567890123456789012";
+    const secret = BASE32_TEST_SECRET;
     const authToken = patientToken();
 
     await redisSet(`mfa-setup:${USER_ID}`, secret, 600);
@@ -230,7 +219,7 @@ describe("Auth routes", () => {
     const res = await request(app)
       .post("/api/v1/auth/mfa-confirm-setup")
       .set("Authorization", `Bearer ${authToken}`)
-      .send({ code: generateTotp(secret) });
+      .send({ code: generateTotpCode(secret) });
 
     expect(res.status).toBe(200);
     expect(res.body.data.backupCodes).toHaveLength(10);
@@ -251,7 +240,7 @@ describe("Auth routes", () => {
 
   it("POST /api/v1/auth/mfa-verify accepts authenticator codes for TOTP-enrolled clinicians", async () => {
     const totpUserId = "22222222-2222-4222-8222-222222222222";
-    const secret = "12345678901234567890123456789012";
+    const secret = BASE32_TEST_SECRET;
 
     (prisma.user.findUnique as unknown as Mock).mockResolvedValueOnce({
       id: totpUserId,
@@ -273,7 +262,7 @@ describe("Auth routes", () => {
       .post("/api/v1/auth/mfa-verify")
       .send({
         userId: totpUserId,
-        code: generateTotp(secret),
+        code: generateTotpCode(secret),
       });
 
     expect(res.status).toBe(200);

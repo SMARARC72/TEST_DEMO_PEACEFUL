@@ -1170,9 +1170,12 @@ authRouter.post(
         throw new AppError("MFA is already enabled", 400);
       }
 
-      // Generate a TOTP secret
+      // Generate a TOTP secret — 20 random bytes (160 bits, standard for TOTP)
+      // encoded as base32 for compatibility with all standard authenticator apps.
       const crypto = await import("crypto");
-      const secret = crypto.randomBytes(20).toString("hex").slice(0, 32);
+      const { base32Encode } = await import("../services/auth.js");
+      const secretBytes = crypto.randomBytes(20);
+      const secret = base32Encode(secretBytes);
 
       // Store the pending secret in Redis (10 min TTL)
       await redisSet(`mfa-setup:${userId}`, secret, 600);

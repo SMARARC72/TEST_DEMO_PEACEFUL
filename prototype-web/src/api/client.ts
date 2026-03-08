@@ -79,6 +79,7 @@ async function attemptRefresh(): Promise<boolean> {
     // Cookie mode fallback: server reads httpOnly refresh cookie.
     try {
       await ky.post(`${BASE_URL}/auth/refresh`, {
+        json: {},
         credentials: 'include',
         headers: csrfHeaders,
       }).json<{ ok: boolean }>();

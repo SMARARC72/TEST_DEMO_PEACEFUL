@@ -178,11 +178,16 @@ export default function ChatPage() {
       const patientId = resolvedPatientId ?? user?.id ?? '';
 
       // Build message history in backend-expected format (exclude system messages)
-      // Use messagesRef.current to capture the latest state including the just-added user message
-      const conversationMessages = messagesRef.current
-        .filter((m) => m.role !== 'system')
-        .slice(-20)
+      // NOTE: messagesRef.current is stale here (React hasn't re-rendered yet
+      // after setMessages), so we explicitly append the new user message to the
+      // current snapshot to guarantee the array is never empty.
+      const priorMessages = messagesRef.current
+        .filter((m) => m.role !== 'system' && m.content.length > 0)
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      const conversationMessages = [
+        ...priorMessages,
+        { role: 'user' as const, content: text },
+      ].slice(-20);
 
       // Read CSRF token from cookie for cookie-auth mode
       const csrfMatch = document.cookie.match(/(?:^|;\s*)pf_csrf_token=([^;]*)/);
