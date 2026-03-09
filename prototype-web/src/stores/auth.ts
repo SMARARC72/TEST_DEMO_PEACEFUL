@@ -8,6 +8,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { bindTokenAccessors } from '@/api/client';
 import { authApi } from '@/api/auth';
 import type { User, UserRole } from '@/api/types';
+import { clearAllSensitiveData } from '@/utils/secureStorage';
+
+function createStoreError(message: string, status?: number, code?: string): Error {
+  const error = new Error(message) as Error & { status?: number; code?: string };
+  if (status !== undefined) error.status = status;
+  if (code !== undefined) error.code = code;
+  return error;
+}
 
 interface AuthState {
   user: User | null;
@@ -57,6 +65,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearAuth: () => {
+        clearAllSensitiveData();
         set({
           user: null,
           accessToken: null,
@@ -105,7 +114,7 @@ export const useAuthStore = create<AuthState>()(
         const [data, err] = await authApi.login(email, password);
         if (err) {
           set({ isLoading: false, error: err.message });
-          throw new Error(err.message);
+          throw createStoreError(err.message, err.status, err.code);
         }
 
         // MFA required?
@@ -150,7 +159,7 @@ export const useAuthStore = create<AuthState>()(
         const [data, err] = await authApi.mfaVerify(userId, code);
         if (err) {
           set({ isLoading: false, error: err.message });
-          throw new Error(err.message);
+          throw createStoreError(err.message, err.status, err.code);
         }
         if (data) {
           set({
@@ -185,6 +194,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'peacefull-auth',
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
+        user: state.user,
         isAuthenticated: state.isAuthenticated,
         isAuth0Session: state.isAuth0Session,
         accessToken: state.accessToken,

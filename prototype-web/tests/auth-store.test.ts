@@ -2,6 +2,7 @@
 // Tests for registration, login, MFA, and logout flows in the auth store.
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from '@/stores/auth';
+import type { User } from '@/api/types';
 
 // Mock the auth API
 vi.mock('@/api/auth', () => ({
@@ -179,6 +180,9 @@ describe('Auth Store — Logout', () => {
       refreshToken: 'rt-456',
       isAuthenticated: true,
     });
+    sessionStorage.setItem('peacefull-safety-plan-cache', JSON.stringify({ patientId: 'u1' }));
+    sessionStorage.setItem('peacefull-consent-u1', JSON.stringify({ hasConsent: true }));
+    localStorage.setItem('peacefull-safety-plan-cache', JSON.stringify({ patientId: 'u1' }));
 
     (authApi.logout as ReturnType<typeof vi.fn>).mockResolvedValueOnce([{ success: true }, null]);
 
@@ -189,6 +193,9 @@ describe('Auth Store — Logout', () => {
     expect(state.accessToken).toBeNull();
     expect(state.refreshToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
+    expect(sessionStorage.getItem('peacefull-safety-plan-cache')).toBeNull();
+    expect(sessionStorage.getItem('peacefull-consent-u1')).toBeNull();
+    expect(localStorage.getItem('peacefull-safety-plan-cache')).toBeNull();
   });
 
   it('logs out cleanly without a refresh token', async () => {
@@ -444,6 +451,36 @@ describe('Auth Store — persistence safety', () => {
       isAuthenticated: true,
       accessToken: 'access-secret',
       refreshToken: 'refresh-secret',
+    });
+  });
+
+  it('persists the authenticated user for session reload route hydration', () => {
+    const mockUser: User = {
+      id: 'u-clinician',
+      tenantId: 't1',
+      email: 'pilot.clinician.1@peacefull.cloud',
+      role: 'CLINICIAN',
+      status: 'ACTIVE',
+      profile: { firstName: 'Pilot', lastName: 'Clinician' },
+      mfaEnabled: true,
+      mfaMethod: 'TOTP',
+      createdAt: '2026-03-09T00:00:00.000Z',
+    };
+
+    useAuthStore.getState().setAuth0Session('access-secret', mockUser);
+
+    const persistedRaw = sessionStorage.getItem('peacefull-auth');
+    expect(persistedRaw).not.toBeNull();
+
+    const persisted = JSON.parse(persistedRaw as string) as {
+      state?: Record<string, unknown>;
+    };
+
+    expect(persisted.state).toMatchObject({
+      user: mockUser,
+      isAuthenticated: true,
+      accessToken: 'access-secret',
+      isAuth0Session: true,
     });
   });
 });

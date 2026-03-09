@@ -3,7 +3,7 @@
 // Also keeps local email/password form as fallback for dev/testing.
 
 import { useState } from 'react';
-import { useNavigate, Link, useLocation, Navigate } from 'react-router';
+import { useNavigate, Link, useLocation } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,9 @@ import { HipaaBadge } from '@/components/ui/HipaaBadge';
 const AUTH0_CONFIGURED = !!(
   import.meta.env.VITE_AUTH0_DOMAIN && import.meta.env.VITE_AUTH0_CLIENT_ID
 );
+const IS_PRODUCTION_DEPLOY = import.meta.env.VITE_ENV === 'production';
+const PATIENT_DEMO_PASSWORD = 'Demo2026!';
+const CLINICIAN_DEMO_PASSWORD = IS_PRODUCTION_DEPLOY ? 'Pilot2026!Change' : 'Demo2026!';
 
 const schema = z.object({
   email: z.string().email('Valid email required'),
@@ -25,17 +28,39 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
+function getLoginErrorMessage(error: unknown): string {
+  const status = typeof error === 'object' && error !== null && 'status' in error
+    ? Number((error as { status?: unknown }).status)
+    : undefined;
+
+  if (status === 401) {
+    return 'Invalid email or password. Please try again.';
+  }
+
+  if (status !== undefined && status >= 500) {
+    return 'Something went wrong. Please try again later.';
+  }
+
+  if (status === 429) {
+    return error instanceof Error ? error.message : 'Too many login attempts. Please try again later.';
+  }
+
+  return error instanceof Error ? error.message : 'Login failed';
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((s) => s.login);
   const mfaVerify = useAuthStore((s) => s.mfaVerify);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const user = useAuthStore((s) => s.user);
 
   const [mfaState, setMfaState] = useState<{ required: boolean; userId: string; method?: 'TOTP' | 'EMAIL' } | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
+  const clearError = () => {
+    if (error) setError('');
+  };
 
   const {
     register,
@@ -65,7 +90,7 @@ export default function LoginPage() {
         navigate(dest, { replace: true });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Login failed');
+      setError(getLoginErrorMessage(e));
     }
   };
 
@@ -80,12 +105,6 @@ export default function LoginPage() {
       setError(e instanceof Error ? e.message : 'MFA verification failed');
     }
   };
-
-  // Already logged in? redirect
-  if (user) {
-    const dest = user.role === 'PATIENT' ? '/patient' : '/clinician';
-    return <Navigate to={dest} replace />;
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100 p-4 dark:from-neutral-900 dark:to-neutral-800">
@@ -102,12 +121,6 @@ export default function LoginPage() {
             </p>
             <HipaaBadge className="mt-2" />
           </div>
-
-          {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-              {error}
-            </div>
-          )}
 
           {/* Auth0 Universal Login button (production) */}
           {AUTH0_CONFIGURED && !mfaState && (
@@ -130,15 +143,24 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="off"
                 error={errors.email?.message}
-                {...register('email')}
+                {...register('email', { onChange: clearError })}
               />
               <Input
                 label="Password"
                 type="password"
                 autoComplete="new-password"
                 error={errors.password?.message}
-                {...register('password')}
+                {...register('password', { onChange: clearError })}
               />
+              {error && (
+                <div
+                  aria-live="polite"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
+                  role="alert"
+                >
+                  {error}
+                </div>
+              )}
               <Button type="submit" className="w-full" loading={isLoading}>
                 Sign in with email
               </Button>
@@ -159,12 +181,24 @@ export default function LoginPage() {
               <Input
                 label={mfaState?.method === 'TOTP' ? 'Authenticator code' : 'Verification Code'}
                 value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
+                onChange={(e) => {
+                  clearError();
+                  setMfaCode(e.target.value);
+                }}
                 placeholder="000000"
                 maxLength={6}
                 autoComplete="one-time-code"
                 inputMode="numeric"
               />
+              {error && (
+                <div
+                  aria-live="polite"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
+                  role="alert"
+                >
+                  {error}
+                </div>
+              )}
               <Button onClick={onMfaSubmit} className="w-full" loading={isLoading}>
                 Verify
               </Button>
@@ -178,6 +212,9 @@ export default function LoginPage() {
               <p className="text-neutral-600 dark:text-neutral-400">
                 <span className="font-medium">Patient:</span> test.patient.1@peacefull.cloud
               </p>
+              <p className="text-neutral-500 dark:text-neutral-500">
+                Password: <code className="rounded bg-neutral-200 px-1 dark:bg-neutral-700">{PATIENT_DEMO_PASSWORD}</code>
+              </p>
               <p className="text-neutral-600 dark:text-neutral-400">
                 <span className="font-medium">Clinician:</span> pilot.clinician.1@peacefull.cloud
               </p>
@@ -185,7 +222,8 @@ export default function LoginPage() {
                 <span className="font-medium">Supervisor:</span> pilot.supervisor@peacefull.cloud
               </p>
               <p className="mt-1 text-neutral-500 dark:text-neutral-500">
-                Password: <code className="rounded bg-neutral-200 px-1 dark:bg-neutral-700">Demo2026!</code>
+                Clinician/Supervisor password:{' '}
+                <code className="rounded bg-neutral-200 px-1 dark:bg-neutral-700">{CLINICIAN_DEMO_PASSWORD}</code>
               </p>
             </div>
           )}

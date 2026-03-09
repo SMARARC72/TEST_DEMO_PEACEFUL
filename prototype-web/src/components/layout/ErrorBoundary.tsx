@@ -178,3 +178,48 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+interface ChunkErrorBoundaryProps {
+  children: ReactNode;
+}
+
+export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, State> {
+  state: State = { hasError: false };
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    reportError(error, info.componentStack ?? undefined);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-[50vh] items-center justify-center px-4 py-12">
+          <div className="w-full max-w-lg rounded-3xl border border-neutral-200 bg-white p-8 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+              <span className="text-2xl">↻</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-white">
+              Something went wrong
+            </h2>
+            <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
+              We could not load this page. Please reload to fetch the latest version.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-6 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

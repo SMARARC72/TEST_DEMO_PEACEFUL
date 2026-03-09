@@ -22,6 +22,7 @@ import { initWebVitals } from './hooks/useWebVitals';
 import { useWsStore } from './stores/ws';
 import { useAuthStore } from './stores/auth';
 import { useFeatureFlagStore } from './hooks/useFeatureFlags';
+import { warnOnUnexpectedLocalStorageKeys } from './utils/secureStorage';
 
 // ─── Sentry Initialization (UGO-6.2) ────────────────────────────────
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -108,6 +109,7 @@ enableMocking().then(() => {
 
   // Load remote feature flags (non-blocking)
   useFeatureFlagStore.getState().loadRemoteFlags();
+  warnOnUnexpectedLocalStorageKeys();
 
   // Connect WebSocket if user is already authenticated (session restore)
   const { isAuthenticated, accessToken } = useAuthStore.getState();

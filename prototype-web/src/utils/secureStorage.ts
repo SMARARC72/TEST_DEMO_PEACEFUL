@@ -3,6 +3,60 @@
 // Drafts are TTL-gated (24 hours) and encrypted with a user-derived key.
 
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_SENSITIVE_EXACT_KEYS = new Set([
+  'peacefull-auth',
+  'peacefull-safety-plan-cache',
+  'chunk-retry',
+]);
+const SESSION_SENSITIVE_PREFIXES = [
+  'peacefull-draft-',
+  'peacefull-autosave-',
+  'peacefull-consent-',
+];
+const LOCAL_STORAGE_ALLOWLIST = new Set([
+  'peacefull-consent-accepted',
+  'peacefull-feature-flags',
+  'peacefull-lang',
+  'peacefull-onboarding-complete',
+  'peacefull-theme',
+]);
+
+function shouldClearSensitiveSessionKey(key: string): boolean {
+  return SESSION_SENSITIVE_EXACT_KEYS.has(key) || SESSION_SENSITIVE_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
+function removeMatchingKeys(storage: Storage, predicate: (key: string) => boolean): void {
+  for (let index = storage.length - 1; index >= 0; index -= 1) {
+    const key = storage.key(index);
+    if (key && predicate(key)) {
+      storage.removeItem(key);
+    }
+  }
+}
+
+export function clearAllSensitiveData(): void {
+  removeMatchingKeys(sessionStorage, shouldClearSensitiveSessionKey);
+  removeMatchingKeys(localStorage, (key) => key === 'peacefull-safety-plan-cache');
+}
+
+export function getUnexpectedLocalStorageKeys(): string[] {
+  const unexpected: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key && !LOCAL_STORAGE_ALLOWLIST.has(key)) {
+      unexpected.push(key);
+    }
+  }
+  return unexpected.sort();
+}
+
+export function warnOnUnexpectedLocalStorageKeys(): void {
+  if (!import.meta.env.DEV) return;
+  const unexpected = getUnexpectedLocalStorageKeys();
+  if (unexpected.length > 0) {
+    console.warn('[storage-audit] Unexpected localStorage keys detected:', unexpected);
+  }
+}
 
 async function deriveKey(userId: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();

@@ -9,13 +9,39 @@ import { test, expect } from '@playwright/test';
 
 // ── Demo credentials (displayed on the login page itself) ──
 const PATIENT = { email: 'test.patient.1@peacefull.cloud', password: 'Demo2026!' };
-const CLINICIAN = { email: 'pilot.supervisor@peacefull.cloud', password: 'Demo2026!' };
+const CLINICIAN = { email: 'pilot.supervisor@peacefull.cloud', password: 'Pilot2026!Change' };
 const CLINICIAN_TOTP_SECRET_PATH = path.join(process.cwd(), 'test-results', '.clinician-totp-secret.txt');
 const ENV_CLINICIAN_TOTP_SECRET = process.env.PLAYWRIGHT_CLINICIAN_TOTP_SECRET?.trim() || null;
 
+const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Decode(encoded) {
+  const cleaned = encoded.replace(/=+$/, '').toUpperCase();
+  const bytes = [];
+  let bits = 0;
+  let value = 0;
+
+  for (const char of cleaned) {
+    const index = BASE32_CHARS.indexOf(char);
+    if (index === -1) {
+      continue;
+    }
+
+    value = (value << 5) | index;
+    bits += 5;
+
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+
+  return Buffer.from(bytes);
+}
+
 function generateTotp(secret, timestamp = Date.now()) {
   const timeStep = Math.floor(timestamp / 30000);
-  const hmac = crypto.createHmac('sha1', secret);
+  const hmac = crypto.createHmac('sha1', base32Decode(secret));
 
   hmac.update(Buffer.from(timeStep.toString(16).padStart(16, '0'), 'hex'));
   const hash = hmac.digest();
@@ -229,7 +255,8 @@ test.describe('Production Smoke', () => {
     await expect(page.locator('text=Demo Accounts')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('text=test.patient.1@peacefull.cloud')).toBeVisible();
     await expect(page.locator('text=pilot.clinician.1@peacefull.cloud')).toBeVisible();
-    await expect(page.locator('text=Demo2026!')).toBeVisible();
+    await expect(page.getByText('Demo2026!')).toBeVisible();
+    await expect(page.getByText('Pilot2026!Change')).toBeVisible();
   });
 
   test('register page loads', async ({ page }) => {
@@ -255,6 +282,17 @@ test.describe('Patient Flow', () => {
     // Should land on patient dashboard
     await expect(page).toHaveURL(/\/patient/, { timeout: 15_000 });
     await page.screenshot({ path: 'test-results/prod-screenshots/10-patient-home.png', fullPage: true });
+  });
+
+  test('authenticated patient is redirected away from public auth routes', async ({ page }) => {
+    await loginAs(page, PATIENT);
+    await expect(page).toHaveURL(/\/patient/, { timeout: 15_000 });
+
+    await safeGoto(page, '/login');
+    await expect(page).toHaveURL(/\/patient/, { timeout: 15_000 });
+
+    await safeGoto(page, '/register');
+    await expect(page).toHaveURL(/\/patient/, { timeout: 15_000 });
   });
 
   test('patient can navigate core pages without errors', async ({ page }) => {

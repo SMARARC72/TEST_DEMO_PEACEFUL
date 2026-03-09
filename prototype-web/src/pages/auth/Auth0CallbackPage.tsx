@@ -3,11 +3,12 @@
 // Syncs the Auth0 user with the local backend (JIT provisioning),
 // then redirects to the appropriate dashboard.
 
-import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useAuthStore } from '@/stores/auth';
 import { apiPost } from '@/api/client';
+import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import type { User } from '@/api/types';
 
@@ -19,16 +20,37 @@ interface Auth0SyncResponse {
 
 export default function Auth0CallbackPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading, user: auth0User, getAccessTokenSilently, error } = useAuth0();
   const setAuth0Session = useAuthStore((s) => s.setAuth0Session);
   const syncedRef = useRef(false);
+  const [callbackError, setCallbackError] = useState<string | null>(null);
+
+  const auth0QueryError = useMemo(() => {
+    const errorCode = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    if (!errorCode) return null;
+
+    const description = errorDescription
+      ? decodeURIComponent(errorDescription).replace(/\+/g, ' ')
+      : null;
+
+    return description && description.trim().length > 0
+      ? description
+      : 'Authentication could not be completed. Please try signing in again.';
+  }, [searchParams]);
 
   useEffect(() => {
+    if (auth0QueryError) {
+      setCallbackError(auth0QueryError);
+      return;
+    }
+
     if (isLoading) return;
 
     if (error) {
       console.error('Auth0 callback error:', error);
-      navigate('/login', { replace: true });
+      setCallbackError('Authentication could not be completed. Please try signing in again.');
       return;
     }
 
@@ -54,7 +76,7 @@ export default function Auth0CallbackPage() {
 
         if (err) {
           console.error('Auth0 sync failed:', err);
-          navigate('/login', { replace: true });
+          setCallbackError('Authentication could not be completed. Please try signing in again.');
           return;
         }
 
@@ -70,10 +92,45 @@ export default function Auth0CallbackPage() {
         }
       } catch (e) {
         console.error('Auth0 callback error:', e);
-        navigate('/login', { replace: true });
+        setCallbackError('Authentication could not be completed. Please try signing in again.');
       }
     })();
-  }, [isAuthenticated, isLoading, auth0User, error, getAccessTokenSilently, setAuth0Session, navigate]);
+  }, [isAuthenticated, isLoading, auth0User, auth0QueryError, error, getAccessTokenSilently, setAuth0Session]);
+
+  useEffect(() => {
+    if (callbackError || syncedRef.current) return;
+    const timeoutId = window.setTimeout(() => {
+      setCallbackError('Authentication could not be completed. Please try signing in again.');
+    }, 10_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [callbackError]);
+
+  if (callbackError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100 px-4 dark:from-neutral-900 dark:to-neutral-800">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm dark:border-red-800 dark:bg-neutral-900">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300">
+            <span className="text-xl">!</span>
+          </div>
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            Authentication could not be completed
+          </h1>
+          <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
+            {callbackError}
+          </p>
+          <div className="mt-6">
+            <Button className="w-full" onClick={() => navigate('/login', { replace: true })}>
+              Return to Login
+            </Button>
+          </div>
+          <p className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
+            <Link to="/login" className="hover:underline">Back to sign in</Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100 dark:from-neutral-900 dark:to-neutral-800">

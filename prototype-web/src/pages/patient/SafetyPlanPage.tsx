@@ -1,7 +1,7 @@
 // ─── Safety Plan Page (M-10) ─────────────────────────────────────────
 // Stanley-Brown safety plan viewer with step-by-step expandable cards.
 // Read-only for patients — clinician manages the plan content.
-// Caches to localStorage for offline access (P0 patient safety).
+// Caches to encrypted sessionStorage for the active session only.
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 
 import { Spinner } from '@/components/ui/Spinner';
 import type { SafetyPlan } from '@/api/types';
+import { decryptAndRetrieve, encryptAndStore } from '@/utils/secureStorage';
 
 const STEP_ICONS = ['⚠️', '🧘', '👥', '📞', '🏥', '🔒'];
 const SAFETY_PLAN_CACHE_KEY = 'peacefull-safety-plan-cache';
@@ -98,24 +99,24 @@ export default function SafetyPlanPage() {
     };
   }, []);
 
-  // Cache safety plan to localStorage for offline access
-  const cachePlan = useCallback((data: SafetyPlan) => {
+  const cachePlan = useCallback(async (data: SafetyPlan) => {
+    if (!patientId) return;
     try {
-      localStorage.setItem(SAFETY_PLAN_CACHE_KEY, JSON.stringify(data));
+      await encryptAndStore(SAFETY_PLAN_CACHE_KEY, data, patientId);
     } catch {
       // Storage full — non-critical
     }
-  }, []);
+  }, [patientId]);
 
-  const loadCachedPlan = useCallback((): SafetyPlan | null => {
+  const loadCachedPlan = useCallback(async (): Promise<SafetyPlan | null> => {
+    if (!patientId) return null;
     try {
-      const cached = localStorage.getItem(SAFETY_PLAN_CACHE_KEY);
-      if (cached) return JSON.parse(cached) as SafetyPlan;
+      return await decryptAndRetrieve<SafetyPlan>(SAFETY_PLAN_CACHE_KEY, patientId);
     } catch {
       // corrupt cache — ignore
     }
     return null;
-  }, []);
+  }, [patientId]);
 
   useEffect(() => {
     if (!patientId) return;
@@ -127,7 +128,7 @@ export default function SafetyPlanPage() {
         if (err) {
           addToast({ title: 'Using default safety plan', variant: 'info' });
           // Try loading from cache if API fails
-          const cached = loadCachedPlan();
+          const cached = await loadCachedPlan();
           if (cached) {
             setPlan(cached);
             addToast({ title: 'Loaded cached safety plan', variant: 'info' });
@@ -135,11 +136,11 @@ export default function SafetyPlanPage() {
         }
         if (data) {
           setPlan(data);
-          cachePlan(data); // Cache for offline access
+          void cachePlan(data);
         }
       } catch {
         // Use cached plan if API unavailable (offline mode)
-        const cached = loadCachedPlan();
+        const cached = await loadCachedPlan();
         if (cached) {
           setPlan(cached);
           addToast({ title: 'Offline: showing cached safety plan', variant: 'info' });

@@ -3,6 +3,8 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { lazy, Suspense, type ComponentType } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/layout/AuthGuard';
+import { ChunkErrorBoundary } from '@/components/layout/ErrorBoundary';
+import { PublicRoute } from '@/guards/PublicRoute';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuthStore } from '@/stores/auth';
 
@@ -20,33 +22,41 @@ function DashboardRedirect() {
 function retryImport(
   factory: () => Promise<{ default: ComponentType }>,
 ): Promise<{ default: ComponentType }> {
-  return factory().catch(() => {
-    // If we already retried, don't loop — hard reload to get fresh index.html
+  return factory().catch(async () => {
     const key = 'chunk-retry';
     const hasRetried = sessionStorage.getItem(key);
     if (hasRetried) {
       sessionStorage.removeItem(key);
-      return factory(); // let it throw naturally for ErrorBoundary
+      return factory();
     }
+
     sessionStorage.setItem(key, '1');
-    window.location.reload();
-    // Return a never-resolving promise so React doesn't render stale content
-    return new Promise<{ default: ComponentType }>(() => {});
+    await new Promise((resolve) => window.setTimeout(resolve, 1_000));
+    try {
+      const component = await factory();
+      sessionStorage.removeItem(key);
+      return component;
+    } catch (error) {
+      sessionStorage.removeItem(key);
+      throw error;
+    }
   });
 }
 
 function lazyPage(factory: () => Promise<{ default: ComponentType }>) {
   const Component = lazy(() => retryImport(factory));
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-full items-center justify-center">
-          <Spinner size="lg" />
-        </div>
-      }
-    >
-      <Component />
-    </Suspense>
+    <ChunkErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        }
+      >
+        <Component />
+      </Suspense>
+    </ChunkErrorBoundary>
   );
 }
 
@@ -71,36 +81,48 @@ export const router = createBrowserRouter([
 
   // ── Public routes ──────────────────────────
   {
-    path: '/login',
-    element: lazyPage(() => import('@/pages/auth/LoginPage')),
+    element: <PublicRoute />,
+    children: [
+      {
+        path: '/login',
+        element: lazyPage(() => import('@/pages/auth/LoginPage')),
+      },
+      {
+        path: '/register',
+        element: lazyPage(() => import('@/pages/auth/RegisterPage')),
+      },
+      {
+        path: '/register/success',
+        element: lazyPage(() => import('@/pages/auth/RegistrationSuccessPage')),
+      },
+      {
+        path: '/forgot-password',
+        element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
+      },
+      {
+        path: '/reset-password',
+        element: lazyPage(() => import('@/pages/auth/ResetPasswordPage')),
+      },
+      {
+        path: '/callback',
+        element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
+      },
+      {
+        path: '/invite',
+        element: lazyPage(() => import('@/pages/auth/InviteAcceptPage')),
+      },
+    ],
   },
+
+  // ── MFA enrollment (authenticated clinician setup) ───────────────
   {
-    path: '/register',
-    element: lazyPage(() => import('@/pages/auth/RegisterPage')),
-  },
-  {
-    path: '/register/success',
-    element: lazyPage(() => import('@/pages/auth/RegistrationSuccessPage')),
-  },
-  {
-    path: '/forgot-password',
-    element: lazyPage(() => import('@/pages/auth/ForgotPasswordPage')),
-  },
-  {
-    path: '/reset-password',
-    element: lazyPage(() => import('@/pages/auth/ResetPasswordPage')),
-  },
-  {
-    path: '/callback',
-    element: lazyPage(() => import('@/pages/auth/Auth0CallbackPage')),
-  },
-  {
-    path: '/invite',
-    element: lazyPage(() => import('@/pages/auth/InviteAcceptPage')),
-  },
-  {
-    path: '/mfa-enrollment',
-    element: lazyPage(() => import('@/pages/auth/MfaEnrollmentPage')),
+    element: <AuthGuard allowedRoles={['CLINICIAN', 'SUPERVISOR', 'ADMIN']} />,
+    children: [
+      {
+        path: '/mfa-enrollment',
+        element: lazyPage(() => import('@/pages/auth/MfaEnrollmentPage')),
+      },
+    ],
   },
 
   // ── Legal pages ────────────────────────────
