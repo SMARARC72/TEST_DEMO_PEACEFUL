@@ -141,12 +141,14 @@ async function verifyAuth0Token(
     // Map Auth0 claims to our internal AuthTokenPayload shape
     // Auth0 standard claims: sub, iss, aud, exp, iat
     // Custom claims under namespace: https://peacefull.ai/
+    // amr (Authentication Methods References) indicates MFA completion
     const namespace = "https://peacefull.ai/";
     return {
       sub: payload.sub as string,
       tid: (payload[`${namespace}tid`] as string) ?? "default",
       role: (payload[`${namespace}role`] as UserRole) ?? "PATIENT",
       permissions: (payload.permissions as string[]) ?? [],
+      amr: (payload.amr as string[]) ?? [],
       iat: payload.iat as number,
       exp: payload.exp as number,
     } as AuthTokenPayload;

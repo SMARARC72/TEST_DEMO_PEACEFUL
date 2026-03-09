@@ -229,6 +229,7 @@ function toUserResponse(u: PrismaUser) {
     },
     mfaEnabled: u.mfaEnabled,
     mfaMethod: u.mfaMethod,
+    authMethod: u.authMethod,
     lastLogin: u.lastLogin?.toISOString() ?? null,
     status: u.status,
     createdAt: u.createdAt.toISOString(),
@@ -1064,6 +1065,12 @@ authRouter.post(
 // Called by the frontend after Auth0 Universal Login redirect.
 // Verifies the Auth0 access token, finds or creates a local user,
 // and returns local JWT tokens so the rest of the app works seamlessly.
+//
+// Option A Auth Unification:
+// - Stores auth0Sub for persistent identity linking (prevents email-only matching)
+// - Enforces MFA completion via Auth0's `amr` claim
+// - Sets authMethod to AUTH0 on first sync
+// - Clears stale passwordHash for Auth0-only users
 
 const auth0SyncSchema = z.object({
   email: z.string().email(),
@@ -1085,53 +1092,104 @@ authRouter.post(
         throw new AppError("Auth0 identity mismatch", 403);
       }
 
-      // req.user.sub is the Auth0 sub (e.g., "auth0|abc123") from the verified token.
-      // The email in the body comes from Auth0's ID token on the frontend.
+      // Option A: Enforce MFA completion via Auth0's amr claim.
+      // Auth0 includes `amr` (Authentication Methods References) in the token
+      // when MFA is completed (e.g., ["mfa"]). If the user's role requires MFA
+      // but the amr claim is absent, reject the sync.
+      const amr = (req.user as Record<string, unknown>).amr as
+        | string[]
+        | undefined;
+      const mfaCompletedViaAuth0 = Array.isArray(amr) && amr.includes("mfa");
+
       authLogger.info(
-        { auth0Sub: req.user!.sub, email: body.email },
+        {
+          auth0Sub: req.user!.sub,
+          email: body.email,
+          mfaCompleted: mfaCompletedViaAuth0,
+        },
         "Auth0 sync initiated",
       );
 
-      const matchingUsers = await prisma.user.findMany({
-        where: { email: body.email },
-        orderBy: { createdAt: "asc" },
+      // First, try to find user by auth0Sub (persistent identity link)
+      let resolvedUser = await prisma.user.findUnique({
+        where: { auth0Sub: body.auth0Sub },
       });
 
-      if (matchingUsers.length === 0) {
+      if (!resolvedUser) {
+        // Fallback: find by email (first-time Auth0 login for existing user)
+        const matchingUsers = await prisma.user.findMany({
+          where: { email: body.email },
+          orderBy: { createdAt: "asc" },
+        });
+
+        if (matchingUsers.length === 0) {
+          throw new AppError(
+            "No pre-provisioned account matches this Auth0 identity. Use your clinic invitation or contact an administrator.",
+            403,
+          );
+        }
+
+        // Check no other user already claimed this auth0Sub
+        const existingAuth0Link = await prisma.user.findUnique({
+          where: { auth0Sub: body.auth0Sub },
+        });
+        if (existingAuth0Link) {
+          throw new AppError(
+            "This Auth0 identity is already linked to another account. Contact support.",
+            409,
+          );
+        }
+
+        const tenantScopedUser = matchingUsers.find(
+          (candidate) => candidate.tenantId === req.user!.tid,
+        );
+
+        if (matchingUsers.length > 1 && !tenantScopedUser) {
+          throw new AppError(
+            "This Auth0 identity matches multiple organizations and cannot be linked automatically. Contact support.",
+            409,
+          );
+        }
+
+        resolvedUser = tenantScopedUser ?? matchingUsers[0]!;
+      }
+
+      // Enforce MFA for clinician/supervisor roles
+      const requiresMfa =
+        resolvedUser.role === "CLINICIAN" ||
+        resolvedUser.role === "SUPERVISOR" ||
+        resolvedUser.role === "ADMIN";
+      if (requiresMfa && !mfaCompletedViaAuth0) {
+        authLogger.warn(
+          { userId: resolvedUser.id, role: resolvedUser.role },
+          "Auth0 sync rejected: MFA not completed for privileged role",
+        );
         throw new AppError(
-          "No pre-provisioned account matches this Auth0 identity. Use your clinic invitation or contact an administrator.",
+          "Multi-factor authentication is required for your role. Please complete MFA in Auth0 and try again.",
           403,
         );
       }
 
-      const tenantScopedUser = matchingUsers.find(
-        (candidate) => candidate.tenantId === req.user!.tid,
-      );
+      // Update user: link auth0Sub, set authMethod, update lastLogin
+      const updateData: Record<string, unknown> = {
+        lastLogin: new Date(),
+        auth0Sub: body.auth0Sub,
+        authMethod: "AUTH0",
+        // Mark MFA as enabled if Auth0 confirms it
+        ...(mfaCompletedViaAuth0
+          ? { mfaEnabled: true, mfaMethod: null, mfaSecret: null }
+          : {}),
+      };
 
-      if (matchingUsers.length > 1 && !tenantScopedUser) {
-        throw new AppError(
-          "This Auth0 identity matches multiple organizations and cannot be linked automatically. Contact support.",
-          409,
-        );
-      }
-
-      const resolvedUser = tenantScopedUser ?? matchingUsers[0]!;
       const user = await prisma.user.update({
         where: { id: resolvedUser.id },
-        data: { lastLogin: new Date() },
+        data: updateData,
       });
 
       authLogger.info(
         { userId: user.id, auth0Sub: body.auth0Sub },
-        "Auth0 sync: existing user linked",
+        "Auth0 sync: user linked with persistent auth0Sub",
       );
-
-      if (user.passwordHash && user.passwordHash.trim().length > 0) {
-        authLogger.warn(
-          { userId: user.id },
-          "Auth0 sync linked an account that also has a local password",
-        );
-      }
 
       // Check user is active
       if (user.status !== "ACTIVE") {

@@ -81,8 +81,10 @@ export default function LoginPage() {
         const role = currentUser?.role;
         // Clinicians without MFA must enroll before proceeding
         // In demo/mock mode, skip MFA enrollment — demo accounts are pre-enrolled
+        // Auth0 users skip local MFA enrollment — MFA is handled by Auth0 Guardian
         const inDemoMode = import.meta.env.VITE_ENABLE_MOCKS === 'true' || import.meta.env.DEV;
-        if (!inDemoMode && (role === 'CLINICIAN' || role === 'SUPERVISOR') && !currentUser?.mfaEnabled) {
+        const isAuth0User = currentUser?.authMethod === 'AUTH0';
+        if (!inDemoMode && !isAuth0User && (role === 'CLINICIAN' || role === 'SUPERVISOR') && !currentUser?.mfaEnabled) {
           navigate('/mfa-enrollment', { replace: true });
           return;
         }

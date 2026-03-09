@@ -1,13 +1,45 @@
-# Change Log - VC Demo v2.0
+# Change Log
 ## Peacefull.ai Behavioral Health AI Companion
 
-**Version:** 2.0  
-**Date:** 2026-02-25  
 **Packet Reference:** Master Artifact Packet v1.5
 
 ---
 
-## v2.9 — Prod API Stability & Audit Schema (NEW)
+## v2.1 — VC Demo Polish (2026-02-25)
+
+### Claims & Trust Fixes
+- Compliance Posture: "SOC 2 Type II" → "SOC 2 Type II (Planned)"
+- ROI Dashboard: Added "Simulated Demo Values" banner, assumptions drawer
+
+### Safety UI Fixes
+- Signal Strength Bands: LOW / GUARDED / MODERATE / HIGH (replaced AI confidence %)
+- Workflow Simulation: Reframed as process demonstration, removed "crisis averted" language
+
+### Moat Screens (All Implemented)
+- Restricted Notes Surface, Exports Center, Suppression Transparency UI
+
+### Workflow Proof Screens
+- Portal Inbox Detail (authority banner, evidence panel, nudge telemetry)
+- Draft Summary Review (persistent draft banner, review actions, known unknowns)
+
+### Demo Mode Controls
+- Added Export status and Voice status toggles
+- Demo Script Panel: 8-10 minute guided investor flow
+
+### Patches Applied
+| Patch | Fix |
+|-------|-----|
+| 1 | SOC 2 wording: added "(Planned)" label |
+| 2 | Added portal authority banner to inbox-detail |
+| 3 | Added Export/Voice toggles to demo controls |
+
+---
+
+## v2.0 — Full Platform Build (2026-02-25)
+
+---
+
+## v2.9 — Prod API Stability & Audit Schema
 
 ### Production API runtime fixes
 - **Resolved:** ECS task crash due to invalid `ENCRYPTION_KEY` format; rotated secret to 64-hex/32-byte and forced new deployment.

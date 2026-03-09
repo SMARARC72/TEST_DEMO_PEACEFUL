@@ -45,6 +45,7 @@ temp/
 .terraform/
 .terraform.lock.hcl
 *.tfvars
+tfplan-*
 
 # Prisma
 # Keep committed schema migrations in source control for CI and deploys.
@@ -65,3 +66,12 @@ ecs-logs.json
 **/task-def-update.json
 **/aws-ecs-describe-task-definition*.json
 **/describe-task-definition*.json
+
+# Test artifacts
+test-results/
+.playwright-artifacts-*/
+.last-run.json
+playwright-report/
+
+# Build artifacts
+overrides.json

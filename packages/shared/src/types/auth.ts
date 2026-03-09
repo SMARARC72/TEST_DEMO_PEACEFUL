@@ -24,6 +24,12 @@ export enum MFAMethod {
   FIDO2 = 'FIDO2',
 }
 
+/** Primary authentication method for a user account. */
+export enum AuthMethod {
+  LOCAL = 'LOCAL',   // Email/password with optional local TOTP MFA
+  AUTH0 = 'AUTH0',   // Auth0 Universal Login (MFA enforced by Auth0 Guardian)
+}
+
 /** Permission action verbs. */
 export enum PermissionAction {
   READ = 'READ',
@@ -48,6 +54,7 @@ export interface User {
   };
   mfaEnabled: boolean;
   mfaMethod?: MFAMethod;
+  authMethod?: AuthMethod;
   lastLogin?: string;
   status: UserStatus;
   createdAt: string;
@@ -84,6 +91,8 @@ export interface AuthTokenPayload {
   tid: string;
   role: UserRole;
   permissions: string[];
+  /** Authentication Methods References (from Auth0 — includes "mfa" when MFA completed). */
+  amr?: string[];
   /** Issued-at (epoch seconds). */
   iat: number;
   /** Expiration (epoch seconds). */

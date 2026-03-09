@@ -40,15 +40,17 @@ enum TenantPlan {
 model User {
   id           String     @id @default(uuid())
   tenantId     String
-  email        String     
+  email        String
   passwordHash String
   role         UserRole
   firstName    String
   lastName     String
   phone        String?
+  auth0Sub     String?    @unique // Auth0 subject identifier for persistent identity linking
+  authMethod   AuthMethod @default(LOCAL) // PRIMARY auth method: LOCAL (password) or AUTH0
   mfaEnabled   Boolean    @default(false)
   mfaMethod    MfaMethod?
-  mfaSecret    String?    // encrypted
+  mfaSecret    String?    // encrypted TOTP secret (deprecated — MFA moving to Auth0 Guardian)
   lastLogin    DateTime?
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime   @default(now())
@@ -84,6 +86,11 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DEACTIVATED
+}
+
+enum AuthMethod {
+  LOCAL  // Email/password with optional local TOTP MFA
+  AUTH0  // Auth0 Universal Login (MFA enforced by Auth0 Guardian)
 }
 
 enum MfaMethod {

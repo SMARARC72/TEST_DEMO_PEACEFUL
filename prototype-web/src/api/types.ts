@@ -12,6 +12,8 @@ export type SubmissionSource = 'JOURNAL' | 'CHECKIN' | 'VOICE_MEMO';
 
 // ─── Auth ─────────────────────────────────────
 
+export type AuthMethod = 'LOCAL' | 'AUTH0';
+
 export interface User {
   id: string;
   tenantId: string;
@@ -25,6 +27,7 @@ export interface User {
   };
   mfaEnabled: boolean;
   mfaMethod?: 'TOTP' | 'SMS' | 'FIDO2' | null;
+  authMethod?: AuthMethod;
   lastLogin?: string;
   createdAt: string;
 }

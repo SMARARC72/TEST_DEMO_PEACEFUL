@@ -1,1 +1,0 @@
-{"containerOverrides":[{"name":"api","command":["npx","prisma","db","push","--accept-data-loss"],"environment":[{"name":"DIRECT_DATABASE_URL","value":"postgresql://peacefull_admin:zlibuExpToNgd38tCfQv9RM6sIZamWLy@peacefull-dev-postgres.cwbc646w4005.us-east-1.rds.amazonaws.com:5432/peacefull?sslmode=require"}]}]}

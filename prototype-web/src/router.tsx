@@ -4,7 +4,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { ChunkErrorBoundary } from '@/components/layout/ErrorBoundary';
-import { PublicRoute } from '@/guards/PublicRoute';
+import { PublicRoute } from '@/components/layout/PublicRoute';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuthStore } from '@/stores/auth';
 
