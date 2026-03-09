@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import LoginPage from '@/pages/auth/LoginPage';
 import Auth0CallbackPage from '@/pages/auth/Auth0CallbackPage';
-import { PublicRoute } from '@/guards/PublicRoute';
+import { PublicRoute } from '@/components/layout/PublicRoute';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/api/auth';
 

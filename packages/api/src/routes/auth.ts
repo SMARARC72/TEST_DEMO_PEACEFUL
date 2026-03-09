@@ -1096,7 +1096,7 @@ authRouter.post(
       // Auth0 includes `amr` (Authentication Methods References) in the token
       // when MFA is completed (e.g., ["mfa"]). If the user's role requires MFA
       // but the amr claim is absent, reject the sync.
-      const amr = (req.user as Record<string, unknown>).amr as
+      const amr = (req.user as unknown as Record<string, unknown>).amr as
         | string[]
         | undefined;
       const mfaCompletedViaAuth0 = Array.isArray(amr) && amr.includes("mfa");
@@ -1159,7 +1159,18 @@ authRouter.post(
         resolvedUser.role === "CLINICIAN" ||
         resolvedUser.role === "SUPERVISOR" ||
         resolvedUser.role === "ADMIN";
-      if (requiresMfa && !mfaCompletedViaAuth0) {
+
+      // Pilot demo accounts: skip MFA enforcement for presentation purposes.
+      // These accounts are seeded with known credentials and used for live demos.
+      // TODO: Remove this bypass once Auth0 Guardian MFA enrollment is completed for real accounts.
+      const DEMO_EMAILS: ReadonlySet<string> = new Set([
+        "pilot.clinician.1@peacefull.cloud",
+        "pilot.clinician.2@peacefull.cloud",
+        "pilot.supervisor@peacefull.cloud",
+      ]);
+      const isDemoAccount = DEMO_EMAILS.has(body.email.toLowerCase());
+
+      if (requiresMfa && !mfaCompletedViaAuth0 && !isDemoAccount) {
         authLogger.warn(
           { userId: resolvedUser.id, role: resolvedUser.role },
           "Auth0 sync rejected: MFA not completed for privileged role",
@@ -1167,6 +1178,13 @@ authRouter.post(
         throw new AppError(
           "Multi-factor authentication is required for your role. Please complete MFA in Auth0 and try again.",
           403,
+        );
+      }
+
+      if (isDemoAccount && !mfaCompletedViaAuth0) {
+        authLogger.info(
+          { userId: resolvedUser.id, email: body.email },
+          "Auth0 sync: MFA bypass for pilot demo account",
         );
       }
 
