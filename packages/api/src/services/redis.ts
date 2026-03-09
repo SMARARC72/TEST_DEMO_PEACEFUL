@@ -111,3 +111,16 @@ export async function redisExists(key: string): Promise<boolean> {
   purgeExpired();
   return memoryStore.has(key);
 }
+
+export async function redisPing(): Promise<boolean> {
+  await ensureRedis();
+  if (!redisClient) {
+    return true;
+  }
+
+  try {
+    return (await redisClient.ping()) === "PONG";
+  } catch {
+    return false;
+  }
+}

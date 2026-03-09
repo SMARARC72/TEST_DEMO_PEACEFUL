@@ -7,7 +7,11 @@ import type { CookieOptions, Request, Response, RequestHandler } from "express";
 import { z } from "zod";
 import crypto from "node:crypto";
 import { authenticate } from "../middleware/auth.js";
-import { authLimiter } from "../middleware/rate-limit.js";
+import {
+  authLimiter,
+  forgotPasswordLimiter,
+  loginAttemptLimiter,
+} from "../middleware/rate-limit.js";
 import { AppError } from "../middleware/error.js";
 import {
   generateTokens,
@@ -294,7 +298,6 @@ const MFA_TTL = 300; // 5 minutes
 const REVOKED_TTL = 7 * 24 * 3600; // 7 days (matches refresh token max age)
 
 // SEC-004: Per-route rate limiting for auth endpoints (from shared module)
-const loginLimiter = authLimiter;
 const mfaLimiter = authLimiter;
 
 // ─── POST /register ──────────────────────────────────────────────────
@@ -521,7 +524,7 @@ const loginBodySchema = z.object({
   tenantSlug: z.string().min(1).max(100).optional(),
 });
 
-authRouter.post("/login", loginLimiter, async (req, res, next) => {
+authRouter.post("/login", loginAttemptLimiter, async (req, res, next) => {
   try {
     const body = loginBodySchema.parse(req.body);
 
@@ -787,7 +790,7 @@ const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
-authRouter.post("/forgot-password", loginLimiter, async (req, res, next) => {
+authRouter.post("/forgot-password", forgotPasswordLimiter, async (req, res, next) => {
   try {
     const body = forgotPasswordSchema.parse(req.body);
 
@@ -832,7 +835,7 @@ const resetPasswordSchema = z.object({
     .max(128),
 });
 
-authRouter.post("/reset-password", loginLimiter, async (req, res, next) => {
+authRouter.post("/reset-password", authLimiter, async (req, res, next) => {
   try {
     const body = resetPasswordSchema.parse(req.body);
 

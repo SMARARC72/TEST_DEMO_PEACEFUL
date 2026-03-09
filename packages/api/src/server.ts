@@ -34,6 +34,7 @@ import routes from "./routes/index.js";
 import { auditLog } from "./middleware/audit.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 import { apiLogger } from "./utils/logger.js";
+import { redisPing } from "./services/redis.js";
 import { prisma } from "./models/index.js";
 import { startWorker, getQueueHealth, shutdownQueue } from "./services/job-queue.js";
 import { WebSocketServer, WebSocket } from "ws";
@@ -158,34 +159,60 @@ app.use(auditLog);
 // ─── Health / Ready / Version ────────────────────────────────────────
 
 const startedAt = Date.now();
-const APP_VERSION = "0.1.0";
+const APP_VERSION = process.env.APP_VERSION ?? "1.0.0";
+
+function buildHealthPayload() {
+  return {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    version: APP_VERSION,
+    uptime: process.uptime(),
+  };
+}
+
+async function buildReadinessPayload() {
+  const checks: { database: "ok" | "error"; cache: "ok" | "error" } = {
+    database: "ok",
+    cache: "ok",
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    checks.database = "error";
+  }
+
+  const cacheOk = await redisPing();
+  if (!cacheOk) {
+    checks.cache = "error";
+  }
+
+  return {
+    status: checks.database === "ok" && checks.cache === "ok" ? "ready" : "degraded",
+    checks,
+  };
+}
 
 /**
  * Health check — always public, no auth required.
  * Returns server status, version, timestamp, and uptime.
  */
-app.get("/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    version: APP_VERSION,
-    timestamp: new Date().toISOString(),
-    uptime: Math.floor((Date.now() - startedAt) / 1000),
-    environment: env.NODE_ENV,
-  });
+app.get(["/health", `/api/${API_VERSION}/health`], (_req, res) => {
+  res.json(buildHealthPayload());
 });
 
 /**
  * Readiness probe — checks database connectivity.
  * Returns 503 if the database is unreachable.
  */
-app.get("/ready", async (_req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    const queue = await getQueueHealth();
-    res.json({ status: "ready", database: "connected", queue });
-  } catch {
-    res.status(503).json({ status: "not-ready", database: "disconnected" });
-  }
+app.get(["/ready", `/api/${API_VERSION}/health/ready`], async (_req, res) => {
+  const readiness = await buildReadinessPayload();
+  const queue = await getQueueHealth();
+
+  res.status(readiness.status === "ready" ? 200 : 503).json({
+    ...readiness,
+    queue,
+  });
 });
 
 /**

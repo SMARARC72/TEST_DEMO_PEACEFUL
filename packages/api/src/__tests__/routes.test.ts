@@ -62,6 +62,15 @@ describe("Infrastructure endpoints", () => {
     expect(res.body).toHaveProperty("uptime");
   });
 
+  it("GET /api/v1/health returns the versioned health payload", async () => {
+    const res = await request(app).get("/api/v1/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: "ok", version: "1.0.0" });
+    expect(typeof res.body.timestamp).toBe("string");
+    expect(typeof res.body.uptime).toBe("number");
+  });
+
   it("GET /ready may return 200 or 503 (depends on DB connectivity)", async () => {
     // Mock Prisma $queryRaw to simulate connected DB
     (prisma.$queryRaw as unknown as Mock).mockResolvedValueOnce([
@@ -72,6 +81,16 @@ describe("Infrastructure endpoints", () => {
     // With mock it should succeed; without real DB it would 503
     expect([200, 503]).toContain(res.status);
     expect(res.body).toHaveProperty("status");
+  });
+
+  it("GET /api/v1/health/ready returns checks for database and cache", async () => {
+    (prisma.$queryRaw as unknown as Mock).mockResolvedValueOnce([{ "?column?": 1 }]);
+
+    const res = await request(app).get("/api/v1/health/ready");
+
+    expect([200, 503]).toContain(res.status);
+    expect(res.body).toHaveProperty("checks.database");
+    expect(res.body).toHaveProperty("checks.cache");
   });
 
   it("GET /version returns version info", async () => {
@@ -106,6 +125,44 @@ describe("Auth routes", () => {
       .send({ email: "nobody@example.com", password: "wrongpass123" });
 
     expect(res.status).toBe(401);
+  });
+
+  it("POST /api/v1/auth/login rate limits after 5 attempts for the same email", async () => {
+    (prisma.tenant.findFirst as unknown as Mock).mockResolvedValue({
+      id: "tenant-001",
+      slug: "default",
+    });
+    (prisma.user.findFirst as unknown as Mock).mockResolvedValue(null);
+
+    let finalResponse;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      finalResponse = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: "rate.limit@example.com", password: "wrongpass123" });
+    }
+
+    expect(finalResponse!.status).toBe(429);
+    expect(finalResponse!.body.error.code).toBe("RATE_LIMITED");
+    expect(finalResponse!.body.error.message).toMatch(/Too many login attempts/i);
+    expect(finalResponse!.headers["x-ratelimit-remaining"]).toBeDefined();
+    expect(finalResponse!.headers["x-ratelimit-reset"]).toBeDefined();
+  });
+
+  it("POST /api/v1/auth/forgot-password rate limits after 3 attempts for the same email", async () => {
+    (prisma.user.findFirst as unknown as Mock).mockResolvedValue(null);
+
+    let finalResponse;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      finalResponse = await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: "forgot.limit@example.com" });
+    }
+
+    expect(finalResponse!.status).toBe(429);
+    expect(finalResponse!.body.error.code).toBe("RATE_LIMITED");
+    expect(finalResponse!.body.error.message).toMatch(/password reset requests/i);
+    expect(finalResponse!.headers["x-ratelimit-remaining"]).toBeDefined();
+    expect(finalResponse!.headers["x-ratelimit-reset"]).toBeDefined();
   });
 
   it("POST /api/v1/auth/login returns 403 for suspended clinicians", async () => {

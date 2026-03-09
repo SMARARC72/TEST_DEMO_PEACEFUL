@@ -5,7 +5,7 @@
 
 import { rateLimit, type Options } from "express-rate-limit";
 import { env } from "../config/index.js";
-import { apiLogger } from "../utils/logger.js";
+import { apiLogger, authLogger } from "../utils/logger.js";
 
 // ─── Redis Store (lazy-initialized) ──────────────────────────────────
 
@@ -89,6 +89,73 @@ function createLimiter(
   });
 }
 
+function normalizeEmail(email: unknown): string | null {
+  if (typeof email !== "string") return null;
+  const normalized = email.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getWaitMinutes(resetTime: Date | undefined, windowMs: number): number {
+  if (!resetTime) {
+    return Math.max(1, Math.ceil(windowMs / 60_000));
+  }
+
+  const remainingMs = Math.max(resetTime.getTime() - Date.now(), 0);
+  return Math.max(1, Math.ceil(remainingMs / 60_000));
+}
+
+function createEmailScopedLimiter(config: {
+  actionLabel: string;
+  keyPrefix: string;
+  windowMs: number;
+  max: number;
+}): ReturnType<typeof rateLimit> {
+  const { actionLabel, keyPrefix, windowMs, max } = config;
+
+  return createLimiter({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: true,
+    keyGenerator: (req) => {
+      const email = normalizeEmail((req.body as { email?: unknown } | undefined)?.email);
+      return email ? `${keyPrefix}:${email}` : `${keyPrefix}:ip:${req.ip}`;
+    },
+    handler: (req, res) => {
+      const rateLimitState = req as typeof req & {
+        rateLimit?: { resetTime?: Date };
+      };
+      const resetTime = rateLimitState.rateLimit?.resetTime;
+      const waitMinutes = getWaitMinutes(
+        resetTime instanceof Date ? resetTime : undefined,
+        windowMs,
+      );
+      const message = `Too many ${actionLabel}. Please try again in ${waitMinutes} minute${waitMinutes === 1 ? "" : "s"}.`;
+      const email = normalizeEmail((req.body as { email?: unknown } | undefined)?.email);
+
+      authLogger.warn(
+        {
+          ip: req.ip,
+          email,
+          path: req.originalUrl,
+          method: req.method,
+          waitMinutes,
+        },
+        "Auth rate limit exceeded",
+      );
+
+      res.status(429).json({
+        error: {
+          code: "RATE_LIMITED",
+          message,
+        },
+        requestId: req.requestId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+  });
+}
+
 /**
  * Global rate limiter — 100 requests per 15 minutes per IP.
  * Applied to all routes as a baseline.
@@ -107,6 +174,22 @@ export const authLimiter: ReturnType<typeof rateLimit> = createLimiter({
   windowMs: 60 * 1000,
   max: 10,
 });
+
+export const loginAttemptLimiter: ReturnType<typeof rateLimit> =
+  createEmailScopedLimiter({
+    actionLabel: "login attempts",
+    keyPrefix: "auth-login",
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+  });
+
+export const forgotPasswordLimiter: ReturnType<typeof rateLimit> =
+  createEmailScopedLimiter({
+    actionLabel: "password reset requests",
+    keyPrefix: "auth-forgot-password",
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+  });
 
 /**
  * Crisis rate limiter — looser than auth because crisis reports must go through,

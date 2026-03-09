@@ -50,12 +50,20 @@ async function main() {
   console.log('  → Creating tenant...');
   const tenant = await prisma.tenant.upsert({
     where: { slug: 'peacefull' },
-    update: {},
+    update: {
+      name: 'Demo Clinic',
+      domain: 'peacefull.cloud',
+      settings: {
+        timezone: 'America/Los_Angeles',
+        defaultLanguage: 'en',
+        features: ['mbc', 'memory', 'escalation', 'chat', 'adherence'],
+      },
+    },
     create: {
       id: TENANT_ID,
-      name: 'Peacefull Health System',
+      name: 'Demo Clinic',
       slug: 'peacefull',
-      domain: 'peacefull.ai',
+      domain: 'peacefull.cloud',
       plan: 'PILOT',
       ssoEnabled: false,
       scimEnabled: false,
@@ -74,25 +82,25 @@ async function main() {
   const clinicianUsers = [
     {
       id: USER_CHEN_ID,
-      email: 'sarah.chen@peacefull.ai',
-      firstName: 'Sarah',
-      lastName: 'Chen',
+      email: 'pilot.clinician.1@peacefull.cloud',
+      firstName: 'Pilot',
+      lastName: 'Clinician-1',
       role: 'CLINICIAN' as const,
       phone: '555-0300',
     },
     {
       id: USER_WILSON_ID,
-      email: 'james.wilson@peacefull.ai',
-      firstName: 'James',
-      lastName: 'Wilson',
+      email: 'pilot.supervisor@peacefull.cloud',
+      firstName: 'Pilot',
+      lastName: 'Supervisor',
       role: 'SUPERVISOR' as const,
       phone: '555-0301',
     },
     {
       id: USER_RODRIGUEZ_ID,
-      email: 'maria.rodriguez-clinician@peacefull.ai',
-      firstName: 'Maria',
-      lastName: 'Rodriguez',
+      email: 'pilot.clinician.2@peacefull.cloud',
+      firstName: 'Pilot',
+      lastName: 'Clinician-2',
       role: 'CLINICIAN' as const,
       phone: '555-0302',
     },
@@ -101,7 +109,14 @@ async function main() {
   for (const u of clinicianUsers) {
     await prisma.user.upsert({
       where: { tenantId_email: { tenantId: TENANT_ID, email: u.email } },
-      update: {},
+      update: {
+        firstName: u.firstName,
+        lastName: u.lastName,
+        phone: u.phone,
+        passwordHash,
+        role: u.role,
+        status: 'ACTIVE',
+      },
       create: {
         id: u.id,
         tenantId: TENANT_ID,
@@ -124,15 +139,20 @@ async function main() {
   // ═══════════════════════════════════════════════════
   console.log('  → Creating patient users...');
   const patientUsers = [
-    { id: USER_MARIA_ID, email: 'maria.santos@example.com', firstName: 'Maria', lastName: 'Santos' },
-    { id: USER_JAMES_ID, email: 'james.chen@example.com', firstName: 'James', lastName: 'Chen' },
-    { id: USER_EMMA_ID, email: 'emma.thompson@example.com', firstName: 'Emma', lastName: 'Thompson' },
+    { id: USER_MARIA_ID, email: 'test.patient.1@peacefull.cloud', firstName: 'Test', lastName: 'Patient-1' },
+    { id: USER_JAMES_ID, email: 'test.patient.2@peacefull.cloud', firstName: 'Test', lastName: 'Patient-2' },
+    { id: USER_EMMA_ID, email: 'test.patient.3@peacefull.cloud', firstName: 'Test', lastName: 'Patient-3' },
   ];
 
   for (const u of patientUsers) {
     await prisma.user.upsert({
       where: { tenantId_email: { tenantId: TENANT_ID, email: u.email } },
-      update: {},
+      update: {
+        firstName: u.firstName,
+        lastName: u.lastName,
+        passwordHash,
+        status: 'ACTIVE',
+      },
       create: {
         id: u.id,
         tenantId: TENANT_ID,
