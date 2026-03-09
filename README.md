@@ -178,8 +178,8 @@
 | Role | Email | Password |
 |------|-------|----------|
 | Patient | `test.patient.1@peacefull.cloud` | `Demo2026!` |
-| Clinician | `pilot.clinician.1@peacefull.cloud` | `Demo2026!` |
-| Supervisor | `pilot.supervisor@peacefull.cloud` | `Demo2026!` |
+| Clinician | `pilot.clinician.1@peacefull.cloud` | `Pilot2026!Change` on production, `Demo2026!` in default/dev seed |
+| Supervisor | `pilot.supervisor@peacefull.cloud` | `Pilot2026!Change` on production, `Demo2026!` in default/dev seed |
 
 ### Quick Smoke Test
 
