@@ -93,17 +93,24 @@ enableMocking().then(() => {
         });
       }
     } else {
-      // Production without mocks: unregister stale MSW workers, register offline SW
+      // Unregister ALL service workers — the offline SW's stale-while-revalidate
+      // strategy caches cross-origin Auth0 requests as opaque responses, which
+      // breaks the Auth0 SDK token exchange. Re-enable once SW is fixed to
+      // exclude Auth0 domain requests.
+      // TODO: Fix sw.js to skip cross-origin requests, then re-enable registration.
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         for (const registration of registrations) {
-          if (registration.active?.scriptURL?.includes('mockServiceWorker')) {
-            registration.unregister();
-          }
+          registration.unregister();
         }
       });
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // Service worker registration is best-effort
-      });
+      // Purge any stale caches left by the old SW
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
+          }
+        });
+      }
     }
   }
 
