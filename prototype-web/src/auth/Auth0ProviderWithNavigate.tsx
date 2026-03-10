@@ -34,8 +34,6 @@ export function Auth0ProviderWithNavigate({ children }: Props) {
         scope: 'openid profile email',
       }}
       cacheLocation="localstorage"
-      useRefreshTokens
-      useRefreshTokensFallback
     >
       {children}
     </Auth0Provider>
