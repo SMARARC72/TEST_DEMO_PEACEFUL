@@ -50,7 +50,7 @@ export default function Auth0CallbackPage() {
 
     if (error) {
       console.error('Auth0 callback error:', error);
-      setCallbackError('Authentication could not be completed. Please try signing in again.');
+      setCallbackError(`Auth0 SDK error: ${error.message}`);
       return;
     }
 
@@ -76,7 +76,7 @@ export default function Auth0CallbackPage() {
 
         if (err) {
           console.error('Auth0 sync failed:', err);
-          setCallbackError('Authentication could not be completed. Please try signing in again.');
+          setCallbackError(`Sync error (${err.status}): ${err.message}`);
           return;
         }
 
@@ -92,7 +92,7 @@ export default function Auth0CallbackPage() {
         }
       } catch (e) {
         console.error('Auth0 callback error:', e);
-        setCallbackError('Authentication could not be completed. Please try signing in again.');
+        setCallbackError(`Callback exception: ${e instanceof Error ? e.message : String(e)}`);
       }
     })();
   }, [isAuthenticated, isLoading, auth0User, auth0QueryError, error, getAccessTokenSilently, setAuth0Session]);
@@ -100,7 +100,7 @@ export default function Auth0CallbackPage() {
   useEffect(() => {
     if (callbackError || syncedRef.current) return;
     const timeoutId = window.setTimeout(() => {
-      setCallbackError('Authentication could not be completed. Please try signing in again.');
+      setCallbackError('Timeout: Auth0 callback did not complete within 10 seconds. Check browser console for details.');
     }, 10_000);
 
     return () => window.clearTimeout(timeoutId);
@@ -119,6 +119,20 @@ export default function Auth0CallbackPage() {
           <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
             {callbackError}
           </p>
+          <details className="mt-4 text-left text-xs text-neutral-500 dark:text-neutral-400">
+            <summary className="cursor-pointer">Debug info</summary>
+            <pre className="mt-2 max-h-40 overflow-auto rounded bg-neutral-100 p-2 dark:bg-neutral-800">
+              {JSON.stringify({
+                url: window.location.href,
+                error: searchParams.get('error'),
+                error_description: searchParams.get('error_description'),
+                isAuthenticated,
+                isLoading,
+                auth0User: auth0User ? { email: auth0User.email, sub: auth0User.sub } : null,
+                sdkError: error?.message,
+              }, null, 2)}
+            </pre>
+          </details>
           <div className="mt-6">
             <Button className="w-full" onClick={() => navigate('/login', { replace: true })}>
               Return to Login
