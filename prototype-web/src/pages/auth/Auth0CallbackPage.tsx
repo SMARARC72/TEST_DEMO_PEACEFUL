@@ -40,6 +40,37 @@ export default function Auth0CallbackPage() {
       : 'Authentication could not be completed. Please try signing in again.';
   }, [searchParams]);
 
+  // DEBUG: Manual token exchange to diagnose "Failed to fetch"
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (!code || syncedRef.current) return;
+
+    const domain = import.meta.env.VITE_AUTH0_DOMAIN;
+    const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+    if (!domain || !clientId) return;
+
+    // Try a raw fetch to the token endpoint to see the actual error
+    fetch(`https://${domain}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code,
+        redirect_uri: `${window.location.origin}/callback`,
+      }),
+    })
+      .then(async (res) => {
+        const body = await res.text();
+        console.log('[DEBUG] Token exchange response:', res.status, body);
+        // Don't act on this — just log it for debugging
+      })
+      .catch((err) => {
+        console.error('[DEBUG] Token exchange fetch error:', err);
+        // This tells us if the raw fetch also fails
+      });
+  }, [searchParams]);
+
   useEffect(() => {
     if (auth0QueryError) {
       setCallbackError(auth0QueryError);
