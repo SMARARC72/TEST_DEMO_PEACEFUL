@@ -12,7 +12,9 @@
     <meta property="og:url" content="https://peacefullai.netlify.app" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Peacefull.ai" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.peacefull.ai https://*.peacefull.cloud https://*.neon.tech wss://*.netlify.app; img-src 'self' data: https:;" />
+    <!-- CSP is set via Netlify headers (netlify.toml) — do not duplicate here.
+         A <meta> CSP + HTTP header CSP are enforced independently (intersection),
+         so the meta tag was blocking Auth0 domain requests. -->
     <title>Peacefull.ai - Clinical Platform</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
