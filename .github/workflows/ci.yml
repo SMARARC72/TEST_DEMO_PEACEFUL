@@ -62,7 +62,7 @@ jobs:
       - run: cd prototype-web && npx vitest run --coverage
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: prototype-web/coverage/
@@ -83,7 +83,7 @@ jobs:
       - run: cd prototype-web && npm run build
       - name: Check bundle size budget
         run: cd prototype-web && npm run check:bundle
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: prototype-dist
           path: prototype-web/dist/
@@ -212,7 +212,7 @@ jobs:
           npx license-checker --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0' --production --summary
       - name: Upload security scan evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-scan-evidence
           path: ci-artifacts/security/
